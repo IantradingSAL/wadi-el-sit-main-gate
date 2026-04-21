@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بوابة المواطن — بلدية وادي الست</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;
+  --green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
+  --sun:#f5a623;--bg:#f0f2f7;--surface:#fff;--surface2:#eef0f6;
+  --border:#dce0ea;--text:#191c24;--text2:#515668;--text3:#8d93a6;
+  --warn:#c47800;--warn-bg:#fff4e0;--danger:#bf2424;--danger-bg:#fdeaea;
+  --purple:#6535a8;--purple-bg:#ede8f8;--font:'Tajawal',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.65;direction:rtl;}body.dark-mode{filter:invert(1) hue-rotate(180deg);}body.dark-mode img{filter:invert(1) hue-rotate(180deg);}
+
+/* ── LOGIN ── */
+.ls{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--blue2),var(--blue) 50%,var(--green2));padding:24px;}
+.lc{background:#fff;border-radius:20px;padding:38px 40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;}
+.ll{height:84px;margin-bottom:14px;}
+.lt{font-size:20px;font-weight:800;color:var(--blue2);margin-bottom:2px;}
+.ls2{font-size:13px;color:var(--text3);margin-bottom:24px;}
+.lf{text-align:right;}
+.lfl{font-size:12px;font-weight:700;color:var(--text3);margin-bottom:5px;display:block;}
+.lfi{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:15px;color:var(--text);outline:none;background:#f8f9fc;margin-bottom:14px;transition:border .15s,background .15s;}
+.lfi:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,110,181,0.1);}
+.lb{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;transition:opacity .15s;margin-top:4px;}
+.lb:hover{opacity:.9;}
+.lb:disabled{opacity:.5;cursor:not-allowed;}
+.lerr{color:var(--danger);font-size:13px;margin-top:10px;min-height:18px;font-weight:600;text-align:center;}
+.forgot{font-size:12px;color:var(--blue);cursor:pointer;margin-top:10px;display:block;text-align:center;}
+.forgot:hover{text-decoration:underline;}
+
+/* ── APP ── */
+.app{display:flex;min-height:100vh;}
+.sb{width:248px;flex-shrink:0;background:var(--blue2);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-top{padding:15px 15px 13px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.sb-lr{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.sb-logo{height:44px;}
+.sb-m{font-size:15px;font-weight:800;line-height:1.2;}
+.sb-s{font-size:10px;opacity:0.5;}
+.sb-user{background:rgba(255,255,255,0.12);border-radius:10px;padding:9px 12px;margin-top:2px;}
+.sb-uname{font-size:13px;font-weight:700;}
+.sb-uemail{font-size:11px;opacity:0.55;margin-top:1px;}
+.sb-urole{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.18);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600;margin-top:6px;}
+.ns{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:15px 14px 4px;font-weight:700;}
+.sbn{flex:1;padding:5px 9px;}
+.ni{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:400;color:rgba(255,255,255,0.65);transition:all .13s;}
+.ni:hover{background:rgba(255,255,255,0.09);color:#fff;}
+.ni.on{background:rgba(255,255,255,0.16);color:#fff;font-weight:700;}
+.nii{font-size:17px;flex-shrink:0;}
+.nb{margin-right:auto;background:rgba(255,255,255,0.2);border-radius:20px;font-size:11px;padding:1px 9px;font-weight:700;}
+.sb-ft{padding:11px 14px;border-top:1px solid rgba(255,255,255,0.08);font-size:11px;color:rgba(255,255,255,0.3);}
+.lo{margin-top:6px;display:flex;align-items:center;gap:5px;cursor:pointer;color:rgba(255,255,255,0.45);font-size:12px;transition:color .13s;}
+.lo:hover{color:#fff;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.hb{background:linear-gradient(120deg,var(--blue2),var(--blue) 60%,var(--green2));color:#fff;padding:12px 22px;display:flex;align-items:center;gap:13px;}
+.hbt{font-size:14px;font-weight:700;}.hbs{font-size:11px;opacity:0.6;}
+.hbr{margin-right:auto;text-align:left;direction:ltr;font-size:11px;opacity:0.55;}
+.hbv{font-size:15px;font-weight:700;opacity:1;}
+.tb{background:#fff;border-bottom:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;box-shadow:0 1px 5px rgba(0,0,0,0.05);}
+.tbt{font-size:17px;font-weight:800;flex:1;}
+.sw{position:relative;}
+.sw input{background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:8px 34px 8px 13px;font-size:14px;font-family:var(--font);color:var(--text);width:210px;outline:none;}
+.sw input:focus{border-color:var(--blue);}
+.si{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.32;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 17px;border-radius:9px;border:none;cursor:pointer;font-family:var(--font);font-size:14px;font-weight:700;transition:all .14s;white-space:nowrap;}
+.bp{background:var(--blue);color:#fff;}.bp:hover{background:var(--blue2);}
+.bg{background:transparent;color:var(--text2);border:1px solid var(--border);}.bg:hover{background:var(--surface2);}
+.bd2{background:var(--danger-bg);color:var(--danger);border:1px solid #f2bcbc;}
+.bgr{background:var(--green3);color:var(--green2);border:1px solid #a8d9b4;}
+.ct{padding:20px;overflow-y:auto;flex:1;}
+.sts{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px;}
+.sc{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 17px;position:relative;overflow:hidden;}
+.sc::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;}
+.c1::before{background:var(--blue);}.c2::before{background:var(--warn);}.c3::before{background:var(--danger);}.c4::before{background:var(--green);}
+.sci{font-size:21px;margin-bottom:8px;display:block;}
+.scv{font-size:29px;font-weight:800;line-height:1;margin-bottom:3px;}
+.scl{font-size:12px;color:var(--text3);}
+.c1 .scv{color:var(--blue);}.c2 .scv{color:var(--warn);}.c3 .scv{color:var(--danger);}.c4 .scv{color:var(--green);}
+.fb2{display:flex;align-items:center;gap:7px;margin-bottom:13px;flex-wrap:wrap;}
+.fb{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;font-family:var(--font);color:var(--text2);font-weight:500;transition:all .13s;}
+.fb:hover{border-color:var(--blue);color:var(--blue);}
+.fb.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+.fsp{width:1px;height:22px;background:var(--border);margin:0 2px;}
+select.fsel{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;font-family:var(--font);color:var(--text2);outline:none;appearance:none;-webkit-appearance:none;padding-left:26px;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238d93a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 9px center;}
+.tw{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
+.th,.tr{display:grid;grid-template-columns:46px 1.7fr 1fr 1fr 95px 1fr 68px 70px;align-items:center;padding:11px 16px;}
+.th{background:var(--surface2);border-bottom:1px solid var(--border);}
+.th span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);}
+.tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.tr:last-child{border-bottom:none;}
+.tr:hover{background:#f6f8fc;}
+.tr.pr{background:#fffcf0;border-right:3px solid var(--sun);}
+.tr.ws{background:#f0f8ff;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:600;}
+.bd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.bn{background:#e6f0fa;color:var(--blue);}.bn .bd{background:var(--blue);}
+.bip{background:var(--warn-bg);color:var(--warn);}.bip .bd{background:var(--warn);}
+.br2{background:var(--purple-bg);color:var(--purple);}.br2 .bd{background:var(--purple);}
+.bpa{background:#fff8e6;color:#b87500;}.bpa .bd{background:var(--sun);}
+.bdo{background:var(--green3);color:var(--green2);}.bdo .bd{background:var(--green);}
+.bc{background:var(--surface2);color:var(--text3);}.bc .bd{background:var(--text3);}
+.tt{display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:600;}
+.tc{background:var(--danger-bg);color:var(--danger);}.tw2{background:var(--green3);color:var(--green2);}.tp{background:#fff8e6;color:#8a6200;}.ti{background:var(--purple-bg);color:var(--purple);}
+.pr2{font-size:12.5px;font-weight:600;display:inline-flex;align-items:center;gap:3px;}
+.ph{color:var(--danger);}.pm{color:var(--warn);}.pl{color:var(--green);}
+.pc{display:flex;align-items:center;gap:9px;}
+.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.pn{font-weight:600;font-size:13.5px;}.pi{font-size:11px;color:var(--text3);}
+.dp{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;background:var(--blue3);color:var(--blue);font-size:11.5px;font-weight:600;}
+.ac{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:600;}
+.ay{background:var(--green3);color:var(--green2);}.an2{background:var(--danger-bg);color:var(--danger);}.ap{background:#fff8e6;color:#a06000;}.ana{background:var(--surface2);color:var(--text3);}
+.pg{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:var(--surface2);}
+.pgi{font-size:12.5px;color:var(--text3);}
+.pgb{display:flex;gap:4px;}
+.pb{padding:4px 10px;border-radius:7px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:12.5px;font-family:var(--font);color:var(--text2);}
+.pb.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+.em{text-align:center;padding:50px 24px;color:var(--text3);}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#191c24;color:#fff;padding:11px 22px;border-radius:10px;font-size:14px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}.toast.ok{background:var(--green2);}.toast.err{background:var(--danger);}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:none;align-items:flex-start;justify-content:flex-start;}
+.ov.open{display:flex;}
+.mo{background:#fff;width:530px;height:100vh;overflow-y:auto;box-shadow:8px 0 36px rgba(0,0,0,0.15);display:flex;flex-direction:column;direction:rtl;}
+.mh{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;position:sticky;top:0;background:#fff;z-index:1;}
+.mht{flex:1;font-size:17px;font-weight:800;}
+.mcl{background:none;border:none;cursor:pointer;font-size:20px;color:var(--text3);padding:4px 8px;border-radius:6px;line-height:1;}
+.mcl:hover{background:var(--surface2);}
+.mb{padding:20px;flex:1;}
+.ab{background:linear-gradient(120deg,#fff8e0,#fffbf0);border:1.5px solid var(--sun);border-radius:12px;padding:15px 17px;margin-bottom:16px;}
+.abt{font-size:14px;font-weight:700;color:#8a5500;margin-bottom:3px;}
+.abs{font-size:13px;color:#7a5000;}
+.abbs{display:flex;gap:9px;margin-top:11px;}
+.fg{margin-bottom:16px;}
+.fl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:5px;}
+.fv{font-size:14px;}
+.fi{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-family:var(--font);font-size:14px;color:var(--text);outline:none;background:var(--bg);transition:border .14s;direction:rtl;}
+.fi:focus{border-color:var(--blue);background:#fff;}
+textarea.fi{resize:vertical;min-height:76px;}
+select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
+.fi:disabled{opacity:.55;cursor:not-allowed;}
+.dv{height:1px;background:var(--border);margin:18px 0;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px;}
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-top:9px;}
+.dcd{border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.dth{width:100%;height:85px;object-fit:cover;display:block;cursor:pointer;}
+.dpdf{width:100%;height:85px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fdeaea,#fff8f8);font-size:30px;cursor:pointer;}
+.ddi{padding:6px 9px;display:flex;align-items:center;justify-content:space-between;}
+.ddn{font-size:11px;color:var(--text2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:85px;}
+.ddrm{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;}
+.ddrm:hover{color:var(--danger);}
+.uz{border:2px dashed var(--border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:all .15s;position:relative;}
+.uz:hover,.uz.drag{border-color:var(--blue);background:var(--blue3);}
+.uz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uzi{font-size:26px;margin-bottom:7px;}
+.uzt{font-size:13.5px;font-weight:600;color:var(--text2);}
+.uzs{font-size:11.5px;color:var(--text3);margin-top:3px;}
+.tl{display:flex;flex-direction:column;}
+.tli{display:flex;gap:11px;padding-bottom:16px;position:relative;}
+.tli:last-child{padding-bottom:0;}
+.tlln{position:absolute;right:4px;top:13px;bottom:0;width:1px;background:var(--border);}
+.tli:last-child .tlln{display:none;}
+.tld{width:10px;height:10px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:5px;position:relative;z-index:1;}
+.tld.g{background:var(--green);}.tld.r{background:var(--danger);}
+.tla{font-size:13.5px;font-weight:600;}.tlm{font-size:11.5px;color:var(--text3);}
+.ltr{direction:ltr;display:inline-block;}
+.ron{background:#fff4e0;border:1px solid #f5c842;border-radius:9px;padding:9px 13px;font-size:13px;color:#7a5800;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.sv{font-size:12px;color:var(--text3);display:none;align-items:center;gap:4px;}
+.sv.show{display:flex;}
+.web-src{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:5px;background:#e8f4ff;color:#0f5c99;font-size:10.5px;font-weight:700;margin-right:4px;}
+
+/* ADMIN PANEL */
+.admin-section{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;}
+.admin-header{font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.user-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.user-row:last-child{border-bottom:none;}
+.user-av{width:38px;height:38px;border-radius:50%;background:var(--blue3);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;}
+.user-info{flex:1;}
+.user-name{font-weight:700;font-size:14px;}
+.user-email{font-size:12px;color:var(--text3);}
+.user-role-tag{padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;background:var(--blue3);color:var(--blue);}
+.profile-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px;margin-bottom:18px;}
+.profile-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;}
+.profile-head{display:flex;align-items:center;gap:14px;margin-bottom:12px;}
+.profile-avatar{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;}
+.log-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+.log-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;}
+.log-list{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow:auto;}
+.log-item{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fafbfe;}
+.log-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:3px;}
+.log-meta{font-size:11.5px;color:var(--text3);line-height:1.8;}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 6px;}
+.kpi-box{border:1px solid var(--border);border-radius:12px;padding:12px;background:#fafbfe;}
+.kpi-num{font-size:22px;font-weight:800;color:var(--blue2);line-height:1.1;}
+.kpi-lbl{font-size:12px;color:var(--text3);margin-top:2px;}
+.perm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.perm-item{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:var(--surface2);font-size:13px;}
+.perm-item strong{display:block;font-size:12px;margin-bottom:3px;color:var(--text2);}
+.perm-yes{color:var(--green2);font-weight:800;}
+.perm-no{color:var(--danger);font-weight:800;}
+.role-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;background:var(--blue3);color:var(--blue);font-size:12px;font-weight:800;}
+@keyframes popIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+@media(max-width:600px){
+  #LANDING > div:nth-child(2){padding:12px 12px 16px !important;}
+  #LANDING img{max-height:80px !important;}
+}
+</style>
+<style>.help-btn{position:fixed;bottom:70px;right:16px;width:44px;height:44px;background:#1a6eb5;color:#fff;border-radius:50%;border:none;font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(26,110,181,.4);z-index:1000;transition:transform .15s;font-family:inherit}.help-btn:hover{transform:scale(1.1)}</style>
+</head>
+<body>
+<div id="CP" style="display:block">
+<div style="min-height:100vh;background:var(--bg)">
+  <div style="background:linear-gradient(120deg,var(--blue2),var(--blue) 60%,var(--green2));color:#fff;padding:14px 22px;display:flex;align-items:center;gap:14px">
+    <img src="data:image/png;base64,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" style="height:46px">
+    <div><div style="font-size:15px;font-weight:800">بلدية وادي الست</div><div style="font-size:11px;opacity:0.6">قضاء الشوف · جبل لبنان</div></div>
+    <button onclick="showLanding()" style="margin-right:auto;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:var(--font);font-size:13px">← الرئيسية</button>
+  </div>
+  <div style="max-width:620px;margin:28px auto;padding:0 16px">
+
+    <!-- TRACK CASE -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px">
+      <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:4px;text-align:center">🔍 تتبع حالة طلبك</div>
+      <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:14px">أدخل رقم الطلب الذي حصلت عليه عند التقديم</div>
+      <div style="display:flex;gap:10px">
+        <input type="number" id="track-num" placeholder="رقم الطلب — مثال: 1001"
+            style="flex:1;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:15px;outline:none;direction:ltr;text-align:center"
+            onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')doTrack()">
+        <button onclick="doTrack()" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">متابعة</button>
+      </div>
+
+      <div id="phone-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+        <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;text-align:center;direction:rtl">
+          <div style="font-size:48px;margin-bottom:12px">📱</div>
+          <div style="font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:6px">تحقق من هويتك</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:20px">أدخل رقم هاتفك للتأكد أنك صاحب الطلب</div>
+          <input type="tel" id="popup-phone" placeholder="مثال: 03xxxxxx"
+            style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;outline:none;direction:ltr;margin-bottom:8px"
+            onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')confirmPhone()">
+          <div id="popup-err" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:12px"></div>
+          <div style="display:flex;gap:10px">
+            <button onclick="closePhonePopup()" style="flex:1;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;color:var(--text2)">إلغاء</button>
+            <button onclick="confirmPhone()" style="flex:2;padding:12px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">تأكيد ←</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone Verification Popup -->
+      <div id="phone-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;direction:rtl">
+        <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:90%;text-align:center;animation:popIn .2s ease">
+          <div style="font-size:48px;margin-bottom:12px">📱</div>
+          <div style="font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:8px">تحقق من هويتك</div>
+          <div style="font-size:14px;color:var(--text3);margin-bottom:20px;line-height:1.6">أدخل رقم الهاتف المسجّل في طلبك</div>
+          <input type="tel" id="modal-phone" placeholder="مثال: 03xxxxxx"
+            style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;direction:ltr;outline:none;margin-bottom:8px;box-sizing:border-box"
+            onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')confirmPhone()">
+          <div id="phone-err" style="color:var(--danger);font-size:13px;min-height:20px;margin-bottom:12px"></div>
+          <div style="display:flex;gap:10px">
+            <button onclick="confirmPhone()" style="flex:2;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">✓ تأكيد</button>
+            <button onclick="closePhoneModal()" style="flex:1;padding:13px;background:var(--surface2);color:var(--text2);border:none;border-radius:10px;font-family:var(--font);font-size:15px;cursor:pointer">إلغاء</button>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <div id="track-res" style="margin-top:14px"></div>
+
+    <!-- SUBMIT REQUEST -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px" id="submit-form-wrap">
+      <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:16px;text-align:center">📋 تقديم طلب جديد</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">الاسم الكامل *</div>
+          <input type="text" id="c-name" class="fi" placeholder="اسمك الكامل"></div>
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">رقم الهاتف *</div>
+          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" style="direction:ltr"></div>
+      </div>
+      <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">البريد الإلكتروني</div>
+        <input type="email" id="c-email" class="fi" placeholder="email@example.com" style="direction:ltr"></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px;margin-bottom:2px;font-size:12px;color:var(--green2)">📧 سيتم إرسال إشعار إلكتروني إلى بريدك لتأكيد استلام طلبك</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px">
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">نوع الطلب *</div>
+          <select id="c-type" class="fi" style="appearance:none;-webkit-appearance:none" onchange="showRequiredDocs(this.value)"></select></div>
+      <div id="required-docs-box" style="display:none;margin:4px 0 12px;border-radius:10px;overflow:hidden;font-size:13px"></div>
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">العنوان</div>
+          <input type="text" id="c-addr" class="fi" placeholder="حارة، منطقة…"></div>
+      </div>
+      <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">وصف الطلب *</div>
+        <textarea id="c-desc" class="fi" placeholder="اشرح طلبك بالتفصيل…" style="min-height:100px;resize:vertical"></textarea></div>
+      <div style="margin-top:13px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:8px">المستندات والصور (اختياري)</div>
+        <div style="display:flex;gap:9px;margin-bottom:8px">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--blue3);border:1.5px dashed var(--blue);border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">
+            <input type="file" id="c-files" multiple accept="image/*,video/*,.pdf" onchange="addCitFiles(this.files)" style="display:none">📁 اختر ملفات</label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--green3);border:1.5px dashed var(--green);border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--green2)">
+            <input type="file" id="c-camera" accept="image/*" capture="environment" onchange="addCitFiles(this.files)" style="display:none">📸 التقط صورة</label>
+        </div>
+        <div id="c-files-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div id="c-prog-wrap" style="display:none;margin-top:8px">
+          <div style="height:6px;background:var(--border);border-radius:6px;overflow:hidden"><div id="c-prog-bar" style="height:100%;background:var(--blue);border-radius:6px;width:0%;transition:width .3s"></div></div>
+          <div id="c-prog-lbl" style="font-size:12px;color:var(--text3);text-align:center;margin-top:4px"></div>
+        </div>
+      </div>
+      <div id="c-err" style="color:var(--danger);font-size:13px;margin-top:10px;text-align:center;min-height:18px"></div>
+      <button onclick="doSubmitCit()" id="c-btn" style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer">📤 إرسال الطلب</button>
+    </div>
+
+    <!-- SUCCESS -->
+    <div id="c-success" style="display:none;background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;margin-top:18px">
+      <div style="font-size:52px;margin-bottom:14px">🎉</div>
+      <div style="font-size:20px;font-weight:800;color:var(--green2);margin-bottom:8px">تم استلام طلبك!</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:12px">سيتواصل معك فريق البلدية في أقرب وقت</div>
+      <div style="background:#f0f8ea;border:1.5px solid #a8d9b4;border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:14px;color:#1e5429;display:flex;align-items:center;gap:8px;justify-content:center">
+        <span style="font-size:18px">📧</span>
+        <span>تم إرسال إشعار إلكتروني إلى بريدك بتفاصيل طلبك ورقمه المرجعي</span>
+      </div>
+      <div style="background:var(--blue3);border:1.5px solid var(--blue);border-radius:12px;padding:18px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:700;color:var(--blue2);margin-bottom:6px">رقمك المرجعي — احتفظ به</div>
+        <div style="font-size:36px;font-weight:800;color:var(--blue);direction:ltr" id="c-ref">—</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px">استخدم هذا الرقم لمتابعة حالة طلبك أعلاه</div>
+      </div>
+      <button onclick="resetCit()" style="padding:11px 24px;border:2px solid var(--blue);background:transparent;color:var(--blue);border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">+ تقديم طلب جديد</button>
+    </div>
+
+  </div>
+</div>
+</div>
+<div id="wn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeWnModal()">
+  <div style="background:#fff;border-radius:20px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:1;border-radius:20px 20px 0 0">
+      <button onclick="closeWnModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">✕</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px;font-weight:800;color:#1a1a2e">ما الجديد</span>
+        <span style="font-size:22px">✨</span>
+      </div>
+    </div>
+    <div id="wn-modal-body" style="padding:16px 20px"></div>
+  </div>
+</div>
+<button class="help-btn" onclick="openHelp('c')" title="مساعدة">?</button>
+<script>var OFFICERS = [];
+
+const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+let sb=null,dbR=false,citUser=null,citFiles=[],_cats=null;
+
+const WADI_CATS_DEFAULT = [
+  {id:'complaint', icon:'⚠️', label:'شكوى'},
+  {id:'welfare',   icon:'🤝', label:'رعاية اجتماعية'},
+  {id:'permit',    icon:'🏗️', label:'ترخيص'},
+  {id:'inquiry',   icon:'❓', label:'استفسار'},
+  {id:'ifada',     icon:'📜', label:'إفادة عقارية'},
+  {id:'water',     icon:'💧', label:'شكوى ري'},
+];
+const WN_DEFAULT = [
+  {icon:'🎭', title:'نظام إدارة الأدوار المتقدم', desc:'إنشاء أدوار مخصصة مع تحديد الصلاحيات والإشعارات لكل دور', isNew:true, date:'2026-04-08', color:'var(--blue3)', titleColor:'var(--blue2)'},
+  {icon:'🌐', title:'بوابة المواطن المحسّنة', desc:'إمكانية متابعة الطلب وإرفاق مستندات إضافية وإضافة ملاحظات', isNew:true, date:'2026-04-08', color:'#f0f8ea', titleColor:'var(--green2)'},
+  {icon:'📧', title:'إشعارات البريد الإلكتروني', desc:'إرسال تلقائي عند تقديم طلب أو تغيير الحالة أو رد البلدية', isNew:true, date:'2026-04-08', color:'#f5f0ff', titleColor:'#6535a8'},
+  {icon:'🖨️', title:'طباعة الطلبات', desc:'طباعة ملف PDF احترافي لكل طلب مع التوقيعات والسجل الكامل', isNew:false, date:'2026-04-08', color:'#fff4e0', titleColor:'var(--warn)'},
+  {icon:'📋', title:'إدارة التصنيفات', desc:'إضافة وتعديل وحذف أنواع الطلبات بشكل ديناميكي', isNew:false, date:'2026-04-08', color:'#eef0f6', titleColor:'var(--text2)'},
+];
+const WN_VERSIONS = [
+  {
+    version: '2.5', date: 'أبريل 2026', color: '#eef5ff', badgeColor: '#3b82f6',
+    features: [
+      {icon:'📜', title:'إفادة عقارية', desc:'خدمة جديدة — تقديم طلب إفادة عقارية مع قائمة المستندات المطلوبة تلقائياً'},
+      {icon:'📋', title:'قائمة المستندات المطلوبة', desc:'عند اختيار نوع الطلب تظهر المستندات الإلزامية والاختيارية في نموذج التقديم ولوحة التحكم'},
+      {icon:'📤', title:'تحديث الطلب من المواطن', desc:'يمكن للمواطن إضافة ملاحظات ورفع مستندات جديدة على طلبه بعد تقديمه'},
+      {icon:'📊', title:'تبويب تحديثات المواطنين', desc:'موظفو البلدية يرون جميع تحديثات المواطنين في تبويب مخصص'},
+      {icon:'🖨️', title:'طباعة الطلب', desc:'طباعة ملف PDF احترافي لأي طلب يشمل المعلومات والتوقيعات والسجل الكامل'},
+      {icon:'📧', title:'إشعارات البريد الإلكتروني', desc:'إشعارات تلقائية للمواطن والموظفين عند كل حدث مهم عبر Brevo'},
+    ]
+  },
+  {
+    version: '2.0', date: 'مارس 2026', color: '#f0fdf4', badgeColor: '#22c55e',
+    features: [
+      {icon:'🎭', title:'نظام الأدوار المتقدم', desc:'إنشاء أدوار مخصصة مع 27 صلاحية وتخصيص كل موظف بشكل فردي'},
+      {icon:'👥', title:'إدارة الموظفين الكاملة', desc:'إضافة وتعديل وإيقاف الحسابات مع تغيير الأدوار والصلاحيات'},
+      {icon:'📋', title:'إدارة التصنيفات', desc:'إضافة وتعديل وحذف أنواع الطلبات ديناميكياً — تُحفظ في Supabase'},
+      {icon:'🔔', title:'إشعارات واتساب', desc:'إعداد قنوات إشعار واتساب لكل دور'},
+      {icon:'📊', title:'نشاط الموظفين', desc:'متابعة نشاط كل موظف وسجل التعديلات'},
+      {icon:'🌐', title:'بوابة المواطن', desc:'بوابة مستقلة لتقديم ومتابعة الطلبات مع التحقق برقم الهاتف'},
+    ]
+  },
+];
+const REQUIRED_DOCS = {
+  ifada: {
+    label: 'إفادة عقارية',
+    icon: '📜',
+    description: 'تُستخدم لإثبات الملكية العقارية أو وضع العقار القانوني',
+    docs: [
+      {name: 'صورة عن الهوية الشخصية', required: true,  icon: '🪪'},
+      {name: 'صورة عن سند الملكية (طابو)',required: true, icon: '📄'},
+      {name: 'صورة عن وثيقة المساحة',   required: true,  icon: '📐'},
+      {name: 'شهادة عائلية (قيد نفوس)', required: false, icon: '👨‍👩‍👧'},
+      {name: 'وكالة قانونية (إن وُجدت)',required: false, icon: '⚖️'},
+      {name: 'رسم طابو حديث (6 أشهر)',  required: true,  icon: '🗓️'},
+    ]
+  },
+  permit: {
+    label: 'رخصة بناء / ترخيص',
+    icon: '🏗️',
+    description: 'مطلوبة لأي أعمال بناء أو هدم أو تعديل',
+    docs: [
+      {name: 'صورة عن الهوية الشخصية',    required: true,  icon: '🪪'},
+      {name: 'مخطط هندسي موقّع من مهندس', required: true,  icon: '📐'},
+      {name: 'سند الملكية',               required: true,  icon: '📄'},
+      {name: 'موافقة الجيران (إن لزم)',    required: false, icon: '🤝'},
+      {name: 'صور فوتوغرافية للموقع',     required: false, icon: '📷'},
+    ]
+  },
+  welfare: {
+    label: 'رعاية اجتماعية',
+    icon: '🤝',
+    description: 'طلبات الدعم والمساعدة الاجتماعية',
+    docs: [
+      {name: 'صورة عن الهوية الشخصية',   required: true,  icon: '🪪'},
+      {name: 'شهادة عائلية (قيد نفوس)',  required: true,  icon: '👨‍👩‍👧'},
+      {name: 'وثيقة إثبات السكن',         required: true,  icon: '🏠'},
+      {name: 'وثيقة الدخل / شهادة فقر',  required: false, icon: '📋'},
+      {name: 'تقرير طبي (إن لزم)',       required: false, icon: '🏥'},
+    ]
+  },
+  complaint: {
+    label: 'شكوى',
+    icon: '⚠️',
+    description: 'تقديم شكوى رسمية للبلدية',
+    docs: [
+      {name: 'صورة عن الهوية الشخصية', required: true,  icon: '🪪'},
+      {name: 'صور أو وثائق داعمة',     required: false, icon: '📷'},
+    ]
+  },
+  inquiry: {
+    label: 'استفسار',
+    icon: '❓',
+    description: 'استفسار عام',
+    docs: [
+      {name: 'صورة عن الهوية الشخصية', required: false, icon: '🪪'},
+    ]
+  },
+  water: {
+    label: 'شكوى ري',
+    icon: '💧',
+    description: 'شكوى تتعلق بمياه الري — وضّح المشكلة وموقعها',
+    docs: [
+      {name: 'صورة عن الهوية الشخصية', required: true,  icon: '🪪'},
+      {name: 'وصف المشكلة والموقع',      required: true,  icon: '📝'},
+      {name: 'صور توضيحية للمشكلة',     required: false, icon: '📸'},
+    ]
+  }
+};
+
+function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show '+t;setTimeout(()=>el.className='toast',3000);}
+function getCats() {
+  try {
+    const stored = localStorage.getItem('wadi_cats');
+    if (stored) {
+      var parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch(e) {}
+  return WADI_CATS_DEFAULT;
+}
+async function saveCats(c) {
+  // Save to localStorage immediately (for fast UI)
+  localStorage.setItem('wadi_cats', JSON.stringify(c));
+  renderCatsNav();
+  // Update type selects
+  var sel = document.getElementById('at');
+  if(sel) {
+    sel.innerHTML = getDynTypes().map(function(t){
+      var cat=getCats().find(function(x){return x.id===t;});
+      return '<option value="'+t+'">'+(cat?cat.icon+' '+cat.label:(TL[t]||t))+'</option>';
+    }).join('');
+  }
+  if(typeof tick === 'function') setTimeout(tick, 100);
+  // Save to Supabase settings table (persistent across devices)
+  if(dbR && sb) {
+    sb.from('settings')
+      .upsert({key:'wadi_cats', value:c, updated_at:new Date().toISOString()}, {onConflict:'key'})
+      .then(function(res){
+        if(res.error) console.log('saveCats DB error:', res.error.message);
+        else console.log('✅ التصنيفات محفوظة في Supabase');
+      })
+      .catch(function(e){ console.log('saveCats:', e.message); });
+  }
+}
+async function loadCatsFromSupabase() {
+  try {
+    const {data, error} = await sb.from('app_settings').select('value').eq('key', 'wadi_cats').single();
+    if (!error && data && data.value) {
+      const cats = JSON.parse(data.value);
+      localStorage.setItem('wadi_cats', JSON.stringify(cats));
+      updateCitizenTypeSelect();
+      console.log('✅ Cats loaded from Supabase:', cats.length);
+    }
+  } catch(e) { console.log('loadCatsFromSupabase:', e.message); }
+}
+function getDynTypes(){try{return getCats().map(function(c){return c.id;});}catch(e){return TYPES_DEFAULT;}}
+function getDbType(catId) {
+  var base = ['complaint','welfare','permit','inquiry','ifada','water'];
+  if (base.includes(catId)) return catId;
+  var cat = getCats().find(function(c){ return c.id === catId; });
+  if (!cat) return 'complaint';
+  var label = (cat.label || '').toLowerCase();
+  if (label.includes('ري') || label.includes('مياه')) return 'water';
+  if (label.includes('إفادة') || label.includes('عقار')) return 'ifada';
+  if (label.includes('شكو') || label.includes('شكاو')) return 'complaint';
+  if (label.includes('رعاي') || label.includes('اجتماع')) return 'welfare';
+  if (label.includes('رخص') || label.includes('ترخيص')) return 'permit';
+  if (label.includes('استفس') || label.includes('سؤال')) return 'inquiry';
+  return 'complaint';
+}
+function updateCitizenTypeSelect() {
+  var sel = document.getElementById('c-type');
+  if (!sel) return;
+  var cats = getCats();
+  sel.innerHTML = cats.map(function(c) {
+    return '<option value="' + c.id + '">' + c.icon + ' ' + c.label + '</option>';
+  }).join('');
+}
+function showCitizenHero(){
+  // Show main citizen portal (track + submit form always visible)
+  var sf=document.getElementById('submit-form-wrap');
+  if(sf) sf.style.display='block';
+  var ss=document.getElementById('c-success');
+  if(ss) ss.style.display='none';
+  // Hide sections that don't exist in standalone citizen.html (safe no-ops)
+  ['cit-login-form','cit-reg-form','cit-dashboard','cit-add-form'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+}
+function showCitizenLogin(){
+  document.getElementById('cit-hero').style.display='none';
+  document.getElementById('cit-login-form').style.display='block';
+  document.getElementById('cit-reg-form').style.display='none';
+  document.getElementById('cit-dashboard').style.display='none';
+  document.getElementById('cit-add-form').style.display='none';
+}
+function showCitizenRegister(){
+  document.getElementById('cit-hero').style.display='none';
+  document.getElementById('cit-login-form').style.display='none';
+  document.getElementById('cit-reg-form').style.display='block';
+  document.getElementById('cit-dashboard').style.display='none';
+  document.getElementById('cit-add-form').style.display='none';
+}
+function showCitDashboard(){
+  document.getElementById('cit-hero').style.display='none';
+  document.getElementById('cit-login-form').style.display='none';
+  document.getElementById('cit-reg-form').style.display='none';
+  document.getElementById('cit-dashboard').style.display='block';
+  document.getElementById('cit-add-form').style.display='none';
+  loadCitCases();
+}
+function openCitAdd(){
+  document.getElementById('cit-dashboard').style.display='none';
+  document.getElementById('cit-add-form').style.display='block';
+}
+async function citLogin(){
+  const email=document.getElementById('cit-em').value.trim();
+  const pw=document.getElementById('cit-pw').value;
+  const err=document.getElementById('cit-err');
+  const btn=event.currentTarget||document.querySelector('[onclick="citLogin()"]');
+  err.textContent='';
+  if(!email||!pw){err.textContent='يرجى إدخال البريد وكلمة المرور';return;}
+  if(!dbR){err.textContent='⚠️ Supabase غير مُعد';return;}
+  try{
+    const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error)throw error;
+    citUser=data.user;
+    setupCitDashboard();
+  }catch(e){
+    console.error('Login error:',e);
+    err.textContent='البريد أو كلمة المرور غير صحيحة ❌';
+  }
+}
+async function citRegister(){
+  const name=document.getElementById('cit-name').value.trim();
+  const phone=document.getElementById('cit-phone').value.trim();
+  const email=document.getElementById('cit-rem').value.trim();
+  const pw=document.getElementById('cit-rpw').value;
+  const err=document.getElementById('cit-rerr');
+  err.textContent='';
+  if(!name||!email||!pw){err.textContent='يرجى ملء جميع الحقول الإلزامية';return;}
+  if(pw.length<8){err.textContent='كلمة المرور يجب أن تكون 8 أحرف على الأقل';return;}
+  if(!dbR){err.textContent='⚠️ Supabase غير مُعد';return;}
+  try{
+    const{data,error}=await sb.auth.signUp({
+      email,password:pw,
+      options:{data:{name,phone,role:'citizen'}}
+    });
+    if(error)throw error;
+    // After signup, immediately sign in to get a valid session
+    const{data:loginData,error:loginError}=await sb.auth.signInWithPassword({email,password:pw});
+    if(loginError)throw loginError;
+    citUser=loginData.user;
+    setupCitDashboard();
+  }catch(e){
+    console.error('Register error:',e);
+    err.textContent='خطأ: '+e.message;
+  }
+}
+async function citLogout(){
+  if(dbR)await sb.auth.signOut();
+  citUser=null;
+  showLanding();
+}
+function setupCitDashboard(){
+  const name=citUser?.user_metadata?.name||citUser?.email?.split('@')[0]||'مواطن';
+  const ini2=name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('');
+  document.getElementById('cit-av').textContent=ini2;
+  document.getElementById('cit-welcome').textContent='مرحباً، '+name;
+  document.getElementById('cit-uemail').textContent=citUser?.email||'';
+  showCitDashboard();
+}
+async function loadCitCases(){
+  const el=document.getElementById('cit-cases');
+  if(!dbR||!citUser){el.innerHTML='<div class="em">لا توجد طلبات بعد</div>';return;}
+  el.innerHTML='<div class="em"><div style="font-size:28px">⏳</div></div>';
+  try{
+    const{data,error}=await sb.from('cases').select('id,name,type,status,description,created_at,approval_state,documents').eq('email',citUser.email).order('created_at',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){el.innerHTML='<div class="em" style="padding:30px"><div style="font-size:32px;margin-bottom:10px">📭</div><div style="font-size:14px">لا توجد طلبات بعد</div></div>';return;}
+    const SLC2={new:'bn','in-progress':'bip',review:'br2','pending-approval':'bpa',resolved:'bdo',closed:'bc'};
+    el.innerHTML=data.map(c=>`
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:12px;color:var(--text3);direction:ltr">#${String(c.id).slice(-4)} · ${(c.created_at||'').slice(0,10)}</div>
+          <span class="badge ${SLC2[c.status]||'bc'}"><span class="bd"></span>${SL[c.status]||c.status}</span>
+        </div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">${TL[c.type]||c.type}</div>
+        <div style="font-size:13px;color:var(--text2)">${(c.description||'').slice(0,80)}${(c.description||'').length>80?'…':''}</div>
+        ${(c.documents||[]).length>0?`<div style="margin-top:6px"><span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;background:var(--blue3);color:var(--blue);font-size:11.5px;font-weight:600">📎 ${(c.documents||[]).length} مستند</span></div>`:''}
+      </div>`).join('');
+  }catch(e){el.innerHTML='<div class="em">خطأ في التحميل</div>';}
+}
+function showPhonePopup() {
+  const ref = document.getElementById('track-num').value.toString().trim();
+  const el = document.getElementById('track-res');
+  if (!ref) {
+    el.innerHTML = '<div style="color:var(--danger);font-size:13px;text-align:center;padding:10px">⚠️ يرجى إدخال رقم الطلب أولاً</div>';
+    return;
+  }
+  document.getElementById('popup-phone').value = '';
+  document.getElementById('popup-err').textContent = '';
+  const popup = document.getElementById('phone-popup');
+  popup.style.display = 'flex';
+  setTimeout(() => document.getElementById('popup-phone').focus(), 100);
+}
+function closePhonePopup() {
+  document.getElementById('phone-popup').style.display = 'none';
+}
+async function doTrack(phone=""){
+  const ref=document.getElementById('track-num').value.toString().trim();
+  const el=document.getElementById('track-res');
+  if(!ref){el.innerHTML='<div style="color:var(--danger);font-size:13px;text-align:center;padding:10px">⚠️ يرجى إدخال رقم الطلب</div>';return;}
+  document.getElementById('modal-phone').value='';
+  document.getElementById('phone-err').textContent='';
+  document.getElementById('phone-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('modal-phone').focus(),150);
+}
+async function confirmPhone(){
+  const ref=document.getElementById('track-num').value.toString().trim();
+  const phone=(document.getElementById('modal-phone').value||'').replace(/[^0-9+]/g,'').trim();
+  const errEl=document.getElementById('phone-err');
+  const el=document.getElementById('track-res');
+  if(!phone){errEl.textContent='⚠️ يرجى إدخال رقم الهاتف';return;}
+  errEl.textContent='';
+  closePhoneModal();
+  el.innerHTML='<div style="text-align:center;padding:14px;color:var(--text3)">⏳ جاري التحقق…</div>';
+  if(!dbR){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center">الخدمة غير متاحة</div>';return;}
+  try{
+    const{data,error}=await sb.from('cases')
+      .select('id,name,phone,email,address,type,status,description,created_at,timeline,documents,public_note,priority,assigned')
+      .eq('id',ref).single();
+    if(error||!data){el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:16px;text-align:center;color:var(--danger)">❌ لم يتم العثور على طلب بهذا الرقم</div>';return;}
+    const storedPhone=(data.phone||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');
+    const inputPhone=phone.replace(/^[+]?961/,'').replace(/^0/,'');
+    if(data.phone&&storedPhone&&inputPhone&&inputPhone!==storedPhone){
+      el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:20px;text-align:center;color:var(--danger)"><div style="font-size:32px;margin-bottom:8px">🔒</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">رقم الهاتف غير مطابق</div><div style="font-size:13px;opacity:.8">تحقق من الرقم وحاول مجدداً</div></div>';
+      return;
+    }
+    const TL={complaint:'شكوى',welfare:'رعاية اجتماعية',permit:'ترخيص',inquiry:'استفسار'};
+    const SL={new:'جديد','in-progress':'قيد المعالجة',review:'مراجعة','pending-approval':'ينتظر الموافقة',resolved:'منجز ✅',closed:'مغلق'};
+    const PL={high:'🔴 عالية',medium:'🟡 متوسطة',low:'🟢 منخفضة'};
+    const SBG={new:'#e6f0fa','in-progress':'#fff4e0',review:'#ede8f8','pending-approval':'#fff8e6',resolved:'#d4edda',closed:'#eef0f6'};
+    const STC={new:'#1a6eb5','in-progress':'#c47800',review:'#6535a8','pending-approval':'#b87500',resolved:'#1e5429',closed:'#8d93a6'};
+    const pct={new:20,'in-progress':50,review:75,'pending-approval':75,resolved:100,closed:100}[data.status]||20;
+    const tl=Array.isArray(data.timeline)?data.timeline:[];
+    const docs=Array.isArray(data.documents)?data.documents:[];
+    let h='<div style="background:#f8fbff;border:1.5px solid var(--blue3);border-radius:14px;padding:20px;direction:rtl">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">';
+    h+='<div><div style="font-size:11px;color:var(--text3)">رقم الطلب</div><div style="font-size:20px;font-weight:800;color:var(--blue2)">#'+data.id+'</div></div>';
+    h+='<span style="padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;background:'+(SBG[data.status]||'#eef')+';color:'+(STC[data.status]||'#888')+'">'+(SL[data.status]||data.status)+'</span></div>';
+    h+='<div style="margin-bottom:16px"><div style="font-size:12px;color:var(--text3);margin-bottom:6px;font-weight:600">تقدم الطلب</div>';
+    h+='<div style="height:10px;background:var(--border);border-radius:10px;overflow:hidden"><div style="height:100%;border-radius:10px;width:'+pct+'%;background:'+(data.status==='resolved'?'var(--green)':data.status==='closed'?'var(--danger)':'var(--blue)')+'"></div></div>';
+    h+='<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px"><span>مقدَّم</span><span>قيد المعالجة</span><span>مراجعة</span><span>منجز</span></div></div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">';
+    if(data.name)h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">الاسم</div><strong>'+data.name+'</strong></div>';
+    if(data.phone)h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">الهاتف</div><span style="direction:ltr;display:inline-block">'+data.phone+'</span></div>';
+    if(data.email)h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">البريد</div>'+data.email+'</div>';
+    if(data.address)h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">العنوان</div>'+data.address+'</div>';
+    h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">النوع</div>'+(TL[data.type]||data.type)+'</div>';
+    if(data.priority)h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">الأولوية</div>'+(PL[data.priority]||data.priority)+'</div>';
+    if(data.assigned)h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">المسؤول</div>'+data.assigned+'</div>';
+    h+='<div style="padding:8px;background:#fff;border-radius:8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--text3);margin-bottom:2px">التاريخ</div><span style="direction:ltr;display:inline-block">'+(data.created_at||'').slice(0,10)+'</span></div></div>';
+    if(data.description)h+='<div style="margin-bottom:14px;padding:12px;background:#fff;border-radius:10px;border:1px solid var(--border)"><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px">📋 وصف الطلب</div><div style="font-size:14px;line-height:1.6">'+data.description+'</div></div>';
+    if(data.public_note)h+='<div style="background:#f0f8ea;border:2px solid #a8d9b4;border-radius:10px;padding:14px;margin-bottom:14px"><div style="font-size:12px;font-weight:800;color:var(--green2);margin-bottom:6px">📢 رد البلدية</div><div style="font-size:14px;color:#1a4a2a;line-height:1.6">'+data.public_note+'</div></div>';
+    if(docs.length)h+='<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:700">📎 المرفقات ('+docs.length+')</div><div style="display:flex;flex-wrap:wrap;gap:8px">'+docs.map(d=>'<a href="'+d.url+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:var(--blue3);border:1px solid var(--blue);border-radius:9px;color:var(--blue);font-size:13px;font-weight:600;text-decoration:none">'+(d.type&&['jpg','jpeg','png','gif','webp'].includes((d.type||'').toLowerCase())?'🖼️':'📄')+' '+d.name+' ⬇️</a>').join('')+'</div></div>';
+    if(tl.length){h+='<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:700">🕒 سجل النشاط</div><div style="display:flex;flex-direction:column;gap:10px">';h+=tl.slice().reverse().slice(0,8).map(t=>'<div style="display:flex;gap:12px;align-items:flex-start"><div style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:5px"></div><div><div style="font-size:13px;font-weight:600">'+t.a+'</div><div style="font-size:11px;color:var(--text3)">'+t.d+'</div></div></div>').join('');h+='</div>';}
+    else h+='<div style="color:var(--text3);font-size:13px;padding:8px 0">لا يوجد نشاط بعد</div>';
+    h+='</div>';
+    // Add update section (upload docs + notes)
+    h += '<div style="border-top:2px solid var(--border);margin-top:16px;padding-top:16px">';
+    h += '<div style="font-size:14px;font-weight:800;color:var(--blue2);margin-bottom:12px">📤 تحديث طلبك</div>';
+    // Add note
+    h += '<div style="margin-bottom:12px">';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">💬 إضافة ملاحظة أو معلومة إضافية</div>';
+    h += '<textarea id="cit-update-note" placeholder="اكتب أي معلومة إضافية أو تحديث تريد إرساله للبلدية…" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:13px;resize:vertical;min-height:80px;outline:none;direction:rtl" onfocus="this.style.borderColor=\'var(--blue)\'"></textarea>';
+    h += '</div>';
+    // Upload docs
+    h += '<div style="margin-bottom:12px">';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">📎 إرفاق مستندات إضافية</div>';
+    h += '<label style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);border:1.5px dashed var(--blue);border-radius:10px;cursor:pointer;font-size:13px;color:var(--blue)">';
+    h += '<input type="file" id="cit-update-files" multiple accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="showCitUpdateFiles(this)">';
+    h += '📂 اضغط لاختيار الملفات (صور، PDF، وثائق)</label>';
+    h += '<div id="cit-update-file-list" style="margin-top:6px;font-size:12px;color:var(--text3)"></div>';
+    h += '</div>';
+    // Submit button
+    h += '<button onclick="submitCitUpdate(\'' + data.id + '\',\'' + (data.phone||'') + '\')" style="width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font)">✅ إرسال التحديث</button>';
+    h += '<div id="cit-update-msg" style="margin-top:8px;font-size:13px;text-align:center;min-height:18px"></div>';
+    h += '</div>';
+    el.innerHTML=h;
+  }catch(e){el.innerHTML='<div style="color:var(--danger);font-size:13px;text-align:center">خطأ: '+e.message+'</div>';}
+}
+function closePhoneModal(){
+  document.getElementById('phone-modal').style.display='none';
+}
+async function doSubmitCit(){
+  const name=document.getElementById('c-name').value.trim();
+  const phone=document.getElementById('c-phone').value.trim();
+  const email=document.getElementById('c-email').value.trim();
+  const typeRaw=document.getElementById('c-type').value;
+  const type=getDbType(typeRaw);
+  const addr=document.getElementById('c-addr').value.trim();
+  const desc=document.getElementById('c-desc').value.trim();
+  const err=document.getElementById('c-err');
+  const btn=document.getElementById('c-btn');
+  err.textContent='';
+  if(!name){err.textContent='يرجى إدخال اسمك الكامل';return;}
+  if(!phone){err.textContent='يرجى إدخال رقم هاتفك';return;}
+  if(!desc){err.textContent='يرجى وصف طلبك';return;}
+  if(!dbR){err.textContent='⚠️ الخدمة غير متاحة حالياً';return;}
+  btn.disabled=true;btn.textContent='⏳ جاري الإرسال…';
+  const today=new Date().toISOString().slice(0,10);
+  const na=['permit','welfare'].includes(type);
+  const nc={name,phone,email,address:addr,type:type,description:desc,priority:'medium',
+    assigned:'',status:na?'pending-approval':'new',
+    approval_state:na?'pending':null,approval_by:null,approval_date:null,
+    timeline:[{a:'تم تقديم الطلب عبر الموقع الإلكتروني',by:name,d:today,cls:''}],
+    documents:[],source:'website'};
+  try{
+    const{data,error}=await sb.from('cases').insert([nc]).select().single();
+    if(error)throw error;
+    const newCaseId = data.id;
+    document.getElementById('c-ref').textContent = newCaseId;
+    // Send confirmation email (non-blocking)
+    const citEmail=document.getElementById('c-email')?.value?.trim();
+    const citName=document.getElementById('c-name')?.value?.trim();
+    const citTypeVal=document.getElementById('c-type')?.value;
+    if(citEmail) setTimeout(function(){
+      sendBrevoEmail(citEmail, citName, '[بلدية وادي الست] تم استلام طلبكم رقم #'+newCaseId, buildCitizenEmail(newCaseId, citName, citTypeVal, 'new'));
+    }, 100);
+    if (citFiles.length > 0) {
+      const pw=document.getElementById('c-prog-wrap');
+      const pb=document.getElementById('c-prog-bar');
+      const pl=document.getElementById('c-prog-lbl');
+      if(pw) pw.style.display='block';
+      const uploadedDocs=[];
+      for(let fi=0;fi<citFiles.length;fi++){
+        const f=citFiles[fi];
+        if(pb) pb.style.width=Math.round(fi/citFiles.length*90)+'%';
+        if(pl) pl.textContent='جاري رفع '+f.name+'…';
+        const ext=f.name.split('.').pop().toLowerCase();
+        const path=newCaseId+'/'+Date.now()+'_'+fi+'.'+ext;
+        try{
+          const{error:ue}=await sb.storage.from('case-documents').upload(path,f,{upsert:true});
+          if(!ue){
+            const{data:pd}=sb.storage.from('case-documents').getPublicUrl(path);
+            uploadedDocs.push({name:f.name,path,url:pd.publicUrl,type:ext,size:f.size});
+          }
+        }catch(fe){console.error('upload error:',fe);}
+      }
+      if(uploadedDocs.length){
+        await sb.from('cases').update({documents:uploadedDocs}).eq('id',newCaseId);
+      }
+      if(pb) pb.style.width='100%';
+      if(pl) pl.textContent='✅ تم رفع '+uploadedDocs.length+' ملف';
+      setTimeout(()=>{if(pw)pw.style.display='none';},1200);
+    }
+    citFiles=[];
+    renderCitFiles();
+    document.getElementById('submit-form-wrap').style.display='none';
+    document.getElementById('c-success').style.display='block';
+    document.getElementById('c-success').scrollIntoView({behavior:'smooth'});
+  }catch(e){err.textContent='خطأ: '+e.message;btn.disabled=false;btn.textContent='📤 إرسال الطلب';}
+}
+function resetCit(){
+  citFiles=[];
+  renderCitFiles();
+  ['c-name','c-phone','c-email','c-addr','c-desc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-err').textContent='';
+  document.getElementById('c-success').style.display='none';
+  document.getElementById('submit-form-wrap').style.display='block';
+  document.getElementById('c-btn').disabled=false;
+  document.getElementById('c-btn').textContent='📤 إرسال الطلب';
+}
+function addCitFiles(files) {
+  Array.from(files).forEach(f => {
+    if (f.size > 20*1024*1024) { alert('الملف ' + f.name + ' أكبر من 20MB'); return; }
+    if (!citFiles.find(x => x.name===f.name && x.size===f.size)) citFiles.push(f);
+  });
+  renderCitFiles();
+}
+function removeCitFile(i) { citFiles.splice(i,1); renderCitFiles(); }
+function renderCitFiles() {
+  const el = document.getElementById('c-files-list');
+  if (!el) return;
+  if (!citFiles.length) { el.innerHTML=''; return; }
+  const fmt = b => b>1048576?(b/1048576).toFixed(1)+'MB':Math.round(b/1024)+'KB';
+  const ico = f => { const e=f.name.toLowerCase().split('.').pop(); return ['jpg','jpeg','png','gif','webp'].includes(e)?'🖼️':['mp4','mov','avi','webm'].includes(e)?'🎥':e==='pdf'?'📄':'📎'; };
+  el.innerHTML = citFiles.map((f,i)=>
+    '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--blue3);border-radius:8px;border:1px solid var(--blue);margin-bottom:4px">'
+    +'<span style="font-size:20px">'+ico(f)+'</span>'
+    +'<span style="flex:1;font-size:13px;font-weight:600;color:var(--blue2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.name+'</span>'
+    +'<span style="font-size:11px;color:var(--text3);flex-shrink:0">'+fmt(f.size)+'</span>'
+    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px">✕</button>'
+    +'</div>'
+  ).join('');
+}
+function showRequiredDocs(typeId) {
+  var el = document.getElementById('required-docs-box');
+  if (!el) return;
+  var config = REQUIRED_DOCS[typeId];
+  if (!config || !config.docs || !config.docs.length) {
+    el.style.display = 'none';
+    return;
+  }
+  var required = config.docs.filter(function(d){ return d.required; });
+  var optional = config.docs.filter(function(d){ return !d.required; });
+  
+  el.style.display = 'block';
+  el.innerHTML = 
+    '<div style="background:linear-gradient(120deg,#0f4d82,#1a6eb5);color:#fff;padding:10px 14px;border-radius:10px 10px 0 0;font-weight:800;font-size:13px">' +
+    config.icon + ' المستندات المطلوبة — ' + config.label + '</div>' +
+    '<div style="background:#f8faff;border:1.5px solid #daeaf8;border-top:none;border-radius:0 0 10px 10px;padding:12px 14px">' +
+    '<div style="font-size:12px;color:#555;margin-bottom:8px">' + config.description + '</div>' +
+    (required.length ? 
+      '<div style="font-size:12px;font-weight:700;color:#0f4d82;margin-bottom:6px">✅ إلزامية:</div>' +
+      required.map(function(d){ 
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e8eef8;font-size:13px">' +
+          '<span>' + d.icon + '</span><span>' + d.name + '</span>' +
+          '<span style="margin-right:auto;font-size:10px;background:#fdeaea;color:#b02020;padding:2px 7px;border-radius:4px;font-weight:700">مطلوب</span></div>';
+      }).join('') : '') +
+    (optional.length ? 
+      '<div style="font-size:12px;font-weight:700;color:#555;margin:8px 0 6px">📎 اختيارية (تُقوّي طلبك):</div>' +
+      optional.map(function(d){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eee;font-size:13px;color:#666">' +
+          '<span>' + d.icon + '</span><span>' + d.name + '</span>' +
+          '<span style="margin-right:auto;font-size:10px;background:#eef0f6;color:#666;padding:2px 7px;border-radius:4px">اختياري</span></div>';
+      }).join('') : '') +
+    '<div style="font-size:11px;color:#888;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd">' +
+    '💡 يمكنك إرفاق المستندات في حقل الملفات أدناه أو إحضارها لمركز البلدية</div>' +
+    '</div>';
+}
+async function submitCitCase(){
+  const type=document.getElementById('cit-type').value;
+  const desc=document.getElementById('cit-desc').value.trim();
+  const addr=document.getElementById('cit-addr').value.trim();
+  const err=document.getElementById('cit-add-err');
+  const btn=document.getElementById('cit-submit-btn');
+  err.textContent='';
+  if(!desc){err.textContent='يرجى كتابة وصف الطلب';return;}
+  if(!dbR){err.textContent='⚠️ Supabase غير مُعد';return;}
+  if(!citUser){err.textContent='يرجى تسجيل الدخول أولاً';return;}
+  // Re-check session if citUser is null
+  if(!citUser){
+    try{
+      const{data:{session}}=await sb.auth.getSession();
+      if(session&&session.user){citUser=session.user;}
+      else{err.textContent='يرجى تسجيل الدخول أولاً';return;}
+    }catch(e){err.textContent='خطأ في الاتصال: '+e.message;return;}
+  }
+  const name=citUser?.user_metadata?.name||'مواطن';
+  const phone=citUser?.user_metadata?.phone||'';
+  const email=citUser?.email||'';
+  const today=new Date().toISOString().slice(0,10);
+  const na=NA.includes(type);
+  btn.disabled=true;btn.textContent='⏳ جاري الإرسال…';
+  try{
+    // 1. Insert case first
+    const nc={name,phone,email,address:addr,type,description:desc,priority:'medium',
+      assigned:'م. مقصود',status:na?'pending-approval':'new',
+      approval_state:na?'pending':null,approval_by:null,approval_date:null,
+      timeline:[{a:'تم تقديم الطلب عبر بوابة المواطن',by:name,d:today,cls:''}],
+      documents:[],source:'citizen-portal'};
+    const{data,error}=await sb.from('cases').insert([nc]).select().single();
+    if(error)throw error;
+    const caseId=data.id;
+    // 2. Upload files if any
+    if(citPendingFiles.length>0){
+      const progWrap=document.getElementById('cit-upload-progress');
+      const progBar=document.getElementById('cit-prog-bar');
+      const progLabel=document.getElementById('cit-prog-label');
+      progWrap.style.display='block';
+      const docs=[];
+      for(let i=0;i<citPendingFiles.length;i++){
+        const f=citPendingFiles[i];
+        const pct=Math.round(((i)/citPendingFiles.length)*90);
+        progBar.style.width=pct+'%';
+        progLabel.textContent=`رفع الملف ${i+1} من ${citPendingFiles.length}: ${f.name}`;
+        const ext=f.name.split('.').pop().toLowerCase();
+        const path=`${caseId}/${Date.now()}_${i}.${ext}`;
+        const{error:ue}=await sb.storage.from('case-documents').upload(path,f);
+        if(!ue){
+          const{data:pd}=sb.storage.from('case-documents').getPublicUrl(path);
+          docs.push({name:f.name,path,url:pd.publicUrl,type:ext,size:f.size});
+        }
+      }
+      if(docs.length>0){
+        const tl=[...nc.timeline,{a:`تم إرفاق ${docs.length} مستند`,by:name,d:today,cls:''}];
+        await sb.from('cases').update({documents:docs,timeline:tl}).eq('id',caseId);
+      }
+      progBar.style.width='100%';
+      progLabel.textContent='تم الرفع!';
+      setTimeout(()=>{progWrap.style.display='none';progBar.style.width='0%';},1000);
+    }
+    // Reset form
+    document.getElementById('cit-desc').value='';
+    document.getElementById('cit-addr').value='';
+    citPendingFiles=[];
+    renderCitFileList();
+    showCitDashboard();
+    toast('✅ تم إرسال طلبك بنجاح!');
+  }catch(e){
+    console.error('Submit error:',e);
+    err.textContent='خطأ: '+(e.message||'حدث خطأ غير متوقع');
+    err.style.color='var(--danger)';
+  }
+  finally{btn.disabled=false;btn.textContent='📤 إرسال الطلب';}
+}
+function showCitUpdateFiles(input) {
+  if (!input || !input.files || !input.files.length) return;
+  var list = document.getElementById('cit-update-file-list');
+  if (!list) return;
+  list.innerHTML = Array.from(input.files).map(function(f){
+    return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0">📄 ' + f.name 
+      + ' <span style="color:var(--text3);font-size:11px">(' + (f.size/1024).toFixed(0) + ' KB)</span></div>';
+  }).join('');
+}
+function openWhatsNewModal() {
+  var modal = document.getElementById('wn-modal');
+  var body = document.getElementById('wn-modal-body');
+  if (!modal || !body) return;
+  
+  body.innerHTML = WN_VERSIONS.map(function(v) {
+    return '<div style="background:' + v.color + ';border-radius:14px;padding:14px 16px;margin-bottom:16px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+      + '<div>'
+      + '<div style="font-size:16px;font-weight:800;color:#1a1a2e">الإصدار ' + v.version + '</div>'
+      + '<div style="font-size:12px;color:#888;margin-top:2px">' + v.date + '</div>'
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<span style="background:' + v.badgeColor + ';color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px">' + v.features.length + ' ميزة</span>'
+      + '<span style="font-size:26px">🚀</span>'
+      + '</div>'
+      + '</div>'
+      + '<div style="background:#fff;border-radius:10px;overflow:hidden">'
+      + v.features.map(function(f, i) {
+          return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px' + (i < v.features.length-1 ? ';border-bottom:1px solid #f0f0f0' : '') + '">'
+            + '<div style="flex:1">'
+            + '<div style="font-size:14px;font-weight:700;color:#1a1a2e;margin-bottom:3px">' + f.title + '</div>'
+            + '<div style="font-size:12px;color:#666;line-height:1.6">' + f.desc + '</div>'
+            + '</div>'
+            + '<div style="width:38px;height:38px;border-radius:10px;background:#f8f8f8;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">' + f.icon + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '</div>';
+  }).join('');
+  
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeWnModal() {
+  var modal = document.getElementById('wn-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+
+async function loadCats(){
+  _cats = await loadCatsFromSupabase();
+  updateCitizenTypeSelect();
+}
+function showStaffLogin(){ window.location='dashboard.html'; }
+function showLanding(){ window.location='index.html'; }
+
+document.addEventListener('DOMContentLoaded', async function(){
+  try{
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{realtime:{enabled:false}});
+    dbR=true;
+  }catch(e){console.error('SB:',e);}
+  showCitizenHero();
+  await loadCats();
+  updateCitizenTypeSelect();
+  try{
+    var gs=await sb.auth.getSession();
+    if(gs.data&&gs.data.session&&gs.data.session.user){citUser=gs.data.session.user;setupCitDashboard();}
+  }catch(e){}
+});
+
+function openHelp(p){
+  var c='<b style="color:#1a6eb5;font-size:14px">👥 بوابة المواطن</b><br><br>📋 <b>تقديم طلب</b>: اسمك+هاتفك إلزاميان، اختر النوع لترى المستندات، احتفظ بالرقم المرجعي.<br><br>🔍 <b>متابعة طلب</b>: أدخل الرقم المرجعي ← أدخل هاتفك للتحقق ← ترى الحالة.<br><br>⚠️ شكوى(3-5أيام) | 🤝 رعاية(5-7) | 🏗️ ترخيص(7-14) | ❓ استفسار(1-2) | 📜 إفادة(5-10) | 💧 ري(2-4)';
+  var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل بوابة المواطن</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';
+}
+
+async function submitCitUpdate(caseId, casePhone) {
+  var note = document.getElementById('cit-update-note');
+  var msgEl = document.getElementById('cit-update-msg');
+  var noteText = note ? note.value.trim() : '';
+  if (!noteText && (!citUpdateFiles || citUpdateFiles.length === 0)) {
+    if (msgEl) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = '⚠️ يرجى إدخال ملاحظة أو إرفاق مستند'; }
+    return;
+  }
+  if (msgEl) { msgEl.style.color = 'var(--text3)'; msgEl.textContent = '⏳ جاري الإرسال…'; }
+  if (!dbR) { if(msgEl){msgEl.style.color='var(--danger)';msgEl.textContent='⚠️ الخدمة غير متاحة';} return; }
+  try {
+    // Load current case
+    var res = await sb.from('cases').select('timeline,documents').eq('id', caseId).single();
+    if (res.error) throw res.error;
+    var tl = Array.isArray(res.data.timeline) ? res.data.timeline : [];
+    var docs = Array.isArray(res.data.documents) ? res.data.documents : [];
+    var today = new Date().toISOString().slice(0,10);
+    // Add note to timeline
+    if (noteText) {
+      tl.push({a: 'تحديث من المواطن: ' + noteText, by: 'المواطن', d: today, cls: 'citizen'});
+    }
+    // Upload files if any
+    var newDocs = [];
+    if (citUpdateFiles && citUpdateFiles.length > 0) {
+      for (var fi = 0; fi < citUpdateFiles.length; fi++) {
+        var f = citUpdateFiles[fi];
+        var ext = f.name.split('.').pop().toLowerCase();
+        var path = caseId + '/update_' + Date.now() + '_' + fi + '.' + ext;
+        try {
+          var up = await sb.storage.from('case-documents').upload(path, f, {upsert:true});
+          if (!up.error) {
+            var pd = sb.storage.from('case-documents').getPublicUrl(path);
+            newDocs.push({name:f.name, path:path, url:pd.data.publicUrl, type:ext, size:f.size});
+          }
+        } catch(fe) { console.error('upload:', fe); }
+      }
+      docs = docs.concat(newDocs);
+    }
+    // Save to Supabase
+    var upd = {timeline: tl};
+    if (newDocs.length) upd.documents = docs;
+    var upRes = await sb.from('cases').update(upd).eq('id', caseId);
+    if (upRes.error) throw upRes.error;
+    if (msgEl) { msgEl.style.color = 'var(--green2)'; msgEl.textContent = '✅ تم إرسال التحديث بنجاح'; }
+    if (note) note.value = '';
+    citUpdateFiles = [];
+    var fileList = document.getElementById('cit-update-file-list');
+    if (fileList) fileList.innerHTML = '';
+  } catch(e) {
+    if (msgEl) { msgEl.style.color = 'var(--danger)'; msgEl.textContent = 'خطأ: ' + e.message; }
+  }
+}
+
+// Variable to hold update files
+var citUpdateFiles = [];
+function showCitUpdateFiles(input) {
+  citUpdateFiles = Array.from(input.files);
+  var el = document.getElementById('cit-update-file-list');
+  if (!el) return;
+  el.innerHTML = citUpdateFiles.map(function(f, i) {
+    return '<div style="font-size:12px;color:var(--text2);padding:3px 0">📎 ' + f.name + 
+      ' <button onclick="citUpdateFiles.splice('+i+',1);showCitUpdateFiles({files:citUpdateFiles})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px">✕</button></div>';
+  }).join('');
+}
+</script>
+</body>
+</html>
