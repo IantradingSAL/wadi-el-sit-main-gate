@@ -23,6 +23,7 @@
   --green:#2d7a3e;--green2:#1e5429;--green3:#d4f0dc;
   --teal:#0891b2;--teal3:#e0f7ff;
   --coop:#2d5a27;--coop3:#e8f3e6;
+  --dir:#d88e0a;--dir2:#a06700;--dir3:#fff4e0;
   --bg:#f5f7fa;--surface:#fff;
   --text:#1a2332;--text2:#4a5568;--text3:#8a95a3;
   --border:#e2e8f0;--shadow:0 4px 20px rgba(15,77,130,.1);
@@ -64,26 +65,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .svc-card.staff::before{background:var(--blue2)}
 .svc-card.water::before{background:var(--teal)}
 .svc-card.coop::before{background:var(--coop)}
+.svc-card.directory::before{background:var(--dir)}
 .svc-icon-wrap{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
 .svc-card.citizen .svc-icon-wrap{background:#e8f2ff}
 .svc-card.staff .svc-icon-wrap{background:#ede8f8}
 .svc-card.water .svc-icon-wrap{background:var(--teal3)}
 .svc-card.coop .svc-icon-wrap{background:var(--coop3)}
+.svc-card.directory .svc-icon-wrap{background:var(--dir3)}
 .svc-title{font-size:16px;font-weight:800;margin-bottom:3px}
 .svc-card.citizen .svc-title{color:var(--blue)}
 .svc-card.staff .svc-title{color:var(--blue2)}
 .svc-card.water .svc-title{color:var(--teal)}
 .svc-card.coop .svc-title{color:var(--coop)}
+.svc-card.directory .svc-title{color:var(--dir)}
 .svc-desc{font-size:13px;color:var(--text2);line-height:1.6;flex:1}
 .svc-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;width:fit-content}
 .svc-card.citizen .svc-badge{background:#e8f2ff;color:var(--blue)}
 .svc-card.staff .svc-badge{background:#ede8f8;color:var(--blue2)}
 .svc-card.water .svc-badge{background:var(--teal3);color:var(--teal)}
 .svc-card.coop .svc-badge{background:var(--coop3);color:var(--coop)}
+.svc-card.directory .svc-badge{background:var(--dir3);color:var(--dir2)}
 .svc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:10px;border-top:1px solid var(--border)}
 .svc-arrow{font-size:18px;opacity:.4}
 .svc-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--bg)}
 .new-badge{background:#dcfce7;color:#15803d;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px}
+.yp-badge{background:linear-gradient(135deg,#f5a623,#d88e0a);color:#3a2502;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(245,166,35,.4)}
+
+/* full-width featured card */
+.svc-card.svc-wide{grid-column:1 / -1}
 
 /* ── WHAT'S NEW BUTTON ── */
 .wn-bar{max-width:900px;margin:0 auto 20px;padding:0 20px}
@@ -203,6 +212,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
 
+    <!-- Directory (Phonebook) — full width -->
+    <div class="svc-card directory svc-wide" onclick="window.location='https://iantradingsal.github.io/WATER/phonebook.html'">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="svc-icon-wrap">📒</div>
+        <div>
+          <div class="svc-title">دليل البلدة</div>
+          <div class="svc-desc">دليل وادي الست — أرقام، عائلات، مهن، ومواقع. ابحث بالعربية أو الإنكليزية أو الفرنسية، أو برقم الهاتف.</div>
+        </div>
+      </div>
+      <div class="svc-footer">
+        <span class="svc-badge">🔍 ابحث في الدليل</span>
+        <span class="yp-badge">📒 Yellow Pages</span>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -263,6 +287,16 @@ const WN_DEFAULT = [
 ];
 
 const WN_VERSIONS = [
+  {
+    version: '3.1', date: 'أبريل 2026', color: '#fff4e0', badgeColor: '#d88e0a',
+    features: [
+      {icon:'📒', title:'دليل البلدة (Yellow Pages)', desc:'دليل وادي الست الإلكتروني — أرقام، عائلات، مهن، ومواقع، مع بحث بالعربية والإنكليزية والفرنسية'},
+      {icon:'🔍', title:'بحث متعدّد اللغات', desc:'ابحث بكتابة الاسم بأي لغة (Michel ↔ ميشال، Maksoud ↔ مقصود، Joseph ↔ يوسف...) أو برقم الهاتف بأي تنسيق'},
+      {icon:'🛡️', title:'أدوات إدارة الظهور', desc:'الأدمن يستطيع إخفاء جهة بالكامل، أو إخفاء الرقم/العنوان، أو إظهار اتصال فقط أو واتساب فقط — حسب طلب صاحب الرقم'},
+      {icon:'✏️', title:'تعديلات بموافقة', desc:'أي زائر يمكنه طلب إضافة جهة جديدة أو تعديل بياناتها، ولا يُطبَّق التعديل قبل موافقة البلدية'},
+      {icon:'💼', title:'حقول العمل', desc:'إضافة هاتف وعنوان وموقع منفصلين لمكان العمل بجانب المعلومات الشخصية'},
+    ]
+  },
   {
     version: '3.0', date: 'أبريل 2026', color: '#f0fdf4', badgeColor: '#22c55e',
     features: [
@@ -342,7 +376,8 @@ function openHelp(p){
   '👥 <b>بوابة المواطن</b>: تقديم الطلبات بدون حساب<br><br>'+
   '🔐 <b>دخول الموظفين</b>: للموظفين فقط<br><br>'+
   '💧 <b>بوابة الري</b>: لأصحاب حقوق الري<br><br>'+
-  '🛒 <b>تعاونية وادي الست</b>: منتجات أهل القرية';
+  '🛒 <b>تعاونية وادي الست</b>: منتجات أهل القرية<br><br>'+
+  '📒 <b>دليل البلدة</b>: أرقام وعائلات ومهن وادي الست — بحث بثلاث لغات';
   var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل الخدمات</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:2;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}
   document.getElementById('_hb').innerHTML=c;m.style.display='flex';
 }
