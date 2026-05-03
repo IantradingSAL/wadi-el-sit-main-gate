@@ -3087,6 +3087,23 @@ function renderInfoModal(){
       </div>
     </div>
 
+    <div class="help-divider">🔔 الإشعارات</div>
+    <div class="help-step blue" id="PUSH_STEP">
+      <div class="help-step-i" style="background:#dcf5e6;color:#128C7E">🔔</div>
+      <div class="help-step-text">
+        <div class="help-step-t">إشعارات البلدية الفورية</div>
+        <div class="help-step-d" id="PUSH_STATUS_DESC">
+          فعّل الإشعارات لتستلم تنبيهات فورية من البلدية على هاتفك:<br>
+          • 💧 جدول دورات الري<br>
+          • 📢 إعلانات وأخبار البلدة<br>
+          • ⚠️ تنبيهات طارئة (انقطاع ماء/كهرباء)<br>
+          • ✅ موافقة على طلباتك<br><br>
+          <strong>ملاحظة:</strong> تحتاج تثبيت التطبيق على الشاشة الرئيسية أوّلاً (خصوصاً على iPhone).
+        </div>
+        <div id="PUSH_BTN_AREA" style="margin-top:10px"></div>
+      </div>
+    </div>
+
     <div class="help-divider">سرّية وخصوصية</div>
     <div style="background:var(--blue3);padding:13px;border-radius:var(--r);font-size:12.5px;color:var(--blue2);line-height:1.7">
       🛡️ <strong>التزامنا:</strong> لا نشارك أرقامكم مع جهات إعلانية، ولا نستخدمها لأغراض تجارية. الدليل لخدمة أهل البلدة فقط. أيّ طلب إخفاء يُحترَم خلال ٢٤–٤٨ ساعة.
@@ -3235,6 +3252,76 @@ function renderInfoModal(){
     </div>
   </div>`;
   openModal(html);
+
+  // After the help modal renders, populate the push notification button
+  if(_infoTab === 'help'){
+    setTimeout(renderPushButton, 100);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PUSH NOTIFICATION BUTTON — renders inside the help modal
+// ═══════════════════════════════════════════════════════════════════════════
+async function renderPushButton(){
+  const area = document.getElementById('PUSH_BTN_AREA');
+  const desc = document.getElementById('PUSH_STATUS_DESC');
+  if(!area) return;
+
+  if(!window.PWA || !window.PWA.canPush()){
+    area.innerHTML = `<div class="fm-error" style="margin:0;padding:10px 12px;font-size:12.5px">⚠️ متصفّحك لا يدعم الإشعارات. جرّب Chrome على Android أو Safari iOS 16.4+.</div>`;
+    return;
+  }
+
+  const status = await window.PWA.pushStatus();
+  if(status === 'subscribed'){
+    area.innerHTML = `
+      <div style="background:var(--green3);color:var(--green2);padding:10px 13px;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:8px">
+        ✅ الإشعارات مُفعَّلة على هذا الجهاز
+      </div>
+      <button class="btn btn-out btn-sm" style="width:100%" onclick="disablePushNow()">🔕 إيقاف الإشعارات</button>
+    `;
+  } else if(status === 'denied'){
+    area.innerHTML = `
+      <div class="fm-error" style="margin:0 0 8px;padding:10px 12px;font-size:12.5px">
+        ⚠️ رفضتَ الإذن سابقاً. لتفعيل الإشعارات، اذهب إلى إعدادات الموقع في المتصفّح وغيّر "Notifications" إلى "Allow".
+      </div>
+    `;
+  } else {
+    area.innerHTML = `
+      <button class="btn btn-sm" style="width:100%;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;font-weight:800;font-size:14px" onclick="enablePushNow()">
+        🔔 تفعيل الإشعارات الآن
+      </button>
+    `;
+  }
+}
+
+async function enablePushNow(){
+  const area = document.getElementById('PUSH_BTN_AREA');
+  if(area) area.innerHTML = '<div style="text-align:center;padding:8px"><span class="spin"></span> جاري التفعيل...</div>';
+  try {
+    await window.PWA.enablePush(['general', 'news']);
+    toast('✅ تمّ تفعيل الإشعارات!');
+    renderPushButton();
+  } catch(ex){
+    console.error('enablePush error:', ex);
+    if(area){
+      area.innerHTML = `
+        <div class="fm-error" style="margin:0 0 8px;padding:10px 12px;font-size:12.5px">⚠️ ${escHtml(ex.message || 'خطأ غير معروف')}</div>
+        <button class="btn btn-out btn-sm" style="width:100%" onclick="renderPushButton()">حاول مرّة أخرى</button>
+      `;
+    }
+  }
+}
+
+async function disablePushNow(){
+  if(!confirm('هل أنت متأكّد من إيقاف الإشعارات؟ لن تستلم تنبيهات البلدية بعد ذلك.')) return;
+  try {
+    await window.PWA.disablePush();
+    toast('✅ تمّ إيقاف الإشعارات');
+    renderPushButton();
+  } catch(ex){
+    toast('⚠️ ' + (ex.message || 'خطأ'), 'err');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

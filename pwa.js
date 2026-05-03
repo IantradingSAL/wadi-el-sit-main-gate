@@ -4,6 +4,12 @@
 (function () {
   'use strict';
 
+  // ─── PUSH CONFIG (Wadi El Sit) ───────────────────────────────────────────
+  const VAPID_PUBLIC_KEY = 'BJjyBXyjL0fkAxlgyu715TXCkqDfTqCFwahiodJsBVtWpQ4fa3ouup8wu89sDyeWrgd5i-wirk-EfQPNzWG1-NQ';
+  const SUPABASE_URL  = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
+  const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+  const MUN_ID        = '00000000-0000-0000-0000-000000000001';
+
   // ─── 1. Register service worker ─────────────────────────────────────────
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -138,8 +144,7 @@
     }, 4000);
   }
 
-  // ─── 4. Push notification subscription helpers (exposed globally) ──────
-  // (Will be called from the admin panel later when VAPID key is set up)
+  // ─── 4. Push notification API (full Supabase integration) ─────────────
   window.PWA = {
     isInstalled: () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true,
 
@@ -151,34 +156,125 @@
       else alert('يمكنك تثبيت التطبيق من قائمة المتصفّح (الثلاث نقاط).');
     },
 
-    // Subscribe to push (call this from a button click — must be user-initiated)
-    subscribeToPush: async (vapidPublicKey) => {
+    // Returns the current subscription status: 'subscribed', 'denied', 'unsupported', 'pending'
+    pushStatus: async () => {
+      if (!window.PWA.canPush()) return 'unsupported';
+      if (Notification.permission === 'denied') return 'denied';
+      if (Notification.permission === 'default') return 'pending';
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        return sub ? 'subscribed' : 'pending';
+      } catch (e) { return 'pending'; }
+    },
+
+    // Enable push: ask permission, subscribe, save to Supabase
+    enablePush: async (topics = ['general']) => {
       if (!window.PWA.canPush()) {
-        throw new Error('Push notifications not supported on this browser.');
+        throw new Error('متصفّحك لا يدعم الإشعارات. تأكّد من iOS 16.4+ أو Android Chrome حديث.');
       }
-      const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        throw new Error('Permission denied.');
-      }
+
+      // Wait for service worker to be ready
       const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+
+      // Request permission
+      const permission = await Notification.requestPermission();
+      if (permission === 'denied') {
+        throw new Error('رفضتَ السماح بالإشعارات. لتفعيلها، اذهب إلى إعدادات المتصفّح/الموقع.');
+      }
+      if (permission !== 'granted') {
+        throw new Error('لم يتمّ منح الإذن.');
+      }
+
+      // Subscribe to push
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+
+      // Save to Supabase
+      const subJson = sub.toJSON();
+      const payload = {
+        mun_id: MUN_ID,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth,
+        user_agent: navigator.userAgent.slice(0, 200),
+        topics: topics,
+        is_active: true
+      };
+
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(payload)
       });
+
+      if (!resp.ok && resp.status !== 201 && resp.status !== 204) {
+        const text = await resp.text();
+        console.error('Push save failed:', resp.status, text);
+        throw new Error(`تعذّر حفظ الاشتراك (${resp.status}): ${text.slice(0,100)}`);
+      }
+
       return sub;
     },
 
-    unsubscribeFromPush: async () => {
+    // Disable push: unsubscribe + remove from Supabase
+    disablePush: async () => {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
-      if (sub) { await sub.unsubscribe(); return true; }
-      return false;
+      if (!sub) return false;
+
+      const endpoint = sub.endpoint;
+
+      // Unsubscribe locally
+      await sub.unsubscribe();
+
+      // Mark inactive in Supabase
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ is_active: false })
+        });
+      } catch (e) { console.warn('Failed to mark sub inactive:', e); }
+
+      return true;
     },
 
     getCurrentSubscription: async () => {
       if (!('serviceWorker' in navigator)) return null;
       const reg = await navigator.serviceWorker.ready;
       return await reg.pushManager.getSubscription();
+    },
+
+    // Update topics for an existing subscription
+    updateTopics: async (topics) => {
+      const sub = await window.PWA.getCurrentSubscription();
+      if (!sub) throw new Error('غير مشترك حالياً');
+      await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ topics })
+      });
     }
   };
 

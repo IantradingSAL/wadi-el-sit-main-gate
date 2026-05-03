@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f4d82">
+<title>📢 إرسال إشعار — بلدية وادي الست</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;
+  --green:#2d7a3e;--green3:#d4f0dc;
+  --warn:#d97706;--warn3:#fef3c7;
+  --danger:#bf2424;--danger3:#fee2e2;
+  --bg:#f5f7fa;--surface:#fff;
+  --text:#1a2332;--text2:#4a5568;--text3:#8a95a3;
+  --border:#e2e8f0;
+}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;padding:20px}
+.container{max-width:680px;margin:0 auto}
+.hdr{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;padding:24px;border-radius:18px;margin-bottom:18px;box-shadow:0 6px 20px rgba(15,77,130,.25)}
+.hdr h1{font-size:22px;font-weight:900;margin-bottom:4px}
+.hdr p{font-size:13px;opacity:.9}
+.back-link{display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;font-size:13px;font-weight:700;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:20px;margin-bottom:14px}
+.card{background:#fff;border-radius:16px;padding:22px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);border:1px solid var(--border)}
+.card h2{font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text2)}
+.field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;direction:rtl}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
+.field textarea{min-height:80px;resize:vertical}
+.field .hint{font-size:11.5px;color:var(--text3);margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,77,130,.35)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.btn-out{background:#fff;color:var(--blue2);border:1.5px solid var(--blue)}
+.btn.btn-warn{background:linear-gradient(135deg,var(--warn),#b45309)}
+.alert{padding:13px 16px;border-radius:12px;font-size:13px;margin-bottom:14px;line-height:1.6}
+.alert.ok{background:var(--green3);color:var(--green);border-left:4px solid var(--green)}
+.alert.err{background:var(--danger3);color:var(--danger);border-left:4px solid var(--danger)}
+.alert.warn{background:var(--warn3);color:var(--warn);border-left:4px solid var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat{background:#fff;padding:14px;border-radius:12px;text-align:center;border:1px solid var(--border)}
+.stat-v{font-size:24px;font-weight:900;color:var(--blue2);line-height:1}
+.stat-l{font-size:11.5px;color:var(--text3);margin-top:4px;font-weight:600}
+.preview{background:linear-gradient(180deg,#1a2332,#0a0e1a);color:#fff;border-radius:14px;padding:14px 16px;margin-top:12px;display:flex;gap:11px;align-items:flex-start}
+.preview-i{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.preview-text{flex:1;min-width:0}
+.preview-app{font-size:11px;opacity:.7;margin-bottom:2px}
+.preview-t{font-size:14px;font-weight:800;line-height:1.3;margin-bottom:3px}
+.preview-b{font-size:13px;opacity:.92;line-height:1.45}
+.log-row{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px}
+.log-row:last-child{border-bottom:none}
+.log-time{color:var(--text3);font-size:11px}
+.log-title{font-weight:700;color:var(--text);margin:2px 0}
+.log-stats{display:flex;gap:10px;font-size:11px}
+.log-stats span{padding:2px 8px;border-radius:8px;background:var(--bg)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <a href="dashboard.html" class="back-link">← العودة للوحة التحكم</a>
+
+  <div class="hdr">
+    <h1>📢 إرسال إشعار للمستخدمين</h1>
+    <p>أرسل إشعاراً فورياً لكل من ثبّت التطبيق ووافق على الإشعارات</p>
+  </div>
+
+  <!-- LOGIN CARD -->
+  <div class="card" id="LOGIN_CARD" style="display:none">
+    <h2>🔐 تسجيل دخول الأدمن</h2>
+    <div class="field"><label>البريد الإلكتروني</label><input type="email" id="LOGIN_EMAIL" placeholder="admin@example.com"></div>
+    <div class="field"><label>كلمة المرور</label><input type="password" id="LOGIN_PASS"></div>
+    <div id="LOGIN_ERR"></div>
+    <button class="btn" onclick="doLogin()">دخول</button>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div id="MAIN_CARD" style="display:none">
+
+    <div class="stats" id="STATS"></div>
+
+    <div class="card">
+      <h2>✏️ إعداد الإشعار</h2>
+
+      <div class="field">
+        <label>العنوان (50 حرف كحدّ أقصى) *</label>
+        <input type="text" id="N_TITLE" maxlength="50" placeholder="مثال: انقطاع الماء غداً" oninput="updatePreview()">
+        <div class="hint">يظهر بخطّ عريض أعلى الإشعار</div>
+      </div>
+
+      <div class="field">
+        <label>نصّ الإشعار (200 حرف كحدّ أقصى) *</label>
+        <textarea id="N_BODY" maxlength="200" placeholder="غداً انقطاع للماء من الساعة 8 صباحاً حتى 2 ظهراً للصيانة" oninput="updatePreview()"></textarea>
+      </div>
+
+      <div class="field">
+        <label>الرابط عند الضغط (اختياري)</label>
+        <input type="text" id="N_URL" placeholder="مثال: phonebook.html أو https://...">
+        <div class="hint">عند ضغط الإشعار، التطبيق يفتح هذا الرابط</div>
+      </div>
+
+      <div class="field">
+        <label>الفئة المستهدفة</label>
+        <select id="N_TOPIC">
+          <option value="general">📢 الجميع</option>
+          <option value="water">💧 أصحاب حقوق الري فقط</option>
+          <option value="news">📰 المهتمّون بالأخبار فقط</option>
+          <option value="urgent">🚨 إشعار طارئ (الجميع)</option>
+        </select>
+      </div>
+
+      <h2 style="margin-top:18px">👁️ معاينة</h2>
+      <div class="preview">
+        <div class="preview-i">📒</div>
+        <div class="preview-text">
+          <div class="preview-app">🔔 وادي الست • الآن</div>
+          <div class="preview-t" id="PREV_T">عنوان الإشعار</div>
+          <div class="preview-b" id="PREV_B">نصّ الإشعار يظهر هنا</div>
+        </div>
+      </div>
+
+      <div id="SEND_RESULT"></div>
+
+      <button class="btn" id="SEND_BTN" onclick="sendNotification()" style="margin-top:18px">📤 إرسال الإشعار للجميع</button>
+    </div>
+
+    <div class="card">
+      <h2>📜 آخر الإشعارات المُرسلة</h2>
+      <div id="LOG_LIST">جاري التحميل…</div>
+    </div>
+
+    <div class="card">
+      <h2>🧪 اختبار سريع</h2>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">أرسل إشعاراً تجريبياً لجهازك الحالي للتأكّد من عمل النظام (يجب أن تكون مشتركاً بالإشعارات أوّلاً)</p>
+      <button class="btn btn-out" onclick="sendTest()">🧪 إرسال إشعار تجريبي</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID        = '00000000-0000-0000-0000-000000000001';
+const FUNCTION_URL  = `${SUPABASE_URL}/functions/v1/send-push`;
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentUser = null;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════════════════════
+async function checkSession(){
+  const { data: { session } } = await sb.auth.getSession();
+  if(session && session.user){
+    currentUser = session.user;
+    document.getElementById('LOGIN_CARD').style.display = 'none';
+    document.getElementById('MAIN_CARD').style.display = 'block';
+    loadStats();
+    loadLog();
+  } else {
+    document.getElementById('LOGIN_CARD').style.display = 'block';
+    document.getElementById('MAIN_CARD').style.display = 'none';
+  }
+}
+
+async function doLogin(){
+  const email = document.getElementById('LOGIN_EMAIL').value.trim();
+  const pass = document.getElementById('LOGIN_PASS').value;
+  const err = document.getElementById('LOGIN_ERR'); err.innerHTML = '';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error){ err.innerHTML = `<div class="alert err">⚠️ ${error.message}</div>`; return; }
+  await checkSession();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATS
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadStats(){
+  const { count: total } = await sb.from('push_subscriptions').select('*', { count:'exact', head:true }).eq('mun_id', MUN_ID);
+  const { count: active } = await sb.from('push_subscriptions').select('*', { count:'exact', head:true }).eq('mun_id', MUN_ID).eq('is_active', true);
+  const { count: sent } = await sb.from('push_log').select('*', { count:'exact', head:true }).eq('mun_id', MUN_ID);
+  document.getElementById('STATS').innerHTML = `
+    <div class="stat"><div class="stat-v">${active||0}</div><div class="stat-l">مشترك نشط</div></div>
+    <div class="stat"><div class="stat-v">${total||0}</div><div class="stat-l">إجمالي</div></div>
+    <div class="stat"><div class="stat-v">${sent||0}</div><div class="stat-l">إشعار مُرسَل</div></div>
+  `;
+}
+
+async function loadLog(){
+  const { data } = await sb.from('push_log').select('*').eq('mun_id', MUN_ID).order('sent_at', { ascending:false }).limit(10);
+  const list = document.getElementById('LOG_LIST');
+  if(!data || data.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">لم يتمّ إرسال أيّ إشعار بعد</div>';
+    return;
+  }
+  list.innerHTML = data.map(r => `
+    <div class="log-row">
+      <div class="log-time">${new Date(r.sent_at).toLocaleString('ar-LB')}</div>
+      <div class="log-title">${escHtml(r.title)}</div>
+      <div style="font-size:12px;color:var(--text2);margin:3px 0">${escHtml(r.body)}</div>
+      <div class="log-stats">
+        <span>📊 ${r.recipients_count} مستلم</span>
+        <span style="color:var(--green)">✅ ${r.success_count}</span>
+        ${r.failed_count > 0 ? `<span style="color:var(--danger)">❌ ${r.failed_count}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SEND
+// ═══════════════════════════════════════════════════════════════════════════
+async function sendNotification(){
+  const title = document.getElementById('N_TITLE').value.trim();
+  const body = document.getElementById('N_BODY').value.trim();
+  const url = document.getElementById('N_URL').value.trim();
+  const topic = document.getElementById('N_TOPIC').value;
+  const result = document.getElementById('SEND_RESULT');
+  result.innerHTML = '';
+
+  if(!title || !body){
+    result.innerHTML = '<div class="alert err">⚠️ العنوان والنصّ مطلوبان</div>';
+    return;
+  }
+
+  if(!confirm(`هل أنت متأكّد من إرسال الإشعار للجميع؟\n\nالعنوان: ${title}\nالنص: ${body}`)){
+    return;
+  }
+
+  const btn = document.getElementById('SEND_BTN');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الإرسال…';
+
+  try {
+    const session = (await sb.auth.getSession()).data.session;
+    const resp = await fetch(FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      },
+      body: JSON.stringify({
+        mun_id: MUN_ID,
+        title, body, url,
+        topics: topic === 'urgent' ? ['general','water','news'] : [topic],
+        sent_by: currentUser?.email || 'admin'
+      })
+    });
+    const data = await resp.json();
+    if(!resp.ok) throw new Error(data.error || 'فشل الإرسال');
+
+    result.innerHTML = `<div class="alert ok">
+      ✅ تمّ الإرسال بنجاح!<br>
+      📊 ${data.recipients_count} مستلم • ✅ ${data.success_count} نجح • ❌ ${data.failed_count} فشل
+    </div>`;
+    document.getElementById('N_TITLE').value = '';
+    document.getElementById('N_BODY').value = '';
+    document.getElementById('N_URL').value = '';
+    updatePreview();
+    await loadStats();
+    await loadLog();
+  } catch(ex){
+    result.innerHTML = `<div class="alert err">⚠️ خطأ: ${escHtml(ex.message)}</div>`;
+  }
+  btn.disabled = false; btn.innerHTML = '📤 إرسال الإشعار للجميع';
+}
+
+async function sendTest(){
+  document.getElementById('N_TITLE').value = '🧪 إشعار تجريبي';
+  document.getElementById('N_BODY').value = 'هذا اختبار للنظام. إذا رأيت هذا الإشعار، فالنظام يعمل بشكل ممتاز ✅';
+  document.getElementById('N_URL').value = '';
+  document.getElementById('N_TOPIC').value = 'general';
+  updatePreview();
+}
+
+function updatePreview(){
+  document.getElementById('PREV_T').textContent = document.getElementById('N_TITLE').value || 'عنوان الإشعار';
+  document.getElementById('PREV_B').textContent = document.getElementById('N_BODY').value || 'نصّ الإشعار يظهر هنا';
+}
+
+function escHtml(s){
+  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+checkSession();
+</script>
+
+</body>
+</html>
