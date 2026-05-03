@@ -1,87 +1,49 @@
 {
   "name": "بلدية وادي الست",
   "short_name": "وادي الست",
-  "description": "البوابة الإلكترونية لبلدية وادي الست — قضاء الشوف",
+  "description": "البوابة الإلكترونية لبلدية وادي الست — دليل، خدمات، واتصالات",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
+  "background_color": "#f5f7fa",
   "theme_color": "#1a6eb5",
-  "background_color": "#ffffff",
   "lang": "ar",
   "dir": "rtl",
-  "categories": ["government", "utilities", "productivity"],
+  "categories": ["utilities", "social", "government"],
   "icons": [
-    {
-      "src": "icons/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "icons/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     {
-      "name": "بوابة المواطن",
-      "short_name": "المواطن",
-      "description": "تقديم طلبات وشكاوى",
-      "url": "./water/citizen.html",
+      "name": "دليل البلدة",
+      "short_name": "الدليل",
+      "description": "صفحات صفراء — أرقام أهالي وادي الست",
+      "url": "./phonebook.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "دخول الموظفين",
-      "short_name": "الموظفين",
-      "description": "لوحة تحكم الموظفين",
-      "url": "./water/dashboard.html",
+      "name": "بوابة المواطن",
+      "short_name": "خدمات",
+      "description": "تقديم طلبات وشكاوى",
+      "url": "./citizen.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "بوابة الري",
       "short_name": "الري",
-      "description": "نظام الري",
-      "url": "./water/water.html",
+      "description": "جدول دورة الري",
+      "url": "./water.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
-  ]
+  ],
+  "prefer_related_applications": false
 }

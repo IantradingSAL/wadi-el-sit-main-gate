@@ -265,16 +265,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<!-- PWA Service Worker Registration -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
-      .then((reg) => console.log('✅ PWA ready'))
-      .catch((err) => console.log('SW registration failed:', err));
-  });
-}
-</script>
+<!-- PWA: Service Worker + Install Banner + Push Notifications -->
+<script src="pwa.js" defer></script>
 
 <script>
 
