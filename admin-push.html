@@ -523,7 +523,7 @@ async function loadLog(){
     list.innerHTML=data.map(r=>{
       const rate=r.recipients_count>0?Math.round((r.success_count/r.recipients_count)*100):0;
       const cls=rate>=90?'lr-ok':(rate>=60?'lr-mid':'lr-bad');
-      return `<div class="log-entry">
+      return `<div class="log-entry" style="cursor:pointer" onclick="showRecipients('${r.id}','${esc(r.title)}','${(r.sent_at||'').replace(/'/g,'')}','${esc(r.to_role||'')}','${esc(r.to_user_phone||'')}',${JSON.stringify(r.topics||[]).replace(/"/g,'&quot;')})">
         <div class="log-top">
           <span class="log-time">${formatDate(r.sent_at)}</span>
           ${r.recipients_count>0?`<span class="log-rate ${cls}">${rate}%</span>`:''}
@@ -536,10 +536,65 @@ async function loadLog(){
           ${r.failed_count>0?`<span class="log-stat" style="color:var(--danger)">❌ <strong>${r.failed_count}</strong></span>`:''}
           ${r.to_role?`<span class="log-stat">→ ${esc(r.to_role)}</span>`:''}
           ${r.to_user_phone?`<span class="log-stat">→ 📞 ${esc(r.to_user_phone)}</span>`:''}
+          <span class="log-stat" style="color:var(--blue);margin-right:auto">👁️ تفاصيل المستلمين</span>
         </div>
       </div>`;
     }).join('');
   }catch(ex){document.getElementById('LOG_LIST').innerHTML=`<div class="alert err" style="margin:14px">⚠️ ${esc(ex.message)}</div>`;}
+}
+
+// Show who received this notification
+async function showRecipients(logId, title, sentAt, toRole, toUserPhone, topics){
+  try {
+    let q = sb.from('push_subscriptions').select('user_name,user_phone,user_role,user_agent,is_active,last_used_at,created_at').eq('mun_id',MUN_ID);
+    if (toUserPhone) q = q.eq('user_phone', toUserPhone);
+    else if (toRole) q = q.eq('user_role', toRole);
+    else if (topics && topics.length) q = q.overlaps('topics', topics);
+    q = q.eq('is_active', true);
+    const {data, error} = await q;
+    if (error) throw error;
+    const recipients = data || [];
+
+    const RI={citizen:'👤',staff:'👨‍💼',water_owner:'💧',coop_customer:'🛒',admin:'🛡️'};
+    const RL={citizen:'مواطن',staff:'موظف',water_owner:'صاحب حقّ ري',coop_customer:'زبون التعاونية',admin:'أدمن'};
+
+    let html = `<div style="margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;color:var(--blue2);margin-bottom:3px">${esc(title)}</div>
+      <div style="font-size:11.5px;color:var(--text3)">📅 ${formatDate(sentAt)}</div>
+    </div>`;
+
+    if (!recipients.length) {
+      html += '<div class="empty"><div class="empty-i">👥</div><div class="empty-t">لم يتمّ تسجيل أيّ مستلم</div><div style="font-size:11px;margin-top:6px;opacity:.7">قد يكون السجلّ قديماً قبل ربط المستخدمين</div></div>';
+    } else {
+      html += `<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px;padding:8px 12px;background:var(--blue4);border-radius:8px;font-weight:700">📊 ${recipients.length} مستلم نشط</div>`;
+      html += recipients.map(s => {
+        const ico = RI[s.user_role] || '👤';
+        const lbl = RL[s.user_role] || (s.user_role||'مواطن');
+        const lu = s.last_used_at ? timeAgo(s.last_used_at) : 'لم يُستخدم';
+        const ua = (s.user_agent||'').match(/(iPhone|iPad|Android|Windows|Mac|Linux)/i);
+        const device = ua ? ua[0] : 'جهاز';
+        return `<div class="sub-row">
+          <div class="sub-icon">${ico}</div>
+          <div class="sub-info">
+            <div class="sub-name">${esc(s.user_name||s.user_phone||'مشترك بدون اسم')}</div>
+            <div class="sub-meta">
+              <span class="sub-meta-pill">${esc(lbl)}</span>
+              ${s.user_phone?`<span class="sub-meta-pill">📞 ${esc(s.user_phone)}</span>`:''}
+              <span class="sub-meta-pill">📱 ${esc(device)}</span>
+              <span class="sub-meta-pill">🕒 ${lu}</span>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Open in modal
+    document.getElementById('TPL_MODAL_T').textContent = '👁️ تفاصيل المستلمين';
+    document.getElementById('TPL_MODAL').querySelector('.modal-b').innerHTML = html + '<div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-primary" onclick="closeTplForm()">إغلاق</button></div>';
+    document.getElementById('TPL_MODAL').classList.add('on');
+  } catch(ex){
+    alert('⚠️ خطأ: ' + ex.message);
+  }
 }
 
 function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
