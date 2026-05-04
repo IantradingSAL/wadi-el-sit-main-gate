@@ -2,324 +2,551 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f4d82">
-<title>📢 إرسال إشعار — بلدية وادي الست</title>
+<meta name="description" content="لوحة إدارة الإشعارات — بلدية وادي الست">
+<title>📢 إشعارات البلدية</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="pwa.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;
-  --green:#2d7a3e;--green3:#d4f0dc;
-  --warn:#d97706;--warn3:#fef3c7;
-  --danger:#bf2424;--danger3:#fee2e2;
-  --bg:#f5f7fa;--surface:#fff;
-  --text:#1a2332;--text2:#4a5568;--text3:#8a95a3;
-  --border:#e2e8f0;
-}
-body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;padding:20px}
-.container{max-width:680px;margin:0 auto}
-.hdr{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;padding:24px;border-radius:18px;margin-bottom:18px;box-shadow:0 6px 20px rgba(15,77,130,.25)}
-.hdr h1{font-size:22px;font-weight:900;margin-bottom:4px}
-.hdr p{font-size:13px;opacity:.9}
-.back-link{display:inline-flex;align-items:center;gap:6px;color:#fff;text-decoration:none;font-size:13px;font-weight:700;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:20px;margin-bottom:14px}
-.card{background:#fff;border-radius:16px;padding:22px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);border:1px solid var(--border)}
-.card h2{font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px;color:var(--text2)}
-.field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;direction:rtl}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
-.field textarea{min-height:80px;resize:vertical}
-.field .hint{font-size:11.5px;color:var(--text3);margin-top:4px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;border:none;border-radius:12px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,77,130,.35)}
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--green4:#ebf7ee;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--purple:#7c3aed;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0;--shadow:0 2px 8px rgba(15,77,130,.08);--r:14px;--r2:10px}
+html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+.app-hdr{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;padding:18px 16px 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(15,77,130,.18)}
+.hdr-row{display:flex;align-items:center;gap:12px;max-width:1200px;margin:0 auto}
+.hdr-back{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;padding:7px 12px;border-radius:18px;font-size:12px;font-weight:700;flex-shrink:0}
+.hdr-back:hover{background:rgba(255,255,255,.28)}
+.hdr-ttl{flex:1;min-width:0}
+.hdr-ttl h1{font-size:18px;font-weight:900;letter-spacing:-.3px;line-height:1.2}
+.hdr-ttl p{font-size:11.5px;opacity:.78;margin-top:2px}
+.hdr-user{font-size:11px;background:rgba(255,255,255,.14);padding:5px 11px;border-radius:14px;font-weight:600;flex-shrink:0;cursor:pointer}
+.hdr-user:hover{background:rgba(255,255,255,.22)}
+.container{max-width:1200px;margin:0 auto;padding:18px 14px 60px}
+.tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--surface);padding:5px;border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--border);overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:max-content;padding:9px 14px;border:none;background:none;color:var(--text2);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;transition:.15s;display:flex;align-items:center;gap:6px;justify-content:center;white-space:nowrap}
+.tab:hover{background:var(--bg)}
+.tab.on{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 2px 6px rgba(15,77,130,.3)}
+.card{background:var(--surface);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.card-t{font-size:15px;font-weight:800;color:var(--blue2);display:flex;align-items:center;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:540px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat{background:var(--surface);padding:14px 12px;border-radius:var(--r);text-align:center;border:1px solid var(--border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat.s-blue::before{background:var(--blue)}
+.stat.s-green::before{background:var(--green)}
+.stat.s-purple::before{background:var(--purple)}
+.stat.s-warn::before{background:var(--warn)}
+.stat-i{font-size:18px;margin-bottom:4px;opacity:.7}
+.stat-n{font-size:22px;font-weight:900;line-height:1;color:var(--blue2)}
+.stat-l{font-size:11px;color:var(--text3);margin-top:4px;font-weight:600}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text2)}
+.field label .req{color:var(--danger);margin-right:3px}
+.field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--r2);font-family:inherit;font-size:14px;direction:rtl;background:#fff;color:var(--text);transition:.15s;-webkit-appearance:none}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,110,181,.08)}
+.field textarea{min-height:78px;resize:vertical;line-height:1.55}
+.field .hint{font-size:11px;color:var(--text3);margin-top:5px}
+.field .ctr{display:block;text-align:left;font-size:11px;color:var(--text3);margin-top:3px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:480px){.row2{grid-template-columns:1fr}}
+.btn{padding:12px 16px;border:none;border-radius:var(--r2);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1}
+.btn:hover{transform:translateY(-1px)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn.btn-out{background:#fff;color:var(--blue2);border:1.5px solid var(--blue)}
-.btn.btn-warn{background:linear-gradient(135deg,var(--warn),#b45309)}
-.alert{padding:13px 16px;border-radius:12px;font-size:13px;margin-bottom:14px;line-height:1.6}
-.alert.ok{background:var(--green3);color:var(--green);border-left:4px solid var(--green)}
-.alert.err{background:var(--danger3);color:var(--danger);border-left:4px solid var(--danger)}
-.alert.warn{background:var(--warn3);color:var(--warn);border-left:4px solid var(--warn)}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.stat{background:#fff;padding:14px;border-radius:12px;text-align:center;border:1px solid var(--border)}
-.stat-v{font-size:24px;font-weight:900;color:var(--blue2);line-height:1}
-.stat-l{font-size:11.5px;color:var(--text3);margin-top:4px;font-weight:600}
-.preview{background:linear-gradient(180deg,#1a2332,#0a0e1a);color:#fff;border-radius:14px;padding:14px 16px;margin-top:12px;display:flex;gap:11px;align-items:flex-start}
-.preview-i{width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.preview-text{flex:1;min-width:0}
-.preview-app{font-size:11px;opacity:.7;margin-bottom:2px}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 4px 12px rgba(15,77,130,.25)}
+.btn-out{background:#fff;color:var(--blue2);border:1.5px solid var(--blue3)}
+.btn-out:hover{border-color:var(--blue);background:var(--blue4)}
+.btn-warn{background:linear-gradient(135deg,var(--warn),#b45309);color:#fff}
+.btn-sm{padding:7px 11px;font-size:12px}
+.btn-block{width:100%}
+.aud-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(min-width:520px){.aud-grid{grid-template-columns:repeat(4,1fr)}}
+.aud-pill{padding:11px 9px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r2);cursor:pointer;text-align:center;transition:.15s;user-select:none}
+.aud-pill:hover{border-color:var(--blue3)}
+.aud-pill.on{background:var(--blue4);border-color:var(--blue);color:var(--blue2)}
+.aud-pill-i{font-size:18px;margin-bottom:3px}
+.aud-pill-l{font-size:11.5px;font-weight:700}
+.aud-pill-c{font-size:10px;color:var(--text3);margin-top:2px}
+.target-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.target-chip{padding:5px 11px;background:var(--bg);border:1px solid var(--border);border-radius:14px;font-size:11.5px;font-weight:600;color:var(--text2);cursor:pointer;transition:.15s}
+.target-chip:hover{background:var(--blue4);color:var(--blue2);border-color:var(--blue3)}
+.target-chip.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.preview-wrap{margin-top:10px}
+.preview-lbl{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.preview{background:linear-gradient(180deg,#1f2937,#111827);color:#fff;border-radius:var(--r);padding:13px 14px;display:flex;gap:10px;border:1px solid #374151}
+.preview-i{width:42px;height:42px;border-radius:9px;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid rgba(255,255,255,.08)}
+.preview-tx{flex:1;min-width:0;direction:rtl}
+.preview-app{font-size:10.5px;opacity:.6;margin-bottom:2px}
 .preview-t{font-size:14px;font-weight:800;line-height:1.3;margin-bottom:3px}
 .preview-b{font-size:13px;opacity:.92;line-height:1.45}
-.log-row{padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px}
-.log-row:last-child{border-bottom:none}
-.log-time{color:var(--text3);font-size:11px}
-.log-title{font-weight:700;color:var(--text);margin:2px 0}
-.log-stats{display:flex;gap:10px;font-size:11px}
-.log-stats span{padding:2px 8px;border-radius:8px;background:var(--bg)}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+.tpl-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:540px){.tpl-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:840px){.tpl-grid{grid-template-columns:1fr 1fr 1fr}}
+.tpl{background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:13px;cursor:pointer;transition:.15s;display:flex;align-items:flex-start;gap:11px}
+.tpl:hover{border-color:var(--blue3);transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.tpl-i{width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,var(--blue4),var(--blue3));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.tpl-text{flex:1;min-width:0}
+.tpl-n{font-size:13.5px;font-weight:800;color:var(--text);margin-bottom:2px}
+.tpl-d{font-size:11.5px;color:var(--text3);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tpl-meta{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:10px;color:var(--text3)}
+.tpl-meta-c{padding:2px 7px;background:var(--bg);border-radius:8px;font-weight:600}
+.sub-row{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:var(--r2);margin-bottom:6px;background:var(--bg);transition:.15s;flex-wrap:wrap}
+.sub-row:hover{background:var(--bg2)}
+.sub-icon{width:36px;height:36px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border:1px solid var(--border)}
+.sub-info{flex:1;min-width:0}
+.sub-name{font-size:13px;font-weight:700;color:var(--text);margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub-meta{font-size:11px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap}
+.sub-meta-pill{padding:2px 7px;background:#fff;border-radius:7px;border:1px solid var(--border);font-weight:600;font-size:10px}
+.sub-status{padding:3px 9px;border-radius:14px;font-size:10px;font-weight:800;flex-shrink:0}
+.ss-active{background:var(--green3);color:var(--green)}
+.ss-inactive{background:var(--bg2);color:var(--text3)}
+.log-entry{padding:13px 14px;border-bottom:1px solid var(--border)}
+.log-entry:hover{background:var(--bg)}
+.log-entry:last-child{border-bottom:none}
+.log-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;flex-wrap:wrap}
+.log-time{font-size:10.5px;color:var(--text3);font-weight:600}
+.log-rate{font-size:11px;font-weight:800;padding:2px 9px;border-radius:10px}
+.lr-ok{background:var(--green3);color:var(--green)}
+.lr-mid{background:var(--warn3);color:var(--warn)}
+.lr-bad{background:var(--danger3);color:var(--danger)}
+.log-title{font-size:13.5px;font-weight:800;margin-bottom:3px;line-height:1.3}
+.log-body{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.log-stats{display:flex;gap:6px;flex-wrap:wrap;font-size:10.5px}
+.log-stat{padding:2px 9px;background:var(--bg);border-radius:8px;font-weight:700;color:var(--text2)}
+.log-stat strong{color:var(--text)}
+.alert{padding:11px 14px;border-radius:var(--r2);font-size:13px;margin-bottom:14px;line-height:1.55;border-left:4px solid}
+.alert.ok{background:var(--green4);color:var(--green);border-color:var(--green)}
+.alert.err{background:var(--danger3);color:var(--danger);border-color:var(--danger)}
+.alert.warn{background:var(--warn3);color:#7a5500;border-color:var(--warn)}
+.alert.info{background:var(--blue4);color:var(--blue2);border-color:var(--blue)}
+.empty{text-align:center;padding:32px 20px;color:var(--text3)}
+.empty-i{font-size:36px;margin-bottom:8px;opacity:.5}
+.empty-t{font-size:13px;font-weight:600}
+.section{display:none}
+.section.on{display:block;animation:fadeIn .25s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:14px}
+.modal-bg.on{display:flex}
+.modal-x{background:var(--surface);border-radius:18px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal-h{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;border-radius:18px 18px 0 0}
+.modal-h h3{font-size:15px;font-weight:800;color:var(--blue2)}
+.modal-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg);cursor:pointer;font-size:14px}
+.modal-b{padding:18px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--blue4) 0%,var(--bg) 100%)}
+.login-card{background:#fff;padding:30px 26px;border-radius:18px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(15,77,130,.18);text-align:center}
+.login-logo{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue2));margin:0 auto 14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px}
+.login-card h2{font-size:20px;font-weight:900;margin-bottom:4px;color:var(--blue2)}
+.login-card p{font-size:13px;color:var(--text3);margin-bottom:22px}
+.login-card .field{text-align:right;margin-bottom:14px}
 </style>
-<!-- PWA & Mobile Meta -->
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a6eb5">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="وادي الست">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<script src="pwa.js" defer></script>
 </head>
 <body>
-<!-- Back to Main Gate (floating) -->
-<style>
-.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
-.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
-.back-to-gate-i{font-size:16px;line-height:1}
-.back-to-gate-l{white-space:nowrap}
-@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:8px 12px 8px 10px;font-size:12px}.back-to-gate-l{display:none}.back-to-gate-i{font-size:18px}}
-@media print{.back-to-gate{display:none}}
-</style>
-<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
-  <span class="back-to-gate-i">🏛️</span>
-  <span class="back-to-gate-l">البوابة الرئيسية</span>
-</a>
 
-
-<div class="container">
-  <a href="dashboard.html" class="back-link">← العودة للوحة التحكم</a>
-
-  <div class="hdr">
-    <h1>📢 إرسال إشعار للمستخدمين</h1>
-    <p>أرسل إشعاراً فورياً لكل من ثبّت التطبيق ووافق على الإشعارات</p>
+<div id="LOGIN_VIEW" class="login-wrap" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">📢</div>
+    <h2>إشعارات البلدية</h2>
+    <p>تسجيل دخول الأدمن</p>
+    <div class="field"><label>البريد الإلكتروني</label><input type="email" id="LE" autocomplete="email"></div>
+    <div class="field"><label>كلمة المرور</label><input type="password" id="LP" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="LERR"></div>
+    <button class="btn btn-primary btn-block" onclick="doLogin()">🔐 دخول</button>
   </div>
+</div>
 
-  <!-- LOGIN CARD -->
-  <div class="card" id="LOGIN_CARD" style="display:none">
-    <h2>🔐 تسجيل دخول الأدمن</h2>
-    <div class="field"><label>البريد الإلكتروني</label><input type="email" id="LOGIN_EMAIL" placeholder="admin@example.com"></div>
-    <div class="field"><label>كلمة المرور</label><input type="password" id="LOGIN_PASS"></div>
-    <div id="LOGIN_ERR"></div>
-    <button class="btn" onclick="doLogin()">دخول</button>
-  </div>
+<div id="MAIN_VIEW" style="display:none">
+  <header class="app-hdr">
+    <div class="hdr-row">
+      <a href="index.html" class="hdr-back">← البوابة</a>
+      <div class="hdr-ttl"><h1>📢 إشعارات البلدية</h1><p>أرسل تنبيهات فورية للأهالي</p></div>
+      <span class="hdr-user" id="USER_BADGE" onclick="doLogout()" title="خروج">⏻</span>
+    </div>
+  </header>
 
-  <!-- MAIN CARD -->
-  <div id="MAIN_CARD" style="display:none">
+  <div class="container">
+    <div class="stats">
+      <div class="stat s-blue"><div class="stat-i">🔔</div><div class="stat-n" id="ST_ACTIVE">—</div><div class="stat-l">مشترك نشط</div></div>
+      <div class="stat s-purple"><div class="stat-i">👥</div><div class="stat-n" id="ST_TOTAL">—</div><div class="stat-l">إجمالي مشتركين</div></div>
+      <div class="stat s-green"><div class="stat-i">📬</div><div class="stat-n" id="ST_SENT">—</div><div class="stat-l">إشعارات مُرسَلة</div></div>
+      <div class="stat s-warn"><div class="stat-i">📊</div><div class="stat-n" id="ST_RATE">—</div><div class="stat-l">نسبة النجاح</div></div>
+    </div>
 
-    <div class="stats" id="STATS"></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="compose" onclick="setTab('compose')">✏️ إنشاء</button>
+      <button class="tab" data-tab="templates" onclick="setTab('templates')">📋 القوالب</button>
+      <button class="tab" data-tab="subscribers" onclick="setTab('subscribers')">👥 المشتركون</button>
+      <button class="tab" data-tab="log" onclick="setTab('log')">📜 السجلّ</button>
+    </div>
 
-    <div class="card">
-      <h2>✏️ إعداد الإشعار</h2>
-
-      <div class="field">
-        <label>العنوان (50 حرف كحدّ أقصى) *</label>
-        <input type="text" id="N_TITLE" maxlength="50" placeholder="مثال: انقطاع الماء غداً" oninput="updatePreview()">
-        <div class="hint">يظهر بخطّ عريض أعلى الإشعار</div>
-      </div>
-
-      <div class="field">
-        <label>نصّ الإشعار (200 حرف كحدّ أقصى) *</label>
-        <textarea id="N_BODY" maxlength="200" placeholder="غداً انقطاع للماء من الساعة 8 صباحاً حتى 2 ظهراً للصيانة" oninput="updatePreview()"></textarea>
-      </div>
-
-      <div class="field">
-        <label>الرابط عند الضغط (اختياري)</label>
-        <input type="text" id="N_URL" placeholder="مثال: phonebook.html أو https://...">
-        <div class="hint">عند ضغط الإشعار، التطبيق يفتح هذا الرابط</div>
-      </div>
-
-      <div class="field">
-        <label>الفئة المستهدفة</label>
-        <select id="N_TOPIC">
-          <option value="general">📢 الجميع</option>
-          <option value="water">💧 أصحاب حقوق الري فقط</option>
-          <option value="news">📰 المهتمّون بالأخبار فقط</option>
-          <option value="urgent">🚨 إشعار طارئ (الجميع)</option>
-        </select>
-      </div>
-
-      <h2 style="margin-top:18px">👁️ معاينة</h2>
-      <div class="preview">
-        <div class="preview-i">📒</div>
-        <div class="preview-text">
-          <div class="preview-app">🔔 وادي الست • الآن</div>
-          <div class="preview-t" id="PREV_T">عنوان الإشعار</div>
-          <div class="preview-b" id="PREV_B">نصّ الإشعار يظهر هنا</div>
+    <div class="section on" id="SEC_compose">
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t">✏️ إعداد الإشعار</div>
+          <button class="btn btn-out btn-sm" onclick="setTab('templates')">📋 من قالب</button>
+        </div>
+        <div class="field"><label>العنوان <span class="req">*</span></label><input type="text" id="N_TITLE" maxlength="60" placeholder="مثال: انقطاع للماء غداً" oninput="updatePreview();updateCount('N_TITLE','tcnt',60)"><span class="ctr"><span id="tcnt">0</span> / 60</span></div>
+        <div class="field"><label>نصّ الإشعار <span class="req">*</span></label><textarea id="N_BODY" maxlength="240" placeholder="غداً انقطاع للماء من الساعة 8 صباحاً حتى 2 ظهراً للصيانة" oninput="updatePreview();updateCount('N_BODY','bcnt',240)"></textarea><span class="ctr"><span id="bcnt">0</span> / 240</span></div>
+        <div class="row2">
+          <div class="field"><label>الرابط (اختياري)</label><input type="text" id="N_URL" placeholder="phonebook.html" oninput="updatePreview()"><div class="hint">الصفحة عند الضغط</div></div>
+          <div class="field"><label>الأيقونة</label><select id="N_ICON" onchange="updatePreview()"><option value="📢">📢 عام</option><option value="💧">💧 ماء/ري</option><option value="✅">✅ موافقة</option><option value="❌">❌ رفض</option><option value="🚨">🚨 طارئ</option><option value="📰">📰 خبر</option><option value="🏛️">🏛️ بلدي</option><option value="🎉">🎉 تهنئة</option><option value="📦">📦 طلب</option><option value="🔔">🔔 تذكير</option></select></div>
+        </div>
+        <div class="field"><label>الجمهور المستهدف</label>
+          <div class="aud-grid">
+            <div class="aud-pill on" data-aud="all" onclick="setAud('all')"><div class="aud-pill-i">📣</div><div class="aud-pill-l">الجميع</div><div class="aud-pill-c" id="ac-all">—</div></div>
+            <div class="aud-pill" data-aud="citizen" onclick="setAud('citizen')"><div class="aud-pill-i">👤</div><div class="aud-pill-l">المواطنون</div><div class="aud-pill-c" id="ac-citizen">—</div></div>
+            <div class="aud-pill" data-aud="staff" onclick="setAud('staff')"><div class="aud-pill-i">👨‍💼</div><div class="aud-pill-l">الموظفون</div><div class="aud-pill-c" id="ac-staff">—</div></div>
+            <div class="aud-pill" data-aud="water_owner" onclick="setAud('water_owner')"><div class="aud-pill-i">💧</div><div class="aud-pill-l">أصحاب الري</div><div class="aud-pill-c" id="ac-water">—</div></div>
+          </div>
+        </div>
+        <div class="field"><label>أو فئات (topics)</label>
+          <div class="target-row">
+            <span class="target-chip on" data-tt="general" onclick="toggleTopic('general')">📢 عام</span>
+            <span class="target-chip" data-tt="water" onclick="toggleTopic('water')">💧 ماء وري</span>
+            <span class="target-chip" data-tt="news" onclick="toggleTopic('news')">📰 أخبار</span>
+            <span class="target-chip" data-tt="urgent" onclick="toggleTopic('urgent')">🚨 طارئ</span>
+            <span class="target-chip" data-tt="cases" onclick="toggleTopic('cases')">📋 طلبات</span>
+            <span class="target-chip" data-tt="coop" onclick="toggleTopic('coop')">🛒 تعاونية</span>
+          </div>
+        </div>
+        <div class="preview-wrap">
+          <div class="preview-lbl">معاينة كما تظهر للمستخدم:</div>
+          <div class="preview">
+            <div class="preview-i" id="PV_I">📢</div>
+            <div class="preview-tx">
+              <div class="preview-app">🔔 وادي الست • الآن</div>
+              <div class="preview-t" id="PV_T">عنوان الإشعار</div>
+              <div class="preview-b" id="PV_B">نصّ الإشعار يظهر هنا</div>
+            </div>
+          </div>
+        </div>
+        <div id="SEND_RESULT" style="margin-top:14px"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-out" onclick="resetForm()">🔄 مسح</button>
+          <button class="btn btn-warn btn-sm" onclick="testSelf()">🧪 اختبار</button>
+          <button class="btn btn-primary" id="SEND_BTN" onclick="sendNotification()" style="flex:1">📤 إرسال</button>
         </div>
       </div>
-
-      <div id="SEND_RESULT"></div>
-
-      <button class="btn" id="SEND_BTN" onclick="sendNotification()" style="margin-top:18px">📤 إرسال الإشعار للجميع</button>
     </div>
 
-    <div class="card">
-      <h2>📜 آخر الإشعارات المُرسلة</h2>
-      <div id="LOG_LIST">جاري التحميل…</div>
+    <div class="section" id="SEC_templates">
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t">📋 قوالب جاهزة</div>
+          <button class="btn btn-out btn-sm" onclick="openTplForm()">+ قالب جديد</button>
+        </div>
+        <div class="alert info">💡 اختر قالباً لتعبئة النموذج تلقائياً ثم عدّله وأرسل</div>
+        <div id="TPL_GRID" class="tpl-grid"><div class="empty"><div class="empty-i">⏳</div><div class="empty-t">جاري التحميل…</div></div></div>
+      </div>
     </div>
 
-    <div class="card">
-      <h2>🧪 اختبار سريع</h2>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">أرسل إشعاراً تجريبياً لجهازك الحالي للتأكّد من عمل النظام (يجب أن تكون مشتركاً بالإشعارات أوّلاً)</p>
-      <button class="btn btn-out" onclick="sendTest()">🧪 إرسال إشعار تجريبي</button>
+    <div class="section" id="SEC_subscribers">
+      <div class="card">
+        <div class="card-h">
+          <div class="card-t">👥 المشتركون</div>
+          <input type="text" id="SUB_SEARCH" placeholder="🔍 ابحث…" style="padding:7px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:12.5px;width:200px;max-width:50%" oninput="filterSubs()">
+        </div>
+        <div id="SUB_LIST"><div class="empty"><div class="empty-i">⏳</div><div class="empty-t">جاري التحميل…</div></div></div>
+      </div>
     </div>
 
+    <div class="section" id="SEC_log">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="card-h" style="padding:16px 16px 0;margin-bottom:8px">
+          <div class="card-t">📜 سجلّ الإشعارات</div>
+          <button class="btn btn-out btn-sm" onclick="loadLog()">🔄 تحديث</button>
+        </div>
+        <div id="LOG_LIST"><div class="empty"><div class="empty-i">⏳</div><div class="empty-t">جاري التحميل…</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="TPL_MODAL">
+  <div class="modal-x">
+    <div class="modal-h"><h3 id="TPL_MODAL_T">قالب جديد</h3><button class="modal-close" onclick="closeTplForm()">✕</button></div>
+    <div class="modal-b">
+      <div class="row2">
+        <div class="field"><label>الاسم</label><input type="text" id="TPL_N" placeholder="مثلاً: انقطاع ماء"></div>
+        <div class="field"><label>الأيقونة</label><input type="text" id="TPL_I" maxlength="3" placeholder="📢" style="text-align:center;font-size:18px"></div>
+      </div>
+      <div class="field"><label>قالب العنوان</label><input type="text" id="TPL_TT"></div>
+      <div class="field"><label>قالب النصّ</label><textarea id="TPL_BB"></textarea></div>
+      <div class="field"><label>الفئة</label><select id="TPL_CAT"><option value="general">عام</option><option value="water">ماء/ري</option><option value="cases">طلبات</option><option value="news">أخبار</option><option value="urgent">طارئ</option><option value="celebration">تهنئة</option></select></div>
+      <div id="TPL_ERR"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-out" onclick="closeTplForm()">إلغاء</button>
+        <button class="btn btn-primary" id="TPL_SAVE" onclick="saveTpl()" style="flex:1">حفظ</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════════════════════
-// CONFIG
-// ═══════════════════════════════════════════════════════════════════════════
-const SUPABASE_URL  = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
-const MUN_ID        = '00000000-0000-0000-0000-000000000001';
-const FUNCTION_URL  = `${SUPABASE_URL}/functions/v1/send-push`;
+const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+const FUNCTION_URL=SUPABASE_URL+'/functions/v1/send-push';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,allSubs=[],allTemplates=[],editingTplId=null;
+let currentAud='all',currentTopics=['general'];
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let currentUser = null;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════════════════════════════════
 async function checkSession(){
   const { data: { session } } = await sb.auth.getSession();
   if(session && session.user){
     currentUser = session.user;
-    document.getElementById('LOGIN_CARD').style.display = 'none';
-    document.getElementById('MAIN_CARD').style.display = 'block';
-    loadStats();
-    loadLog();
-  } else {
-    document.getElementById('LOGIN_CARD').style.display = 'block';
-    document.getElementById('MAIN_CARD').style.display = 'none';
-  }
+    document.getElementById('USER_BADGE').textContent = '👤 ' + (session.user.email||'').split('@')[0];
+    show('MAIN_VIEW'); loadAll();
+  } else show('LOGIN_VIEW');
 }
-
+function show(id){
+  ['LOGIN_VIEW','MAIN_VIEW'].forEach(x=>document.getElementById(x).style.display='none');
+  document.getElementById(id).style.display = id==='LOGIN_VIEW'?'flex':'block';
+}
 async function doLogin(){
-  const email = document.getElementById('LOGIN_EMAIL').value.trim();
-  const pass = document.getElementById('LOGIN_PASS').value;
-  const err = document.getElementById('LOGIN_ERR'); err.innerHTML = '';
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  if(error){ err.innerHTML = `<div class="alert err">⚠️ ${error.message}</div>`; return; }
+  const email=document.getElementById('LE').value.trim();
+  const pass=document.getElementById('LP').value;
+  const err=document.getElementById('LERR'); err.innerHTML='';
+  if(!email||!pass){err.innerHTML='<div class="alert err">⚠️ أدخل البريد وكلمة المرور</div>';return;}
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){err.innerHTML=`<div class="alert err">⚠️ ${esc(error.message)}</div>`;return;}
   await checkSession();
 }
+async function doLogout(){if(!confirm('تسجيل خروج؟'))return;await sb.auth.signOut();show('LOGIN_VIEW');}
 
-// ═══════════════════════════════════════════════════════════════════════════
-// STATS
-// ═══════════════════════════════════════════════════════════════════════════
+function setTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
+  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('on',s.id==='SEC_'+name));
+  if(name==='subscribers')loadSubs();
+  if(name==='templates')loadTemplates();
+  if(name==='log')loadLog();
+}
+
+async function loadAll(){await Promise.all([loadStats(),loadAudienceCounts(),loadTemplates()]);updatePreview();}
+
 async function loadStats(){
-  const { count: total } = await sb.from('push_subscriptions').select('*', { count:'exact', head:true }).eq('mun_id', MUN_ID);
-  const { count: active } = await sb.from('push_subscriptions').select('*', { count:'exact', head:true }).eq('mun_id', MUN_ID).eq('is_active', true);
-  const { count: sent } = await sb.from('push_log').select('*', { count:'exact', head:true }).eq('mun_id', MUN_ID);
-  document.getElementById('STATS').innerHTML = `
-    <div class="stat"><div class="stat-v">${active||0}</div><div class="stat-l">مشترك نشط</div></div>
-    <div class="stat"><div class="stat-v">${total||0}</div><div class="stat-l">إجمالي</div></div>
-    <div class="stat"><div class="stat-v">${sent||0}</div><div class="stat-l">إشعار مُرسَل</div></div>
-  `;
+  try{
+    const {count:total}=await sb.from('push_subscriptions').select('*',{count:'exact',head:true}).eq('mun_id',MUN_ID);
+    const {count:active}=await sb.from('push_subscriptions').select('*',{count:'exact',head:true}).eq('mun_id',MUN_ID).eq('is_active',true);
+    const {data:logs}=await sb.from('push_log').select('recipients_count,success_count,failed_count').eq('mun_id',MUN_ID);
+    const sent=(logs||[]).length;
+    const tr=(logs||[]).reduce((a,l)=>a+(l.recipients_count||0),0);
+    const ts=(logs||[]).reduce((a,l)=>a+(l.success_count||0),0);
+    const rate=tr>0?Math.round((ts/tr)*100):0;
+    document.getElementById('ST_ACTIVE').textContent=active||0;
+    document.getElementById('ST_TOTAL').textContent=total||0;
+    document.getElementById('ST_SENT').textContent=sent;
+    document.getElementById('ST_RATE').textContent=rate+'%';
+  }catch(e){console.error(e);}
+}
+
+async function loadAudienceCounts(){
+  try{
+    const {data}=await sb.from('push_subscriptions').select('user_role').eq('mun_id',MUN_ID).eq('is_active',true);
+    const counts={citizen:0,staff:0,water_owner:0,all:(data||[]).length};
+    (data||[]).forEach(r=>{const role=r.user_role||'citizen';if(counts[role]!==undefined)counts[role]++;});
+    document.getElementById('ac-all').textContent=counts.all;
+    document.getElementById('ac-citizen').textContent=counts.citizen;
+    document.getElementById('ac-staff').textContent=counts.staff;
+    document.getElementById('ac-water').textContent=counts.water_owner;
+  }catch(e){}
+}
+
+function setAud(a){currentAud=a;document.querySelectorAll('.aud-pill').forEach(p=>p.classList.toggle('on',p.dataset.aud===a));}
+function toggleTopic(t){const i=currentTopics.indexOf(t);if(i>=0)currentTopics.splice(i,1);else currentTopics.push(t);document.querySelectorAll('.target-chip').forEach(c=>c.classList.toggle('on',currentTopics.indexOf(c.dataset.tt)>=0));}
+function updateCount(id,cid,m){document.getElementById(cid).textContent=document.getElementById(id).value.length;}
+function updatePreview(){
+  document.getElementById('PV_T').textContent=document.getElementById('N_TITLE').value||'عنوان الإشعار';
+  document.getElementById('PV_B').textContent=document.getElementById('N_BODY').value||'نصّ الإشعار يظهر هنا';
+  document.getElementById('PV_I').textContent=document.getElementById('N_ICON').value;
+}
+function resetForm(){
+  ['N_TITLE','N_BODY','N_URL'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('N_ICON').value='📢';
+  document.getElementById('SEND_RESULT').innerHTML='';
+  setAud('all'); currentTopics=['general'];
+  document.querySelectorAll('.target-chip').forEach(c=>c.classList.toggle('on',c.dataset.tt==='general'));
+  updateCount('N_TITLE','tcnt',60);updateCount('N_BODY','bcnt',240);updatePreview();
+}
+
+async function sendNotification(){
+  const title=document.getElementById('N_TITLE').value.trim();
+  const body=document.getElementById('N_BODY').value.trim();
+  const url=document.getElementById('N_URL').value.trim();
+  const result=document.getElementById('SEND_RESULT'); result.innerHTML='';
+  if(!title||!body){result.innerHTML='<div class="alert err">⚠️ العنوان والنصّ مطلوبان</div>';return;}
+  const audLabel={all:'الجميع',citizen:'المواطنين',staff:'الموظفين',water_owner:'أصحاب حقوق الري'}[currentAud];
+  if(!confirm(`إرسال إلى ${audLabel}؟\n\n"${title}"`))return;
+  await doSend({title,body,url,target:'audience'});
+}
+
+async function testSelf(){
+  if(!confirm('سيُرسل لجهازك الحالي فقط (إن كنت مشتركاً). متابعة؟'))return;
+  const title=document.getElementById('N_TITLE').value.trim()||'🧪 اختبار';
+  const body=document.getElementById('N_BODY').value.trim()||'هذا إشعار تجريبي ✅';
+  const url=document.getElementById('N_URL').value.trim();
+  await doSend({title,body,url,target:'test'});
+}
+
+async function doSend({title,body,url,target}){
+  const result=document.getElementById('SEND_RESULT');
+  const btn=document.getElementById('SEND_BTN');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> جاري…';
+  try{
+    const payload={mun_id:MUN_ID,title,body,url,sent_by:currentUser?.email||'admin'};
+    if(target==='audience'){
+      if(currentAud==='all') payload.topics=currentTopics.length?currentTopics:['general'];
+      else payload.to_role=currentAud;
+    } else payload.topics=['general'];
+    const resp=await fetch(FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY,'apikey':SUPABASE_KEY},body:JSON.stringify(payload)});
+    const data=await resp.json();
+    if(!resp.ok)throw new Error(data.error||'فشل الإرسال');
+    result.innerHTML=`<div class="alert ok">✅ تمّ الإرسال!<br>📊 ${data.recipients_count||0} مستلم • ✅ ${data.success_count||0} نجح ${data.failed_count?'• ❌ '+data.failed_count:''}</div>`;
+    if(target==='audience')resetForm();
+    await loadStats();
+    if(document.querySelector('.tab.on').dataset.tab==='log')await loadLog();
+  }catch(ex){
+    result.innerHTML=`<div class="alert err">⚠️ ${esc(ex.message||'خطأ')}</div>`;
+  }
+  btn.disabled=false; btn.innerHTML='📤 إرسال';
+}
+
+async function loadTemplates(){
+  try{
+    const {data,error}=await sb.from('push_templates').select('*').eq('mun_id',MUN_ID).order('usage_count',{ascending:false});
+    if(error)throw error;
+    allTemplates=data||[];
+    renderTemplates();
+  }catch(e){
+    document.getElementById('TPL_GRID').innerHTML='<div class="alert info" style="margin:0">💡 جدول القوالب غير موجود. شغّل <code>02_push_user_link.sql</code> في Supabase SQL Editor.</div>';
+  }
+}
+function renderTemplates(){
+  const grid=document.getElementById('TPL_GRID');
+  if(!allTemplates.length){grid.innerHTML='<div class="empty"><div class="empty-i">📋</div><div class="empty-t">لا توجد قوالب بعد</div></div>';return;}
+  grid.innerHTML=allTemplates.map(t=>`<div class="tpl" onclick='useTpl("${t.id}")'>
+    <div class="tpl-i">${esc(t.icon||'📢')}</div>
+    <div class="tpl-text">
+      <div class="tpl-n">${esc(t.name)}</div>
+      <div class="tpl-d">${esc(t.title_template)}</div>
+      <div class="tpl-meta"><span class="tpl-meta-c">${categoryLabel(t.category)}</span>${t.usage_count?'<span class="tpl-meta-c">استُخدم '+t.usage_count+'×</span>':''}</div>
+    </div></div>`).join('');
+}
+function categoryLabel(c){return {general:'📢 عام',water:'💧 ماء',cases:'📋 طلبات',news:'📰 أخبار',urgent:'🚨 طارئ',celebration:'🎉 تهنئة'}[c]||c;}
+function useTpl(id){
+  const tpl=allTemplates.find(t=>t.id===id);if(!tpl)return;
+  document.getElementById('N_TITLE').value=tpl.title_template;
+  document.getElementById('N_BODY').value=tpl.body_template;
+  document.getElementById('N_ICON').value=tpl.icon||'📢';
+  if(tpl.default_topics&&tpl.default_topics.length){
+    currentTopics=[...tpl.default_topics];
+    document.querySelectorAll('.target-chip').forEach(c=>c.classList.toggle('on',currentTopics.indexOf(c.dataset.tt)>=0));
+  }
+  updateCount('N_TITLE','tcnt',60);updateCount('N_BODY','bcnt',240);updatePreview();
+  setTab('compose');
+  document.getElementById('N_TITLE').focus();
+}
+function openTplForm(){
+  editingTplId=null;
+  ['TPL_N','TPL_I','TPL_TT','TPL_BB'].forEach(x=>document.getElementById(x).value='');
+  document.getElementById('TPL_CAT').value='general';
+  document.getElementById('TPL_ERR').innerHTML='';
+  document.getElementById('TPL_MODAL').classList.add('on');
+}
+function closeTplForm(){document.getElementById('TPL_MODAL').classList.remove('on');}
+async function saveTpl(){
+  const name=document.getElementById('TPL_N').value.trim();
+  const icon=document.getElementById('TPL_I').value.trim()||'📢';
+  const tt=document.getElementById('TPL_TT').value.trim();
+  const bb=document.getElementById('TPL_BB').value.trim();
+  const cat=document.getElementById('TPL_CAT').value;
+  const err=document.getElementById('TPL_ERR'); err.innerHTML='';
+  if(!name||!tt||!bb){err.innerHTML='<div class="alert err">⚠️ كل الحقول مطلوبة</div>';return;}
+  const btn=document.getElementById('TPL_SAVE');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span>';
+  try{
+    const {error}=await sb.from('push_templates').insert({mun_id:MUN_ID,name,icon,title_template:tt,body_template:bb,category:cat,default_topics:[cat]});
+    if(error)throw error;
+    closeTplForm();
+    await loadTemplates();
+  }catch(ex){err.innerHTML=`<div class="alert err">⚠️ ${esc(ex.message)}</div>`;}
+  btn.disabled=false; btn.innerHTML='حفظ';
+}
+
+async function loadSubs(){
+  try{
+    const {data,error}=await sb.from('push_subscriptions').select('*').eq('mun_id',MUN_ID).order('created_at',{ascending:false});
+    if(error)throw error;
+    allSubs=data||[]; renderSubs(allSubs);
+  }catch(e){document.getElementById('SUB_LIST').innerHTML=`<div class="alert err">⚠️ ${esc(e.message)}</div>`;}
+}
+function filterSubs(){
+  const q=(document.getElementById('SUB_SEARCH').value||'').toLowerCase().trim();
+  if(!q){renderSubs(allSubs);return;}
+  renderSubs(allSubs.filter(s=>(s.user_name||'').toLowerCase().includes(q)||(s.user_phone||'').includes(q)||(s.user_role||'').toLowerCase().includes(q)));
+}
+function renderSubs(subs){
+  const list=document.getElementById('SUB_LIST');
+  if(!subs.length){list.innerHTML='<div class="empty"><div class="empty-i">👥</div><div class="empty-t">لا يوجد مشتركون</div></div>';return;}
+  const RI={citizen:'👤',staff:'👨‍💼',water_owner:'💧',coop_customer:'🛒',admin:'🛡️'};
+  const RL={citizen:'مواطن',staff:'موظف',water_owner:'صاحب حقّ ري',coop_customer:'زبون التعاونية',admin:'أدمن'};
+  list.innerHTML=subs.map(s=>{
+    const ico=RI[s.user_role]||'👤'; const lbl=RL[s.user_role]||(s.user_role||'مواطن');
+    const lu=s.last_used_at?timeAgo(s.last_used_at):'لم يُستخدم';
+    return `<div class="sub-row">
+      <div class="sub-icon">${ico}</div>
+      <div class="sub-info">
+        <div class="sub-name">${esc(s.user_name||s.user_phone||'مشترك')}</div>
+        <div class="sub-meta">
+          <span class="sub-meta-pill">${esc(lbl)}</span>
+          ${s.user_phone?`<span class="sub-meta-pill">📞 ${esc(s.user_phone)}</span>`:''}
+          <span class="sub-meta-pill">🕒 ${lu}</span>
+        </div>
+      </div>
+      <span class="sub-status ${s.is_active?'ss-active':'ss-inactive'}">${s.is_active?'نشط':'غير نشط'}</span>
+    </div>`;
+  }).join('');
 }
 
 async function loadLog(){
-  const { data } = await sb.from('push_log').select('*').eq('mun_id', MUN_ID).order('sent_at', { ascending:false }).limit(10);
-  const list = document.getElementById('LOG_LIST');
-  if(!data || data.length === 0){
-    list.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">لم يتمّ إرسال أيّ إشعار بعد</div>';
-    return;
-  }
-  list.innerHTML = data.map(r => `
-    <div class="log-row">
-      <div class="log-time">${new Date(r.sent_at).toLocaleString('ar-LB')}</div>
-      <div class="log-title">${escHtml(r.title)}</div>
-      <div style="font-size:12px;color:var(--text2);margin:3px 0">${escHtml(r.body)}</div>
-      <div class="log-stats">
-        <span>📊 ${r.recipients_count} مستلم</span>
-        <span style="color:var(--green)">✅ ${r.success_count}</span>
-        ${r.failed_count > 0 ? `<span style="color:var(--danger)">❌ ${r.failed_count}</span>` : ''}
-      </div>
-    </div>
-  `).join('');
+  try{
+    const {data,error}=await sb.from('push_log').select('*').eq('mun_id',MUN_ID).order('sent_at',{ascending:false}).limit(50);
+    if(error)throw error;
+    const list=document.getElementById('LOG_LIST');
+    if(!data||!data.length){list.innerHTML='<div class="empty"><div class="empty-i">📜</div><div class="empty-t">لم يُرسَل أيّ إشعار بعد</div></div>';return;}
+    list.innerHTML=data.map(r=>{
+      const rate=r.recipients_count>0?Math.round((r.success_count/r.recipients_count)*100):0;
+      const cls=rate>=90?'lr-ok':(rate>=60?'lr-mid':'lr-bad');
+      return `<div class="log-entry">
+        <div class="log-top">
+          <span class="log-time">${formatDate(r.sent_at)}</span>
+          ${r.recipients_count>0?`<span class="log-rate ${cls}">${rate}%</span>`:''}
+        </div>
+        <div class="log-title">${esc(r.title)}</div>
+        <div class="log-body">${esc(r.body)}</div>
+        <div class="log-stats">
+          <span class="log-stat">📊 <strong>${r.recipients_count||0}</strong></span>
+          <span class="log-stat" style="color:var(--green)">✅ <strong>${r.success_count||0}</strong></span>
+          ${r.failed_count>0?`<span class="log-stat" style="color:var(--danger)">❌ <strong>${r.failed_count}</strong></span>`:''}
+          ${r.to_role?`<span class="log-stat">→ ${esc(r.to_role)}</span>`:''}
+          ${r.to_user_phone?`<span class="log-stat">→ 📞 ${esc(r.to_user_phone)}</span>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }catch(ex){document.getElementById('LOG_LIST').innerHTML=`<div class="alert err" style="margin:14px">⚠️ ${esc(ex.message)}</div>`;}
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SEND
-// ═══════════════════════════════════════════════════════════════════════════
-async function sendNotification(){
-  const title = document.getElementById('N_TITLE').value.trim();
-  const body = document.getElementById('N_BODY').value.trim();
-  const url = document.getElementById('N_URL').value.trim();
-  const topic = document.getElementById('N_TOPIC').value;
-  const result = document.getElementById('SEND_RESULT');
-  result.innerHTML = '';
-
-  if(!title || !body){
-    result.innerHTML = '<div class="alert err">⚠️ العنوان والنصّ مطلوبان</div>';
-    return;
-  }
-
-  if(!confirm(`هل أنت متأكّد من إرسال الإشعار للجميع؟\n\nالعنوان: ${title}\nالنص: ${body}`)){
-    return;
-  }
-
-  const btn = document.getElementById('SEND_BTN');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الإرسال…';
-
-  try {
-    const session = (await sb.auth.getSession()).data.session;
-    const resp = await fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_KEY}`
-      },
-      body: JSON.stringify({
-        mun_id: MUN_ID,
-        title, body, url,
-        topics: topic === 'urgent' ? ['general','water','news'] : [topic],
-        sent_by: currentUser?.email || 'admin'
-      })
-    });
-    const data = await resp.json();
-    if(!resp.ok) throw new Error(data.error || 'فشل الإرسال');
-
-    result.innerHTML = `<div class="alert ok">
-      ✅ تمّ الإرسال بنجاح!<br>
-      📊 ${data.recipients_count} مستلم • ✅ ${data.success_count} نجح • ❌ ${data.failed_count} فشل
-    </div>`;
-    document.getElementById('N_TITLE').value = '';
-    document.getElementById('N_BODY').value = '';
-    document.getElementById('N_URL').value = '';
-    updatePreview();
-    await loadStats();
-    await loadLog();
-  } catch(ex){
-    result.innerHTML = `<div class="alert err">⚠️ خطأ: ${escHtml(ex.message)}</div>`;
-  }
-  btn.disabled = false; btn.innerHTML = '📤 إرسال الإشعار للجميع';
-}
-
-async function sendTest(){
-  document.getElementById('N_TITLE').value = '🧪 إشعار تجريبي';
-  document.getElementById('N_BODY').value = 'هذا اختبار للنظام. إذا رأيت هذا الإشعار، فالنظام يعمل بشكل ممتاز ✅';
-  document.getElementById('N_URL').value = '';
-  document.getElementById('N_TOPIC').value = 'general';
-  updatePreview();
-}
-
-function updatePreview(){
-  document.getElementById('PREV_T').textContent = document.getElementById('N_TITLE').value || 'عنوان الإشعار';
-  document.getElementById('PREV_B').textContent = document.getElementById('N_BODY').value || 'نصّ الإشعار يظهر هنا';
-}
-
-function escHtml(s){
-  return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function formatDate(iso){if(!iso)return '—';try{const d=new Date(iso);const t=new Date();if(d.toDateString()===t.toDateString())return 'اليوم • '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('ar-LB',{day:'2-digit',month:'short'})+' • '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'});}catch(e){return iso;}}
+function timeAgo(iso){if(!iso)return '—';const diff=(Date.now()-new Date(iso).getTime())/1000;if(diff<60)return 'الآن';if(diff<3600)return Math.floor(diff/60)+' د';if(diff<86400)return Math.floor(diff/3600)+' س';if(diff<604800)return Math.floor(diff/86400)+' يوم';return formatDate(iso);}
 
 checkSession();
 </script>
-
 </body>
 </html>

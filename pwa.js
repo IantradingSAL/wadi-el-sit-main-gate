@@ -275,6 +275,116 @@
         },
         body: JSON.stringify({ topics })
       });
+    },
+
+    // Link the current subscription to a user identifier (phone number)
+    // Call this after enablePush() once we know who the user is
+    linkToUser: async (userPhone, userName, role) => {
+      const sub = await window.PWA.getCurrentSubscription();
+      if (!sub || !userPhone) return false;
+      const phoneNorm = (userPhone || '').toString().replace(/[^\d+]/g, '');
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            user_phone: phoneNorm,
+            user_name: userName || null,
+            user_role: role || 'citizen'
+          })
+        });
+        return true;
+      } catch (e) {
+        console.warn('linkToUser failed:', e);
+        return false;
+      }
+    },
+
+    // Send a push notification (calls the Edge Function)
+    // Used by admins/staff to notify someone or a topic
+    sendPush: async ({ title, body, url, topics, toUserPhone, toRole, sentBy }) => {
+      const payload = {
+        mun_id: MUN_ID,
+        title,
+        body,
+        url: url || '/',
+        sent_by: sentBy || 'system'
+      };
+      if (toUserPhone) payload.to_user_phone = (toUserPhone||'').toString().replace(/[^\d+]/g,'');
+      if (toRole) payload.to_role = toRole;
+      if (topics) payload.topics = topics;
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'apikey': SUPABASE_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.error || `فشل الإرسال (${resp.status})`);
+      return data;
+    },
+
+    // Convenience: render a push enable/disable button into a container
+    // Usage: PWA.renderToggle('my-container-id', { topics: ['general','water'], onSubscribed: (sub) => {} })
+    renderToggle: async (containerId, opts = {}) => {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      const topics = opts.topics || ['general'];
+      const onSubscribed = opts.onSubscribed || (() => {});
+
+      const status = await window.PWA.pushStatus();
+      if (status === 'unsupported') {
+        el.innerHTML = '<div style="padding:10px 14px;background:#fef3c7;color:#7a5500;border-radius:10px;font-size:12.5px;line-height:1.6">⚠️ متصفّحك لا يدعم الإشعارات. للأيفون: iOS 16.4+ مع التطبيق المثبَّت على الشاشة الرئيسية.</div>';
+        return;
+      }
+      if (status === 'denied') {
+        el.innerHTML = '<div style="padding:10px 14px;background:#fee2e2;color:#bf2424;border-radius:10px;font-size:12.5px;line-height:1.6">🔕 الإشعارات محظورة. غيّرها من إعدادات المتصفّح ثمّ أعد تحميل الصفحة.</div>';
+        return;
+      }
+      if (status === 'subscribed') {
+        el.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#d4f0dc;color:#1e5429;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:8px">
+            <span>🔔</span><span>الإشعارات مُفعَّلة على هذا الجهاز</span>
+          </div>
+          <button onclick="window.PWA._disableFromToggle('${containerId}',${JSON.stringify(opts).replace(/"/g,'&quot;')})" style="width:100%;background:#fff;color:#bf2424;border:1.5px solid #bf2424;padding:9px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🔕 إيقاف الإشعارات</button>
+        `;
+        return;
+      }
+      // pending: show the enable button
+      el.innerHTML = `
+        <button onclick="window.PWA._enableFromToggle('${containerId}',${JSON.stringify(opts).replace(/"/g,'&quot;')})" style="width:100%;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;padding:11px;border-radius:11px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          🔔 تفعيل الإشعارات الآن
+        </button>
+        <div style="font-size:11.5px;color:#8a95a3;text-align:center;margin-top:6px">سنُرسل لك تحديثات مهمّة فقط</div>
+      `;
+    },
+
+    _enableFromToggle: async (containerId, opts) => {
+      try {
+        const sub = await window.PWA.enablePush(opts.topics || ['general']);
+        if (opts.userPhone) await window.PWA.linkToUser(opts.userPhone, opts.userName, opts.role);
+        if (opts.onSubscribed) opts.onSubscribed(sub);
+        window.PWA.renderToggle(containerId, opts);
+      } catch (e) {
+        const el = document.getElementById(containerId);
+        if (el) el.innerHTML = `<div style="padding:10px 14px;background:#fee2e2;color:#bf2424;border-radius:10px;font-size:12.5px">⚠️ ${(e.message||'خطأ').slice(0,200)}</div>`;
+      }
+    },
+
+    _disableFromToggle: async (containerId, opts) => {
+      if (!confirm('هل تريد فعلاً إيقاف الإشعارات؟ لن تستلم تحديثات البلدية.')) return;
+      try {
+        await window.PWA.disablePush();
+        window.PWA.renderToggle(containerId, opts);
+      } catch (e) { console.error(e); }
     }
   };
 

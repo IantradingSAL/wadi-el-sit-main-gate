@@ -805,6 +805,16 @@ async function setupUser(user){
   await load();
   tick();setInterval(tick,60000);
   if(dbR)subscribe();
+  // Auto-link push subscription to this staff member's role
+  if (window.PWA && window.PWA.canPush && window.PWA.canPush()) {
+    setTimeout(async function(){
+      const status = await window.PWA.pushStatus();
+      if (status === 'subscribed') {
+        // Already subscribed — just update role
+        await window.PWA.linkToUser(user.email, userName, 'staff');
+      }
+    }, 1000);
+  }
 }
 
 async function doLogout(){
@@ -1164,6 +1174,20 @@ async function doApprove(id,dec){
   if(dec==='approved')c.status='resolved';else c.status='closed';
   const tl=[...(c.timeline||[]),{a:dec==='approved'?'تمت الموافقة الرسمية':'تم رفض الطلب',by,d:today,cls:dec==='approved'?'g':'r'}];
   c.timeline=tl;await saveC(c);closeM();rStats();render();
+
+  // Send push notification to the citizen
+  if(c.phone && window.PWA && window.PWA.sendPush){
+    const isApproved = dec==='approved';
+    window.PWA.sendPush({
+      title: isApproved ? '✅ تمّت الموافقة على طلبك' : '❌ تمّ رفض طلبك',
+      body: isApproved
+        ? `الطلب رقم #${c.id} تمّت الموافقة عليه. يمكنك مراجعة التفاصيل.`
+        : `الطلب رقم #${c.id} تمّ رفضه. يمكنك مراجعة التفاصيل والأسباب.`,
+      url: 'citizen.html?case='+c.id,
+      toUserPhone: c.phone,
+      sentBy: by
+    }).then(r => console.log('Push sent:', r)).catch(e => console.warn('Push failed:', e));
+  }
 }
 
 async function cd(id){if(!confirm('حذف هذا الطلب نهائياً؟'))return;await delC(id);closeM();}

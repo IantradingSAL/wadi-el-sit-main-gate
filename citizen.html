@@ -245,6 +245,16 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
   </div>
   <div style="max-width:620px;margin:28px auto;padding:0 16px">
 
+    <!-- PUSH NOTIFICATIONS TOGGLE -->
+    <div id="cit-push-card" style="background:linear-gradient(135deg,#e8f4fd,#f0f7ff);border:1px solid #c7dff5;border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 2px 6px rgba(15,77,130,.1)">🔔</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800;color:var(--blue2);margin-bottom:2px">إشعارات تحديث طلبك</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5">فعّل الإشعارات لتعرف فوراً عند تحديث حالة طلبك</div>
+      </div>
+      <div id="cit-push-toggle" style="flex-shrink:0;min-width:120px"></div>
+    </div>
+
     <!-- TRACK CASE -->
     <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px">
       <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:4px;text-align:center">🔍 تتبع حالة طلبك</div>
@@ -795,6 +805,20 @@ async function doSubmitCit(){
     if(error)throw error;
     const newCaseId = data.id;
     document.getElementById('c-ref').textContent = newCaseId;
+    // Link push subscription to this phone (so they get personalized notifications)
+    linkPushToPhone(phone, name);
+
+    // Notify all staff that a new case was submitted
+    if (window.PWA && window.PWA.sendPush) {
+      window.PWA.sendPush({
+        title: '📨 طلب جديد من مواطن',
+        body: 'طلب رقم #' + newCaseId + ' من ' + name + (type ? ' (' + type + ')' : ''),
+        url: 'dashboard.html?case=' + newCaseId,
+        toRole: 'staff',
+        sentBy: 'system'
+      }).catch(e => console.warn('Staff notification failed:', e));
+    }
+
     // Send confirmation email (non-blocking)
     const citEmail=document.getElementById('c-email')?.value?.trim();
     const citName=document.getElementById('c-name')?.value?.trim();
@@ -1049,7 +1073,29 @@ document.addEventListener('DOMContentLoaded', async function(){
     var gs=await sb.auth.getSession();
     if(gs.data&&gs.data.session&&gs.data.session.user){citUser=gs.data.session.user;setupCitDashboard();}
   }catch(e){}
+
+  // Render push notification toggle
+  if (window.PWA && window.PWA.canPush && window.PWA.canPush()) {
+    setTimeout(function(){
+      window.PWA.renderToggle('cit-push-toggle', {
+        topics: ['general', 'cases'],
+        role: 'citizen'
+      });
+    }, 500);
+  } else {
+    var card = document.getElementById('cit-push-card');
+    if (card) card.style.display = 'none';
+  }
 });
+
+// Helper: link push subscription to phone after case submission
+async function linkPushToPhone(phone, name) {
+  try {
+    if (window.PWA && window.PWA.linkToUser) {
+      await window.PWA.linkToUser(phone, name, 'citizen');
+    }
+  } catch(e) { console.warn('Failed to link push:', e); }
+}
 
 function openHelp(p){
   var c='<b style="color:#1a6eb5;font-size:14px">👥 بوابة المواطن</b><br><br>📋 <b>تقديم طلب</b>: اسمك+هاتفك إلزاميان، اختر النوع لترى المستندات، احتفظ بالرقم المرجعي.<br><br>🔍 <b>متابعة طلب</b>: أدخل الرقم المرجعي ← أدخل هاتفك للتحقق ← ترى الحالة.<br><br>⚠️ شكوى(3-5أيام) | 🤝 رعاية(5-7) | 🏗️ ترخيص(7-14) | ❓ استفسار(1-2) | 📜 إفادة(5-10) | 💧 ري(2-4)';
