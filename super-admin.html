@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Super Admin — نظام البلديات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--green2:#1e5429;--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;--bg:#f5f7fa;--bg2:#f0f2f7;--danger:#e74c3c;--font:'Tahoma',Arial,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh;color:var(--text);font-size:14px;}
+.header{background:linear-gradient(120deg,#1a1a2e,#2d2d5e);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:12px;}
+.main{max-width:900px;margin:0 auto;padding:20px 16px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;}
+.card-title{font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--border);}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:14px;outline:none;background:#fff;color:var(--text);}
+.fi:focus{border-color:var(--blue);}
+.fg{margin-bottom:12px;}
+.fl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-family:var(--font);}
+.btn.bp{background:var(--blue);color:#fff;border-color:var(--blue);}
+.btn.bg{background:#1a1a2e;color:#fff;border-color:#1a1a2e;}
+.mun-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;}
+.mun-card:hover{border-color:var(--blue);background:#eef5ff;}
+.color-swatch{width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
+.tab{padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);}
+.tab.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+</style>
+<!-- PWA & Mobile Meta -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a6eb5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="وادي الست">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="pwa.js" defer></script>
+</head>
+<body>
+<!-- Back to Main Gate (floating) -->
+<style>
+.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
+.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
+.back-to-gate-i{font-size:16px;line-height:1}
+.back-to-gate-l{white-space:nowrap}
+@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:8px 12px 8px 10px;font-size:12px}.back-to-gate-l{display:none}.back-to-gate-i{font-size:18px}}
+@media print{.back-to-gate{display:none}}
+</style>
+<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
+  <span class="back-to-gate-i">🏛️</span>
+  <span class="back-to-gate-l">البوابة الرئيسية</span>
+</a>
+
+
+<div class="header">
+  <span style="font-size:28px">🏛</span>
+  <div>
+    <div style="font-size:16px;font-weight:800;">لوحة تحكم Super Admin</div>
+    <div style="font-size:11px;opacity:.7;">Municipal Management System</div>
+  </div>
+  <button id="logout-btn" onclick="doLogout()" class="btn" style="margin-right:auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:6px 14px;display:none;">خروج</button>
+</div>
+
+<!-- Login -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:80vh;padding:20px;">
+  <div class="card" style="max-width:380px;width:100%;text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px">🔐</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px">Super Admin</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">صلاحيات كاملة على جميع البلديات</div>
+    <input type="email" class="fi" id="li-em" placeholder="البريد الإلكتروني" style="margin-bottom:10px;direction:ltr">
+    <input type="password" class="fi" id="li-pw" placeholder="كلمة المرور" style="margin-bottom:12px;direction:ltr" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="li-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px;"></div>
+    <button class="btn bg" style="width:100%;justify-content:center;" onclick="doLogin()">🚀 دخول</button>
+    <a href="index.html" style="display:block;margin-top:14px;font-size:13px;color:var(--text3)">← العودة للرئيسية</a>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app-screen" style="display:none;">
+  <div class="main">
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+      <div class="tab on" id="tab-mun-btn" onclick="showTab('tab-mun')">🏛 البلديات</div>
+      <div class="tab" id="tab-new-btn" onclick="showTab('tab-new')">➕ بلدية جديدة</div>
+      <div class="tab" id="tab-admins-btn" onclick="showTab('tab-admins')">👤 Super Admins</div>
+    </div>
+
+    <!-- MUNICIPALITIES -->
+    <div id="tab-mun">
+      <div class="card">
+        <div class="card-title">🏛 البلديات المسجلة</div>
+        <div id="mun-list">⏳ جاري التحميل…</div>
+      </div>
+      <div id="mun-edit-card" class="card" style="display:none;">
+        <div class="card-title" id="mun-edit-title">✏️ تعديل</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="fg" style="grid-column:1/-1"><div class="fl">الاسم العربي *</div><input type="text" class="fi" id="me-name"></div>
+          <div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="me-region"></div>
+          <div class="fg"><div class="fl">الموقع</div><input type="text" class="fi" id="me-website" style="direction:ltr"></div>
+          <div class="fg">
+            <div class="fl">اللون الأساسي ☀️</div>
+            <div style="display:flex;gap:8px;">
+              <input type="color" id="me-c1" value="#1a6eb5" oninput="document.getElementById('me-c1t').value=this.value;updateEditPreview()" style="width:46px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;">
+              <input type="text" class="fi" id="me-c1t" value="#1a6eb5" style="direction:ltr;" oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)){document.getElementById('me-c1').value=this.value;updateEditPreview();}">
+            </div>
+          </div>
+          <div class="fg">
+            <div class="fl">اللون الثانوي 🌿</div>
+            <div style="display:flex;gap:8px;">
+              <input type="color" id="me-c2" value="#1e5429" oninput="document.getElementById('me-c2t').value=this.value;updateEditPreview()" style="width:46px;height:36px;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:2px;">
+              <input type="text" class="fi" id="me-c2t" value="#1e5429" style="direction:ltr;" oninput="if(/^#[0-9A-Fa-f]{6}$/.test(this.value)){document.getElementById('me-c2').value=this.value;updateEditPreview();}">
+            </div>
+          </div>
+          <div class="fg" style="grid-column:1/-1">
+            <div class="fl">الشعار (صورة)</div>
+            <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border:1.5px dashed var(--blue);border-radius:10px;cursor:pointer;font-size:13px;color:var(--blue);">
+              <input type="file" id="me-logo" accept="image/*" style="display:none" onchange="previewEditLogo(this)">
+              📷 رفع شعار جديد
+            </label>
+            <div id="me-logo-prev" style="margin-top:8px;"></div>
+          </div>
+          <div class="fg" style="grid-column:1/-1">
+            <div class="fl">معاينة</div>
+            <div id="me-prev-hdr" style="border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;color:#fff;">
+              <img id="me-prev-logo" src="" style="height:32px;display:none">
+              <span id="me-prev-name" style="font-weight:800;font-size:14px;">اسم البلدية</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn bp" style="flex:1;justify-content:center;" onclick="saveMunEdit()">💾 حفظ</button>
+          <button class="btn" onclick="document.getElementById('mun-edit-card').style.display='none'">إلغاء</button>
+        </div>
+        <div id="me-msg" style="margin-top:8px;text-align:center;font-size:13px;min-height:18px;"></div>
+      </div>
+    </div>
+
+    <!-- NEW MUNICIPALITY -->
+    <div id="tab-new" style="display:none;">
+      <div class="card">
+        <div class="card-title">➕ إضافة بلدية جديدة</div>
+        <div class="fg"><div class="fl">الاسم العربي *</div><input type="text" class="fi" id="nm-name" placeholder="مثال: بلدية المصيلح"></div>
+        <div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="nm-region"></div>
+        <div class="fg"><div class="fl">الموقع</div><input type="text" class="fi" id="nm-website" style="direction:ltr" placeholder="https://..."></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="fg"><div class="fl">اللون الأساسي</div><input type="color" class="fi" id="nm-c1" value="#1a6eb5" style="height:42px;padding:4px;"></div>
+          <div class="fg"><div class="fl">اللون الثانوي</div><input type="color" class="fi" id="nm-c2" value="#1e5429" style="height:42px;padding:4px;"></div>
+        </div>
+        <div class="fg">
+          <div class="fl">الشعار</div>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border:1.5px dashed var(--blue);border-radius:10px;cursor:pointer;font-size:13px;color:var(--blue);">
+            <input type="file" id="nm-logo" accept="image/*" style="display:none" onchange="previewNewLogo(this)">
+            📷 رفع شعار
+          </label>
+          <div id="nm-logo-prev" style="margin-top:8px;"></div>
+        </div>
+        <button class="btn bp" style="width:100%;justify-content:center;margin-top:12px;" onclick="createMunicipality()">✓ إنشاء البلدية</button>
+        <div id="nm-msg" style="margin-top:8px;text-align:center;font-size:13px;min-height:18px;"></div>
+      </div>
+    </div>
+
+    <!-- ADMINS -->
+    <div id="tab-admins" style="display:none;">
+      <div class="card">
+        <div class="card-title">👤 Super Admins</div>
+        <div id="admins-list">⏳</div>
+        <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px;">
+          <div class="fl">إضافة Super Admin</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <input type="email" class="fi" id="new-adm-em" placeholder="email@example.com" style="flex:1;min-width:160px;direction:ltr;">
+            <input type="text" class="fi" id="new-adm-name" placeholder="الاسم" style="width:140px;">
+            <button class="btn bp" onclick="addSuperAdmin()">➕</button>
+          </div>
+          <div id="adm-msg" style="margin-top:8px;font-size:13px;min-height:18px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-c" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
+
+<script>
+var SB_URL = '__SUPABASE_URL__';
+var SB_KEY = '__SUPABASE_ANON_KEY__';
+var KNOWN_SUPER = ['imadaehn@gmail.com'];
+var sb = null;
+var currentMunId = null;
+var editLogoB64 = null;
+var newLogoB64 = null;
+
+function toast(msg, type) {
+  var c = document.getElementById('toast-c');
+  var t = document.createElement('div');
+  t.style.cssText = 'background:' + (type==='err'?'#e74c3c':type==='warn'?'#e67e22':'#222') + ';color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;pointer-events:all;';
+  t.textContent = msg; c.appendChild(t);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);}, 3000);
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  try {
+    sb = window.supabase.createClient(SB_URL, SB_KEY, {realtime:{enabled:false}});
+  } catch(e) {
+    document.getElementById('li-err').textContent = 'خطأ في تحميل المكتبة: ' + e.message;
+    return;
+  }
+  document.getElementById('logout-btn').style.display = 'none';
+  sb.auth.getUser().then(function(r) {
+    if (r.data && r.data.user) checkSuperAdmin(r.data.user);
+  });
+});
+
+async function doLogin() {
+  var em = (document.getElementById('li-em').value || '').trim();
+  var pw = document.getElementById('li-pw').value || '';
+  var err = document.getElementById('li-err');
+  if (!em || !pw) { err.textContent = 'يرجى إدخال البريد وكلمة المرور'; return; }
+  err.textContent = '⏳ جاري الدخول…';
+  try {
+    if (!sb) sb = window.supabase.createClient(SB_URL, SB_KEY, {realtime:{enabled:false}});
+    var r = await sb.auth.signInWithPassword({email:em, password:pw});
+    if (r.error) { err.textContent = 'خطأ: ' + r.error.message; return; }
+    await checkSuperAdmin(r.data.user);
+  } catch(e) { err.textContent = 'خطأ: ' + e.message; }
+}
+
+async function checkSuperAdmin(user) {
+  var meta = user.user_metadata || {};
+  var role = meta.role || '';
+  var email = user.email || '';
+  var ok = KNOWN_SUPER.indexOf(email) >= 0 || role === 'mayor' || role === 'admin';
+  if (!ok) {
+    try {
+      var r = await sb.from('super_admins').select('id').eq('email', email).single();
+      if (!r.error && r.data) ok = true;
+    } catch(e) {}
+  }
+  if (!ok) {
+    document.getElementById('li-err').textContent = '⚠️ ليس لديك صلاحية Super Admin';
+    await sb.auth.signOut(); return;
+  }
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  document.getElementById('logout-btn').style.display = 'flex';
+  loadMunicipalities();
+  loadSuperAdmins();
+}
+
+function doLogout() { sb.auth.signOut().then(function(){location.reload();}); }
+
+function showTab(id) {
+  ['tab-mun','tab-new','tab-admins'].forEach(function(t){
+    var el = document.getElementById(t); if(el) el.style.display = t===id ? 'block' : 'none';
+    var btn = document.getElementById(t+'-btn'); if(btn) btn.className = 'tab' + (t===id?' on':'');
+  });
+}
+
+// MUNICIPALITIES
+async function loadMunicipalities() {
+  var el = document.getElementById('mun-list');
+  try {
+    var r = await sb.from('municipalities').select('*').order('created_at');
+    if (r.error) throw new Error(r.error.message);
+    var muns = r.data || [];
+    if (!muns.length) { el.innerHTML = '<div style="color:var(--text3);padding:20px;text-align:center">لا توجد بلديات — أضف من تبويب ➕</div>'; return; }
+    var html = '';
+    muns.forEach(function(m) {
+      html += '<div class="mun-card" data-munid="' + m.id + '">';
+      html += '<div style="width:44px;height:44px;border-radius:10px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
+      html += m.logo_base64 ? '<img src="' + m.logo_base64 + '" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:24px">🏛</span>';
+      html += '</div><div style="flex:1"><div style="font-weight:700;font-size:14px">' + m.name + '</div>';
+      html += '<div style="font-size:12px;color:var(--text3)">' + (m.region||'') + '</div></div>';
+      html += '<div class="color-swatch" style="background:' + (m.primary_color||'#1a6eb5') + '"></div>';
+      html += '<div class="color-swatch" style="background:' + (m.secondary_color||'#1e5429') + '"></div>';
+      html += '<span style="font-size:11px;background:' + (m.is_active?'#d4edda':'#fdeaea') + ';color:' + (m.is_active?'#1e5429':'#e74c3c') + ';padding:3px 10px;border-radius:20px;font-weight:700">' + (m.is_active?'نشطة':'موقوفة') + '</span>';
+      html += '</div>';
+    });
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<div style="background:#fff9e6;border:1.5px solid #f5c842;border-radius:12px;padding:16px;text-align:center">'
+      + '<div style="font-size:24px;margin-bottom:8px">⚠️</div>'
+      + '<div style="font-weight:700;margin-bottom:8px">جدول municipalities غير موجود بعد</div>'
+      + '<div style="font-size:13px;color:var(--text3);margin-bottom:12px">' + e.message + '</div>'
+      + '<a href="https://supabase.com/dashboard/project/onjbwhkmmtqnymhjnplw/sql/new" target="_blank" class="btn bp" style="text-decoration:none;display:inline-flex">فتح SQL Editor</a>'
+      + '</div>';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var rmBtn = e.target.closest ? e.target.closest('[data-rmadm-id]') : null;
+  if (rmBtn) { removeSuperAdmin(rmBtn.getAttribute('data-rmadm-id'), rmBtn.getAttribute('data-rmadm-em')); return; }
+
+  var card = e.target.closest ? e.target.closest('[data-munid]') : null;
+  if (card) editMunicipality(card.getAttribute('data-munid'));
+});
+
+async function editMunicipality(id) {
+  var r = await sb.from('municipalities').select('*').eq('id', id).single();
+  if (r.error || !r.data) { toast('خطأ في التحميل', 'err'); return; }
+  var m = r.data;
+  currentMunId = id; editLogoB64 = m.logo_base64 || null;
+  document.getElementById('me-name').value = m.name || '';
+  document.getElementById('me-region').value = m.region || '';
+  document.getElementById('me-website').value = m.website || '';
+  document.getElementById('me-c1').value = m.primary_color || '#1a6eb5';
+  document.getElementById('me-c1t').value = m.primary_color || '#1a6eb5';
+  document.getElementById('me-c2').value = m.secondary_color || '#1e5429';
+  document.getElementById('me-c2t').value = m.secondary_color || '#1e5429';
+  var lp = document.getElementById('me-logo-prev');
+  lp.innerHTML = editLogoB64 ? '<img src="' + editLogoB64 + '" style="height:50px;border-radius:8px;">' : '<span style="font-size:12px;color:var(--text3)">لا يوجد شعار</span>';
+  document.getElementById('mun-edit-title').textContent = '✏️ تعديل: ' + m.name;
+  document.getElementById('mun-edit-card').style.display = 'block';
+  document.getElementById('me-msg').textContent = '';
+  updateEditPreview();
+  document.getElementById('mun-edit-card').scrollIntoView({behavior:'smooth'});
+}
+
+function updateEditPreview() {
+  var c1 = document.getElementById('me-c1').value;
+  var c2 = document.getElementById('me-c2').value;
+  var name = document.getElementById('me-name').value || 'اسم البلدية';
+  var hdr = document.getElementById('me-prev-hdr');
+  if (hdr) hdr.style.background = 'linear-gradient(120deg,' + c1 + ',' + c2 + ')';
+  var pn = document.getElementById('me-prev-name'); if(pn) pn.textContent = name;
+  var pl = document.getElementById('me-prev-logo');
+  if (pl) { pl.style.display = editLogoB64 ? 'block' : 'none'; if(editLogoB64) pl.src = editLogoB64; }
+}
+
+function previewEditLogo(input) {
+  var f = input.files[0]; if(!f) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    editLogoB64 = e.target.result;
+    var lp = document.getElementById('me-logo-prev');
+    lp.innerHTML = '<img src="' + editLogoB64 + '" style="height:50px;border-radius:8px;">';
+    updateEditPreview();
+  };
+  reader.readAsDataURL(f);
+}
+
+function previewNewLogo(input) {
+  var f = input.files[0]; if(!f) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    newLogoB64 = e.target.result;
+    document.getElementById('nm-logo-prev').innerHTML = '<img src="' + newLogoB64 + '" style="height:44px;border-radius:8px;">';
+  };
+  reader.readAsDataURL(f);
+}
+
+async function saveMunEdit() {
+  var msg = document.getElementById('me-msg');
+  if (!currentMunId) return;
+  msg.style.color = 'var(--text3)'; msg.textContent = '⏳ جاري الحفظ…';
+  var updates = {
+    name: document.getElementById('me-name').value.trim(),
+    region: document.getElementById('me-region').value.trim(),
+    website: document.getElementById('me-website').value.trim(),
+    primary_color: document.getElementById('me-c1').value,
+    secondary_color: document.getElementById('me-c2').value
+  };
+  if (editLogoB64) updates.logo_base64 = editLogoB64;
+  var r = await sb.from('municipalities').update(updates).eq('id', currentMunId);
+  if (r.error) { msg.style.color='var(--danger)'; msg.textContent='خطأ: '+r.error.message; return; }
+  msg.style.color = 'var(--green2)'; msg.textContent = '✅ تم الحفظ!';
+  toast('✅ تم تحديث بيانات البلدية');
+  loadMunicipalities();
+  setTimeout(function(){document.getElementById('mun-edit-card').style.display='none';}, 1500);
+}
+
+async function createMunicipality() {
+  var name = (document.getElementById('nm-name').value||'').trim();
+  var msg = document.getElementById('nm-msg');
+  if (!name) { msg.style.color='var(--danger)'; msg.textContent='يرجى إدخال الاسم'; return; }
+  msg.style.color='var(--text3)'; msg.textContent='⏳ جاري الإنشاء…';
+  var mun = {
+    name: name,
+    region: (document.getElementById('nm-region').value||'').trim()||null,
+    website: (document.getElementById('nm-website').value||'').trim()||null,
+    primary_color: document.getElementById('nm-c1').value,
+    secondary_color: document.getElementById('nm-c2').value,
+    is_active: true
+  };
+  if (newLogoB64) mun.logo_base64 = newLogoB64;
+  var r = await sb.from('municipalities').insert([mun]).select().single();
+  if (r.error) {
+    msg.style.color='var(--danger)';
+    msg.textContent = r.error.message.includes('does not exist')
+      ? '⚠️ جدول municipalities غير موجود — نفّذ migration_v1.sql أولاً'
+      : 'خطأ: '+r.error.message;
+    return;
+  }
+  msg.style.color='var(--green2)'; msg.textContent='✅ تم الإنشاء! ID: '+r.data.id;
+  toast('✅ تم إنشاء البلدية: '+name);
+  ['nm-name','nm-region','nm-website'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  newLogoB64=null; document.getElementById('nm-logo-prev').innerHTML='';
+  loadMunicipalities();
+}
+
+async function loadSuperAdmins() {
+  var el = document.getElementById('admins-list'); if(!el) return;
+  try {
+    var r = await sb.from('super_admins').select('*').order('created_at');
+    if (r.error) throw new Error(r.error.message);
+    var admins = r.data||[];
+    var html = '';
+    admins.forEach(function(a) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:8px;margin-bottom:6px">';
+      html += '<span style="font-size:18px">👤</span>';
+      html += '<div style="flex:1"><div style="font-weight:700">'+(a.name||'—')+'</div>';
+      html += '<div style="font-size:12px;color:var(--text3);direction:ltr">'+a.email+'</div></div>';
+      if (KNOWN_SUPER.indexOf(a.email) >= 0) {
+        html += '<span style="font-size:11px;background:#daeaf8;color:var(--blue2);padding:2px 8px;border-radius:10px">مدير النظام</span>';
+      } else {
+        html += '<button class="btn" data-rmadm-id="'+a.id+'" data-rmadm-em="'+a.email+'" style="color:var(--danger);padding:5px 10px;font-size:12px">🗑️</button>';
+      }
+      html += '</div>';
+    });
+    el.innerHTML = html || '<div style="color:var(--text3);padding:10px">لا يوجد Super Admins بعد</div>';
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px">⚠️ جدول super_admins غير موجود بعد — نفّذ migration_v1.sql</div>';
+  }
+}
+
+async function addSuperAdmin() {
+  var em=(document.getElementById('new-adm-em').value||'').trim();
+  var name=(document.getElementById('new-adm-name').value||'').trim();
+  var msg=document.getElementById('adm-msg');
+  if(!em){msg.style.color='var(--danger)';msg.textContent='يرجى إدخال البريد';return;}
+  var r=await sb.from('super_admins').insert([{email:em,name:name||null}]);
+  if(r.error){msg.style.color='var(--danger)';msg.textContent='خطأ: '+r.error.message;return;}
+  msg.style.color='var(--green2)';msg.textContent='✅ تمت الإضافة';
+  document.getElementById('new-adm-em').value='';
+  document.getElementById('new-adm-name').value='';
+  loadSuperAdmins();
+}
+
+async function removeSuperAdmin(id, email) {
+  if(!confirm('حذف '+email+'؟'))return;
+  await sb.from('super_admins').delete().eq('id',id);
+  loadSuperAdmins(); toast('🗑️ تم الحذف');
+}
+</script>
+</body>
+</html>

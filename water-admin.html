@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إدارة الري — بلدية وادي الست</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
+--danger:#e74c3c;--warn:#e67e22;--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;
+--bg:#f5f7fa;--bg2:#f0f2f7;--font:'Tahoma',Arial,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh;color:var(--text);font-size:14px;}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:14px;outline:none;background:#fff;color:var(--text);direction:rtl;}
+.fi:focus{border-color:#1e5429;}
+.fg{margin-bottom:12px;}
+.fl{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-family:var(--font);}
+.btn.bp{background:#1e5429;color:#fff;border-color:#1e5429;}
+.admin-section{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.admin-header{font-size:15px;font-weight:800;color:var(--blue2);margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid var(--border);}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:flex-end;justify-content:center;display:none;}
+.ov.open{display:flex;}
+.ov-panel{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:92vh;overflow-y:auto;}
+.ov-hdr{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;}
+.ov-close{background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:auto;}
+.ov-title{font-size:16px;font-weight:800;color:var(--blue2);}
+.ov-body{padding:16px 20px;}
+</style>
+<!-- PWA & Mobile Meta -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a6eb5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="وادي الست">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="pwa.js" defer></script>
+</head>
+<body>
+<!-- Back to Main Gate (floating) -->
+<style>
+.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
+.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
+.back-to-gate-i{font-size:16px;line-height:1}
+.back-to-gate-l{white-space:nowrap}
+@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:8px 12px 8px 10px;font-size:12px}.back-to-gate-l{display:none}.back-to-gate-i{font-size:18px}}
+@media print{.back-to-gate{display:none}}
+</style>
+<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
+  <span class="back-to-gate-i">🏛️</span>
+  <span class="back-to-gate-l">البوابة الرئيسية</span>
+</a>
+
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;max-width:380px;width:100%;text-align:center;">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAABVCAYAAACCViA6AAABCGlDQ1BJQ0MgUHJvZmlsZQAAeJxjYGA8wQAELAYMDLl5JUVB7k4KEZFRCuwPGBiBEAwSk4sLGHADoKpv1yBqL+viUYcLcKakFicD6Q9ArFIEtBxopAiQLZIOYWuA2EkQtg2IXV5SUAJkB4DYRSFBzkB2CpCtkY7ETkJiJxcUgdT3ANk2uTmlyQh3M/Ck5oUGA2kOIJZhKGYIYnBncAL5H6IkfxEDg8VXBgbmCQixpJkMDNtbGRgkbiHEVBYwMPC3MDBsO48QQ4RJQWJRIliIBYiZ0tIYGD4tZ2DgjWRgEL7AwMAVDQsIHG5TALvNnSEfCNMZchhSgSKeDHkMyQx6QJYRgwGDIYMZAKbWPz9HbOBQAAAabUlEQVR42u18eXhU1f3++zn3zpJMMtkXAmRnSxAXaAW3mbigoKCIE1uX2qoFq6UutG6t3oyiWGoVvtYqai3UrjOiYmlRUcm4QRXUsgRQigkQCdm32e89n98fM4EQgqICrf7mfZ48DDc3Z3vPZ3vPvQMkkEACCSSQQAIJJJBAAgkkkEACCRwhMIMYoMRKfNOI9bgUoj5eCcwuJbEq3xRyNYi+z+94kAlA7bPmxOp8Q8jdsbzcFfigal1447Rm/wfnbGtadfzNcZJFYpW+xm4ZALYsK5vOH89kbvol86e/Y96zkHnv1dy46oTb+993LKAmaDmCcFUwAMrLzf857ONZKidHhTnPBL3bQMRMaWmNt3oeyHhMVHu7mEFE4KM9pIS7OFLWCxDRPdJVAZPVaiuAzIAwZ6mwFREsuQpkmmK2pNnHFil5DAA1xyYeJwg+QiCAme8W3jpEo5HApxBdkOF2A4FdLMMtEqLHiIZ7erZtbW1GjGDuX0olCP46wFtHALi5rXk+/O+TkOtM6FlDIvyuAvGB0tax56EZbnTGSqj9BB8LV53AEc6id66o+G73+2dtDG+a0e7/95Qde18/8dbBsujrNUfK7F+ePSLu5xNl1NetDn57mS33vHJYBrrivs83P33GcT99xrEIAFyehBjyPxyCBymZPkPJ8sTJvO2vzpl3PutscrmODrmJGHzEkugBjFd7DTBTTItmIvIa/X+/OaeZAIAETk7LS8obem7ziYNacdzSi687ZfqwmycmJQg+xtA0iAsuGJ98KOKJwDTIBqhx+gwAZFIUh9Wsss1uvgQAKuLE9/MNXOFymTlNudVkTbYfymMkCD5K2IPx1pEX237tcrmUQ5Y7A65rmiaIwLcsnjwqyWo5UQ8ISrYmuVyay+yOEw8AsTaZaHjThNwM66lpkWBhTFBxiQTBx8ByAUDNsefYh5hnF1/UfDERWNMc6kHxeWAZ5KwVAJCXm3phXnaeySrTIsNyC0pPOSGtisHweOIEugAi4pPyh1w9Y9wpqD5x8iQA0K6vOHIWzMyJ1H0wOB0CDEpNp6rkVJXMSeKB6zVHSk2NU+6z5Ni/PHzOKbeUzzlvn3utcdYaAES2fdhlmdZhyE8pRmHWGJQOGT2biBhwQWNNeFweuXHjxuG3XXJ79Y8cN+DSMy47L+bea+ThDlP9DGZjSQARMzPFOk5gP8FOCfKx+VnxXRkiZGSmlCpjor8icv9o8bpZJvATOoORfpUz3ZTF9/W2720AsGzOojlmIop4ax86taykeJwKm0wy2002azqrOcnnNzRcWVZUlLdj06ZNJhpLkTfff+3O/KTc1Pe3vsvt3e2nPbhYyyai1sPlRBySXCIGEd922wNpCXIHumdN1KCGf/H0+SPSUuxVFpnC5qhNLxxecN38v1bPnD3hiai25CoLEXFFPl/17eHDLTNGTbhVJQUX/+RiAwCfXnnJnLGFZ+p5aWURVZhka8/OyG7/u6Z36h+/EQBXVo6NPvz7eSds2bPh2uVvPyff2fqWsaV1S2qj0Xo2AKqpqVG+lAVrmibcRPLyOYvsBaee9fvcrMxT5411XvSLKyeu1ZiFm0gmrBeCiPT/W/H9G/Pzs0wRP3SrmkKptvTomOysJ+s/WrCleGRxXc9//pP3SuOae2z2ZIJF/Xby7zLvqaKqu5e8fPvk7YF/uDq2NKM71Kr6w10IhHuViBFCNMRXa56JNURr2+c+8enT3Aa1tzdgRAyd2ELwdweuBPDXuro6/uIEx93yee2ZduOEM17S04dP6lFV+FmWAViL2loB4BgTzBRPKv8nvIjH41Gqq6r11976S1naEMtVNmt61JRvMyUn2yAEFItNydiw5a012pOu8d9/9p4fZRdktW1v3LVuT7CjIxKIZBY5HNYmf2NK87a6+V0d/qSo5EwIzhBC5EFwfrJdKezpMi+cPu9iS5ul98T25i4pmTkidTICzBEpz5pw01ml3oXeT6BpAm63PGwFps9CT//1689nj5hwEbXuajd3fnrLX2855xlN0+D+nMaOKFwuBR6PRF94OIzJHAvFiogYLLCh/tV38grSJu1s/g/2tn2Kzp7Whu5A28bW3k/fY+GvG0LGmz+84/UO1CHyRTLepSvHD6ndbZ/U0JRyVhiRSVHiEzlZQTRqQI/oEbYqqt4eWbhlvm+uQ3OoPrdPPyyCHdpq1eeu0o+748+X2MdWeam3bU+44cOp791/xYf7YvKxkv1cLgFvTPmxnXNdrn/V453A4S/UUdtzHpcybNcus60g86Gs3LSZTW1Nr/uDra919mxc/ccfY/sBN0+cPVTNNBepKpdLQhEDeRKUxowkKKoqhBTQDRaELpayk4l2coS2G01yEz747b62TtQmlgcN23cNhS+FGZUwEfRevZt2REbsKFvTCgBwH9qr0oDECmMWvPmv5PzSbwU3vDal7sHvveTSNpm97rGRY7SCCrzVBgAo5107g5NSfwZSRwOySfS0/0Bf9ft3oWn0X7Dk2KZrrqBrp/wrP2d4Z9n8y9f69v12xJ1DzaP9J5OKUyRwkgSNZIghbE4SrJoAUj5be2IALEHSAEWCIGk0EuvvQ5cv6a3R5Vi7uBEASn4+8WzJ1htFuukCoyPo3Tn/rWp4XAqqD5RBDyY47v7K5ywuMx1Xtd1o273qozvOnOxYzaqvivSj7409itfjYhDJvLxxttZJZy6Q1pTrmRmIhKNISTcpbY2PGf987Ho4NBU+t34sST24v7k2ZUqoSrHSVANqFRTTaGlNBQsFMHQgGgYiIYNYtoGwFyw7IGWXINEppS6hWrphGGYBTmKCjUnYAcoGIQ+gXLYkqzBZQQRQoBswom9Ajy6RK/7zZ+ClcMntk74VJXWRGsai+ofe/BtcLqXP4x0iyXIKwC05c+h4JNnBRugxMBNqao9eqcEsUFsrapxOg4gMEGC+dO6UFrNtASvWsRzqjUAaAkk2k/B3Notw75MGQHBCwneUSYUL8FYb/RfNNGXWcWxOniKFmE6Kcion5SPKDAR7AV3fQT0dG4U0NgkjupWNYIOiRxqTO5vbOta/2tXXxkAGBv4/65RTUnuTRuXoEX8RCUsFKzRJknI6rClnwGQ9Q8yw/B8ZZYs/eazjPnT9+ZTSH588pfjiSUX1Xu/OuLHyoBbcF3/LFrx9g5Ke+5vwhpVjGn7zk61HKLEhMMNV7RUVFTkEJ+CuOlPvP5ayG+c7G0XSjSGdL4JkIBwGSAEFelgJh55VWurvDPu82+MZ9RHOBZjg8sb0gHh4AIDy8nLLruPOO1Un80wmcQEsyYUgAQ76u0nK94iNt2EE1qn+UF1Y/qEBPuifKRpVV8c2TvPmA511biWjYjMfap2Lioqse0dNPilqTbpACvUypKQVUbAHFA3eb7z4qEaAzg6HCt/gydYBZRILVRrRCFjN6DqSKwgiePs2rDt28ZHnVo3sZcv5u3qCl3+qi/GZOmFXeyvaOjpgSL2egv6/m0Ptfwgue3Sdvi+MHKkavD+pZMAbG5t9oiszOKxwsqFYZn5CfCaIMtkw9rKUa5VgxwLyd6/Nbtu0Zc/69YGDrNDlUtAc14hz6xgVFQy3m+O5N8du9X6+MWgaoa6O0FxByK3kBm91CA1PvgPgnaKiont2jzlnirSm/AQpOXeKi+f+QHS2Xaq/vuTNQ4UuFcA+jye797arKXYWJtgB7Plqrs4jhmR0WHJSk1JEZnZ2TmpG0ah063ETCrMmnF5uP9mcai1s6Izg3x/t4NS2jm3JbV2bVCO4jjj4pvLBe+/vXusNBvcRC3x1T8IEj1fAeyCptmnX5EVSc6ezMM30s5wA5jCk8a4w9Nupt9MXXfnURwzsM889fWOqhTiASO+hE51+ySx/rjH0bYpBcoEGnzuEhqeeB/C8+ZyrJ0dTMx81coe/Ic695ofyZfdTg5Ect+BaCQCyZfd7nF9GsOecAOaPUFMrgC+0sFRUVGQxnzRtlEzbXYzU7LxQUsoQs8G5gXDQ3mkk++v3djdmW2nhyWVyR0a4a+cwCn6as6yq9ZfeASHJ5VE+y3UdHqdMLq9XeAGgmgxUx/pIvvymIRFL2gyQaWaIuQLSaIahv0SR3nt1z8K1AAw5cCzNmwm5dQyvV8bHdHjj6h/mNE2gro4+ZzMcTPr++2NkV1Rw2O1+JS8v74TmSZct5pzCJ03nzkL0ZfdTAxOugWUSlzy4ZjtHQ9vq76g63+VhxVtNBo4BXB6P0rw5h3x1LQxvtfzSylWc1FhI3R9TbVfMzdUz8mYaQp3JhhwLPdJIurFM9PQ8H/nbgi0YjFAnZNyivlLcL0e5pem0E+29b3lb+pH+1dp1OFT43tABhjJ9zuNsy5hNrTvPMlYteb0/yQcJHUXaiutNeaWP+te8WLTnD7ftQk3Nl687mQk1NeSqrCTAhYqcWH9OAE4n2Ov1wuVyyfhbePzlDZXJ640dnFT325Cjb7g/S83KmR5g/k6vIcf2RCJN0ajxnOjpeTby9N3bDhins0Y5UoT2J9Fy/g/PilrsjzNTBrH+gRr2PxZZ+eSyI6POaQKuSoK32qAZN79BjDL50cslqNsc7ZN3aWCAH/a7ly2mub/5iPXQh/U/O23a+MXrTOtnT9D/V7Tg/evHwumsFU6nU1K/A5Dz7rgvx5ZbMi3C6iV+Q47tCYVbeqKRF4K9Xd6Gh366dcDmUwDIoyKcxOOhOn3Os3pa3kz4O6NQzSYiQAR7/phd77tu74YNfoyfZcL6J778+sat1eJwlUdzij8mf+dUY+WTK/uuqwf4+rpKsXu3O1jctPVy08hTfUW/ePHm9bMnPDx+MZvWz4Z+5EuUL2qlXuFyuQiAQUTSHZfotKdeKFDs6Rf4gRn+YHhcTzja1BMIvGiN9Mx9/a4fbhmU1NimOHqCSW4dAyAlGlgsA93TpdlmQjQIZhmRSfYrWkqqRptzj/9e5NUntuzbEM4vsdm8XgOaJsJu93aaNmcTrCnjAKzsy+gPPE3yVhvweJT66uo3iu5afrO57PiHS+5Z2bN+Nj0FIjjuXq363E7jGBFNmsYEZ62odDqZiIz+VcmLb68bbSgp04OGnNYVCo/oCUZ2RwL+v6vh7p8uneXa3J9UR02N4jsWpA5ceDCFV9Iq9azLT6W0vB8x01Q2J+UxGJxsnxBVTO+o5/9ogW3nzse7fO6OWDnDBEeNEkvoKvgwklzCnj0KAEkgFVGj55CnSQfFY/dLN5mHlj9sdDb/1njklLkNDQjFzsxYgdcLeF3yiJEdT46aN+dQbqWTByZ3vG6xqaPUNSnIuKg3JM/pChm5Xf7Qx12BwPL2tpbls84/46P+1u6sqVV8qJX/9ROofnHWPnFyZihr1JmGqrpYiCq2JuewagH525tFNPKkEuz6U+TVZ7YMqtEPFEhiycy++SmTr74ISanPmTtbC4O+P+2OH07JQ0vg2moV7iq96FbvFHXYiKWAwUZ3x0Pqv197ert3fsv+A1JWHJtryVfZwtjsYtT0PUNIg5EI1NQQ6irJ5XKheXMtAYCvxmkMPK1yAcrpyzaOzci2V+WnJZ8zLNMyLj9dFYDxfntP8IU9TW0rTxs/5tP+pNbU1iqorZXu//6x4sEk18WSoX1Z/aQrciMZyZOlKel8Fuq5SLZnsB4GQoFNQsqXFCNaqyKwPvDPpU2f1XSK44LsUFrptWxJmk+9nTfpKxcvGjSLHhQeVlBNRlbWqFT7zY/cSimZ17ARTYFh/AN68E/K5hff2P6nR7qPxBqcNmdRTkrRmHH2pBRHus12arrNOiYjyZSSbVV3ZiRTrd3Mf3/77yvfdLtnB/qRKmpra0Xt/yKph6N1x5F2/IXpoeFDx+uK6WwmcS5InEBmC0k9CjKijWDexswfg7mF2AgzCasgkcdCHAeIk4goICL+G6P/eHzpoevgwzjCA0Cl971yJgvz5VCUSSBSYOifEOT7MIyNeqS3HmGjSe/Z0yWadwR2N78fhc8Hh6ahaVdyUigz12a2pmUIU3I+JVmHq6SMUhVltElRRlgVyrcIgVRV/SRVVf6VxKE3gp1Na/4wd1rjgGSr71kk+TV/Vozg0BTkVnJ/sgEg42xXWo85Y7Qk8zgWVElCKQG4gCGssUc1ZQigvSS5HlL6ct9f8489e9YHBiu7DvORWCZotQrcVQckKCXacyPZlDqRBE8gYS2C1PNZVVWSUoFQIpIZghmsCBKGNBPBBKFIwYZOoG4F2GMStFXo+haTYWx495V7d8DnCw3MnmtrobS0eDleM38THwDcfzRZW2N8qYcrDnFkSF98IB7hqMgh3z1n6mAeRGDR1E8mjUwlS4GFVL8FSAJCHaDk9JBs3hVu+HBJ76FOPvYfI0LUtYArNtfw18T1Hj3C+ydU/VEbfyK2Tz49RB391R5q1zSBykpybM4hX6WT4YI8rN3HTPBCOOJJVm5lC3s3b2a4a/i/WWsncLi7D0zgQX5iytlXf1PCwwo8HsWhrVah8Vd//cblUaCtPqwvpHFoq1W44n1/kbc+mMmxmtUB6mECR6rGhqYl3sM6anB5FHji2e8g1nfQZ5dHGfR6vI3ie1+6u+S2P99cevfy+WXzVl4YD94CmiZi7bOyz1IOJpbgYQXMokLbZAaAortf/EGR9uIDAMihsQrmWDt93iFuqcOu+XVm8f2vPVP4s7/8rGTeqr+UzH36W/v6iM9r/xw5Nsf4teE3PVFZ9uBbj47SXigAgPGL2fTN2HRH4eW14of+1VRy7yvrihe8GS56oPZJABg/a53pUDlG0VUL8gtv+l3podoreWjN88UL3+05jDlQ6b0vv1B0y5I7S+e98kr5rX+duC+DPWTAiv1p8e3Lpo/6414eseCtE47l8qtHnVwiLvzx4rNF1pDz6t3Tf1p878sPIuzvgWopBPBKfc35fyuZ98rjkuULDXed91KRtmIhIDY0uKc+XaStWEiq6YP6u85dWqKtWMhk+qC+5tylBHSCZSeAFhh6AADWDxlvDJ2zaJi19NR5YKMsvOGt63cvmbux8OfLzlRyCr1KalZm8X2rZ8ntta+px019hiEIvW3/+OTu8+YzlE5A7M1xuFJSJl93n0iyO5l4p1G/5f6GRVetiX+nFRVr/7wFtvRkYU6eSkTtMrJT79Odi+9aPg9m6y516Q1L5DVP/h229FT2t/vk1jceaFjq7mRBUd3fqasmczDvnLm2lHNmPKQ3fvyXhkU/qIXGR/BxpANx9FyEpgkQMHT2YyPUkRNeJmvKSQ5ttQqTKQ+KKYdUcz5Uc1rRVZpVzS2eraQXfNuhrVZFauaNZMu4yKGtVoU9+0Y1e+hZDm21SqlZN4qM3MkObbXKsY0Z/xGxOdQ6hWno8cvZYp3K/q4NyMhqd2irVcWe8z2Qkhzetu5a0oMmmDOtpIidbIQD5pHfnld89wt3sYxEABmyOa+6Ux1S+hPD37EOpExQho94bthEVxLcJItv97hMJWN/JfVIlwRvVwrKpylDR+Q5tNVqfHyzyJ57oVJxhpkVpZ1D/g516OjbaNQZHmgsyCRMRKTCAlhKhtqV/JJZSnrWOABwoFZ8DS3YKQDSTUWvTSTFTDvuOPP8T2InOVce5CKPmxIWVssen7tKL17wVjOkbPG5q/TiB99pkeFQp89dpZcseLsV4Eafu0ovXfiuIgVFCTD6aqqS46/IEvackyL1/75014LLPACwG8Dwax/6lfmkc6eJ5JTST7SpP4/f/l0AKL5/1V8oveD7iAbXkpBRTsk4Lbq3fkP9XZOvKb7T8z1lWMVSHD8xE2u9jZQ+5ESjqyVUf+vpLgCWssVbLxO93S0+9zQdAIrnr94jCIFtLz7dgxef/g4AFNesuE0dUv4AZpPkW5buApGRYdJbtj1xS0fpCeeGSXLoa+yinTGX09WyARkFVLzgzVdJYgXMJiKQZCIiyZJDvRlKeo7F6Gm7pHj+6yVqZkGu3t16YaH7nx1KWk6O0dX2ncK7lutKVkG23t3mKLrv1QVq5tDiSFP9Es62fxuIWAEguqeuWy0cs1cdXvFgya/erhCWpAhIMOsR3ehubbdUnn5n4U+f2aLkl6YpqRmZiIQjRiQynMEZRBjCQjGLQM8GpWDEDSW/fOMeKOo4GY1EpIglWtTTtk0tKLUWP+D7LRGiZLaaDFv6T8oX/muTEQkrwpY5zuht31WirbiC0vJLZLg3ApbjyJSEkvtfX8CqKYNUi9LSodxe/ECtqqZlW6KffnTURRw6FjG46DbPZUpB2U0gYQeBD0y8hMKBnkYGJ4uUjCwOdG1jI6qK1Cyn7O34EEKoIsl+nOztWCdMFgGzJZd7u14OP7/o55aLb1phRALLdmpTHwSAYXOXnGEaOmY+VHMOouEuKCYBPQqQEETUFPlo7UK19Ph7RFKqnaNhkCU5zJ17dyASbKW0/PTAmudvsI2fOk+aTd9iiQKoakZ009tljU/duHvIBbOSk06+eB5Sc6ZDKCFm2Q0SJugRA0IxC6utUW595wkMHXm1Ys8ZLcN+JsCQjB4iSgdYgtEN4jTWZRjRcL3atH3Oxw9/v/Fovvt1DIruL/ewuuMqzepb6g4BwETXr5PWeucGD2Mu+/opvvPZn1EksAPW5JGqDK38+P4rPvy8PsvnLMoxhlReKqORFJGafSXAhYGVj+TvXfVMYLA5VGjLyyOgS2R3+zZKySz7z73THzycuZXVLJ/D4Ujdjvmu1zRNE0dTjj0GdRgxPB4FzGJQdYuZYjXsvt8LMAvfUnco9nIOYa13bnDffcwUr4cpVoLs//I4uOL9lJdbKDn9e2RLn0LWtKvZPqQCzGL8rHWmQfuP/R1FoxhGJuvtSkrWbCJqQfMnM/au+qMfWg31q58J8XaM1KwKaUm5FkmpU9hmv3L8rFmmA8Z5wBy1fdfYZLuGUtLOBTPVwvn/qwDT340n5L0EBov/+zTwL7A/4l4DzKJPUfts2T322u3+ry38An0kkEACCSSQQAIJJJBAAgkkkEACCSSQQAIJJJBAAgkkkEACCSSQQAIJJJBAAgkkkEACCSRwjPD/AD4QtQXgzRhHAAAAAElFTkSuQmCC" style="height:64px;margin-bottom:16px" alt="شعار">
+    <div style="font-size:18px;font-weight:800;color:#1e5429;margin-bottom:4px">نظام إدارة الري</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:22px">بلدية وادي الست</div>
+    <input type="email" class="fi" id="li-em" placeholder="البريد الإلكتروني" style="margin-bottom:10px;direction:ltr">
+    <input type="password" class="fi" id="li-pw" placeholder="كلمة المرور" style="margin-bottom:12px;direction:ltr" onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="li-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px"></div>
+    <button class="btn bp" style="width:100%;justify-content:center;" onclick="doLogin()">💧 دخول لنظام الري</button>
+    <a href="index.html" style="display:block;margin-top:14px;font-size:13px;color:var(--text3)">← العودة للرئيسية</a>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen" style="display:none;flex-direction:column;min-height:100vh;">
+  <div style="background:linear-gradient(120deg,#1e5429,#2d7a3e);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:12px;">
+    <img src="data:image/png;base64,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" style="height:38px" alt="شعار">
+    <div>
+      <div style="font-size:16px;font-weight:800;">💧 إدارة نظام الري</div>
+      <div style="font-size:11px;opacity:.7;">بلدية وادي الست</div>
+    </div>
+    <div style="margin-right:auto;display:flex;gap:8px;">
+      <button onclick="window.location='dashboard.html'" class="btn" style="padding:6px 14px;font-size:12px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff;">← لوحة التحكم</button>
+      <button onclick="doLogout()" class="btn" style="padding:6px 14px;font-size:12px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;">خروج</button>
+    </div>
+  </div>
+  <div style="padding:16px;max-width:720px;margin:0 auto;width:100%;">
+    <div id="water-main-content">
+      <div style="text-align:center;padding:40px;color:var(--text3);">⏳ جاري تحميل البيانات…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="OV" class="ov" onclick="if(event.target===this)closeM()">
+  <div class="ov-panel">
+    <div class="ov-hdr">
+      <div class="ov-title" id="MT"></div>
+      <button onclick="closeM()" class="ov-close">✕</button>
+    </div>
+    <div class="ov-body" id="MB"></div>
+  </div>
+</div>
+<div id="toast-c" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;"></div>
+
+<script>
+const SB_URL='__SUPABASE_URL__';
+const SB_KEY='__SUPABASE_ANON_KEY__';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+const BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
+let sb=null, dbR=false, UN='', userRole='water_admin';
+
+window.addEventListener('DOMContentLoaded', async function(){
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{enabled:false}});
+  dbR=true;
+  var res=await sb.auth.getUser();
+  if(res.data&&res.data.user){
+    var meta=res.data.user.user_metadata||{};
+    var role=meta.role||'';
+    if(role==='water_admin'||role==='admin'||role==='mayor'){
+      await showWaterApp(res.data.user);
+    }
+  }
+});
+
+async function doLogin(){
+  var em=document.getElementById('li-em').value.trim();
+  var pw=document.getElementById('li-pw').value;
+  var err=document.getElementById('li-err');
+  if(!em||!pw){err.textContent='يرجى إدخال البريد وكلمة المرور';return;}
+  err.textContent='⏳ جاري الدخول…';
+  try{
+    var res=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(res.error) throw res.error;
+    var meta=res.data.user.user_metadata||{};
+    var role=meta.role||'';
+    if(role!=='water_admin'&&role!=='admin'&&role!=='mayor'){
+      err.textContent='⚠️ لا تملك صلاحية الدخول لنظام الري';
+      await sb.auth.signOut(); return;
+    }
+    await showWaterApp(res.data.user);
+  }catch(e){err.textContent='خطأ: '+e.message;}
+}
+
+async function showWaterApp(user){
+  var meta=user.user_metadata||{};
+  UN=meta.name||user.email;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='flex';
+  await loadWaterFromDB();
+  openWaterSchedule();
+}
+
+function doLogout(){sb.auth.signOut().then(function(){location.reload();});}
+
+function closeM(){
+  var ov=document.getElementById('OV');
+  if(ov){ov.classList.remove('open');ov.style.display='none';}
+  // Show main content again
+  openWaterSchedule();
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeM();});
+
+function toast(msg,type){
+  var c=document.getElementById('toast-c');
+  var t=document.createElement('div');
+  t.style.cssText='background:'+(type==='err'?'#e74c3c':type==='warn'?'#e67e22':'#222')+';color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;';
+  t.textContent=msg; c.appendChild(t);
+  setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);},3000);
+}
+
+// Override openWaterSchedule to render in main content area (not modal)
+// ── IRR OWNERS: Supabase table ───────────────────────────────────────────────
+var _irrOwnersCache = null;
+
+async function loadIrrOwners() {
+  if (!dbR || !sb) {
+    var ls=[];try{ls=JSON.parse(localStorage.getItem('wadi_irr_owners')||'[]');}catch(e){}
+    if(ls.length>0) _irrOwnersCache=ls;
+    return _irrOwnersCache||[];
+  }
+  try {
+    var res = await sb.from('irr_owners')
+      .select('*').eq('municipality_id','00000000-0000-0000-0000-000000000001')
+      .order('sort_order',{ascending:true});
+    if (res.error) throw res.error;
+    var tableData = (res.data||[]).map(function(r){
+      return {id:r.id,name:r.name,phone:r.phone,email:r.email||'',
+        area:r.area||'',landName:r.land_name||'',landRef:r.land_ref||'',
+        crop:r.crop||'',hours:parseFloat(r.hours)||0,order:r.sort_order||1,
+        notes:r.notes||'',createdAt:r.created_at||''};
+    });
+    // If table has data — use it. If empty — prefer localStorage (more complete)
+    var lsData=[];try{lsData=JSON.parse(localStorage.getItem('wadi_irr_owners')||'[]');}catch(e){}
+    var best = tableData.length>=lsData.length ? tableData : lsData;
+    _irrOwnersCache = best;
+    localStorage.setItem('wadi_irr_owners',JSON.stringify(best));
+    return _irrOwnersCache;
+  } catch(e) {
+    console.log('loadIrrOwners (table may not exist yet):', e.message);
+    var fallback=[];try{fallback=JSON.parse(localStorage.getItem('wadi_irr_owners')||'[]');}catch(x){}
+    _irrOwnersCache = fallback;
+    return fallback;
+  }
+}
+
+function getIrrOwners() {
+  if (_irrOwnersCache !== null) return _irrOwnersCache;
+  try { var d=JSON.parse(localStorage.getItem('wadi_irr_owners')||'[]'); _irrOwnersCache=d; return d; }
+  catch(e) { return []; }
+}
+
+function saveIrrOwners(owners) {
+  _irrOwnersCache = owners;
+  localStorage.setItem('wadi_irr_owners', JSON.stringify(owners));
+  if (!dbR || !sb) return;
+  // Save to settings as reliable fallback (always works)
+  sb.from('settings').upsert(
+    {key:'wadi_irr_owners',value:owners,municipality_id:'00000000-0000-0000-0000-000000000001',updated_at:new Date().toISOString()},
+    {onConflict:'key'}
+  ).catch(function(){});
+  // Also try irr_owners table (if it exists)
+  var rows=owners.map(function(o){
+    return {id:o.id,municipality_id:'00000000-0000-0000-0000-000000000001',
+      name:o.name,phone:o.phone,email:o.email||null,area:o.area||null,
+      land_name:o.landName||null,land_ref:o.landRef||null,crop:o.crop||null,
+      hours:o.hours,sort_order:o.order||1,notes:o.notes||null,
+      created_at:o.createdAt||new Date().toISOString().slice(0,10),
+      updated_at:new Date().toISOString()};
+  });
+  if(rows.length) sb.from('irr_owners').upsert(rows,{onConflict:'id'}).catch(function(){});
+}
+
+function deleteIrrOwnerDB(id) {
+  if (!dbR||!sb) return;
+  sb.from('irr_owners').delete().eq('id',id).catch(function(){});
+}
+// ── IRR CONFIG: Supabase table ────────────────────────────────────────────────
+var _irrConfigCache = null;
+
+async function loadIrrConfig() {
+  if (!dbR || !sb) return getIrrConfig();
+  try {
+    var res = await sb.from('irr_config')
+      .select('*')
+      .eq('municipality_id', '00000000-0000-0000-0000-000000000001')
+      .single();
+    if (res.error) throw res.error;
+    var r = res.data;
+    _irrConfigCache = {
+      dayStart: r.day_start || '06:00',
+      nightStart: r.night_start || '18:00',
+      totalHours: r.total_hours || 160,
+      cycleStartDate: r.cycle_start_date || '2026-04-20',
+      senderName: r.sender_name || 'لجنة الري — بلدية وادي الست',
+      senderEmail: r.sender_email || 'noreply@municipality-wadi-el-sitt.org'
+    };
+    localStorage.setItem('wadi_irr_config', JSON.stringify(_irrConfigCache));
+    return _irrConfigCache;
+  } catch(e) {
+    console.log('loadIrrConfig:', e.message);
+    // Fallback to localStorage — set cache too
+    var fallback = getIrrConfig();
+    _irrConfigCache = fallback;
+    return fallback;
+  }
+}
+
+function getIrrConfig() {
+  if (_irrConfigCache) return _irrConfigCache;
+  var def = {
+    dayStart: '06:00', nightStart: '18:00', totalHours: 160,
+    cycleStartDate: '2026-04-20',
+    senderName: 'لجنة الري — بلدية وادي الست',
+    senderEmail: 'noreply@municipality-wadi-el-sitt.org'
+  };
+  try { return Object.assign({}, def, JSON.parse(localStorage.getItem('wadi_irr_config')||'{}')); }
+  catch(e) { return def; }
+}
+
+
+
+function saveIrrConfig(d) {
+  localStorage.setItem('wadi_irr_config', JSON.stringify(d));
+  if (dbR && sb) sb.from('settings').upsert({key:'wadi_irr_config',value:d,updated_at:new Date().toISOString()},{onConflict:'key'}).catch(function(){});
+}
+function getIrrSettings() {
+  try { return JSON.parse(localStorage.getItem('wadi_irr_settings') || '{}'); }
+  catch(e) { return {}; }
+}
+function saveIrrSettings(d) {
+  localStorage.setItem('wadi_irr_settings', JSON.stringify(d));
+  if (dbR && sb) sb.from('settings').upsert({key:'wadi_irr_settings',value:d,updated_at:new Date().toISOString()},{onConflict:'key'}).catch(function(){});
+}
+
+// ── CORE CYCLE LOGIC ──────────────────────────────────────────────────────────
+const IRR_DAYS_AR = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+// Add minutes to a datetime, returns new datetime
+function addMinsToDate(dateObj, minutes) {
+  return new Date(dateObj.getTime() + minutes * 60000);
+}
+
+// Format date to HH:MM
+function fmtTime(dateObj) {
+  var h = dateObj.getHours(), m = dateObj.getMinutes();
+  return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
+}
+
+// Format date to Arabic day + date
+function fmtDateAr(dateObj) {
+  var days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  return days[dateObj.getDay()] + ' ' + dateObj.toLocaleDateString('ar-LB');
+}
+
+// Get current cycle info
+// Returns: { cycleNum, isDay, cycleStart (Date), cycleEnd (Date) }
+function getCurrentCycleInfo() {
+  var cfg = getIrrConfig();
+  var owners = getIrrOwners().sort(function(a,b){ return (a.order||0)-(b.order||0); });
+  var totalMinutes = owners.reduce(function(s,o){ return s + (parseFloat(o.hours)||0)*60; }, 0);
+  if (totalMinutes <= 0) totalMinutes = cfg.totalHours * 60;
+
+  var cycleStart = new Date(cfg.cycleStartDate);
+  cycleStart.setHours(
+    parseInt((cfg.dayStart||'06:00').split(':')[0]),
+    parseInt((cfg.dayStart||'06:00').split(':')[1]),
+    0, 0
+  );
+
+  var now = new Date();
+  // Find which cycle we're in
+  var elapsed = now - cycleStart; // ms
+  if (elapsed < 0) elapsed = 0;
+  var cycleMs = totalMinutes * 60000;
+  var cycleNum = Math.floor(elapsed / cycleMs); // 0-based
+  var thisCycleStart = new Date(cycleStart.getTime() + cycleNum * cycleMs);
+  var thisCycleEnd = new Date(thisCycleStart.getTime() + cycleMs);
+  var isDay = (cycleNum % 2 === 0); // even=day, odd=night
+
+  return {
+    cycleNum: cycleNum + 1, // 1-based for display
+    isDay: isDay,
+    cycleStart: thisCycleStart,
+    cycleEnd: thisCycleEnd,
+    totalMinutes: totalMinutes
+  };
+}
+
+// Get schedule for a specific owner in a specific cycle (0=current, 1=next, -1=prev)
+function getOwnerSchedule(owner, cycleOffset) {
+  var cfg = getIrrConfig();
+  cycleOffset = cycleOffset || 0;
+  var owners = getIrrOwners().sort(function(a,b){ return (a.order||0)-(b.order||0); });
+
+  // Cumulative minutes before this owner
+  var cumMins = 0;
+  for (var i = 0; i < owners.length; i++) {
+    if (owners[i].id === owner.id) break;
+    cumMins += (parseFloat(owners[i].hours)||0) * 60;
+  }
+
+  var cycleInfo = getCurrentCycleInfo();
+  var targetCycleNum = cycleInfo.cycleNum - 1 + cycleOffset; // 0-based
+  var isDay = (targetCycleNum % 2 === 0);
+
+  // Cycle start datetime
+  var totalMs = cycleInfo.totalMinutes * 60000;
+  var cycleStart0 = new Date(cycleInfo.cycleStart.getTime() + cycleOffset * totalMs);
+
+  // Owner's start = cycle start + cumulative minutes
+  var ownerStart = addMinsToDate(cycleStart0, cumMins);
+  var ownerEnd = addMinsToDate(ownerStart, (parseFloat(owner.hours)||0) * 60);
+
+  return {
+    isDay: isDay,
+    cycleLabel: isDay ? '☀️ نهار' : '🌙 ليل',
+    cycleNum: targetCycleNum + 1,
+    startDate: ownerStart,
+    endDate: ownerEnd,
+    startTime: fmtTime(ownerStart),
+    endTime: fmtTime(ownerEnd),
+    startDateStr: fmtDateAr(ownerStart),
+    endDateStr: fmtDateAr(ownerEnd),
+    sameDay: ownerStart.toDateString() === ownerEnd.toDateString()
+  };
+}
+
+function getTotalAllocatedHours() {
+  return getIrrOwners().reduce(function(s,o){ return s+(parseFloat(o.hours)||0); },0);
+}
+function getRemainingHours() {
+  return getIrrConfig().totalHours - getTotalAllocatedHours();
+}
+
+// ── NOTIFICATION SETTINGS ─────────────────────────────────────────────────────
+function getMergedIrrSettings() {
+  var def = {
+    senderName: 'لجنة الري — بلدية وادي الست',
+    senderEmail: 'noreply@municipality-wadi-el-sitt.org',
+    notifications: {
+      tomorrow: { enabled:true, label:'قبل يوم (مساءً)', icon:'🌙',
+        subject:'تذكير: دور الري غداً',
+        body:'السيد/ة {name}،\nتذكير: دور الري غداً {startDate}\nالوقت: {startTime} حتى {endTime} ({hours} ساعة)\nالدورة: {cycle}\nالقطعة: {land}' },
+      morning: { enabled:true, label:'صباح يوم الدور', icon:'🌅',
+        subject:'تذكير: دور الري اليوم',
+        body:'السيد/ة {name}،\nدور الري اليوم {startDate}\nالوقت: {startTime} — {endTime}\nالدورة: {cycle}' },
+      one_hour: { enabled:true, label:'ساعة قبل البدء', icon:'⏰',
+        subject:'تنبيه: الري يبدأ بعد ساعة',
+        body:'السيد/ة {name}،\nتنبيه: دور الري يبدأ الساعة {startTime} (بعد ساعة)\nالقطعة: {land}' },
+      end: { enabled:false, label:'عند انتهاء الدور', icon:'🏁',
+        subject:'انتهى دور الري',
+        body:'السيد/ة {name}،\nانتهى دور الري من {startTime} حتى {endTime}.\nشكراً للالتزام.' }
+    },
+    emailColors: { tomorrow:'#1a6eb5', morning:'#e67e22', one_hour:'#e74c3c', end:'#27ae60' }
+  };
+  var saved = getIrrSettings();
+  if (saved.notifications) Object.keys(def.notifications).forEach(function(k){
+    if(saved.notifications[k]) def.notifications[k]=Object.assign({},def.notifications[k],saved.notifications[k]);
+  });
+  return Object.assign({},def,saved,{notifications:def.notifications});
+}
+
+function fillIrrTemplate(tpl, owner, sch) {
+  return (tpl||'')
+    .replace(/{name}/g, owner.name||'')
+    .replace(/{startDate}/g, sch.startDateStr||'')
+    .replace(/{endDate}/g, sch.endDateStr||'')
+    .replace(/{startTime}/g, sch.startTime||'')
+    .replace(/{endTime}/g, sch.endTime||'')
+    .replace(/{hours}/g, owner.hours||'')
+    .replace(/{cycle}/g, sch.cycleLabel||'')
+    .replace(/{land}/g, owner.landName||'—')
+    .replace(/{phone}/g, owner.phone||'')
+    .replace(/{area}/g, owner.area||'');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MAIN OPEN
+// ══════════════════════════════════════════════════════════════════════════════
+async function openWaterSchedule() {
+  // Load fresh data from Supabase (with error handling)
+  try { await loadIrrOwners(); } catch(e){ console.log('openWater loadOwners:',e.message); }
+  try { await loadIrrConfig(); } catch(e){ console.log('openWater loadConfig:',e.message); }
+  var cfg = getIrrConfig();
+  var owners = getIrrOwners().sort(function(a,b){return (a.order||0)-(b.order||0);});
+  var totalAlloc = getTotalAllocatedHours();
+  var remaining = getRemainingHours();
+  var cycleInfo = getCurrentCycleInfo();
+
+  var nextCycleStart = cycleInfo.cycleEnd;
+  var nextIsDay = !cycleInfo.isDay;
+
+  document.getElementById('MT').textContent = '💧 نظام دورة الري';
+  var html_content = '<style>'
+    +'.irtab{padding:8px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);white-space:nowrap}'
+    +'.irtab.on{background:#1a6eb5;color:#fff;border-color:#1a6eb5}'
+    +'.ircard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px}'
+    +'</style>'
+
+    // Current cycle banner
+    +'<div style="background:linear-gradient(120deg,'+(cycleInfo.isDay?'#e67e22,#f39c12':'#2c3e6b,#3a4fa8')+');color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:12px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    +'<div>'
+    +'<div style="font-size:14px;font-weight:800">الدورة '+(cycleInfo.isDay?'☀️ النهارية':'🌙 الليلية')+' رقم '+cycleInfo.cycleNum+'</div>'
+    +'<div style="font-size:11px;opacity:.85;margin-top:2px">'
+    +'بدأت: '+fmtDateAr(cycleInfo.cycleStart)+' '+fmtTime(cycleInfo.cycleStart)
+    +' | تنتهي: '+fmtDateAr(cycleInfo.cycleEnd)+' '+fmtTime(cycleInfo.cycleEnd)
+    +'</div>'
+    +'</div>'
+    +'<div style="text-align:center;background:rgba(255,255,255,.15);border-radius:8px;padding:6px 12px">'
+    +'<div style="font-size:18px;font-weight:800">'+totalAlloc+'/'+cfg.totalHours+'</div>'
+    +'<div style="font-size:10px;opacity:.8">ساعة مخصصة</div>'
+    +'</div>'
+    +'</div>'
+    +'<div style="font-size:11px;opacity:.8;margin-top:6px">الدورة القادمة: '+(nextIsDay?'☀️ نهار':'🌙 ليل')+' — تبدأ '+fmtDateAr(nextCycleStart)+' '+fmtTime(nextCycleStart)+'</div>'
+    +'</div>'
+
+    // Hours bar
+    +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px">'
+    +'<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">'
+    +'<span><strong>'+totalAlloc+'س</strong> مخصصة من <strong>'+cfg.totalHours+'س</strong></span>'
+    +'<span style="color:'+(remaining>=0?'var(--green2)':'var(--danger)')+'">متبقي: '+remaining.toFixed(1)+'س</span>'
+    +'</div>'
+    +'<div style="background:#eee;border-radius:20px;height:7px;overflow:hidden">'
+    +'<div style="background:'+(remaining<0?'var(--danger)':'linear-gradient(90deg,#1e5429,#2d7a3e)')+';height:100%;width:'+Math.min(100,totalAlloc/cfg.totalHours*100).toFixed(1)+'%;border-radius:20px"></div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:3px">168 ساعة/أسبوع · مباع: '+cfg.totalHours+'س · صيانة: '+(168-cfg.totalHours)+'س · '+owners.length+' مشترك</div>'
+    +'</div>'
+
+    // Tabs
+    +'<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">'
+    +'<div class="irtab on" onclick="irTab(this,\'ir-list\')">📋 المشتركون ('+owners.length+')</div>'
+    +'<div class="irtab" onclick="irTab(this,\'ir-add\')">➕ إضافة</div>'
+    +'<div class="irtab" onclick="irTab(this,\'ir-timeline\');renderIrrTimeline()">📅 الجدول الكامل</div>'
+    +'<div class="irtab" onclick="irTab(this,\'ir-notify\');renderIrrNotifPanel()">🔔 الإشعارات</div>'
+    +'<div class="irtab" onclick="irTab(this,\'ir-settings\');renderIrrSettings()">⚙️ الإعدادات</div>'
+    +'</div>'
+
+    // LIST panel
+    +'<div id="ir-list">'
+    +'<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
+    +'<input type="text" id="ir-search" placeholder="🔍 بحث…" class="fi" style="flex:1;min-width:140px" oninput="renderIrrList()">'
+    +'<button class="btn bp" style="font-size:12px;padding:6px 12px" onclick="irrNotifyAll(\'tomorrow\')">📧 إشعار للكل</button>'
+    +'</div>'
+    +'<div id="irr-list-body"></div>'
+    +'</div>'
+
+    // ADD panel
+    +'<div id="ir-add" style="display:none">'
+    +'<div class="admin-section">'
+    +'<div class="admin-header">➕ تسجيل صاحب حق ري</div>'
+    +'<div style="font-size:12px;color:var(--text3);margin-bottom:12px">الوقت يُحسب تلقائياً حسب الترتيب والدورة — لا يوجد يوم ثابت</div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue2);margin:10px 0 6px">👤 الشخص</div>'
+    +'<div class="fg"><div class="fl">الاسم *</div><input type="text" class="fi" id="ir-name"></div>'
+    +'<div class="fg"><div class="fl">الهاتف *</div><input type="tel" class="fi" id="ir-phone" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="ir-email" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="ir-area"></div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue2);margin:12px 0 6px">🌿 حق الري</div>'
+    +'<div class="fg"><div class="fl">اسم القطعة</div><input type="text" class="fi" id="ir-land" placeholder="بستان الزيتون"></div>'
+    +'<div class="fg"><div class="fl">رقم السند</div><input type="text" class="fi" id="ir-ref"></div>'
+    +'<div class="fg"><div class="fl">المحصول</div><input type="text" class="fi" id="ir-crop" placeholder="زيتون، كرمة..."></div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue2);margin:12px 0 6px">⏱️ الحصة</div>'
+    +'<div class="fg"><div class="fl">الساعات *</div>'
+    +'<div style="display:flex;gap:8px;align-items:center">'
+    +'<input type="number" class="fi" id="ir-hours" placeholder="مثال: 2.5" step="0.5" min="0.5" max="24" style="flex:1" oninput="updateIrrPreview()">'
+    +'<span id="ir-rem-badge" style="font-size:12px;padding:3px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);white-space:nowrap">متبقي: '+remaining.toFixed(1)+'س</span>'
+    +'</div></div>'
+    +'<div class="fg"><div class="fl">الترتيب *</div>'
+    +'<input type="number" class="fi" id="ir-order" value="'+(owners.length+1)+'" min="1" oninput="updateIrrPreview()"></div>'
+    +'<div style="background:#f0fdf4;border:1.5px solid #a8d9b4;border-radius:10px;padding:10px 12px;margin:8px 0;font-size:13px">'
+    +'<div style="font-size:11px;font-weight:700;color:#1e5429;margin-bottom:5px">📅 معاينة الدور (تلقائي)</div>'
+    +'<div id="ir-preview-day" style="margin-bottom:3px">☀️ النهار: —</div>'
+    +'<div id="ir-preview-night">🌙 الليل: —</div>'
+    +'</div>'
+    +'<div class="fg"><div class="fl">ملاحظات</div><textarea class="fi" id="ir-notes" rows="2" style="resize:none"></textarea></div>'
+    +'<button class="btn bp" style="width:100%;justify-content:center;margin-top:12px" onclick="saveIrrOwner()">✓ تسجيل</button>'
+    +'<div id="ir-msg" style="margin-top:8px;text-align:center;font-size:13px;min-height:18px"></div>'
+    +'</div></div>'
+
+    // TIMELINE panel
+    +'<div id="ir-timeline" style="display:none"><div id="irr-timeline-body"></div></div>'
+
+    // NOTIFY panel
+    +'<div id="ir-notify" style="display:none"><div id="irr-notif-body"></div></div>'
+
+    // SETTINGS panel
+    +'<div id="ir-settings" style="display:none"><div id="irr-settings-body"></div></div>';
+
+  document.getElementById('MB').innerHTML = html_content;
+  document.getElementById('OV').classList.add('open');
+  renderIrrList();
+}
+
+function irTab(el, id) {
+  document.querySelectorAll('.irtab').forEach(function(t){t.classList.remove('on');});
+  el.classList.add('on');
+  ['ir-list','ir-add','ir-timeline','ir-notify','ir-settings'].forEach(function(tid){
+    var e=document.getElementById(tid); if(e) e.style.display=tid===id?'block':'none';
+  });
+}
+
+// ── PREVIEW while adding ──────────────────────────────────────────────────────
+
+// ── LIST ──────────────────────────────────────────────────────────────────────
+function renderIrrList() {
+  var el=document.getElementById('irr-list-body'); if(!el) return;
+  var owners=getIrrOwners().sort(function(a,b){return (a.order||0)-(b.order||0);});
+  var q=(document.getElementById('ir-search')||{value:''}).value.toLowerCase();
+  var filtered=q?owners.filter(function(o){return (o.name||'').toLowerCase().includes(q)||(o.phone||'').includes(q);}):owners;
+
+  if(!filtered.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">'+(owners.length?'لا نتائج':'📭 لا يوجد مشتركون بعد')+'</div>'; return;
+  }
+
+  el.innerHTML=filtered.map(function(o){
+    var sch=getOwnerSchedule(o,0);
+    var schNext=getOwnerSchedule(o,1);
+    return '<div class="ircard">'
+      +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1e5429,#2d7a3e);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0">'+(o.order||'?')+'</div>'
+      +'<div style="flex:1;min-width:100px">'
+      +'<div style="font-weight:700;font-size:14px">'+o.name+'</div>'
+      +'<div style="font-size:12px;color:var(--text3)">📞 '+(o.phone||'—')+(o.email?' · 📧 '+o.email:'')+'</div>'
+      +(o.landName?'<div style="font-size:11px;color:var(--text3)">🌿 '+o.landName+(o.crop?' ('+o.crop+')':'')+'</div>':'')
+      +'</div>'
+      +'<span style="background:#d4edda;color:#1e5429;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">💧 '+o.hours+'س</span>'
+      +'</div>'
+      // This cycle
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">'
+      +'<div style="padding:8px 10px;border-radius:8px;background:'+(sch.isDay?'#fff9e6':'#eef0ff')+';border:1px solid '+(sch.isDay?'#f5c842':'#6c7ae0')+'">'
+      +'<div style="font-size:10px;font-weight:700;color:'+(sch.isDay?'#7d5a00':'#3a3fa8')+'">هذه الدورة '+sch.cycleLabel+'</div>'
+      +'<div style="font-size:11px;font-weight:700;margin-top:2px">'+sch.startDateStr+'</div>'
+      +'<div style="font-size:12px;direction:ltr">'+sch.startTime+' — '+sch.endTime+'</div>'
+      +'</div>'
+      +'<div style="padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--border)">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--text3)">الدورة القادمة '+schNext.cycleLabel+'</div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+schNext.startDateStr+'</div>'
+      +'<div style="font-size:12px;color:var(--text3);direction:ltr">'+schNext.startTime+' — '+schNext.endTime+'</div>'
+      +'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
+      +'<button class="btn" style="padding:4px 10px;font-size:12px" onclick="editIrrOwner(\''+o.id+'\')">✏️</button>'
+      +(o.email?'<button class="btn bp" style="padding:4px 12px;font-size:12px" data-irrnn="'+o.id+'">📧 إشعار الآن</button>':'<span style="font-size:11px;color:var(--text3)">بدون بريد</span>')
+      +'<button class="btn" style="padding:4px 10px;font-size:12px;color:var(--danger)" onclick="deleteIrrOwner(\''+o.id+'\',\''+o.name+'\')">🗑️</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── TIMELINE (Full schedule for current cycle) ─────────────────────────────────
+function renderIrrTimeline() {
+  var el=document.getElementById('irr-timeline-body'); if(!el) return;
+  var owners=getIrrOwners().sort(function(a,b){return (a.order||0)-(b.order||0);});
+  var cycleInfo=getCurrentCycleInfo();
+
+  var html='<div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap">'
+    +'<div style="padding:7px 12px;border-radius:8px;background:'+(cycleInfo.isDay?'#fff9e6':'#eef0ff')+';border:1.5px solid '+(cycleInfo.isDay?'#f5c842':'#6c7ae0')+';font-size:12px;font-weight:700">'
+    +'الدورة الحالية '+(cycleInfo.isDay?'☀️ نهار':'🌙 ليل')+' — بدأت '+fmtDateAr(cycleInfo.cycleStart)+'</div>'
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:4px">';
+
+  owners.forEach(function(o,i){
+    var sch=getOwnerSchedule(o,0);
+    var isActive = new Date() >= sch.startDate && new Date() <= sch.endDate;
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:1px solid '+(isActive?'#1e5429':'var(--border)')+';background:'+(isActive?'#f0fdf4':i%2===0?'var(--bg2)':'#fff')+'">'
+      +'<div style="width:28px;height:28px;border-radius:50%;background:'+(isActive?'#1e5429':'#888')+';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">'+(o.order||i+1)+'</div>'
+      +'<div style="flex:1;min-width:80px">'
+      +'<div style="font-weight:700;font-size:13px">'+(isActive?'🟢 ':'')+''+o.name+'</div>'
+      +(o.landName?'<div style="font-size:11px;color:var(--text3)">🌿 '+o.landName+'</div>':'')
+      +'</div>'
+      +'<div style="text-align:left">'
+      +'<div style="font-size:11px;color:var(--text3)">'+sch.startDateStr+'</div>'
+      +'<div style="font-weight:700;font-size:13px;direction:ltr">'+sch.startTime+' — '+sch.endTime+'</div>'
+      +'</div>'
+      +'<span style="background:#d4edda;color:#1e5429;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">'+o.hours+'س</span>'
+      +'</div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+// ── NOTIFICATION PANEL ────────────────────────────────────────────────────────
+function renderIrrNotifPanel() {
+  var el=document.getElementById('irr-notif-body'); if(!el) return;
+  var s=getMergedIrrSettings();
+  var owners=getIrrOwners();
+  var withEmail=owners.filter(function(o){return o.email;});
+
+  var rows=Object.keys(s.notifications).map(function(k){
+    var n=s.notifications[k];
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);margin-bottom:8px;'+(n.enabled?'':'opacity:.5')+'">'
+      +'<div><div style="font-weight:700;font-size:13px">'+n.icon+' '+n.label+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+n.subject+'</div></div>'
+      +(n.enabled?'<button class="btn bp" style="padding:6px 14px;font-size:12px" onclick="irrNotifyAll(\''+k+'\')">إرسال للكل</button>':'<span style="font-size:11px;color:var(--text3)">معطّل</span>')
+      +'</div>';
+  }).join('');
+
+  el.innerHTML='<div class="admin-section">'
+    +'<div class="admin-header">📧 الإشعارات</div>'
+    +'<div style="background:#f0fdf4;border:1px solid #a8d9b4;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px">'
+    +owners.length+' مشترك · 📧 '+withEmail.length+' لديهم بريد · '+(owners.length-withEmail.length)+' بدون بريد'
+    +'</div>'+rows
+    +'<div id="irr-notif-result" style="margin-top:10px;text-align:center;font-size:13px;min-height:18px"></div>'
+    +'</div>';
+}
+
+async function irrNotifyAll(type) {
+  var s=getMergedIrrSettings(), notif=s.notifications[type];
+  if(!notif||!notif.enabled){toast('هذا النوع معطّل','err');return;}
+  var result=document.getElementById('irr-notif-result');
+  var owners=getIrrOwners().filter(function(o){return o.email;});
+  if(!owners.length){if(result){result.style.color='var(--danger)';result.textContent='لا يوجد بريد';}return;}
+  if(result){result.style.color='var(--text3)';result.textContent='⏳ جاري الإرسال…';}
+  var BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
+  var sent=0,failed=0;
+  for(var i=0;i<owners.length;i++){
+    var o=owners[i]; var sch=getOwnerSchedule(o,0);
+    try {
+      var r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',
+        headers:{'api-key':BKEY,'Content-Type':'application/json'},
+        body:JSON.stringify({sender:{name:s.senderName,email:s.senderEmail},to:[{email:o.email,name:o.name}],
+          subject:fillIrrTemplate(notif.subject,o,sch),
+          htmlContent:buildIrrEmail(o,type,s,fillIrrTemplate(notif.body,o,sch),sch)})});
+      if(r.ok||r.status===201) sent++; else failed++;
+    }catch(e){failed++;}
+  }
+  if(result){result.style.color=failed===0?'var(--green2)':'var(--warn)';result.textContent='✅ '+sent+' إشعار'+(failed?' · ❌ '+failed:'');}
+}
+
+// ── NOTIFY NOW (single) ───────────────────────────────────────────────────────
+function irrNotifyNow(id) {
+  var o=getIrrOwners().find(function(x){return x.id===id;});
+  if(!o||!o.email){toast('لا يملك بريداً','err');return;}
+  var s=getMergedIrrSettings(), sch=getOwnerSchedule(o,0), schNext=getOwnerSchedule(o,1);
+  var notifKeys=Object.keys(s.notifications).filter(function(k){return s.notifications[k].enabled;});
+  var ov=document.createElement('div');
+  ov.id='irr-nn-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';
+  var btns=notifKeys.map(function(k){
+    var n=s.notifications[k];
+    return '<button class="btn bp" style="justify-content:flex-start;gap:10px;margin-bottom:8px;width:100%" data-irrnn-send="'+id+'|'+k+'">'
+      +'<span>'+n.icon+'</span><div><div style="font-weight:700">'+n.label+'</div></div></button>';
+  }).join('');
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;max-width:400px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    +'<div style="font-size:15px;font-weight:800;color:#1e5429">📧 إشعار الآن</div>'
+    +'<button onclick="document.getElementById(\'irr-nn-ov\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999">✕</button>'
+    +'</div>'
+    +'<div style="background:#f0fdf4;border:1.5px solid #a8d9b4;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+    +'<div style="font-weight:700;color:#1e5429">#'+o.order+' — '+o.name+'</div>'
+    +'<div style="font-size:12px;color:#666;direction:ltr">'+o.email+'</div>'
+    +'<div style="font-size:12px;font-weight:700;margin-top:6px">'
+    +'<span style="background:'+(sch.isDay?'#fff9e6':'#eef0ff')+';padding:2px 8px;border-radius:6px">هذه الدورة: '+sch.cycleLabel+' '+sch.startDateStr+' '+sch.startTime+'–'+sch.endTime+'</span>'
+    +'</div></div>'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">نوع الإشعار:</div>'
+    +btns
+    +'<div id="irr-nn-res" style="margin-top:8px;text-align:center;font-size:13px;min-height:16px"></div>'
+    +'</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){if(e.target===ov)ov.remove();});
+}
+
+async function sendIrrNN(id,type) {
+  var o=getIrrOwners().find(function(x){return x.id===id;});
+  if(!o||!o.email)return;
+  var s=getMergedIrrSettings(), notif=s.notifications[type], sch=getOwnerSchedule(o,0);
+  var res=document.getElementById('irr-nn-res');
+  if(res){res.style.color='var(--text3)';res.textContent='⏳ جاري…';}
+  var BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
+  try {
+    var r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',
+      headers:{'api-key':BKEY,'Content-Type':'application/json'},
+      body:JSON.stringify({sender:{name:s.senderName,email:s.senderEmail},to:[{email:o.email,name:o.name}],
+        subject:fillIrrTemplate(notif.subject,o,sch),
+        htmlContent:buildIrrEmail(o,type,s,fillIrrTemplate(notif.body,o,sch),sch)})});
+    var ok=r.ok||r.status===201;
+    if(res){res.style.color=ok?'var(--green2)':'var(--danger)';res.textContent=ok?'✅ تم!':'❌ فشل';}
+    if(ok){toast('✅ إشعار لـ '+o.name);setTimeout(function(){var v=document.getElementById('irr-nn-ov');if(v)v.remove();},1500);}
+  }catch(e){if(res){res.style.color='var(--danger)';res.textContent='خطأ: '+e.message;}}
+}
+
+// Event delegation
+document.addEventListener('click',function(e){
+  var b1=e.target.closest?e.target.closest('[data-irrnn]'):null;
+  if(b1)irrNotifyNow(b1.getAttribute('data-irrnn'));
+  var b2=e.target.closest?e.target.closest('[data-irrnn-send]'):null;
+  if(b2){var p=b2.getAttribute('data-irrnn-send').split('|');sendIrrNN(p[0],p[1]);}
+});
+
+// ── EMAIL BUILDER ─────────────────────────────────────────────────────────────
+function buildIrrEmail(o,type,settings,bodyText,sch){
+  var color=(settings.emailColors||{})[type]||'#1e5429';
+  var notif=settings.notifications[type];
+  var icon=notif?notif.icon:'💧';
+  var bodyHtml=(bodyText||'').replace(/\n/g,'<br>');
+  return '<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><style>'
+    +'body{font-family:Tahoma,Arial,sans-serif;background:#f0f6f0;direction:rtl;padding:16px;margin:0}'
+    +'.card{background:#fff;border-radius:16px;max-width:520px;margin:0 auto;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)}'
+    +'.hdr{background:'+color+';color:#fff;padding:18px 22px;text-align:center}'
+    +'.body{padding:20px 24px;font-size:15px;line-height:1.9;color:#333}'
+    +'.box{background:#f0fdf4;border:2px solid #a8d9b4;border-radius:12px;padding:14px;margin:12px 0;text-align:center}'
+    +'.ft{background:#f8f9fb;padding:10px;font-size:11px;color:#999;text-align:center;border-top:1px solid #eee}'
+    +'</style></head><body><div class="card">'
+    +'<div class="hdr"><h2 style="margin:0;font-size:17px">'+icon+' نظام الري — بلدية وادي الست</h2></div>'
+    +'<div class="body"><p>'+bodyHtml+'</p>'
+    +'<div class="box">'
+    +'<div style="font-size:13px;color:#666">'+sch.cycleLabel+' — '+sch.startDateStr+'</div>'
+    +'<div style="font-size:22px;font-weight:800;color:'+color+';margin:6px 0">⏰ '+sch.startTime+' — '+sch.endTime+'</div>'
+    +'<div style="font-size:18px;font-weight:800;color:#1e5429">💧 '+o.hours+' ساعة</div>'
+    +(o.landName?'<div style="font-size:12px;color:#555;margin-top:6px">🌿 '+o.landName+'</div>':'')
+    +'</div></div>'
+    +'<div class="ft">بلدية وادي الست · قضاء الشوف · Powered by IanTrading SAL © 2026</div>'
+    +'</div></body></html>';
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderIrrSettings(){
+  var el=document.getElementById('irr-settings-body'); if(!el) return;
+  var cfg=getIrrConfig(), s=getMergedIrrSettings();
+  var notifRows=Object.keys(s.notifications).map(function(k){
+    var n=s.notifications[k],c=(s.emailColors||{})[k]||'#1e5429';
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+      +'<span>'+n.icon+'</span><div style="flex:1;font-weight:700;font-size:13px">'+n.label+'</div>'
+      +'<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer">'
+      +'<input type="checkbox" id="isn-en-'+k+'" '+(n.enabled?'checked':'')+' style="accent-color:var(--blue);width:14px;height:14px"> مفعّل</label>'
+      +'</div>'
+      +'<div class="fg"><div class="fl" style="font-size:12px">الموضوع</div><input type="text" class="fi" id="isn-sub-'+k+'" value="'+n.subject+'" style="font-size:12px"></div>'
+      +'<div class="fg"><div class="fl" style="font-size:12px">نص الرسالة</div><textarea class="fi" id="isn-body-'+k+'" rows="3" style="resize:none;font-size:11px">'+n.body+'</textarea></div>'
+      +'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">المتغيرات: {name} {startDate} {startTime} {endTime} {hours} {cycle} {land}</div>'
+      +'<div class="fg"><div class="fl" style="font-size:12px">اللون</div><input type="color" id="isn-color-'+k+'" value="'+c+'" style="width:44px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px"></div>'
+      +'</div>';
+  }).join('');
+
+  el.innerHTML='<div class="admin-section">'
+    +'<div class="admin-header">⚙️ إعدادات نظام الري</div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue2);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🕐 إعدادات الدورة</div>'
+    +'<div class="fg"><div class="fl">بداية النهار ☀️</div><input type="time" class="fi" id="irset-day" value="'+cfg.dayStart+'" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">بداية الليل 🌙</div><input type="time" class="fi" id="irset-night" value="'+cfg.nightStart+'" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">إجمالي الساعات المباعة</div><input type="number" class="fi" id="irset-total" value="'+cfg.totalHours+'" min="1" max="168" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">تاريخ بدء أول دورة نهار</div>'
+    +'<input type="datetime-local" class="fi" id="irset-cyclestart" value="'+cfg.cycleStartDate+'T'+cfg.dayStart+'" style="direction:ltr">'
+    +'<div style="font-size:11px;color:var(--text3);margin-top:3px">هذا هو المرجع لحساب كل الدورات والتناوب</div></div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue2);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)">👤 المرسِل</div>'
+    +'<div class="fg"><div class="fl">الاسم</div><input type="text" class="fi" id="irset-sname" value="'+s.senderName+'"></div>'
+    +'<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="irset-semail" value="'+s.senderEmail+'" style="direction:ltr"></div>'
+    +'<div style="font-size:12px;font-weight:700;color:var(--blue2);margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)">🔔 الإشعارات</div>'
+    +notifRows
+    +'<button class="btn bp" style="width:100%;justify-content:center;margin-top:12px" onclick="saveIrrAll()">💾 حفظ كل الإعدادات</button>'
+    +'<div id="irset-msg" style="margin-top:8px;text-align:center;font-size:13px;min-height:18px"></div>'
+    +'</div>';
+}
+
+function saveIrrAll(){
+  var cfg=getIrrConfig();
+  cfg.dayStart=(document.getElementById('irset-day')||{value:cfg.dayStart}).value;
+  cfg.nightStart=(document.getElementById('irset-night')||{value:cfg.nightStart}).value;
+  cfg.totalHours=parseFloat((document.getElementById('irset-total')||{value:160}).value)||160;
+  var dt=(document.getElementById('irset-cyclestart')||{value:''}).value;
+  if(dt){ cfg.cycleStartDate=dt.slice(0,10); cfg.dayStart=dt.slice(11,16)||cfg.dayStart; }
+  saveIrrConfig(cfg);
+  var s=getMergedIrrSettings();
+  s.senderName=(document.getElementById('irset-sname')||{value:s.senderName}).value.trim();
+  s.senderEmail=(document.getElementById('irset-semail')||{value:s.senderEmail}).value.trim();
+  Object.keys(s.notifications).forEach(function(k){
+    var en=document.getElementById('isn-en-'+k),sub=document.getElementById('isn-sub-'+k),
+        body=document.getElementById('isn-body-'+k),clr=document.getElementById('isn-color-'+k);
+    if(en)s.notifications[k].enabled=en.checked;
+    if(sub)s.notifications[k].subject=sub.value.trim();
+    if(body)s.notifications[k].body=body.value.trim();
+    if(clr)s.emailColors[k]=clr.value;
+  });
+  saveIrrSettings(s);
+  var msg=document.getElementById('irset-msg');
+  if(msg){msg.style.color='var(--green2)';msg.textContent='✅ تم الحفظ';}
+  toast('✅ تم حفظ إعدادات الري');
+  openWaterSchedule();
+}
+
+// ── SAVE / EDIT / DELETE ──────────────────────────────────────────────────────
+function saveIrrOwner(){
+  var name=(document.getElementById('ir-name')||{value:''}).value.trim();
+  var phone=(document.getElementById('ir-phone')||{value:''}).value.trim();
+  var hours=parseFloat((document.getElementById('ir-hours')||{value:0}).value)||0;
+  var msg=document.getElementById('ir-msg');
+  if(!name){if(msg){msg.style.color='var(--danger)';msg.textContent='يرجى الاسم';}return;}
+  if(!phone){if(msg){msg.style.color='var(--danger)';msg.textContent='يرجى الهاتف';}return;}
+  if(!hours){if(msg){msg.style.color='var(--danger)';msg.textContent='يرجى الساعات';}return;}
+  var rem=getRemainingHours()-hours;
+  if(rem<-0.01){if(msg){msg.style.color='var(--danger)';msg.textContent='تجاوز! متبقي: '+getRemainingHours().toFixed(1)+'س';}return;}
+  var o={id:'ir_'+Date.now().toString(36),name,phone,
+    email:(document.getElementById('ir-email')||{value:''}).value.trim(),
+    area:(document.getElementById('ir-area')||{value:''}).value.trim(),
+    landName:(document.getElementById('ir-land')||{value:''}).value.trim(),
+    landRef:(document.getElementById('ir-ref')||{value:''}).value.trim(),
+    crop:(document.getElementById('ir-crop')||{value:''}).value.trim(),
+    hours,order:parseInt((document.getElementById('ir-order')||{value:1}).value)||1,
+    notes:(document.getElementById('ir-notes')||{value:''}).value.trim(),
+    createdAt:new Date().toISOString().slice(0,10)};
+  var owners=getIrrOwners(); owners.push(o); saveIrrOwners(owners);
+  if(msg){msg.style.color='var(--green2)';msg.textContent='✅ تم تسجيل '+name+' · متبقي: '+rem.toFixed(1)+'س';}
+  ['ir-name','ir-phone','ir-email','ir-area','ir-land','ir-ref','ir-crop','ir-notes'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  updateWaterBadge();
+}
+
+function deleteIrrOwner(id,name){
+  if(!confirm('حذف '+name+'؟'))return;
+  var updated = getIrrOwners().filter(function(o){return o.id!==id;});
+  _irrOwnersCache = updated;
+  localStorage.setItem('wadi_irr_owners', JSON.stringify(updated));
+  deleteIrrOwnerFromDB(id);
+  renderIrrList(); updateWaterBadge(); toast('🗑️ '+name);
+}
+
+function editIrrOwner(id){
+  var o=getIrrOwners().find(function(x){return x.id===id;}); if(!o)return;
+  document.getElementById('MB').innerHTML='<div>'
+    +'<div style="font-size:16px;font-weight:800;color:#1e5429;margin-bottom:12px">✏️ تعديل: '+o.name+'</div>'
+    +'<div class="admin-section">'
+    +'<div class="fg"><div class="fl">الاسم</div><input type="text" class="fi" id="ire-name" value="'+(o.name||'')+'"></div>'
+    +'<div class="fg"><div class="fl">الهاتف</div><input type="tel" class="fi" id="ire-phone" value="'+(o.phone||'')+'" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="ire-email" value="'+(o.email||'')+'" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="ire-area" value="'+(o.area||'')+'"></div>'
+    +'<div class="fg"><div class="fl">القطعة</div><input type="text" class="fi" id="ire-land" value="'+(o.landName||'')+'"></div>'
+    +'<div class="fg"><div class="fl">السند</div><input type="text" class="fi" id="ire-ref" value="'+(o.landRef||'')+'"></div>'
+    +'<div class="fg"><div class="fl">المحصول</div><input type="text" class="fi" id="ire-crop" value="'+(o.crop||'')+'"></div>'
+    +'<div class="fg"><div class="fl">الساعات</div><input type="number" class="fi" id="ire-hours" value="'+(o.hours||'')+'" step="0.5" min="0.5" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">الترتيب</div><input type="number" class="fi" id="ire-order" value="'+(o.order||1)+'" min="1" style="direction:ltr"></div>'
+    +'<div class="fg"><div class="fl">ملاحظات</div><textarea class="fi" id="ire-notes" rows="2" style="resize:none">'+(o.notes||'')+'</textarea></div>'
+    +'<button class="btn bp" style="width:100%;justify-content:center;margin-top:12px" onclick="saveIrrEdit(\''+id+'\')">💾 حفظ</button>'
+    +'<button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="openWaterSchedule()">← رجوع</button>'
+    +'</div></div>';
+}
+
+function saveIrrEdit(id){
+  var owners=getIrrOwners(),idx=owners.findIndex(function(o){return o.id===id;});if(idx<0)return;
+  owners[idx]=Object.assign(owners[idx],{
+    name:(document.getElementById('ire-name')||{value:''}).value.trim(),
+    phone:(document.getElementById('ire-phone')||{value:''}).value.trim(),
+    email:(document.getElementById('ire-email')||{value:''}).value.trim(),
+    area:(document.getElementById('ire-area')||{value:''}).value.trim(),
+    landName:(document.getElementById('ire-land')||{value:''}).value.trim(),
+    landRef:(document.getElementById('ire-ref')||{value:''}).value.trim(),
+    crop:(document.getElementById('ire-crop')||{value:''}).value.trim(),
+    hours:parseFloat((document.getElementById('ire-hours')||{value:0}).value)||0,
+    order:parseInt((document.getElementById('ire-order')||{value:1}).value)||1,
+    notes:(document.getElementById('ire-notes')||{value:''}).value.trim(),
+  });
+  saveIrrOwners(owners);toast('✅ تم');openWaterSchedule();
+}
+
+// ── BADGE & DB ────────────────────────────────────────────────────────────────
+function updateWaterBadge(){
+  var n=getIrrOwners().length,b=document.getElementById('water-badge');
+  if(b){b.textContent=n||'';b.style.display=n?'inline':'none';}
+}
+async function loadWaterFromDB(){
+  await loadIrrOwners();
+  await loadIrrConfig();
+  updateWaterBadge();
+}
+
+
+// ── WATER PORTAL (PUBLIC) ─────────────────────────────────────────────────────
+function lookupWaterOwner(){
+  var phone=(document.getElementById('wp-phone')||{value:''}).value.replace(/[^0-9]/g,'').trim();
+  var err=document.getElementById('wp-err'), result=document.getElementById('wp-result');
+  if(!phone||phone.length<6){if(err)err.textContent='⚠️ يرجى إدخال رقم هاتفك';return;}
+  if(err)err.textContent='';
+  if(result)result.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">⏳ جاري البحث…</div>';
+  var owners=getIrrOwners();
+  var norm=function(p){return(p||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');};
+  var inp=norm(phone);
+  var matches=owners.filter(function(o){return norm(o.phone)===inp;});
+  if(!matches.length){
+    if(result)result.innerHTML='<div style="background:#fdeaea;border:1px solid #f2bcbc;border-radius:12px;padding:20px;text-align:center;color:var(--danger)">'
+      +'<div style="font-size:32px;margin-bottom:8px">🔒</div>'
+      +'<div style="font-size:15px;font-weight:700">لم يتم العثور على سجل</div>'
+      +'<div style="font-size:13px;opacity:.8;margin-top:6px">تواصل مع البلدية لتسجيل حقك في الري</div>'
+      +'</div>';
+    return;
+  }
+  var html='';
+  matches.forEach(function(o){
+    var sch=getOwnerSchedule(o,0), schNext=getOwnerSchedule(o,1), schPrev=getOwnerSchedule(o,-1);
+    html+='<div style="background:#fff;border:1.5px solid #1e5429;border-radius:16px;padding:20px;margin-bottom:14px">'
+      // Header
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+      +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e5429,#2d7a3e);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px">#'+o.order+'</div>'
+      +'<div><div style="font-size:17px;font-weight:800;color:#1e5429">'+o.name+'</div>'
+      +(o.area?'<div style="font-size:12px;color:var(--text3)">'+o.area+'</div>':'')+'</div>'
+      +'</div>'
+      // Land info
+      +(o.landName?'<div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px">🌿 '+o.landName+(o.crop?' ('+o.crop+')':'')+(o.landRef?' · سند: '+o.landRef:'')+'</div>':'')
+      // Current cycle
+      +'<div style="background:linear-gradient(120deg,'+(sch.isDay?'#e67e22,#f39c12':'#2c3e6b,#3a4fa8')+');color:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:8px">'
+      +'<div style="font-size:12px;opacity:.85;margin-bottom:4px">هذه الدورة — '+sch.cycleLabel+'</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+sch.startDateStr+'</div>'
+      +'<div style="font-size:22px;font-weight:800">⏰ '+sch.startTime+' — '+sch.endTime+'</div>'
+      +'<div style="font-size:20px;font-weight:800;margin-top:6px">💧 '+o.hours+' ساعة</div>'
+      +'</div>'
+      // Next cycle
+      +'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center">'
+      +'<div style="font-size:11px;color:var(--text3);margin-bottom:3px">الدورة القادمة — '+schNext.cycleLabel+'</div>'
+      +'<div style="font-size:13px;font-weight:700;color:var(--text3)">'+schNext.startDateStr+'</div>'
+      +'<div style="font-size:15px;font-weight:700;direction:ltr">'+schNext.startTime+' — '+schNext.endTime+'</div>'
+      +'</div>'
+      +(o.notes?'<div style="margin-top:8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text3)">📝 '+o.notes+'</div>':'')
+      +'</div>';
+  });
+  if(result)result.innerHTML=html;
+}
+
+
+
+// ── WATER PORTAL NAVIGATION ───────────────────────────────────────────────────
+async function showWaterPortal() {
+  try {
+    // Show portal screen
+    ['LANDING','WELCOME-CARDS','LS','CP','APP'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.style.display='none';
+    });
+    var wp=document.getElementById('WATER-PORTAL');
+    if(wp) wp.style.cssText='display:flex;flex-direction:column;min-height:100vh;background:var(--bg,#f5f7fa)';
+    // Clear inputs
+    var p=document.getElementById('wp-phone'), r=document.getElementById('wp-result'), er=document.getElementById('wp-err');
+    if(p) p.value=''; if(er) er.textContent='';
+    // Show loading
+    if(r) r.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">⏳ جاري تحميل البيانات…</div>';
+    // Load water data from Supabase irr_owners table (public — no login needed)
+    try {
+      if(typeof sb !== 'undefined') {
+        await loadIrrOwners();
+        await loadIrrConfig();
+      }
+    } catch(ex){ console.log('Water portal load:', ex.message); }
+    // Clear result after load
+    if(r) r.innerHTML='';
+    setTimeout(function(){ var pp=document.getElementById('wp-phone'); if(pp) pp.focus(); },100);
+  } catch(e){ console.error('showWaterPortal:',e.message); }
+}
+
+
+
+// Override to show in page content
+var _baseOpenWater = openWaterSchedule;
+openWaterSchedule = async function(){
+  try{ await loadIrrOwners(); }catch(e){}
+  try{ await loadIrrConfig(); }catch(e){}
+  var cfg=getIrrConfig();
+  var owners=getIrrOwners().sort(function(a,b){return (a.order||0)-(b.order||0);});
+  var totalAlloc=getTotalAllocatedHours();
+  var remaining=getRemainingHours();
+  var ci=getCycleInfo?getCycleInfo():getCurrentCycleInfo();
+  document.getElementById('MT').textContent='💧 نظام الري — '+owners.length+' مشترك';
+  document.getElementById('OV').classList.add('open');
+  document.getElementById('OV').style.display='flex';
+  // Re-use the inner content generation
+  if(typeof buildWaterContent==='function'){
+    document.getElementById('MB').innerHTML = buildWaterContent(cfg,owners,totalAlloc,remaining,ci);
+  }
+  renderIrrList();
+};
+
+// Try alias
+var getCurrentCycleInfo = typeof getCurrentCycleInfo!=='undefined' ? getCurrentCycleInfo : function(){return {cycleNum:1,isDay:true,cycleStart:new Date(),cycleEnd:new Date(),totalMins:160*60}};
+
+</script>
+</body>
+</html>
