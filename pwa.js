@@ -5,7 +5,7 @@
   'use strict';
 
   // ─── PUSH CONFIG (Wadi El Sit) ───────────────────────────────────────────
-  const VAPID_PUBLIC_KEY = 'BJjyBXyjL0fkAxlgyu715TXCkqDfTqCFwahiodJsBVtWpQ4fa3ouup8wu89sDyeWrgd5i-wirk-EfQPNzWG1-NQ';
+  const VAPID_PUBLIC_KEY = 'BOPoaz8fSF5yefbNZvqADxVB_ENHmkkZwYjyTyuiZp215QpzxKr2eEhkp8LxEUhWWe6Of7Yxmis9zWO-DrlhMnM';
   const SUPABASE_URL  = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
   const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
   const MUN_ID        = '00000000-0000-0000-0000-000000000001';
