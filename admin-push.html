@@ -63,8 +63,32 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min
 .spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
+<!-- PWA & Mobile Meta -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a6eb5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="وادي الست">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="pwa.js" defer></script>
 </head>
 <body>
+<!-- Back to Main Gate (floating) -->
+<style>
+.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
+.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
+.back-to-gate-i{font-size:16px;line-height:1}
+.back-to-gate-l{white-space:nowrap}
+@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:8px 12px 8px 10px;font-size:12px}.back-to-gate-l{display:none}.back-to-gate-i{font-size:18px}}
+@media print{.back-to-gate{display:none}}
+</style>
+<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
+  <span class="back-to-gate-i">🏛️</span>
+  <span class="back-to-gate-l">البوابة الرئيسية</span>
+</a>
+
 
 <div class="container">
   <a href="dashboard.html" class="back-link">← العودة للوحة التحكم</a>

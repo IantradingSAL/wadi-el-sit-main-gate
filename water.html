@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بوابة الري — بلدية وادي الست</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
+--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;--bg:#f5f7fa;--font:'Tahoma',Arial,sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;color:var(--text);}
+.header{background:linear-gradient(120deg,#0f4d82,#1a6eb5);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:12px;}
+.header img{height:38px;}
+.header-text h1{font-size:16px;font-weight:800;}
+.header-text p{font-size:11px;opacity:.7;}
+.back-btn{margin-right:auto;background:rgba(255,255,255,.15);border:none;color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:12px;font-family:var(--font);}
+.main{flex:1;padding:20px 16px;max-width:560px;margin:0 auto;width:100%;}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;}
+.fi{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:15px;outline:none;background:#fff;color:var(--text);direction:ltr;text-align:center;}
+.fi:focus{border-color:#1e5429;}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);}
+.btn-green{background:#1a6eb5;color:#fff;width:100%;}
+.btn-green:hover{background:#0f4d82;}
+</style>
+<style>
+.help-btn{position:fixed;bottom:70px;right:16px;width:44px;height:44px;background:#1a6eb5;color:#fff;border-radius:50%;border:none;font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(26,110,181,.4);z-index:1000;transition:transform .15s;font-family:inherit}.help-btn:hover{transform:scale(1.1)}
+.help-btn:hover{transform:scale(1.1)}
+.help-section{margin-bottom:16px}
+.help-section h3{color:#0891b2;margin:0 0 8px;font-size:15px}
+.help-section h4{color:#0369a1;margin:12px 0 6px;font-size:14px;border-right:3px solid #0891b2;padding-right:8px}
+.help-section p{margin:0 0 6px;font-size:13px;color:#444;line-height:1.7}
+.help-section ul{margin:4px 0 8px 0;padding-right:20px}
+.help-section ul li{font-size:13px;color:#555;margin-bottom:4px}
+.help-note{background:#e0f2fe;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px}
+</style>
+<!-- PWA & Mobile Meta -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a6eb5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="وادي الست">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="pwa.js" defer></script>
+</head>
+<body>
+<!-- Back to Main Gate (floating) -->
+<style>
+.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
+.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
+.back-to-gate-i{font-size:16px;line-height:1}
+.back-to-gate-l{white-space:nowrap}
+@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:8px 12px 8px 10px;font-size:12px}.back-to-gate-l{display:none}.back-to-gate-i{font-size:18px}}
+@media print{.back-to-gate{display:none}}
+</style>
+<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
+  <span class="back-to-gate-i">🏛️</span>
+  <span class="back-to-gate-l">البوابة الرئيسية</span>
+</a>
+
+<div class="header">
+  <img src="data:image/png;base64,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" alt="شعار">
+  <div class="header-text">
+    <h1>💧 بوابة الري</h1>
+    <p>بلدية وادي الست — نظام دورة مياه الري</p>
+  </div>
+  <button class="back-btn" onclick="window.location='index.html'">← الرئيسية</button>
+</div>
+
+<div class="main">
+  <div id="loading-msg" style="text-align:center;padding:20px;color:var(--text3);font-size:14px">⏳ جاري تحميل البيانات…</div>
+
+  <div id="lookup-card" class="card" style="display:none">
+    <div style="font-size:16px;font-weight:800;color:#1e5429;margin-bottom:6px;text-align:center">🔍 استعلام عن دورة الري</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:16px;text-align:center">أدخل رقم هاتفك المسجّل لدى البلدية</div>
+    <input type="tel" class="fi" id="wp-phone" placeholder="03xxxxxx" onkeydown="if(event.key==='Enter')lookupWaterOwner()">
+    <div id="wp-err" style="color:#e74c3c;font-size:13px;margin-top:8px;min-height:18px;text-align:center"></div>
+    <button class="btn btn-green" onclick="lookupWaterOwner()" style="margin-top:10px">🔍 بحث عن دوري</button>
+  </div>
+
+  <div id="wp-result"></div>
+</div>
+
+<script>
+const SB_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+let sb=null, _owners=[], _config={};
+
+// ── CYCLE LOGIC (same as dashboard) ──────────────────────────────────────────
+function addMinsToDate(d,m){return new Date(d.getTime()+m*60000);}
+function fmtTime(d){var h=d.getHours(),m=d.getMinutes();return(h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+function fmtDateAr(d){
+  var days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  return days[d.getDay()]+' '+d.toLocaleDateString('ar-LB');
+}
+function getCycleInfo(){
+  var cfg=_config||{};
+  var owners=_owners.slice().sort(function(a,b){return (a.sort_order||0)-(b.sort_order||0);});
+  var totalMins=owners.reduce(function(s,o){return s+(parseFloat(o.hours)||0)*60;},0);
+  // Use configured total hours even if owners don't fill all 160h yet
+  var configuredMins=(parseInt(cfg.total_hours)||160)*60;
+  // Cycle length = configured total (not sum of current owners)
+  totalMins=configuredMins;
+  var csd = (cfg.cycle_start_date||'2026-04-20').toString().slice(0,10);
+  var ds = (cfg.day_start||'06:00').toString();
+  var cs=new Date(csd);
+  cs.setHours(parseInt(ds.split(':')[0]||6),parseInt(ds.split(':')[1]||0),0,0);
+  var now=new Date();
+  var elapsed=Math.max(0,now-cs);
+  var cycleMs=totalMins*60000;
+  var cycleNum=Math.floor(elapsed/cycleMs);
+  var cycleStart=new Date(cs.getTime()+cycleNum*cycleMs);
+  var cycleEnd=new Date(cycleStart.getTime()+cycleMs);
+  return{cycleNum:cycleNum+1,isDay:cycleNum%2===0,cycleStart,cycleEnd,totalMins};
+}
+
+function getOwnerSched(owner,offset){
+  offset=offset||0;
+  var owners=_owners.slice().sort(function(a,b){return a.sort_order-b.sort_order;});
+  var cumMins=0;
+  for(var i=0;i<owners.length;i++){
+    if(owners[i].id===owner.id) break;
+    cumMins+=(parseFloat(owners[i].hours)||0)*60;
+  }
+  var ci=getCycleInfo();
+  var targetCycle=ci.cycleNum-1+offset;
+  var isDay=targetCycle%2===0;
+  var cStart=new Date(ci.cycleStart.getTime()+offset*ci.totalMins*60000);
+  var oStart=addMinsToDate(cStart,cumMins);
+  var oEnd=addMinsToDate(oStart,(parseFloat(owner.hours)||0)*60);
+  return{isDay,cycleLabel:isDay?'☀️ نهار':'🌙 ليل',cycleNum:targetCycle+1,
+    startDate:oStart,endDate:oEnd,startTime:fmtTime(oStart),endTime:fmtTime(oEnd),
+    startDateStr:fmtDateAr(oStart)};
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async function(){
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{enabled:false}});
+  // Safety timeout: always show UI after 4 seconds regardless of DB state
+  var safetyTimer = setTimeout(function(){
+    var lm=document.getElementById('loading-msg');
+    var lc=document.getElementById('lookup-card');
+    if(lm) lm.style.display='none';
+    if(lc) lc.style.display='block';
+  }, 4000);
+
+  // Load owners: try irr_owners table → fallback to settings → fallback to localStorage
+  try{
+    var r1=await sb.from('irr_owners').select('id,name,phone,email,area,land_name,land_ref,crop,hours,sort_order,notes').eq('municipality_id',MUN_ID).order('sort_order',{ascending:true});
+    if(!r1.error && r1.data){
+      var tableOwners = r1.data.map(function(r){
+        return {id:r.id,name:r.name,phone:r.phone,email:r.email||'',
+          area:r.area||'',land_name:r.land_name||r.landName||'',
+          land_ref:r.land_ref||r.landRef||'',crop:r.crop||'',
+          hours:parseFloat(r.hours)||0,sort_order:parseInt(r.sort_order||r.order)||1,notes:r.notes||''};
+      });
+      if(tableOwners.length>0){
+        _owners=tableOwners;
+      } else {
+        // Table empty — try settings
+        throw new Error('table empty');
+      }
+    } else throw r1.error||new Error('table error');
+  }catch(e){
+    console.log('irr_owners table:',e.message,'— trying settings fallback');
+    try{
+      var rs=await sb.from('settings').select('value').eq('key','wadi_irr_owners').single();
+      if(!rs.error&&rs.data&&rs.data.value){
+        var arr=Array.isArray(rs.data.value)?rs.data.value:[];
+        _owners=arr.map(function(o){
+          return {id:o.id,name:o.name,phone:o.phone,email:o.email||'',
+            area:o.area||'',land_name:o.landName||o.land_name||'',
+            land_ref:o.landRef||o.land_ref||'',crop:o.crop||'',
+            hours:parseFloat(o.hours)||0,sort_order:parseInt(o.order||o.sort_order)||1,notes:o.notes||''};
+        });
+        console.log('Loaded '+_owners.length+' owners from settings fallback');
+      }
+    }catch(e2){console.log('settings fallback failed:',e2.message);}
+    // Final fallback: localStorage (same GitHub Pages domain as dashboard.html)
+    if(!_owners.length){
+      try{
+        var ls=localStorage.getItem('wadi_irr_owners');
+        if(ls){var lsArr=JSON.parse(ls);
+          if(Array.isArray(lsArr)&&lsArr.length>0){
+            var rawOwners=lsArr.map(function(o){return{id:o.id,name:o.name,phone:o.phone,
+              email:o.email||'',area:o.area||'',
+              land_name:o.landName||o.land_name||'',
+              land_ref:o.landRef||o.land_ref||'',crop:o.crop||'',
+              hours:parseFloat(o.hours)||0,
+              sort_order:parseInt(o.order||o.sort_order)||1,notes:o.notes||''};});
+            // Deduplicate by phone number
+            var seen={};
+            _owners=rawOwners.filter(function(o){
+              var k=(o.phone||'').replace(/[^0-9]/g,'');
+              if(seen[k])return false; seen[k]=true; return true;
+            });
+            console.log('Loaded '+_owners.length+' owners from localStorage (deduped from '+rawOwners.length+')');
+          }
+        }
+      }catch(e3){console.log('localStorage fail:',e3);}
+    }
+  }
+
+  // Load config: try irr_config table → fallback to settings
+  try{
+    var r2=await sb.from('irr_config').select('*').eq('municipality_id',MUN_ID).single();
+    if(!r2.error&&r2.data) _config=r2.data;
+    else throw r2.error||new Error('no config');
+  }catch(e){
+    try{
+      var rc=await sb.from('settings').select('value').eq('key','wadi_irr_config').single();
+      if(!rc.error&&rc.data&&rc.data.value){
+        var c=rc.data.value;
+        _config={day_start:c.dayStart||'06:00',night_start:c.nightStart||'18:00',
+          total_hours:c.totalHours||160,cycle_start_date:c.cycleStartDate||'2026-04-20'};
+      }
+    }catch(e2){}
+  }
+
+  clearTimeout(safetyTimer);
+  document.getElementById('loading-msg').style.display='none';
+  document.getElementById('lookup-card').style.display='block';
+  setTimeout(function(){var p=document.getElementById('wp-phone');if(p)p.focus();},200);
+});
+
+// ── LOOKUP ────────────────────────────────────────────────────────────────────
+function lookupWaterOwner(){
+  var phone=document.getElementById('wp-phone').value.replace(/[^0-9]/g,'').trim();
+  var err=document.getElementById('wp-err'),result=document.getElementById('wp-result');
+  if(!phone||phone.length<6){err.textContent='⚠️ يرجى إدخال رقم هاتفك';return;}
+  err.textContent='';
+  var norm=function(p){return(p||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');};
+  var inp=norm(phone);
+  var matches=_owners.filter(function(o){return norm(o.phone)===inp;});
+  if(!matches.length){
+    var noOwnersMsg = _owners.length===0
+      ? '<div style="font-size:12px;background:#fff9e6;border:1px solid #f5c842;border-radius:8px;padding:8px 12px;margin-top:10px;color:#7d5a00">⚠️ لم يُسجَّل أي مشترك حتى الآن في النظام — يرجى التواصل مع البلدية</div>'
+      : '';
+    result.innerHTML='<div class="card" style="text-align:center">'
+      +'<div style="font-size:36px;margin-bottom:10px">🔒</div>'
+      +'<div style="font-size:16px;font-weight:700;margin-bottom:6px;color:#e74c3c">لم يتم العثور على سجل</div>'
+      +'<div style="font-size:13px;color:var(--text3)">تأكد من رقم هاتفك أو تواصل مع البلدية لتسجيل حقك في الري</div>'
+      +noOwnersMsg
+      +'</div>';
+    return;
+  }
+  var html='';
+  matches.forEach(function(o){
+    var sch=getOwnerSched(o,0), schNext=getOwnerSched(o,1);
+    html+='<div class="card" style="border:2px solid #1e5429">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'
+      +'<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e5429,#2d7a3e);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px">#'+o.sort_order+'</div>'
+      +'<div><div style="font-size:17px;font-weight:800;color:#1e5429">'+o.name+'</div>'
+      +(o.area?'<div style="font-size:12px;color:var(--text3)">'+o.area+'</div>':'')+'</div></div>'
+      +(o.land_name?'<div style="background:#f0fdf4;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:13px">🌿 '+o.land_name+(o.crop?' ('+o.crop+')':'')+(o.land_ref?' · سند: '+o.land_ref:'')+'</div>':'')
+      // Current cycle
+      +'<div style="background:linear-gradient(120deg,'+(sch.isDay?'#e67e22,#f39c12':'#2c3e6b,#3a4fa8')+');color:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:8px">'
+      +'<div style="font-size:12px;opacity:.85;margin-bottom:4px">هذه الدورة — '+sch.cycleLabel+'</div>'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:4px">'+sch.startDateStr+'</div>'
+      +'<div style="font-size:22px;font-weight:800">⏰ '+sch.startTime+' — '+sch.endTime+'</div>'
+      +'<div style="font-size:20px;font-weight:800;margin-top:6px">💧 '+o.hours+' ساعة</div>'
+      +'</div>'
+      // Next cycle
+      +'<div style="background:var(--bg2);border-radius:10px;padding:12px;text-align:center">'
+      +'<div style="font-size:11px;color:var(--text3);margin-bottom:3px">الدورة القادمة — '+schNext.cycleLabel+'</div>'
+      +'<div style="font-size:14px;font-weight:700;color:var(--text2)">'+schNext.startDateStr+'</div>'
+      +'<div style="font-size:16px;font-weight:700;direction:ltr">'+schNext.startTime+' — '+schNext.endTime+'</div>'
+      +'</div>'
+      +(o.notes?'<div style="margin-top:8px;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;color:var(--text3)">📝 '+o.notes+'</div>':'')
+      +'</div>';
+  });
+  result.innerHTML=html;
+}
+
+
+
+function openHelp(p){
+  var c=
+    '<div style="background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:12px;padding:14px 16px;margin-bottom:14px">'+
+    '<div style="font-size:22px;margin-bottom:4px">💧 نظام دورة مياه الري</div>'+
+    '<div style="font-size:13px;color:#0369a1;font-weight:600">بلدية وادي الست — قضاء الشوف</div>'+
+    '</div>'+
+    
+    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#0369a1;border-right:3px solid #0891b2;padding-right:8px;margin-bottom:5px">🔍 كيفية الاستعلام عن دورتك</div>'+
+    '<div style="font-size:13px;color:#444;line-height:1.8;padding-right:11px">'+
+    '1. أدخل رقم هاتفك المسجّل لدى البلدية<br>'+
+    '2. يجب أن يكون التنسيق: 03xxxxxx<br>'+
+    '3. اضغط Enter أو زر البحث<br>'+
+    '4. ستظهر دورتك الحالية والقادمة مباشرة</div></div>'+
+    
+    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#0369a1;border-right:3px solid #0891b2;padding-right:8px;margin-bottom:5px">🗓️ كيف يعمل نظام الدورة</div>'+
+    '<div style="font-size:13px;color:#444;line-height:1.8;padding-right:11px">'+
+    '• الدورة الكاملة مدتها <b>160 ساعة</b> موزّعة على جميع المشتركين<br>'+
+    '• ☀️ <b>دورة النهار</b>: تبدأ 06:00 صباحاً<br>'+
+    '• 🌙 <b>دورة الليل</b>: تبدأ 18:00 مساءً<br>'+
+    '• ترتيبك في القائمة يحدد وقت بدء دورك بالضبط<br>'+
+    '• مدة كل مشترك تُحسب حسب مساحة أرضه</div></div>'+
+    
+    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#0369a1;border-right:3px solid #0891b2;padding-right:8px;margin-bottom:5px">📋 قواعد وأحكام الري</div>'+
+    '<div style="font-size:13px;color:#444;line-height:1.8;padding-right:11px">'+
+    '• يُمنع تجاوز ساعاتك المخصصة<br>'+
+    '• يُمنع الري في وقت دورة شخص آخر<br>'+
+    '• التغيير أو التبادل يتم بالتنسيق مع لجنة الري<br>'+
+    '• تجاوز الحصة يُعرّضك للمساءلة القانونية</div></div>'+
+    
+    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#0369a1;border-right:3px solid #0891b2;padding-right:8px;margin-bottom:5px">📧 الإشعارات التلقائية</div>'+
+    '<div style="font-size:13px;color:#444;line-height:1.8;padding-right:11px">'+
+    'إذا سجّلت بريدك الإلكتروني لدى البلدية تصلك رسائل:<br>'+
+    '• قبل يوم من دورك<br>'+
+    '• صباح يوم الدور<br>'+
+    '• ساعة قبل البدء</div></div>'+
+    
+    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:#e74c3c;border-right:3px solid #e74c3c;padding-right:8px;margin-bottom:5px">⚠️ ماذا تفعل عند وجود مشكلة؟</div>'+
+    '<div style="font-size:13px;color:#444;line-height:1.8;padding-right:11px">'+
+    '• رقمك غير موجود؟ ← تواصل مع مكتب البلدية لتسجيله<br>'+
+    '• مشكلة في المياه؟ ← قدّم <b>شكوى ري</b> من <a href="citizen.html" style="color:#0891b2;font-weight:700">بوابة المواطن</a><br>'+
+    '• تغيير في الجدول؟ ← راجع الصفحة يوم الدور</div></div>'+
+    
+    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;font-size:13px">'+
+    '<b style="color:#15803d">📞 للتواصل مع لجنة الري:</b><br>'+
+    'اتصل بمكتب بلدية وادي الست مباشرة أو تفضّل شخصياً</div>';
+
+  var m=document.getElementById('_whm');
+  if(!m){
+    m=document.createElement('div');
+    m.id='_whm';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';
+    m.innerHTML='<div style="background:#fff;border-radius:20px;max-width:540px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e0f2fe;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1">'
+      +'<b style="font-size:15px;font-weight:800;color:#0891b2">📖 دليل نظام الري</b>'
+      +'<button onclick="document.getElementById(\'_whm\').remove()" style="background:#e0f2fe;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;color:#0891b2">✕</button>'
+      +'</div>'
+      +'<div id="_whb" style="padding:18px"></div>'
+      +'</div>';
+    m.addEventListener('click',function(e){if(e.target===m)m.remove();});
+    document.body.appendChild(m);
+  }
+  document.getElementById('_whb').innerHTML=c;
+  m.style.display='flex';
+}</script>
+<button class="help-btn" onclick="openHelp('water')" title="مساعدة">?</button>
+</body>
+</html>
