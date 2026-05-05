@@ -1,10 +1,16 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// بلدية وادي الست — Service Worker v5
-// Bulletproof: notifications NEVER open an empty page
+// بلدية وادي الست — Service Worker v6
+// FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v5';
-const RUNTIME_NAME = 'wadi-elsit-runtime-v2';
+const CACHE_NAME   = 'wadi-elsit-v6';
+const RUNTIME_NAME = 'wadi-elsit-runtime-v3';
+
+// ★ KEY FIX: derive scope dynamically (handles /wadi-el-sit-main-gate/ subpath)
+// self.registration.scope returns full URL like:
+//   "https://iantradingsal.github.io/wadi-el-sit-main-gate/"
+// We use this as the base for ALL navigation
+const SCOPE_URL = self.registration.scope;
 
 const APP_SHELL = [
   './',
@@ -23,7 +29,7 @@ const APP_SHELL = [
 
 // ─── INSTALL ────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
-  console.log('[SW v5] Installing');
+  console.log('[SW v6] Installing. Scope:', SCOPE_URL);
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return Promise.all(
@@ -37,7 +43,7 @@ self.addEventListener('install', (event) => {
 
 // ─── ACTIVATE ───────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  console.log('[SW v5] Activating');
+  console.log('[SW v6] Activating');
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -82,35 +88,63 @@ self.addEventListener('fetch', (event) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PUSH NOTIFICATIONS — Bulletproof URL handling
+// PUSH NOTIFICATIONS — Bulletproof URL handling with SCOPE awareness
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * ★ THE CRITICAL FIX:
+ * Resolves notification URLs against the SW SCOPE (not origin).
+ * This handles GitHub Pages subdirectories correctly:
+ *   scope = "https://iantradingsal.github.io/wadi-el-sit-main-gate/"
+ *   "news.html"           → "https://iantradingsal.github.io/wadi-el-sit-main-gate/news.html"
+ *   "/news.html"          → "https://iantradingsal.github.io/wadi-el-sit-main-gate/news.html"
+ *   "./news.html"         → "https://iantradingsal.github.io/wadi-el-sit-main-gate/news.html"
+ *   "news-detail.html?id=42" → ".../wadi-el-sit-main-gate/news-detail.html?id=42"
+ */
 function resolveNotificationUrl(url) {
-  if (!url || typeof url !== 'string') return './news.html';
+  // Empty/invalid → news landing page
+  if (!url || typeof url !== 'string') return new URL('./news.html', SCOPE_URL).href;
+
   const trimmed = url.trim();
   if (!trimmed || trimmed === '/' || trimmed === './' || trimmed === '#' ||
       trimmed === 'undefined' || trimmed === 'null') {
-    return './news.html';
+    return new URL('./news.html', SCOPE_URL).href;
   }
-  if (trimmed.startsWith('http')) {
+
+  // Already absolute URL?
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     try {
       const u = new URL(trimmed);
       if (u.origin === self.location.origin) {
-        return '.' + u.pathname + u.search + u.hash;
+        return trimmed; // Same origin, use as-is
       }
-      return trimmed;
+      // Different origin → fallback to safe page
+      return new URL('./news.html', SCOPE_URL).href;
     } catch {
-      return './news.html';
+      return new URL('./news.html', SCOPE_URL).href;
     }
   }
-  if (trimmed.startsWith('./')) return trimmed;
-  if (trimmed.startsWith('/')) return '.' + trimmed;
-  return './' + trimmed;
+
+  // Relative URL: resolve against SCOPE (not origin!)
+  // This handles "/news.html" → ".../wadi-el-sit-main-gate/news.html"
+  let cleaned = trimmed;
+
+  // Strip leading slashes — they would cause resolution against origin
+  while (cleaned.startsWith('/')) cleaned = cleaned.substring(1);
+
+  // Strip leading "./" if present
+  if (cleaned.startsWith('./')) cleaned = cleaned.substring(2);
+
+  try {
+    return new URL(cleaned, SCOPE_URL).href;
+  } catch {
+    return new URL('./news.html', SCOPE_URL).href;
+  }
 }
 
 // ─── PUSH ───────────────────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
-  console.log('[SW v5] Push received');
+  console.log('[SW v6] Push received');
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
@@ -118,9 +152,9 @@ self.addEventListener('push', (event) => {
     data = { title: 'بلدية وادي الست', body: event.data ? event.data.text() : '' };
   }
 
-  console.log('[SW v5] Data:', JSON.stringify(data));
+  console.log('[SW v6] Push data:', JSON.stringify(data));
   const resolvedUrl = resolveNotificationUrl(data.url);
-  console.log('[SW v5] Resolved URL:', resolvedUrl);
+  console.log('[SW v6] Resolved URL:', resolvedUrl);
 
   const title = data.title || 'بلدية وادي الست';
   const options = {
@@ -143,18 +177,18 @@ self.addEventListener('push', (event) => {
 
 // ─── NOTIFICATION CLICK ────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW v5] Notification clicked');
+  console.log('[SW v6] Notification clicked');
   event.notification.close();
 
   let targetUrl = '';
   if (event.notification.data) {
     targetUrl = event.notification.data.url || event.notification.data.originalUrl || '';
   }
-  // Apply fallback AGAIN (handles old notifications cached before this SW)
-  targetUrl = resolveNotificationUrl(targetUrl);
 
-  const fullUrl = new URL(targetUrl, self.location.origin).href;
-  console.log('[SW v5] Opening:', fullUrl);
+  // ★ Re-resolve! The cached `data.url` from old SW versions might be wrong (no scope)
+  // Re-running resolveNotificationUrl ensures correctness even for old notifications
+  const fullUrl = resolveNotificationUrl(targetUrl);
+  console.log('[SW v6] Opening:', fullUrl);
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -171,11 +205,11 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 self.addEventListener('pushsubscriptionchange', (event) => {
-  console.log('[SW v5] Subscription changed');
+  console.log('[SW v6] Subscription changed');
 });
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-console.log('[SW v5] Loaded');
+console.log('[SW v6] Loaded. Scope:', SCOPE_URL);
