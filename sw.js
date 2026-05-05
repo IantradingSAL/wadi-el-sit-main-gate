@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// بلدية وادي الست — Service Worker (PWA + Push Notifications)
+// بلدية وادي الست — Service Worker v5
+// Bulletproof: notifications NEVER open an empty page
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v4';
-const RUNTIME_NAME = 'wadi-elsit-runtime-v1';
+const CACHE_NAME   = 'wadi-elsit-v5';
+const RUNTIME_NAME = 'wadi-elsit-runtime-v2';
 
-// Files to cache on install (the "shell" of the app)
 const APP_SHELL = [
   './',
   './index.html',
@@ -13,29 +13,31 @@ const APP_SHELL = [
   './citizen.html',
   './water.html',
   './dashboard.html',
+  './news.html',
+  './news-detail.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/apple-touch-icon.png'
 ];
 
-// ─── INSTALL: pre-cache the app shell ──────────────────────────────────────
+// ─── INSTALL ────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
+  console.log('[SW v5] Installing');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // addAll fails if any single resource is missing — use individual adds
-      // and tolerate failures (e.g. citizen.html might not exist yet)
       return Promise.all(
         APP_SHELL.map(url =>
-          cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
+          cache.add(url).catch(err => console.warn('[SW] cache miss:', url))
         )
       );
     }).then(() => self.skipWaiting())
   );
 });
 
-// ─── ACTIVATE: clean up old caches ─────────────────────────────────────────
+// ─── ACTIVATE ───────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
+  console.log('[SW v5] Activating');
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -46,53 +48,79 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ─── FETCH: network-first for HTML, cache-first for assets ────────────────
+// ─── FETCH ──────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  // Only handle GETs from same origin
   if (req.method !== 'GET') return;
+
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  // Network-first for HTML pages (always get fresh content if online)
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     event.respondWith(
       fetch(req).then(resp => {
         const clone = resp.clone();
         caches.open(CACHE_NAME).then(c => c.put(req, clone));
         return resp;
-      }).catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
+      }).catch(() => caches.match(req).then(r => r || caches.match('./index.html')))
     );
     return;
   }
 
-  // Cache-first for static assets (icons, manifest, etc.)
   event.respondWith(
-    caches.match(req).then((cached) => {
+    caches.match(req).then(cached => {
       if (cached) return cached;
       return fetch(req).then(resp => {
-        if (resp && resp.status === 200) {
+        if (resp.ok) {
           const clone = resp.clone();
           caches.open(RUNTIME_NAME).then(c => c.put(req, clone));
         }
         return resp;
-      }).catch(() => cached);
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PUSH NOTIFICATIONS (will be activated when backend is set up)
+// PUSH NOTIFICATIONS — Bulletproof URL handling
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ─── PUSH: receive notification from server ────────────────────────────────
+function resolveNotificationUrl(url) {
+  if (!url || typeof url !== 'string') return './news.html';
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === '/' || trimmed === './' || trimmed === '#' ||
+      trimmed === 'undefined' || trimmed === 'null') {
+    return './news.html';
+  }
+  if (trimmed.startsWith('http')) {
+    try {
+      const u = new URL(trimmed);
+      if (u.origin === self.location.origin) {
+        return '.' + u.pathname + u.search + u.hash;
+      }
+      return trimmed;
+    } catch {
+      return './news.html';
+    }
+  }
+  if (trimmed.startsWith('./')) return trimmed;
+  if (trimmed.startsWith('/')) return '.' + trimmed;
+  return './' + trimmed;
+}
+
+// ─── PUSH ───────────────────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
+  console.log('[SW v5] Push received');
   let data = {};
   try {
     data = event.data ? event.data.json() : {};
   } catch (e) {
     data = { title: 'بلدية وادي الست', body: event.data ? event.data.text() : '' };
   }
+
+  console.log('[SW v5] Data:', JSON.stringify(data));
+  const resolvedUrl = resolveNotificationUrl(data.url);
+  console.log('[SW v5] Resolved URL:', resolvedUrl);
 
   const title = data.title || 'بلدية وادي الست';
   const options = {
@@ -107,56 +135,47 @@ self.addEventListener('push', (event) => {
     timestamp: data.timestamp || Date.now(),
     dir: 'rtl',
     lang: 'ar',
-    data: {
-      url: data.url || './',
-      ...data.data
-    },
+    data: { url: resolvedUrl, originalUrl: data.url, ...data.data },
     actions: data.actions || []
   };
-
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ─── NOTIFICATION CLICK: open the app at the right page ───────────────────
+// ─── NOTIFICATION CLICK ────────────────────────────────────────────────────
 self.addEventListener('notificationclick', (event) => {
+  console.log('[SW v5] Notification clicked');
   event.notification.close();
 
-  // Smart URL resolution: if no specific URL, go to news.html (most likely relevant)
-  let targetUrl = (event.notification.data && event.notification.data.url) || '';
-
-  // If URL is empty, just '/', or just './' — fallback to news.html
-  if (!targetUrl || targetUrl === '/' || targetUrl === './' || targetUrl === '#') {
-    targetUrl = './news.html';
+  let targetUrl = '';
+  if (event.notification.data) {
+    targetUrl = event.notification.data.url || event.notification.data.originalUrl || '';
   }
+  // Apply fallback AGAIN (handles old notifications cached before this SW)
+  targetUrl = resolveNotificationUrl(targetUrl);
 
   const fullUrl = new URL(targetUrl, self.location.origin).href;
+  console.log('[SW v5] Opening:', fullUrl);
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If the app is already open, focus it AND navigate to the target
       for (const client of clientList) {
         if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          client.navigate(fullUrl).catch(() => {});
-          return client.focus();
+          return client.focus().then(c => {
+            if (c && 'navigate' in c) return c.navigate(fullUrl).catch(() => {});
+          });
         }
       }
-      // Otherwise open a new window
-      if (self.clients.openWindow) {
-        return self.clients.openWindow(fullUrl);
-      }
+      if (self.clients.openWindow) return self.clients.openWindow(fullUrl);
     })
   );
 });
 
-// ─── PUSH SUBSCRIPTION CHANGE: re-subscribe automatically ──────────────────
 self.addEventListener('pushsubscriptionchange', (event) => {
-  console.log('[SW] Push subscription changed; client should re-subscribe.');
-  // Optionally notify the server (handled in the page-side code)
+  console.log('[SW v5] Subscription changed');
 });
 
-// ─── MESSAGE: allow page to trigger SW actions (e.g. force update) ────────
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
+
+console.log('[SW v5] Loaded');
