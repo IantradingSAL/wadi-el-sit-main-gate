@@ -845,6 +845,10 @@ async function load(){
 
 async function saveC(c){
   if(!dbR)return false;sv(true);
+  // Capture old status before save (to detect change)
+  const oldCase = cases.find(x => String(x.id) === String(c.id));
+  const oldStatus = oldCase ? oldCase.status : null;
+  const oldPublicNote = oldCase ? oldCase.public_note : null;
   try{
     const{error}=await sb.from('cases').upsert({
       id:c.id,name:c.name,phone:c.phone||'',email:c.email||'',address:c.address||'',
@@ -853,7 +857,46 @@ async function saveC(c){
       approval_by:c.approval_by||null,approval_date:c.approval_date||null,
       timeline:c.timeline||[],documents:c.documents||[],source:c.source||'staff'
     });
-    if(error)throw error;toast('✓ تم الحفظ');return true;
+    if(error)throw error;toast('✓ تم الحفظ');
+
+    // Send push notification to citizen if status changed (and not already handled by doApprove)
+    if (c.phone && window.PWA && window.PWA.sendPush) {
+      const statusChanged = oldStatus && oldStatus !== c.status && c.status !== 'closed';
+      const noteChanged = (c.public_note||'') !== (oldPublicNote||'') && (c.public_note||'').trim();
+
+      // Skip if approval_state already triggered notification (via doApprove)
+      const isApprovalUpdate = c.approval_state === 'approved' || c.approval_state === 'rejected';
+
+      if (statusChanged && !isApprovalUpdate) {
+        const statusLabels = {
+          'new':'📨 طلبك قيد المراجعة',
+          'in-progress':'⚙️ جاري العمل على طلبك',
+          'pending-approval':'⏳ طلبك بانتظار الموافقة',
+          'resolved':'✅ تمّ حلّ طلبك',
+          'closed':'📁 تمّ إغلاق طلبك'
+        };
+        const title = statusLabels[c.status] || '📋 تحديث على طلبك';
+        const noteSuffix = c.public_note ? '\n💬 ' + c.public_note : '';
+        window.PWA.sendPush({
+          title: title,
+          body: `الطلب رقم #${c.id}: تغيّرت الحالة من "${oldStatus}" إلى "${c.status}".${noteSuffix}`,
+          url: 'citizen.html?case='+c.id,
+          toUserPhone: c.phone,
+          sentBy: currentUser?.email || 'staff'
+        }).catch(e => console.warn('Push on status change failed:', e));
+      } else if (noteChanged && !statusChanged) {
+        // Just a public note added/changed
+        window.PWA.sendPush({
+          title: '💬 تعليق جديد على طلبك',
+          body: `الطلب #${c.id}: ${c.public_note.slice(0,160)}`,
+          url: 'citizen.html?case='+c.id,
+          toUserPhone: c.phone,
+          sentBy: currentUser?.email || 'staff'
+        }).catch(e => console.warn('Push on note failed:', e));
+      }
+    }
+
+    return true;
   }catch(e){toast('خطأ: '+e.message,'err');return false;}
   finally{sv(false);}
 }
