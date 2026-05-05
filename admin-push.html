@@ -435,6 +435,7 @@ async function doSend({title,body,url,target}){
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> جاري…';
   try{
     let finalUrl = url;
+    let newsSaved = false;
 
     // ★ STEP 1: If "Save as News" is checked, create the news article first
     const saveAsNews = document.getElementById('SAVE_AS_NEWS')?.checked;
@@ -442,7 +443,6 @@ async function doSend({title,body,url,target}){
       try {
         const fullContent = document.getElementById('N_FULL_CONTENT')?.value.trim() || body;
         const newsCat = document.getElementById('N_NEWS_CAT')?.value || 'announcement';
-        const icon = document.getElementById('N_ICON').value || '📢';
 
         const newsPayload = {
           mun_id: MUN_ID,
@@ -453,7 +453,7 @@ async function doSend({title,body,url,target}){
           author_name: currentUser?.email?.split('@')[0] || 'إدارة البلدية',
           author_email: currentUser?.email || null,
           is_published: true,
-          is_pinned: newsCat === 'urgent', // pin urgent news automatically
+          is_pinned: newsCat === 'urgent',
           push_sent: true,
           updated_at: new Date().toISOString()
         };
@@ -461,21 +461,28 @@ async function doSend({title,body,url,target}){
         const { data: newsData, error: newsErr } = await sb.from('news_articles').insert(newsPayload).select('id').single();
 
         if (newsErr) {
-          // News table might not exist — warn but continue with push
           console.warn('News save failed:', newsErr.message);
           if (newsErr.message.includes('does not exist') || newsErr.message.includes('relation')) {
-            result.innerHTML = '<div class="alert warn" style="margin-bottom:8px">⚠️ جدول الأخبار غير موجود. شغّل <code>01_news_table.sql</code> في Supabase أوّلاً. سيُرسل الإشعار بدون حفظ كخبر.</div>';
+            result.innerHTML = '<div class="alert warn" style="margin-bottom:8px">⚠️ جدول الأخبار غير موجود. شغّل <code>01_news_table.sql</code> في Supabase. الإشعار سيوجَّه لقائمة الأخبار العامّة.</div>';
           }
+          // Fallback: even if save failed, point to news.html so user doesn't see empty page
+          finalUrl = finalUrl || 'news.html';
         } else if (newsData?.id) {
-          // ✅ News saved! Override URL to point to the news detail page
           finalUrl = 'news-detail.html?id=' + newsData.id;
+          newsSaved = true;
         }
       } catch (newsEx) {
         console.warn('News save error:', newsEx);
+        finalUrl = finalUrl || 'news.html';
       }
     }
 
-    // STEP 2: Send the push with the (possibly updated) URL
+    // ★ FINAL SAFETY: never send a push without a valid URL
+    if (!finalUrl || finalUrl.trim() === '' || finalUrl === '/' || finalUrl === '#') {
+      finalUrl = 'news.html';
+    }
+
+    // STEP 2: Send the push with the guaranteed-valid URL
     const payload={mun_id:MUN_ID,title,body,url:finalUrl,sent_by:currentUser?.email||'admin'};
     if(target==='audience'){
       if(currentAud==='all') payload.topics=currentTopics.length?currentTopics:['general'];
@@ -486,8 +493,10 @@ async function doSend({title,body,url,target}){
     if(!resp.ok)throw new Error(data.error||'فشل الإرسال');
 
     let okMsg = `<div class="alert ok">✅ تمّ الإرسال!<br>📊 ${data.recipients_count||0} مستلم • ✅ ${data.success_count||0} نجح ${data.failed_count?'• ❌ '+data.failed_count:''}`;
-    if (saveAsNews && finalUrl !== url) {
+    if (newsSaved) {
       okMsg += `<br>📰 وتمّ حفظ الخبر — <a href="${finalUrl}" target="_blank" style="color:var(--blue);font-weight:700">معاينة الخبر</a>`;
+    } else if (saveAsNews) {
+      okMsg += `<br>🔗 الإشعار سيوجَّه إلى: <code style="font-size:11px">${esc(finalUrl)}</code>`;
     }
     okMsg += '</div>';
     result.innerHTML = okMsg;

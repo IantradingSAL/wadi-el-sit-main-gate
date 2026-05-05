@@ -2,7 +2,7 @@
 // بلدية وادي الست — Service Worker (PWA + Push Notifications)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v3';
+const CACHE_NAME   = 'wadi-elsit-v4';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v1';
 
 // Files to cache on install (the "shell" of the app)
@@ -121,12 +121,19 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = (event.notification.data && event.notification.data.url) || './';
+  // Smart URL resolution: if no specific URL, go to news.html (most likely relevant)
+  let targetUrl = (event.notification.data && event.notification.data.url) || '';
+
+  // If URL is empty, just '/', or just './' — fallback to news.html
+  if (!targetUrl || targetUrl === '/' || targetUrl === './' || targetUrl === '#') {
+    targetUrl = './news.html';
+  }
+
   const fullUrl = new URL(targetUrl, self.location.origin).href;
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If the app is already open, focus it
+      // If the app is already open, focus it AND navigate to the target
       for (const client of clientList) {
         if (client.url.startsWith(self.location.origin) && 'focus' in client) {
           client.navigate(fullUrl).catch(() => {});
