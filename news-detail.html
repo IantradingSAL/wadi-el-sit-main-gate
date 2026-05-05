@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4d82">
+<title>📰 خبر — وادي الست</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script src="pwa.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0}
+html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;line-height:1.65}
+
+/* HEADER */
+.app-hdr{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;padding:14px 14px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(15,77,130,.18)}
+.hdr-row{display:flex;align-items:center;gap:10px;max-width:900px;margin:0 auto}
+.hdr-back{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;padding:7px 13px;border-radius:18px;font-size:12.5px;font-weight:700}
+.hdr-back:hover{background:rgba(255,255,255,.28)}
+.hdr-news{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;padding:7px 13px;border-radius:18px;font-size:12.5px;font-weight:700;margin-right:auto}
+.hdr-news:hover{background:rgba(255,255,255,.28)}
+
+/* CONTENT */
+.container{max-width:780px;margin:0 auto;padding:0 0 50px}
+
+.cover{aspect-ratio:21/9;background:linear-gradient(135deg,var(--blue4),#dbeafe);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+.cover-fallback{font-size:80px;opacity:.5}
+.cover-cat{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);padding:7px 14px;border-radius:14px;font-size:12.5px;font-weight:800;color:var(--blue2)}
+
+.article{background:#fff;padding:24px 22px;margin:-30px 14px 0;border-radius:18px 18px 0 0;position:relative;z-index:2;box-shadow:0 -8px 30px rgba(0,0,0,.05);min-height:60vh}
+
+.title-bar{margin-bottom:18px}
+.title{font-size:24px;font-weight:900;line-height:1.35;color:var(--text);margin-bottom:10px;letter-spacing:-.3px}
+.meta{display:flex;align-items:center;gap:11px;font-size:11.5px;color:var(--text3);flex-wrap:wrap}
+.meta span{display:inline-flex;align-items:center;gap:4px}
+.meta-dot{width:3px;height:3px;background:var(--text3);border-radius:50%}
+
+.summary{background:var(--blue4);border-right:4px solid var(--blue);padding:14px 16px;border-radius:8px;margin-bottom:20px;font-size:14.5px;font-weight:600;color:var(--blue2);line-height:1.7}
+
+.content{font-size:15px;color:var(--text);line-height:1.85;white-space:pre-wrap;margin-bottom:24px}
+
+.event-box{background:linear-gradient(135deg,#fff8eb,#fef3c7);border:1px solid #fbbf24;border-radius:13px;padding:14px 16px;margin-bottom:20px;display:flex;gap:14px;align-items:center}
+.event-box-i{font-size:32px;flex-shrink:0}
+.event-box-text{flex:1}
+.event-box-l{font-size:11px;color:#7a5500;font-weight:800;margin-bottom:2px}
+.event-box-d{font-size:14px;font-weight:800;color:#854d0e;margin-bottom:1px}
+.event-box-loc{font-size:12px;color:#92400e}
+
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:20px}
+@media(min-width:540px){.gallery{grid-template-columns:repeat(3,1fr)}}
+.gallery-item{aspect-ratio:1/1;background:var(--bg2);border-radius:9px;overflow:hidden;cursor:pointer;transition:.15s}
+.gallery-item:hover{transform:scale(1.03);box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.gallery-item img{width:100%;height:100%;object-fit:cover}
+
+/* SHARE */
+.share-bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:18px}
+.share-btn{flex:1;min-width:90px;padding:11px;border:1.5px solid var(--border);border-radius:11px;background:#fff;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--text);transition:.15s}
+.share-btn:hover{border-color:var(--blue3);background:var(--blue4)}
+.share-btn.wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-color:transparent}
+.share-btn.wa:hover{filter:brightness(1.05)}
+
+/* RELATED */
+.related-h{font-size:14.5px;font-weight:800;color:var(--blue2);margin:26px 0 12px}
+.related-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:540px){.related-grid{grid-template-columns:1fr 1fr}}
+.related-card{display:flex;gap:11px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:11px;cursor:pointer;transition:.15s;text-decoration:none;color:inherit}
+.related-card:hover{border-color:var(--blue3);transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.06)}
+.related-img{width:70px;height:70px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden}
+.related-img img{width:100%;height:100%;object-fit:cover}
+.related-text{flex:1;min-width:0}
+.related-cat{font-size:10.5px;color:var(--blue);font-weight:700;margin-bottom:2px}
+.related-title{font-size:12.5px;font-weight:800;line-height:1.4;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.related-meta{font-size:10.5px;color:var(--text3);margin-top:4px}
+
+/* LOADING / EMPTY */
+.center{text-align:center;padding:60px 20px;color:var(--text3)}
+.center-i{font-size:48px;margin-bottom:12px;opacity:.5}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.1);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* IMAGE LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;cursor:pointer}
+.lightbox.on{display:flex;animation:fadeIn .25s}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.lightbox-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.18);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<header class="app-hdr">
+  <div class="hdr-row">
+    <a href="index.html" class="hdr-back">🏛️ البوابة</a>
+    <a href="news.html" class="hdr-news">📰 كل الأخبار</a>
+  </div>
+</header>
+
+<div class="container" id="ARTICLE">
+  <div class="center"><span class="spin"></span> جاري التحميل...</div>
+</div>
+
+<div class="lightbox" id="LIGHTBOX" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="LIGHTBOX_IMG" src="" alt="">
+</div>
+
+<script>
+const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const CAT_INFO = {
+  general:      {label:'📢 عام',          color:'#1a6eb5'},
+  announcement: {label:'📢 إعلان رسمي',    color:'#0f4d82'},
+  event:        {label:'🎉 فعّالية',       color:'#7c3aed'},
+  alert:        {label:'⚠️ تنبيه',          color:'#d97706'},
+  urgent:       {label:'🚨 طارئ',           color:'#bf2424'},
+  water:        {label:'💧 ماء/ري',         color:'#0891b2'},
+  tender:       {label:'📋 مناقصة',          color:'#15803d'}
+};
+const CAT_ICONS = {general:'📢', announcement:'📢', event:'🎉', alert:'⚠️', urgent:'🚨', water:'💧', tender:'📋'};
+
+let currentArticle = null;
+
+async function loadArticle(){
+  const id = new URLSearchParams(window.location.search).get('id');
+  const wrap = document.getElementById('ARTICLE');
+  if (!id || !/^\d+$/.test(id)) {
+    wrap.innerHTML = '<div class="center"><div class="center-i">⚠️</div><div>رابط غير صحيح</div><div style="margin-top:14px"><a href="news.html" style="color:var(--blue);font-weight:700">← العودة لقائمة الأخبار</a></div></div>';
+    return;
+  }
+  try {
+    const {data, error} = await sb.from('news_articles').select('*').eq('id', id).eq('is_published', true).single();
+    if (error) throw error;
+    if (!data) throw new Error('الخبر غير موجود');
+    currentArticle = data;
+    renderArticle(data);
+    // Increment view count (fire and forget)
+    sb.rpc('increment_news_view', {article_id: parseInt(id)}).then().catch(() => {});
+    // Load related
+    loadRelated(data);
+  } catch(ex) {
+    wrap.innerHTML = `<div class="center"><div class="center-i">⚠️</div><div style="font-weight:700;font-size:14px">تعذّر تحميل الخبر</div><div style="font-size:12.5px;margin-top:6px">${esc(ex.message)}</div><div style="margin-top:14px"><a href="news.html" style="color:var(--blue);font-weight:700">← العودة لقائمة الأخبار</a></div></div>`;
+  }
+}
+
+function renderArticle(a){
+  const cat = CAT_INFO[a.category] || CAT_INFO.general;
+  const icon = CAT_ICONS[a.category] || '📰';
+  document.title = a.title + ' — وادي الست';
+
+  const cover = a.cover_image
+    ? `<img src="${esc(a.cover_image)}" alt="${esc(a.title)}">`
+    : `<span class="cover-fallback">${icon}</span>`;
+
+  const dateStr = formatFullDate(a.created_at);
+
+  const eventBox = a.event_date ? `
+    <div class="event-box">
+      <div class="event-box-i">📅</div>
+      <div class="event-box-text">
+        <div class="event-box-l">موعد الفعّالية</div>
+        <div class="event-box-d">${formatFullDate(a.event_date)}</div>
+        ${a.event_location ? `<div class="event-box-loc">📍 ${esc(a.event_location)}</div>` : ''}
+      </div>
+    </div>
+  ` : '';
+
+  const gallery = (a.gallery && a.gallery.length) ? `
+    <div class="gallery">
+      ${a.gallery.map(url => `<div class="gallery-item" onclick="openLightbox('${esc(url)}')"><img src="${esc(url)}" alt="" loading="lazy"></div>`).join('')}
+    </div>
+  ` : '';
+
+  const html = `
+    <div class="cover">
+      ${cover}
+      <div class="cover-cat" style="color:${cat.color}">${cat.label}</div>
+    </div>
+    <article class="article">
+      <div class="title-bar">
+        <h1 class="title">${esc(a.title)}</h1>
+        <div class="meta">
+          ${a.author_name ? `<span>✍️ ${esc(a.author_name)}</span><span class="meta-dot"></span>` : ''}
+          <span>📅 ${dateStr}</span>
+          ${a.view_count ? `<span class="meta-dot"></span><span>👁️ ${a.view_count} مشاهدة</span>` : ''}
+        </div>
+      </div>
+
+      ${a.summary ? `<div class="summary">${esc(a.summary)}</div>` : ''}
+
+      ${eventBox}
+
+      <div class="content">${esc(a.content)}</div>
+
+      ${gallery}
+
+      <div class="share-bar">
+        <button class="share-btn wa" onclick="shareWhatsApp()">📱 واتساب</button>
+        <button class="share-btn" onclick="copyLink()">📋 نسخ الرابط</button>
+        <button class="share-btn" onclick="shareNative()">🔗 مشاركة</button>
+        <button class="share-btn" onclick="window.print()">🖨️ طباعة</button>
+      </div>
+
+      <h2 class="related-h">📰 أخبار أخرى</h2>
+      <div id="RELATED" class="related-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:14px;color:var(--text3);font-size:12.5px"><span class="spin"></span> جاري التحميل...</div>
+      </div>
+    </article>
+  `;
+  document.getElementById('ARTICLE').innerHTML = html;
+}
+
+async function loadRelated(article){
+  try {
+    let q = sb.from('news_articles').select('id,title,category,cover_image,created_at')
+      .eq('mun_id', MUN_ID).eq('is_published', true)
+      .neq('id', article.id);
+    // Try same category first
+    if (article.category && article.category !== 'general') {
+      q = q.eq('category', article.category);
+    }
+    q = q.order('created_at', {ascending:false}).limit(4);
+    const {data} = await q;
+    let items = data || [];
+    if (items.length < 2) {
+      // Fallback: any recent news
+      const r2 = await sb.from('news_articles').select('id,title,category,cover_image,created_at')
+        .eq('mun_id', MUN_ID).eq('is_published', true)
+        .neq('id', article.id)
+        .order('created_at', {ascending:false}).limit(4);
+      items = r2.data || [];
+    }
+    const wrap = document.getElementById('RELATED');
+    if (!items.length) {
+      wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:14px;color:var(--text3);font-size:12.5px">لا توجد أخبار أخرى</div>';
+      return;
+    }
+    wrap.innerHTML = items.map(n => {
+      const ci = CAT_INFO[n.category] || CAT_INFO.general;
+      const ic = CAT_ICONS[n.category] || '📰';
+      const cover = n.cover_image ? `<img src="${esc(n.cover_image)}" alt="" loading="lazy">` : `<span style="font-size:24px;opacity:.6">${ic}</span>`;
+      return `<a class="related-card" href="news-detail.html?id=${n.id}">
+        <div class="related-img">${cover}</div>
+        <div class="related-text">
+          <div class="related-cat" style="color:${ci.color}">${ci.label}</div>
+          <div class="related-title">${esc(n.title)}</div>
+          <div class="related-meta">📅 ${formatRelativeDate(n.created_at)}</div>
+        </div>
+      </a>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('RELATED').innerHTML = '';
+  }
+}
+
+// SHARING
+function shareWhatsApp(){
+  if (!currentArticle) return;
+  const url = window.location.href;
+  const text = currentArticle.title + '\n\n' + (currentArticle.summary || (currentArticle.content||'').slice(0,200)) + '\n\n📖 اقرأ المزيد: ' + url;
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+function copyLink(){
+  const url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert('✅ تم نسخ الرابط');
+    }).catch(() => fallbackCopy(url));
+  } else fallbackCopy(url);
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert('✅ تم نسخ الرابط'); } catch(e) { alert('انسخ يدوياً: ' + text); }
+  document.body.removeChild(ta);
+}
+async function shareNative(){
+  if (!currentArticle) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: currentArticle.title,
+        text: currentArticle.summary || '',
+        url: window.location.href
+      });
+    } catch(e) {}
+  } else {
+    copyLink();
+  }
+}
+
+// LIGHTBOX
+function openLightbox(src){
+  document.getElementById('LIGHTBOX_IMG').src = src;
+  document.getElementById('LIGHTBOX').classList.add('on');
+}
+function closeLightbox(){
+  document.getElementById('LIGHTBOX').classList.remove('on');
+}
+
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function formatFullDate(iso){
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('ar-LB', {weekday:'long', day:'2-digit', month:'long', year:'numeric'}) + ' • ' + d.toLocaleTimeString('ar-LB', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { return iso; }
+}
+function formatRelativeDate(iso){
+  if (!iso) return '—';
+  const d = new Date(iso); const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return 'الآن';
+  if (diff < 3600) return Math.floor(diff/60) + ' د';
+  if (diff < 86400) return 'منذ ' + Math.floor(diff/3600) + ' س';
+  if (diff < 604800) return 'منذ ' + Math.floor(diff/86400) + ' يوم';
+  return d.toLocaleDateString('ar-LB', {day:'2-digit', month:'short'});
+}
+
+// Init
+loadArticle();
+</script>
+</body>
+</html>

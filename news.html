@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4d82">
+<meta name="description" content="أخبار وإعلانات بلدية وادي الست">
+<title>📰 أخبار البلدية — وادي الست</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="pwa.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0;--shadow:0 2px 10px rgba(15,77,130,.06)}
+html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+
+/* HEADER */
+.app-hdr{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;padding:18px 16px 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(15,77,130,.18)}
+.hdr-row{display:flex;align-items:center;gap:12px;max-width:1200px;margin:0 auto}
+.hdr-back{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.18);color:#fff;text-decoration:none;padding:7px 12px;border-radius:18px;font-size:12px;font-weight:700;flex-shrink:0;white-space:nowrap}
+.hdr-back:hover{background:rgba(255,255,255,.28)}
+.hdr-ttl{flex:1;min-width:0}
+.hdr-ttl h1{font-size:18px;font-weight:900;letter-spacing:-.3px;line-height:1.2}
+.hdr-ttl p{font-size:11.5px;opacity:.78;margin-top:2px}
+.hdr-actions{display:flex;gap:6px;flex-shrink:0}
+.hdr-btn{background:rgba(255,255,255,.16);color:#fff;border:none;padding:7px 11px;border-radius:14px;font-size:11.5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.hdr-btn:hover{background:rgba(255,255,255,.26)}
+
+/* MAIN */
+.container{max-width:1100px;margin:0 auto;padding:18px 14px 60px}
+
+/* PUSH BANNER */
+.push-banner{background:linear-gradient(135deg,#fff8eb,#fef3c7);border:1px solid #fbbf24;border-radius:13px;padding:13px 15px;margin-bottom:16px;display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.push-banner-i{font-size:24px;flex-shrink:0}
+.push-banner-text{flex:1;min-width:170px;font-size:12.5px;color:#7a5500;line-height:1.5}
+.push-banner-text strong{color:#854d0e;font-weight:800}
+.push-banner-btn{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0;white-space:nowrap}
+
+/* CATEGORY FILTER */
+.cats{display:flex;gap:7px;margin-bottom:16px;overflow-x:auto;padding:2px;-webkit-overflow-scrolling:touch}
+.cats::-webkit-scrollbar{display:none}
+.cat{padding:8px 14px;background:#fff;border:1.5px solid var(--border);border-radius:18px;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--text2);cursor:pointer;transition:.15s;flex-shrink:0;white-space:nowrap}
+.cat:hover{border-color:var(--blue3);color:var(--blue2)}
+.cat.on{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 2px 8px rgba(26,110,181,.3)}
+
+/* PINNED SECTION */
+.pinned-section{margin-bottom:18px}
+.pinned-label{font-size:11px;font-weight:800;color:var(--warn);margin-bottom:8px;display:flex;align-items:center;gap:5px;letter-spacing:.3px}
+
+/* NEWS GRID */
+.news-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:680px){.news-grid{grid-template-columns:1fr 1fr}}
+@media(min-width:980px){.news-grid{grid-template-columns:1fr 1fr 1fr}}
+
+.news-card{background:var(--surface);border-radius:14px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--shadow);cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;display:flex;flex-direction:column}
+.news-card:hover,.news-card:active{transform:translateY(-3px);box-shadow:0 12px 28px rgba(15,77,130,.13);border-color:var(--blue3)}
+.news-card.pinned{border:2px solid var(--warn);box-shadow:0 4px 14px rgba(217,119,6,.18)}
+.news-card-img{aspect-ratio:16/9;background:linear-gradient(135deg,var(--blue4),#dbeafe);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden}
+.news-card-img img{width:100%;height:100%;object-fit:cover}
+.news-card-cat{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.95);backdrop-filter:blur(4px);padding:4px 10px;border-radius:10px;font-size:11px;font-weight:800;color:var(--blue2);letter-spacing:.2px}
+.news-card-pin{position:absolute;top:8px;left:8px;background:var(--warn);color:#fff;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:800;display:flex;align-items:center;gap:3px}
+.news-card-body{padding:12px 14px;flex:1;display:flex;flex-direction:column}
+.news-card-title{font-size:14.5px;font-weight:800;line-height:1.4;margin-bottom:6px;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.news-card-summary{font-size:12.5px;color:var(--text2);line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px;flex:1}
+.news-card-meta{display:flex;align-items:center;justify-content:space-between;font-size:10.5px;color:var(--text3);padding-top:9px;border-top:1px dashed var(--border)}
+.news-card-meta span{display:inline-flex;align-items:center;gap:4px}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-i{font-size:48px;margin-bottom:12px;opacity:.5}
+.empty-t{font-size:14px;font-weight:700;margin-bottom:5px}
+.empty-d{font-size:12.5px;line-height:1.6}
+
+/* SPIN */
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.1);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* SEARCH */
+.search-row{margin-bottom:14px}
+.search-box{display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--border);border-radius:11px;padding:0 12px;transition:.15s}
+.search-box:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,110,181,.08)}
+.search-box input{flex:1;border:none;background:none;padding:11px 0;font-family:inherit;font-size:13.5px;color:var(--text);outline:none}
+</style>
+</head>
+<body>
+
+<header class="app-hdr">
+  <div class="hdr-row">
+    <a href="index.html" class="hdr-back">🏛️ البوابة الرئيسية</a>
+    <div class="hdr-ttl">
+      <h1>📰 أخبار البلدية</h1>
+      <p>الإعلانات والفعّاليات والتنبيهات</p>
+    </div>
+    <div class="hdr-actions">
+      <button class="hdr-btn" onclick="loadNews()" title="تحديث">🔄</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PUSH BANNER (if not subscribed) -->
+  <div id="push-banner" class="push-banner" style="display:none">
+    <div class="push-banner-i">🔔</div>
+    <div class="push-banner-text"><strong>لا تفوّت أيّ خبر!</strong><br>فعّل الإشعارات لتستلم الأخبار الجديدة فوراً</div>
+    <button class="push-banner-btn" onclick="enableNewsPush()">🔔 تفعيل الإشعارات</button>
+  </div>
+
+  <!-- CATEGORY FILTER -->
+  <div class="cats">
+    <button class="cat on" data-cat="all" onclick="setCategory('all')">📰 الكلّ</button>
+    <button class="cat" data-cat="announcement" onclick="setCategory('announcement')">📢 إعلان</button>
+    <button class="cat" data-cat="event" onclick="setCategory('event')">🎉 فعّاليات</button>
+    <button class="cat" data-cat="alert" onclick="setCategory('alert')">⚠️ تنبيه</button>
+    <button class="cat" data-cat="urgent" onclick="setCategory('urgent')">🚨 طارئ</button>
+    <button class="cat" data-cat="water" onclick="setCategory('water')">💧 ماء وري</button>
+    <button class="cat" data-cat="tender" onclick="setCategory('tender')">📋 مناقصات</button>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-row">
+    <div class="search-box">
+      <span style="color:var(--text3);font-size:14px">🔍</span>
+      <input type="text" id="search-input" placeholder="ابحث في الأخبار..." oninput="filterNews()">
+    </div>
+  </div>
+
+  <!-- PINNED -->
+  <div id="pinned-section" class="pinned-section" style="display:none">
+    <div class="pinned-label">📌 مثبَّت</div>
+    <div id="pinned-list" class="news-grid"></div>
+  </div>
+
+  <!-- NEWS LIST -->
+  <div id="news-list" class="news-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">
+      <span class="spin"></span> جاري تحميل الأخبار...
+    </div>
+  </div>
+
+</div>
+
+<!-- BACK TO GATE FLOATING -->
+<style>
+.back-to-gate{position:fixed;top:auto;bottom:14px;left:14px;z-index:99990;display:none}
+@media(max-width:540px){.back-to-gate{display:none}}
+</style>
+
+<script>
+const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let allNews = [];
+let currentCategory = 'all';
+
+const CAT_INFO = {
+  general:      {label:'📢 عام',          color:'#1a6eb5', bg:'#dbeafe'},
+  announcement: {label:'📢 إعلان رسمي',    color:'#0f4d82', bg:'#dbeafe'},
+  event:        {label:'🎉 فعّالية',       color:'#7c3aed', bg:'#ede9fe'},
+  alert:        {label:'⚠️ تنبيه',          color:'#d97706', bg:'#fef3c7'},
+  urgent:       {label:'🚨 طارئ',           color:'#bf2424', bg:'#fee2e2'},
+  water:        {label:'💧 ماء/ري',         color:'#0891b2', bg:'#cffafe'},
+  tender:       {label:'📋 مناقصة',          color:'#15803d', bg:'#d4f0dc'}
+};
+
+const CAT_ICONS = {
+  general:'📢', announcement:'📢', event:'🎉',
+  alert:'⚠️', urgent:'🚨', water:'💧', tender:'📋'
+};
+
+async function loadNews(){
+  const list = document.getElementById('news-list');
+  list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3)"><span class="spin"></span> جاري التحديث...</div>';
+  try {
+    const {data, error} = await sb.from('news_articles')
+      .select('*')
+      .eq('mun_id', MUN_ID)
+      .eq('is_published', true)
+      .order('is_pinned', {ascending:false})
+      .order('created_at', {ascending:false})
+      .limit(60);
+    if (error) throw error;
+    allNews = data || [];
+    renderNews();
+    // Auto-open if ?id=X in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (id) {
+      setTimeout(() => { window.location.href = 'news-detail.html?id=' + id; }, 200);
+    }
+  } catch(ex) {
+    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">⚠️</div><div class="empty-t">تعذّر تحميل الأخبار</div><div class="empty-d">${esc(ex.message)}</div></div>`;
+  }
+}
+
+function setCategory(cat){
+  currentCategory = cat;
+  document.querySelectorAll('.cat').forEach(c => c.classList.toggle('on', c.dataset.cat === cat));
+  renderNews();
+}
+
+function filterNews(){
+  renderNews();
+}
+
+function renderNews(){
+  const q = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  let filtered = allNews;
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(n => n.category === currentCategory);
+  }
+  if (q) {
+    filtered = filtered.filter(n =>
+      (n.title||'').toLowerCase().includes(q) ||
+      (n.summary||'').toLowerCase().includes(q) ||
+      (n.content||'').toLowerCase().includes(q)
+    );
+  }
+
+  // Separate pinned (only when no filter)
+  const showPinned = currentCategory === 'all' && !q;
+  const pinned = showPinned ? filtered.filter(n => n.is_pinned) : [];
+  const regular = showPinned ? filtered.filter(n => !n.is_pinned) : filtered;
+
+  // Render pinned
+  const pinnedSec = document.getElementById('pinned-section');
+  const pinnedList = document.getElementById('pinned-list');
+  if (pinned.length) {
+    pinnedSec.style.display = 'block';
+    pinnedList.innerHTML = pinned.map(n => renderCard(n, true)).join('');
+  } else {
+    pinnedSec.style.display = 'none';
+  }
+
+  // Render regular list
+  const list = document.getElementById('news-list');
+  if (!regular.length) {
+    if (q) {
+      list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">🔍</div><div class="empty-t">لا نتائج لـ "${esc(q)}"</div><div class="empty-d">جرّب كلمات مختلفة أو اختر فئة أخرى</div></div>`;
+    } else {
+      list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">📰</div><div class="empty-t">لا توجد أخبار في هذه الفئة</div><div class="empty-d">سيتمّ نشر الأخبار هنا بمجرّد توفّرها</div></div>`;
+    }
+    return;
+  }
+  list.innerHTML = regular.map(n => renderCard(n, false)).join('');
+}
+
+function renderCard(n, isPinned){
+  const cat = CAT_INFO[n.category] || CAT_INFO.general;
+  const icon = CAT_ICONS[n.category] || '📰';
+  const date = formatRelativeDate(n.created_at);
+  const cover = n.cover_image
+    ? `<img src="${esc(n.cover_image)}" alt="${esc(n.title)}" loading="lazy">`
+    : `<span style="font-size:54px;opacity:.5">${icon}</span>`;
+  return `<div class="news-card ${isPinned?'pinned':''}" onclick="openNews(${n.id})">
+    <div class="news-card-img">
+      ${cover}
+      <div class="news-card-cat" style="color:${cat.color}">${cat.label}</div>
+      ${isPinned?'<div class="news-card-pin">📌 مثبَّت</div>':''}
+    </div>
+    <div class="news-card-body">
+      <div class="news-card-title">${esc(n.title)}</div>
+      <div class="news-card-summary">${esc(n.summary || (n.content||'').slice(0,140))}</div>
+      <div class="news-card-meta">
+        <span>🕒 ${date}</span>
+        ${n.view_count ? `<span>👁️ ${n.view_count}</span>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function openNews(id){
+  window.location.href = 'news-detail.html?id=' + id;
+}
+
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function formatRelativeDate(iso){
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const now = new Date();
+  const diff = (now - d) / 1000; // seconds
+  if (diff < 60) return 'الآن';
+  if (diff < 3600) return Math.floor(diff/60) + ' دقيقة';
+  if (diff < 86400) return 'منذ ' + Math.floor(diff/3600) + ' ساعة';
+  if (diff < 604800) return 'منذ ' + Math.floor(diff/86400) + ' يوم';
+  return d.toLocaleDateString('ar-LB', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+// Push notification banner (for users not yet subscribed)
+async function checkPushBanner(){
+  try {
+    if (window.PWA && window.PWA.canPush && window.PWA.canPush()) {
+      const status = await window.PWA.pushStatus();
+      if (status === 'pending') {
+        document.getElementById('push-banner').style.display = 'flex';
+      }
+    }
+  } catch(e) {}
+}
+
+async function enableNewsPush(){
+  try {
+    if (!window.PWA || !window.PWA.enablePush) {
+      alert('⚠️ النظام يحمّل... أعد المحاولة بعد ثانيتين.');
+      return;
+    }
+    await window.PWA.enablePush(['general','news']);
+    document.getElementById('push-banner').innerHTML = '<div style="text-align:center;width:100%;color:var(--green);font-weight:700;padding:6px">✅ تمّ تفعيل الإشعارات!</div>';
+    setTimeout(() => {
+      document.getElementById('push-banner').style.display = 'none';
+    }, 2500);
+  } catch(ex) {
+    alert('⚠️ ' + (ex.message || 'خطأ'));
+  }
+}
+
+// Init
+loadNews();
+setTimeout(checkPushBanner, 1500);
+</script>
+
+</body>
+</html>

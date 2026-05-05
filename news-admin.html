@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4d82">
+<title>📰 إدارة الأخبار — وادي الست</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script src="pwa.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--green4:#ebf7ee;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0;--shadow:0 2px 10px rgba(15,77,130,.06)}
+html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+
+.app-hdr{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;padding:16px 14px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(15,77,130,.18)}
+.hdr-row{display:flex;align-items:center;gap:11px;max-width:1200px;margin:0 auto}
+.hdr-back{background:rgba(255,255,255,.18);color:#fff;text-decoration:none;padding:7px 12px;border-radius:18px;font-size:12px;font-weight:700}
+.hdr-ttl{flex:1}
+.hdr-ttl h1{font-size:17px;font-weight:900}
+.hdr-ttl p{font-size:11px;opacity:.78}
+.hdr-user{font-size:11px;background:rgba(255,255,255,.16);padding:5px 10px;border-radius:12px;font-weight:600;cursor:pointer}
+
+.container{max-width:1100px;margin:0 auto;padding:18px 14px 60px}
+
+.toolbar{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.toolbar-stats{display:flex;gap:14px;flex:1;flex-wrap:wrap}
+.tb-stat{display:flex;flex-direction:column}
+.tb-stat-n{font-size:18px;font-weight:900;color:var(--blue2);line-height:1}
+.tb-stat-l{font-size:10.5px;color:var(--text3);font-weight:600;margin-top:3px}
+.btn{padding:11px 16px;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;box-shadow:0 4px 12px rgba(15,77,130,.25)}
+.btn-out{background:#fff;color:var(--blue2);border:1.5px solid var(--blue3)}
+.btn-danger{background:#fff;color:var(--danger);border:1.5px solid var(--danger)}
+.btn-warn{background:linear-gradient(135deg,var(--warn),#b45309);color:#fff}
+.btn-sm{padding:7px 11px;font-size:12px}
+
+/* CARD */
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.card-t{font-size:15px;font-weight:800;color:var(--blue2);display:flex;align-items:center;gap:8px}
+
+/* FORM */
+.field{margin-bottom:13px}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text2)}
+.field label .req{color:var(--danger)}
+.field input,.field textarea,.field select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;direction:rtl;background:#fff;color:var(--text);transition:.15s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,110,181,.08)}
+.field textarea{min-height:120px;resize:vertical;line-height:1.7}
+.field .hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:480px){.row2{grid-template-columns:1fr}}
+
+/* CHECKBOX ROW */
+.check-row{display:flex;align-items:center;gap:8px;padding:10px 13px;background:var(--bg2);border-radius:10px;margin-bottom:10px;cursor:pointer;user-select:none}
+.check-row:hover{background:#dde5ee}
+.check-row input{width:18px;height:18px;cursor:pointer}
+.check-row-text{flex:1}
+.check-row-l{font-size:13px;font-weight:700;color:var(--text)}
+.check-row-d{font-size:11.5px;color:var(--text3);margin-top:2px;line-height:1.5}
+
+/* IMAGE PREVIEW */
+.img-preview{margin-top:8px;position:relative;display:inline-block;max-width:100%}
+.img-preview img{max-width:100%;max-height:200px;border-radius:9px;display:block}
+.img-preview-rm{position:absolute;top:6px;left:6px;background:var(--danger);color:#fff;border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
+
+/* GALLERY GRID (admin) */
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px;margin-top:8px}
+.gal-item{aspect-ratio:1/1;background:var(--bg2);border-radius:7px;overflow:hidden;position:relative}
+.gal-item img{width:100%;height:100%;object-fit:cover}
+.gal-rm{position:absolute;top:3px;left:3px;background:rgba(191,36,36,.92);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:12px}
+
+/* NEWS LIST (admin) */
+.list-row{display:flex;gap:11px;padding:11px;background:#fff;border:1px solid var(--border);border-radius:11px;margin-bottom:7px;cursor:pointer;transition:.15s}
+.list-row:hover{border-color:var(--blue3);transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.05)}
+.list-img{width:64px;height:64px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden}
+.list-img img{width:100%;height:100%;object-fit:cover}
+.list-text{flex:1;min-width:0}
+.list-cat{font-size:10.5px;color:var(--blue);font-weight:700;margin-bottom:2px}
+.list-title{font-size:13px;font-weight:800;line-height:1.4;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-meta{font-size:10.5px;color:var(--text3);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
+.list-meta-pill{padding:1px 7px;background:var(--bg2);border-radius:7px;font-weight:600}
+.list-meta-pill.pin{background:var(--warn3);color:var(--warn)}
+.list-meta-pill.draft{background:#e5e7eb;color:#374151}
+.list-meta-pill.live{background:var(--green3);color:var(--green)}
+.list-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}
+
+/* ALERTS */
+.alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:14px;line-height:1.55;border-left:4px solid}
+.alert.ok{background:var(--green4);color:var(--green);border-color:var(--green)}
+.alert.err{background:var(--danger3);color:var(--danger);border-color:var(--danger)}
+.alert.info{background:var(--blue4);color:var(--blue2);border-color:var(--blue)}
+.alert.warn{background:var(--warn3);color:#7a5500;border-color:var(--warn)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;display:none;align-items:center;justify-content:center;padding:14px}
+.modal-bg.on{display:flex;animation:fadeIn .25s}
+.modal-x{background:var(--surface);border-radius:18px;max-width:720px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal-h{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;border-radius:18px 18px 0 0;z-index:1}
+.modal-h h3{font-size:15px;font-weight:800;color:var(--blue2)}
+.modal-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--bg);cursor:pointer;font-size:14px}
+.modal-b{padding:18px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--blue4) 0%,var(--bg) 100%)}
+.login-card{background:#fff;padding:30px 26px;border-radius:18px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(15,77,130,.18);text-align:center}
+.login-logo{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue2));margin:0 auto 14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px}
+.login-card h2{font-size:20px;font-weight:900;margin-bottom:4px;color:var(--blue2)}
+.login-card p{font-size:13px;color:var(--text3);margin-bottom:22px}
+.login-card .field{text-align:right}
+
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+.empty{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-i{font-size:36px;margin-bottom:8px;opacity:.5}
+.empty-t{font-size:13px;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="LOGIN_VIEW" class="login-wrap" style="display:none">
+  <div class="login-card">
+    <div class="login-logo">📰</div>
+    <h2>إدارة الأخبار</h2>
+    <p>تسجيل دخول الأدمن</p>
+    <div class="field"><label>البريد الإلكتروني</label><input type="email" id="LE" autocomplete="email"></div>
+    <div class="field"><label>كلمة المرور</label><input type="password" id="LP" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div id="LERR"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="doLogin()">🔐 دخول</button>
+  </div>
+</div>
+
+<!-- MAIN VIEW -->
+<div id="MAIN_VIEW" style="display:none">
+  <header class="app-hdr">
+    <div class="hdr-row">
+      <a href="index.html" class="hdr-back">🏛️ البوابة</a>
+      <div class="hdr-ttl">
+        <h1>📰 إدارة الأخبار</h1>
+        <p>إنشاء وتعديل الإعلانات والفعّاليات</p>
+      </div>
+      <span class="hdr-user" id="USER_BADGE" onclick="doLogout()" title="خروج">⏻</span>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <div class="toolbar">
+      <div class="toolbar-stats">
+        <div class="tb-stat"><div class="tb-stat-n" id="ST_TOTAL">—</div><div class="tb-stat-l">إجمالي</div></div>
+        <div class="tb-stat"><div class="tb-stat-n" id="ST_PINNED">—</div><div class="tb-stat-l">مثبَّت</div></div>
+        <div class="tb-stat"><div class="tb-stat-n" id="ST_VIEWS">—</div><div class="tb-stat-l">إجمالي مشاهدات</div></div>
+      </div>
+      <button class="btn btn-primary" onclick="openEditor()">+ إعلان جديد</button>
+      <a href="news.html" class="btn btn-out" target="_blank">👁️ معاينة الموقع</a>
+    </div>
+
+    <div class="card">
+      <div class="card-h">
+        <div class="card-t">📋 كل الأخبار</div>
+        <input type="text" id="search" placeholder="🔍 ابحث..." style="padding:7px 11px;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:12px;width:200px;max-width:50%" oninput="filterList()">
+      </div>
+      <div id="LIST"><div class="empty"><div class="empty-i">⏳</div><div class="empty-t">جاري التحميل…</div></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EDITOR MODAL -->
+<div class="modal-bg" id="EDIT_MODAL">
+  <div class="modal-x">
+    <div class="modal-h">
+      <h3 id="MOD_TITLE">إعلان جديد</h3>
+      <button class="modal-close" onclick="closeEditor()">✕</button>
+    </div>
+    <div class="modal-b">
+      <div class="row2">
+        <div class="field"><label>الفئة <span class="req">*</span></label>
+          <select id="F_CAT">
+            <option value="general">📢 عام</option>
+            <option value="announcement">📢 إعلان رسمي</option>
+            <option value="event">🎉 فعّالية</option>
+            <option value="alert">⚠️ تنبيه</option>
+            <option value="urgent">🚨 طارئ</option>
+            <option value="water">💧 ماء/ري</option>
+            <option value="tender">📋 مناقصة</option>
+          </select>
+        </div>
+        <div class="field"><label>الكاتب</label><input type="text" id="F_AUTHOR" placeholder="إدارة البلدية"></div>
+      </div>
+
+      <div class="field"><label>العنوان <span class="req">*</span></label><input type="text" id="F_TITLE" maxlength="200" placeholder="مثلاً: انقطاع للماء غداً"></div>
+
+      <div class="field"><label>الملخّص (اختياري)</label><textarea id="F_SUMMARY" maxlength="500" placeholder="جملة-جملتَين تظهر في القائمة وفي معاينة المشاركة" style="min-height:60px"></textarea></div>
+
+      <div class="field"><label>المحتوى الكامل <span class="req">*</span></label><textarea id="F_CONTENT" placeholder="اكتب الخبر هنا بالتفصيل... يمكنك استخدام أسطر جديدة للفقرات."></textarea></div>
+
+      <div class="field">
+        <label>صورة الغلاف (اختياري)</label>
+        <input type="file" id="F_COVER_FILE" accept="image/*" onchange="uploadCover()">
+        <div class="hint">صورة جذّابة تظهر أعلى الخبر (يُفضَّل 1600×900)</div>
+        <div id="COVER_PREVIEW"></div>
+      </div>
+
+      <div class="field">
+        <label>صور إضافية (معرض - اختياري)</label>
+        <input type="file" id="F_GAL_FILE" accept="image/*" multiple onchange="uploadGallery()">
+        <div id="GAL_PREVIEW" class="gal-grid"></div>
+      </div>
+
+      <div class="row2" id="EVENT_FIELDS" style="display:none">
+        <div class="field"><label>📅 تاريخ ووقت الفعّالية</label><input type="datetime-local" id="F_EVENT_DATE"></div>
+        <div class="field"><label>📍 المكان</label><input type="text" id="F_EVENT_LOC" placeholder="مثلاً: ساحة البلدة"></div>
+      </div>
+
+      <div class="check-row" onclick="toggleCheck('F_PINNED')">
+        <input type="checkbox" id="F_PINNED">
+        <div class="check-row-text">
+          <div class="check-row-l">📌 تثبيت في الأعلى</div>
+          <div class="check-row-d">يظهر هذا الخبر دائماً في رأس قائمة الأخبار</div>
+        </div>
+      </div>
+
+      <div class="check-row" onclick="toggleCheck('F_PUSH')">
+        <input type="checkbox" id="F_PUSH" checked>
+        <div class="check-row-text">
+          <div class="check-row-l">🔔 إرسال إشعار push</div>
+          <div class="check-row-d">يُرسَل إشعار فوري لكل المشتركين عند النشر (مرّة واحدة فقط)</div>
+        </div>
+      </div>
+
+      <div class="check-row" onclick="toggleCheck('F_PUBLISH')">
+        <input type="checkbox" id="F_PUBLISH" checked>
+        <div class="check-row-text">
+          <div class="check-row-l">✅ نشر فوراً</div>
+          <div class="check-row-d">إذا أزلت العلامة، يُحفَظ كمسوّدة بدون عرضه للجمهور</div>
+        </div>
+      </div>
+
+      <div id="EDIT_RESULT"></div>
+
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-out" onclick="closeEditor()">إلغاء</button>
+        <button class="btn btn-danger btn-sm" id="DEL_BTN" onclick="deleteArticle()" style="display:none">🗑️ حذف</button>
+        <button class="btn btn-primary" id="SAVE_BTN" onclick="saveArticle()" style="flex:1">💾 حفظ ونشر</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+const FUNCTION_URL=SUPABASE_URL+'/functions/v1/send-push';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null, allArticles=[], editingId=null;
+let coverImage=null, gallery=[];
+
+const CAT_INFO={general:{l:'📢 عام',c:'#1a6eb5'},announcement:{l:'📢 إعلان',c:'#0f4d82'},event:{l:'🎉 فعّالية',c:'#7c3aed'},alert:{l:'⚠️ تنبيه',c:'#d97706'},urgent:{l:'🚨 طارئ',c:'#bf2424'},water:{l:'💧 ماء',c:'#0891b2'},tender:{l:'📋 مناقصة',c:'#15803d'}};
+
+async function checkSession(){
+  const {data:{session}} = await sb.auth.getSession();
+  if (session && session.user) {
+    currentUser = session.user;
+    document.getElementById('USER_BADGE').textContent = '👤 ' + (session.user.email||'').split('@')[0];
+    show('MAIN_VIEW');
+    loadList();
+  } else show('LOGIN_VIEW');
+}
+function show(id){['LOGIN_VIEW','MAIN_VIEW'].forEach(x=>document.getElementById(x).style.display='none');document.getElementById(id).style.display=id==='LOGIN_VIEW'?'flex':'block';}
+async function doLogin(){
+  const email=document.getElementById('LE').value.trim();
+  const pass=document.getElementById('LP').value;
+  const err=document.getElementById('LERR'); err.innerHTML='';
+  if(!email||!pass){err.innerHTML='<div class="alert err">⚠️ أدخل البريد وكلمة المرور</div>';return;}
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){err.innerHTML=`<div class="alert err">⚠️ ${esc(error.message)}</div>`;return;}
+  await checkSession();
+}
+async function doLogout(){if(!confirm('تسجيل خروج؟'))return;await sb.auth.signOut();show('LOGIN_VIEW');}
+
+async function loadList(){
+  try {
+    const {data, error} = await sb.from('news_articles').select('*').eq('mun_id', MUN_ID).order('is_pinned',{ascending:false}).order('created_at',{ascending:false});
+    if (error) throw error;
+    allArticles = data || [];
+    // Stats
+    document.getElementById('ST_TOTAL').textContent = allArticles.length;
+    document.getElementById('ST_PINNED').textContent = allArticles.filter(a=>a.is_pinned).length;
+    document.getElementById('ST_VIEWS').textContent = allArticles.reduce((a,n)=>a+(n.view_count||0),0);
+    renderList(allArticles);
+  } catch(ex) {
+    document.getElementById('LIST').innerHTML = `<div class="alert err">⚠️ ${esc(ex.message)}</div>`;
+  }
+}
+
+function filterList(){
+  const q = (document.getElementById('search').value||'').toLowerCase().trim();
+  if (!q) { renderList(allArticles); return; }
+  renderList(allArticles.filter(a => (a.title||'').toLowerCase().includes(q) || (a.summary||'').toLowerCase().includes(q)));
+}
+
+function renderList(items){
+  const list = document.getElementById('LIST');
+  if (!items.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-i">📰</div><div class="empty-t">لا توجد أخبار بعد</div><div style="font-size:12px;margin-top:6px">اضغط "إعلان جديد" لإضافة أوّل خبر</div></div>';
+    return;
+  }
+  list.innerHTML = items.map(a => {
+    const ci = CAT_INFO[a.category] || CAT_INFO.general;
+    const cover = a.cover_image ? `<img src="${esc(a.cover_image)}" alt="">` : '<span style="font-size:24px">📰</span>';
+    const date = formatDate(a.created_at);
+    return `<div class="list-row" onclick="openEditor(${a.id})">
+      <div class="list-img">${cover}</div>
+      <div class="list-text">
+        <div class="list-cat" style="color:${ci.c}">${ci.l}</div>
+        <div class="list-title">${esc(a.title)}</div>
+        <div class="list-meta">
+          ${a.is_pinned?'<span class="list-meta-pill pin">📌 مثبَّت</span>':''}
+          <span class="list-meta-pill ${a.is_published?'live':'draft'}">${a.is_published?'منشور':'مسوّدة'}</span>
+          <span class="list-meta-pill">📅 ${date}</span>
+          ${a.view_count?`<span class="list-meta-pill">👁️ ${a.view_count}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEditor(id){
+  editingId = id || null;
+  const isEdit = !!id;
+  document.getElementById('MOD_TITLE').textContent = isEdit ? '✏️ تعديل الإعلان' : '+ إعلان جديد';
+  document.getElementById('SAVE_BTN').innerHTML = isEdit ? '💾 حفظ التعديلات' : '💾 حفظ ونشر';
+  document.getElementById('DEL_BTN').style.display = isEdit ? 'inline-flex' : 'none';
+  // Reset
+  ['F_TITLE','F_SUMMARY','F_CONTENT','F_AUTHOR','F_EVENT_LOC'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('F_CAT').value = 'general';
+  document.getElementById('F_EVENT_DATE').value = '';
+  document.getElementById('F_PINNED').checked = false;
+  document.getElementById('F_PUSH').checked = !isEdit; // only auto-push for new
+  document.getElementById('F_PUBLISH').checked = true;
+  coverImage = null;
+  gallery = [];
+  document.getElementById('COVER_PREVIEW').innerHTML = '';
+  document.getElementById('GAL_PREVIEW').innerHTML = '';
+  document.getElementById('EDIT_RESULT').innerHTML = '';
+  if (isEdit) {
+    const a = allArticles.find(x => x.id === id);
+    if (a) {
+      document.getElementById('F_TITLE').value = a.title || '';
+      document.getElementById('F_SUMMARY').value = a.summary || '';
+      document.getElementById('F_CONTENT').value = a.content || '';
+      document.getElementById('F_AUTHOR').value = a.author_name || '';
+      document.getElementById('F_CAT').value = a.category || 'general';
+      document.getElementById('F_PINNED').checked = !!a.is_pinned;
+      document.getElementById('F_PUBLISH').checked = !!a.is_published;
+      document.getElementById('F_PUSH').checked = false; // don't re-send by default
+      if (a.event_date) document.getElementById('F_EVENT_DATE').value = a.event_date.slice(0,16);
+      document.getElementById('F_EVENT_LOC').value = a.event_location || '';
+      coverImage = a.cover_image;
+      gallery = a.gallery || [];
+      renderCoverPreview();
+      renderGalleryPreview();
+    }
+  }
+  updateEventFieldsVisibility();
+  document.getElementById('F_CAT').onchange = updateEventFieldsVisibility;
+  document.getElementById('EDIT_MODAL').classList.add('on');
+}
+function closeEditor(){document.getElementById('EDIT_MODAL').classList.remove('on');}
+function toggleCheck(id){
+  const cb = document.getElementById(id);
+  cb.checked = !cb.checked;
+}
+function updateEventFieldsVisibility(){
+  const cat = document.getElementById('F_CAT').value;
+  document.getElementById('EVENT_FIELDS').style.display = (cat === 'event') ? 'grid' : 'none';
+}
+
+async function uploadCover(){
+  const file = document.getElementById('F_COVER_FILE').files[0];
+  if (!file) return;
+  const preview = document.getElementById('COVER_PREVIEW');
+  preview.innerHTML = '<div style="margin-top:8px;font-size:12px;color:var(--text3)"><span class="spin" style="border-top-color:var(--blue)"></span> جاري رفع الصورة...</div>';
+  try {
+    const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+    const path = `covers/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const {error} = await sb.storage.from('news-images').upload(path, file, {cacheControl:'3600', upsert:false});
+    if (error) throw error;
+    const {data:url} = sb.storage.from('news-images').getPublicUrl(path);
+    coverImage = url.publicUrl;
+    renderCoverPreview();
+  } catch(ex) {
+    preview.innerHTML = `<div class="alert err" style="margin-top:8px">⚠️ ${esc(ex.message)}</div>`;
+  }
+  document.getElementById('F_COVER_FILE').value = '';
+}
+
+function renderCoverPreview(){
+  const preview = document.getElementById('COVER_PREVIEW');
+  if (!coverImage) { preview.innerHTML = ''; return; }
+  preview.innerHTML = `<div class="img-preview"><img src="${esc(coverImage)}" alt=""><button class="img-preview-rm" onclick="removeCover()">✕</button></div>`;
+}
+function removeCover(){coverImage=null;renderCoverPreview();}
+
+async function uploadGallery(){
+  const files = Array.from(document.getElementById('F_GAL_FILE').files);
+  if (!files.length) return;
+  const preview = document.getElementById('GAL_PREVIEW');
+  for (const file of files) {
+    try {
+      const ext = (file.name.split('.').pop()||'jpg').toLowerCase();
+      const path = `gallery/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const {error} = await sb.storage.from('news-images').upload(path, file, {cacheControl:'3600'});
+      if (error) throw error;
+      const {data:url} = sb.storage.from('news-images').getPublicUrl(path);
+      gallery.push(url.publicUrl);
+    } catch(ex) { console.warn('Gallery upload failed:', ex); }
+  }
+  renderGalleryPreview();
+  document.getElementById('F_GAL_FILE').value = '';
+}
+
+function renderGalleryPreview(){
+  const wrap = document.getElementById('GAL_PREVIEW');
+  if (!gallery.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = gallery.map((url, idx) =>
+    `<div class="gal-item"><img src="${esc(url)}" alt=""><button class="gal-rm" onclick="removeGalleryItem(${idx})" type="button">✕</button></div>`
+  ).join('');
+}
+function removeGalleryItem(idx){gallery.splice(idx,1);renderGalleryPreview();}
+
+async function saveArticle(){
+  const title = document.getElementById('F_TITLE').value.trim();
+  const summary = document.getElementById('F_SUMMARY').value.trim();
+  const content = document.getElementById('F_CONTENT').value.trim();
+  const category = document.getElementById('F_CAT').value;
+  const author = document.getElementById('F_AUTHOR').value.trim() || 'إدارة البلدية';
+  const eventDate = document.getElementById('F_EVENT_DATE').value;
+  const eventLoc = document.getElementById('F_EVENT_LOC').value.trim();
+  const isPinned = document.getElementById('F_PINNED').checked;
+  const isPublished = document.getElementById('F_PUBLISH').checked;
+  const sendPush = document.getElementById('F_PUSH').checked;
+  const result = document.getElementById('EDIT_RESULT'); result.innerHTML = '';
+  if (!title || !content) { result.innerHTML = '<div class="alert err">⚠️ العنوان والمحتوى مطلوبان</div>'; return; }
+  const btn = document.getElementById('SAVE_BTN');
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الحفظ...';
+  try {
+    const payload = {
+      mun_id: MUN_ID, title, summary: summary || null, content, category,
+      author_name: author, author_email: currentUser?.email || null,
+      cover_image: coverImage, gallery: gallery,
+      is_pinned: isPinned, is_published: isPublished,
+      event_date: eventDate ? new Date(eventDate).toISOString() : null,
+      event_location: eventLoc || null,
+      updated_at: new Date().toISOString()
+    };
+    let articleId;
+    if (editingId) {
+      const {error} = await sb.from('news_articles').update(payload).eq('id', editingId);
+      if (error) throw error;
+      articleId = editingId;
+    } else {
+      const {data, error} = await sb.from('news_articles').insert(payload).select('id').single();
+      if (error) throw error;
+      articleId = data.id;
+    }
+
+    // Send push notification if requested
+    if (sendPush && isPublished) {
+      try {
+        const catIcons = {announcement:'📢', event:'🎉', alert:'⚠️', urgent:'🚨', water:'💧', tender:'📋', general:'📰'};
+        const icon = catIcons[category] || '📰';
+        await fetch(FUNCTION_URL, {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY,'apikey':SUPABASE_KEY},
+          body:JSON.stringify({
+            mun_id: MUN_ID,
+            title: icon + ' ' + title.slice(0,60),
+            body: (summary || content.slice(0,160)),
+            url: 'news-detail.html?id=' + articleId,
+            topics: ['general','news'],
+            sent_by: currentUser?.email || 'admin'
+          })
+        });
+        await sb.from('news_articles').update({push_sent:true}).eq('id', articleId);
+        result.innerHTML = '<div class="alert ok">✅ تمّ حفظ الخبر وإرسال الإشعار للمشتركين</div>';
+      } catch(pe) {
+        result.innerHTML = `<div class="alert warn">⚠️ تم الحفظ لكن فشل إرسال الإشعار: ${esc(pe.message)}</div>`;
+      }
+    } else {
+      result.innerHTML = '<div class="alert ok">✅ تمّ الحفظ بنجاح</div>';
+    }
+    setTimeout(() => { closeEditor(); loadList(); }, 1500);
+  } catch(ex) {
+    result.innerHTML = `<div class="alert err">⚠️ ${esc(ex.message)}</div>`;
+  }
+  btn.disabled = false; btn.innerHTML = editingId ? '💾 حفظ التعديلات' : '💾 حفظ ونشر';
+}
+
+async function deleteArticle(){
+  if (!editingId) return;
+  if (!confirm('⚠️ هل تريد فعلاً حذف هذا الخبر نهائياً؟ لا يمكن التراجع.')) return;
+  const btn = document.getElementById('DEL_BTN');
+  btn.disabled = true;
+  try {
+    const {error} = await sb.from('news_articles').delete().eq('id', editingId);
+    if (error) throw error;
+    closeEditor();
+    loadList();
+  } catch(ex) {
+    document.getElementById('EDIT_RESULT').innerHTML = `<div class="alert err">⚠️ ${esc(ex.message)}</div>`;
+  }
+  btn.disabled = false;
+}
+
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function formatDate(iso){if(!iso)return '—';try{const d=new Date(iso);return d.toLocaleDateString('ar-LB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'});}catch(e){return iso;}}
+
+checkSession();
+</script>
+</body>
+</html>
