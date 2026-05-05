@@ -288,19 +288,6 @@ footer a{color:rgba(255,255,255,.7)}
 <script src="pwa.js" defer></script>
 </head>
 <body>
-<!-- Back to Main Gate (floating) -->
-<style>
-.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
-.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
-.back-to-gate-i{font-size:16px;line-height:1}
-.back-to-gate-l{white-space:nowrap}
-@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:7px 11px;font-size:11.5px}.back-to-gate-i{font-size:14px}}
-@media print{.back-to-gate{display:none}}
-</style>
-<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
-  <span class="back-to-gate-i">🏛️</span>
-  <span class="back-to-gate-l">البوابة الرئيسية</span>
-</a>
 
 
 <header class="hdr">
@@ -599,6 +586,40 @@ document.addEventListener('DOMContentLoaded',async function(){
   sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{enabled:false}});
   try{var cs=localStorage.getItem('coop_seller');if(cs)currentSeller=JSON.parse(cs);}catch(e){}
   try{var cc=localStorage.getItem('coop_cart');if(cc)cart=JSON.parse(cc);}catch(e){}
+
+  // ★ AUTOFILL identity from welcome onboarding (saved in wadi_user)
+  try {
+    var savedRaw = localStorage.getItem('wadi_user');
+    if (savedRaw) {
+      var saved = JSON.parse(savedRaw);
+      if (saved.name) {
+        // Try to split into first/last names for seller registration
+        var parts = saved.name.trim().split(/\s+/);
+        var fname = parts[0] || '';
+        var lname = parts.slice(1).join(' ') || '';
+        // Seller registration form
+        var rFname = document.getElementById('r-fname');
+        var rLname = document.getElementById('r-lname');
+        if (rFname && !rFname.value) rFname.value = fname;
+        if (rLname && !rLname.value) rLname.value = lname;
+        // Checkout form
+        var ckName = document.getElementById('ck-name');
+        if (ckName && !ckName.value) ckName.value = saved.name;
+        // Profile section
+        var profName = document.getElementById('prof-name');
+        if (profName && !profName.value) profName.value = saved.name;
+      }
+      if (saved.phone) {
+        var rPhone = document.getElementById('r-phone');
+        var ckPhone = document.getElementById('ck-phone');
+        var profWa = document.getElementById('prof-wa');
+        if (rPhone && !rPhone.value) rPhone.value = saved.phone;
+        if (ckPhone && !ckPhone.value) ckPhone.value = saved.phone;
+        if (profWa && !profWa.value) profWa.value = saved.phone;
+      }
+    }
+  } catch(e) { console.warn('autofill identity failed:', e); }
+
   // Init cat buttons
   document.getElementById('cats-bar').addEventListener('click',function(e){
     var btn=e.target.closest('.ccat');if(!btn)return;
@@ -944,6 +965,17 @@ function clearCart(){cart=[];saveCart();updateCartBadge();renderCartDrawer();fil
 function openCheckout(){
   if(!cart.length){toast('سلتك فارغة','err');return;}
   closeCart();
+  // ★ Re-fill identity in case form was reset
+  try {
+    var savedRaw = localStorage.getItem('wadi_user');
+    if (savedRaw) {
+      var saved = JSON.parse(savedRaw);
+      var ckName = document.getElementById('ck-name');
+      var ckPhone = document.getElementById('ck-phone');
+      if (saved.name && ckName && !ckName.value) ckName.value = saved.name;
+      if (saved.phone && ckPhone && !ckPhone.value) ckPhone.value = saved.phone;
+    }
+  } catch(e) {}
   var total=cart.reduce(function(s,c){return s+c.price*c.qty;},0);
   document.getElementById('ck-total').textContent=total.toLocaleString('ar')+' ل.ل.';
   var ckItems=document.getElementById('ck-items');ckItems.innerHTML='';
