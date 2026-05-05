@@ -215,6 +215,38 @@ html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text
             <span class="target-chip" data-tt="coop" onclick="toggleTopic('coop')">🛒 تعاونية</span>
           </div>
         </div>
+
+        <!-- ★ NEW: Save as news article -->
+        <div class="field" style="background:linear-gradient(135deg,#fff8eb,#fef3c7);border:1.5px solid #fbbf24;border-radius:11px;padding:12px 14px;margin:10px 0">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0">
+            <input type="checkbox" id="SAVE_AS_NEWS" checked onchange="toggleNewsFields()" style="width:20px;height:20px;cursor:pointer;flex-shrink:0">
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:13.5px;color:#854d0e">📰 حفظ هذا الإشعار كخبر</div>
+              <div style="font-size:11.5px;color:#7a5500;margin-top:3px;line-height:1.5">يُحفَظ في قسم الأخبار، والإشعار يُرسَل مع رابط مباشر للخبر التفصيلي بدلاً من صفحة فارغة</div>
+            </div>
+          </label>
+        </div>
+
+        <div id="NEWS_FIELDS" class="row2" style="background:#f8fafc;border-radius:10px;padding:10px 12px">
+          <div class="field" style="margin:0">
+            <label>📝 محتوى مفصّل (اختياري)</label>
+            <textarea id="N_FULL_CONTENT" maxlength="2000" placeholder="إذا كنت تريد إضافة تفاصيل أكثر تظهر في صفحة الخبر..." style="min-height:60px"></textarea>
+            <div class="hint">إذا تركته فارغاً، سيُستخدم نصّ الإشعار كمحتوى</div>
+          </div>
+          <div class="field" style="margin:0">
+            <label>📂 فئة الخبر</label>
+            <select id="N_NEWS_CAT">
+              <option value="announcement">📢 إعلان رسمي</option>
+              <option value="alert">⚠️ تنبيه</option>
+              <option value="urgent">🚨 طارئ</option>
+              <option value="water">💧 ماء/ري</option>
+              <option value="event">🎉 فعّالية</option>
+              <option value="tender">📋 مناقصة</option>
+              <option value="general">📢 عام</option>
+            </select>
+            <div class="hint">يحدّد لون وأيقونة الخبر</div>
+          </div>
+        </div>
         <div class="preview-wrap">
           <div class="preview-lbl">معاينة كما تظهر للمستخدم:</div>
           <div class="preview">
@@ -328,7 +360,7 @@ function setTab(name){
   if(name==='log')loadLog();
 }
 
-async function loadAll(){await Promise.all([loadStats(),loadAudienceCounts(),loadTemplates()]);updatePreview();}
+async function loadAll(){await Promise.all([loadStats(),loadAudienceCounts(),loadTemplates()]);updatePreview();toggleNewsFields();}
 
 async function loadStats(){
   try{
@@ -367,12 +399,15 @@ function updatePreview(){
   document.getElementById('PV_I').textContent=document.getElementById('N_ICON').value;
 }
 function resetForm(){
-  ['N_TITLE','N_BODY','N_URL'].forEach(x=>document.getElementById(x).value='');
+  ['N_TITLE','N_BODY','N_URL','N_FULL_CONTENT'].forEach(x=>{const el=document.getElementById(x);if(el)el.value='';});
   document.getElementById('N_ICON').value='📢';
+  const newsCat = document.getElementById('N_NEWS_CAT'); if (newsCat) newsCat.value='announcement';
+  const saveAsNews = document.getElementById('SAVE_AS_NEWS'); if (saveAsNews) saveAsNews.checked = true;
   document.getElementById('SEND_RESULT').innerHTML='';
   setAud('all'); currentTopics=['general'];
   document.querySelectorAll('.target-chip').forEach(c=>c.classList.toggle('on',c.dataset.tt==='general'));
   updateCount('N_TITLE','tcnt',60);updateCount('N_BODY','bcnt',240);updatePreview();
+  toggleNewsFields();
 }
 
 async function sendNotification(){
@@ -399,7 +434,49 @@ async function doSend({title,body,url,target}){
   const btn=document.getElementById('SEND_BTN');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> جاري…';
   try{
-    const payload={mun_id:MUN_ID,title,body,url,sent_by:currentUser?.email||'admin'};
+    let finalUrl = url;
+
+    // ★ STEP 1: If "Save as News" is checked, create the news article first
+    const saveAsNews = document.getElementById('SAVE_AS_NEWS')?.checked;
+    if (saveAsNews && target === 'audience') {
+      try {
+        const fullContent = document.getElementById('N_FULL_CONTENT')?.value.trim() || body;
+        const newsCat = document.getElementById('N_NEWS_CAT')?.value || 'announcement';
+        const icon = document.getElementById('N_ICON').value || '📢';
+
+        const newsPayload = {
+          mun_id: MUN_ID,
+          title: title,
+          summary: body,
+          content: fullContent,
+          category: newsCat,
+          author_name: currentUser?.email?.split('@')[0] || 'إدارة البلدية',
+          author_email: currentUser?.email || null,
+          is_published: true,
+          is_pinned: newsCat === 'urgent', // pin urgent news automatically
+          push_sent: true,
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: newsData, error: newsErr } = await sb.from('news_articles').insert(newsPayload).select('id').single();
+
+        if (newsErr) {
+          // News table might not exist — warn but continue with push
+          console.warn('News save failed:', newsErr.message);
+          if (newsErr.message.includes('does not exist') || newsErr.message.includes('relation')) {
+            result.innerHTML = '<div class="alert warn" style="margin-bottom:8px">⚠️ جدول الأخبار غير موجود. شغّل <code>01_news_table.sql</code> في Supabase أوّلاً. سيُرسل الإشعار بدون حفظ كخبر.</div>';
+          }
+        } else if (newsData?.id) {
+          // ✅ News saved! Override URL to point to the news detail page
+          finalUrl = 'news-detail.html?id=' + newsData.id;
+        }
+      } catch (newsEx) {
+        console.warn('News save error:', newsEx);
+      }
+    }
+
+    // STEP 2: Send the push with the (possibly updated) URL
+    const payload={mun_id:MUN_ID,title,body,url:finalUrl,sent_by:currentUser?.email||'admin'};
     if(target==='audience'){
       if(currentAud==='all') payload.topics=currentTopics.length?currentTopics:['general'];
       else payload.to_role=currentAud;
@@ -407,7 +484,14 @@ async function doSend({title,body,url,target}){
     const resp=await fetch(FUNCTION_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY,'apikey':SUPABASE_KEY},body:JSON.stringify(payload)});
     const data=await resp.json();
     if(!resp.ok)throw new Error(data.error||'فشل الإرسال');
-    result.innerHTML=`<div class="alert ok">✅ تمّ الإرسال!<br>📊 ${data.recipients_count||0} مستلم • ✅ ${data.success_count||0} نجح ${data.failed_count?'• ❌ '+data.failed_count:''}</div>`;
+
+    let okMsg = `<div class="alert ok">✅ تمّ الإرسال!<br>📊 ${data.recipients_count||0} مستلم • ✅ ${data.success_count||0} نجح ${data.failed_count?'• ❌ '+data.failed_count:''}`;
+    if (saveAsNews && finalUrl !== url) {
+      okMsg += `<br>📰 وتمّ حفظ الخبر — <a href="${finalUrl}" target="_blank" style="color:var(--blue);font-weight:700">معاينة الخبر</a>`;
+    }
+    okMsg += '</div>';
+    result.innerHTML = okMsg;
+
     if(target==='audience')resetForm();
     await loadStats();
     if(document.querySelector('.tab.on').dataset.tab==='log')await loadLog();
@@ -415,6 +499,18 @@ async function doSend({title,body,url,target}){
     result.innerHTML=`<div class="alert err">⚠️ ${esc(ex.message||'خطأ')}</div>`;
   }
   btn.disabled=false; btn.innerHTML='📤 إرسال';
+}
+
+function toggleNewsFields(){
+  const checked = document.getElementById('SAVE_AS_NEWS')?.checked;
+  const fields = document.getElementById('NEWS_FIELDS');
+  const urlField = document.getElementById('N_URL');
+  if (fields) fields.style.display = checked ? 'grid' : 'none';
+  if (urlField) {
+    urlField.disabled = checked;
+    urlField.placeholder = checked ? 'سيُولَّد تلقائياً (news-detail.html?id=...)' : 'phonebook.html';
+    if (checked) urlField.value = '';
+  }
 }
 
 async function loadTemplates(){
@@ -499,6 +595,7 @@ function renderSubs(subs){
   list.innerHTML=subs.map(s=>{
     const ico=RI[s.user_role]||'👤'; const lbl=RL[s.user_role]||(s.user_role||'مواطن');
     const lu=s.last_used_at?timeAgo(s.last_used_at):'لم يُستخدم';
+    const dev = detectDevice(s.user_agent);
     return `<div class="sub-row">
       <div class="sub-icon">${ico}</div>
       <div class="sub-info">
@@ -506,6 +603,7 @@ function renderSubs(subs){
         <div class="sub-meta">
           <span class="sub-meta-pill">${esc(lbl)}</span>
           ${s.user_phone?`<span class="sub-meta-pill">📞 ${esc(s.user_phone)}</span>`:''}
+          <span class="sub-meta-pill">${dev}</span>
           <span class="sub-meta-pill">🕒 ${lu}</span>
         </div>
       </div>
@@ -571,8 +669,7 @@ async function showRecipients(logId, title, sentAt, toRole, toUserPhone, topics)
         const ico = RI[s.user_role] || '👤';
         const lbl = RL[s.user_role] || (s.user_role||'مواطن');
         const lu = s.last_used_at ? timeAgo(s.last_used_at) : 'لم يُستخدم';
-        const ua = (s.user_agent||'').match(/(iPhone|iPad|Android|Windows|Mac|Linux)/i);
-        const device = ua ? ua[0] : 'جهاز';
+        const device = detectDevice(s.user_agent);
         return `<div class="sub-row">
           <div class="sub-icon">${ico}</div>
           <div class="sub-info">
@@ -598,6 +695,35 @@ async function showRecipients(logId, title, sentAt, toRole, toUserPhone, topics)
 }
 
 function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// Detect device + brand from user-agent string (Android comes before Linux check)
+function detectDevice(ua){
+  if (!ua) return 'جهاز غير معروف';
+  const u = ua.toString();
+  // iPhone / iPad first (specific)
+  if (/iPad/i.test(u)) return '📱 iPad';
+  if (/iPhone/i.test(u)) return '📱 iPhone';
+  // Android — check brand
+  if (/Android/i.test(u)) {
+    if (/Samsung|SM-/i.test(u)) return '📱 Samsung';
+    if (/Huawei|HUAWEI/i.test(u)) return '📱 Huawei';
+    if (/Xiaomi|Redmi|Mi |POCO/i.test(u)) return '📱 Xiaomi';
+    if (/OPPO/i.test(u)) return '📱 OPPO';
+    if (/Vivo/i.test(u)) return '📱 Vivo';
+    if (/OnePlus/i.test(u)) return '📱 OnePlus';
+    if (/Pixel/i.test(u)) return '📱 Pixel';
+    if (/Realme/i.test(u)) return '📱 Realme';
+    if (/Nokia/i.test(u)) return '📱 Nokia';
+    return '📱 Android';
+  }
+  // Mac
+  if (/Macintosh|Mac OS X/i.test(u)) return '💻 Mac';
+  // Windows
+  if (/Windows/i.test(u)) return '💻 Windows';
+  // Pure Linux desktop (rare)
+  if (/Linux/i.test(u)) return '🐧 Linux';
+  return 'جهاز غير معروف';
+}
 function formatDate(iso){if(!iso)return '—';try{const d=new Date(iso);const t=new Date();if(d.toDateString()===t.toDateString())return 'اليوم • '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('ar-LB',{day:'2-digit',month:'short'})+' • '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'});}catch(e){return iso;}}
 function timeAgo(iso){if(!iso)return '—';const diff=(Date.now()-new Date(iso).getTime())/1000;if(diff<60)return 'الآن';if(diff<3600)return Math.floor(diff/60)+' د';if(diff<86400)return Math.floor(diff/3600)+' س';if(diff<604800)return Math.floor(diff/86400)+' يوم';return formatDate(iso);}
 
