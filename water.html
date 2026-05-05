@@ -224,6 +224,24 @@ window.addEventListener('DOMContentLoaded', async function(){
   document.getElementById('loading-msg').style.display='none';
   document.getElementById('lookup-card').style.display='block';
   setTimeout(function(){var p=document.getElementById('wp-phone');if(p)p.focus();},200);
+
+  // Auto-lookup if ?phone=... in URL (came from a push notification)
+  var urlParams = new URLSearchParams(window.location.search);
+  var phoneParam = urlParams.get('phone');
+  if (phoneParam) {
+    setTimeout(function(){
+      var p = document.getElementById('wp-phone');
+      if (p) {
+        p.value = phoneParam;
+        lookupWaterOwner();
+        // Scroll to result
+        setTimeout(function(){
+          var res = document.getElementById('wp-result');
+          if (res) res.scrollIntoView({behavior:'smooth', block:'center'});
+        }, 400);
+      }
+    }, 600);
+  }
 });
 
 // ── LOOKUP ────────────────────────────────────────────────────────────────────

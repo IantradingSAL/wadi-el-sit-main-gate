@@ -1144,7 +1144,7 @@ async function updateOrderStatus(id,status){
         window.PWA.sendPush({
           title: notif.title,
           body: notif.body + ' (طلب رقم #' + id + ')',
-          url: 'coop.html',
+          url: 'coop.html?order='+id,
           toUserPhone: orderRes.data.buyer_phone,
           sentBy: 'coop'
         }).catch(function(e){ console.warn('Push to customer failed:', e); });

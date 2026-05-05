@@ -1080,6 +1080,15 @@ document.addEventListener('DOMContentLoaded', async function(){
     if(gs.data&&gs.data.session&&gs.data.session.user){citUser=gs.data.session.user;setupCitDashboard();}
   }catch(e){}
 
+  // Auto-open case if ?case=ID in URL (came from a push notification click)
+  var urlParams = new URLSearchParams(window.location.search);
+  var caseId = urlParams.get('case');
+  if (caseId && /^\d+$/.test(caseId)) {
+    setTimeout(function(){
+      autoShowCase(caseId);
+    }, 600);
+  }
+
   // Render push notification toggle (show immediately, upgrade when PWA loads)
   var pushTgl = document.getElementById('cit-push-toggle');
   if (pushTgl) {
@@ -1133,6 +1142,94 @@ async function linkPushToPhone(phone, name) {
     }
   } catch(e) { console.warn('Failed to link push:', e); }
 }
+
+// Auto-show a case fetched from a push notification deeplink (?case=ID)
+async function autoShowCase(caseId) {
+  if (!sb) return;
+  var resEl = document.getElementById('track-res');
+  if (!resEl) return;
+  // Set the track number visually so user sees what was clicked
+  var trackInput = document.getElementById('track-num');
+  if (trackInput) trackInput.value = caseId;
+  // Show loading
+  resEl.scrollIntoView({behavior:'smooth', block:'center'});
+  resEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:14px">⏳ جاري تحميل تفاصيل طلبك...</div>';
+  try {
+    var { data, error } = await sb.from('cases').select('id,name,type,status,description,created_at,approval_state,approval_date,documents,public_note,timeline,phone').eq('id', caseId).single();
+    if (error) throw error;
+    if (!data) throw new Error('الطلب غير موجود');
+    renderCaseDetails(data, resEl);
+  } catch(ex) {
+    resEl.innerHTML = '<div style="text-align:center;padding:18px;color:var(--danger);font-size:13px;background:#fee2e2;border-radius:10px">⚠️ تعذّر تحميل تفاصيل الطلب: ' + (ex.message||'خطأ') + '</div>';
+  }
+}
+
+// Render case details inline (used by both autoShowCase and tracking flow)
+function renderCaseDetails(c, container) {
+  var statusLabels = {
+    'new':         {l:'📨 قيد المراجعة',     bg:'#dbeafe', co:'#1e40af'},
+    'in-progress': {l:'⚙️ جاري المعالجة',    bg:'#fef3c7', co:'#92400e'},
+    'pending-approval':{l:'⏳ بانتظار الموافقة', bg:'#fae8ff', co:'#86198f'},
+    'resolved':    {l:'✅ تمّ الحلّ',          bg:'#d4f0dc', co:'#1e5429'},
+    'closed':      {l:'📁 مُغلق',              bg:'#e5e7eb', co:'#374151'}
+  };
+  var st = statusLabels[c.status] || {l: c.status, bg:'#f3f4f6', co:'#374151'};
+  var approvalBadge = '';
+  if (c.approval_state === 'approved') approvalBadge = '<div style="margin-bottom:10px;padding:10px 14px;background:linear-gradient(135deg,#d4f0dc,#a7e0bb);color:#1e5429;border-radius:10px;font-weight:800;font-size:14px;text-align:center">✅ تمّت الموافقة الرسميّة على طلبك</div>';
+  else if (c.approval_state === 'rejected') approvalBadge = '<div style="margin-bottom:10px;padding:10px 14px;background:#fee2e2;color:#bf2424;border-radius:10px;font-weight:800;font-size:14px;text-align:center">❌ تمّ رفض طلبك رسمياً</div>';
+
+  var html = '<div style="background:#fff;border:2px solid var(--blue3);border-radius:14px;padding:18px;margin-top:14px">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap">'
+    + '<div><div style="font-size:11px;color:var(--text3);font-weight:600">رقم الطلب</div><div style="font-size:20px;font-weight:900;color:var(--blue2)">#'+c.id+'</div></div>'
+    + '<div style="padding:7px 14px;background:'+st.bg+';color:'+st.co+';border-radius:18px;font-weight:800;font-size:13px">'+st.l+'</div>'
+    + '</div>'
+    + approvalBadge
+    + '<div style="background:var(--bg2);border-radius:10px;padding:12px;margin-bottom:12px">'
+    + '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:3px">المُقدِّم</div>'
+    + '<div style="font-size:14px;font-weight:700;margin-bottom:8px">'+escHtml(c.name||'—')+'</div>'
+    + '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:3px">الموضوع</div>'
+    + '<div style="font-size:13px;font-weight:600;margin-bottom:8px">'+escHtml(c.type||'—')+'</div>'
+    + '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:3px">التفاصيل</div>'
+    + '<div style="font-size:13px;line-height:1.6">'+escHtml(c.description||'—')+'</div>'
+    + '</div>';
+
+  if (c.public_note) {
+    html += '<div style="background:#fef9c3;border-left:4px solid #ca8a04;padding:11px 13px;border-radius:8px;margin-bottom:12px">'
+      + '<div style="font-size:11.5px;font-weight:800;color:#854d0e;margin-bottom:3px">💬 ملاحظة من البلدية</div>'
+      + '<div style="font-size:13px;color:#713f12;line-height:1.6">'+escHtml(c.public_note)+'</div>'
+      + '</div>';
+  }
+
+  if (c.timeline && c.timeline.length) {
+    html += '<div style="font-size:13px;font-weight:800;color:var(--blue2);margin:14px 0 8px">📅 سجلّ التحديثات</div>';
+    html += '<div style="border-right:2px solid var(--border);padding-right:14px">';
+    c.timeline.slice().reverse().forEach(function(t){
+      var color = t.cls === 'g' ? '#1e5429' : (t.cls === 'r' ? '#bf2424' : 'var(--text2)');
+      var bg = t.cls === 'g' ? '#d4f0dc' : (t.cls === 'r' ? '#fee2e2' : 'var(--bg2)');
+      html += '<div style="position:relative;padding:8px 11px;background:'+bg+';border-radius:8px;margin-bottom:6px;font-size:12.5px">'
+        + '<div style="font-weight:700;color:'+color+';margin-bottom:2px">'+escHtml(t.a||'')+'</div>'
+        + '<div style="font-size:10.5px;color:var(--text3)">'+(t.by?escHtml(t.by)+' · ':'')+(t.d||'')+'</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (c.documents && c.documents.length) {
+    html += '<div style="font-size:13px;font-weight:800;color:var(--blue2);margin:14px 0 8px">📎 المرفقات ('+c.documents.length+')</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:6px">';
+    c.documents.forEach(function(d){
+      html += '<div style="background:var(--bg2);padding:8px 11px;border-radius:8px;font-size:12.5px">📄 '+escHtml(d.name||d.path||'مرفق')+'</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div style="text-align:center;font-size:11px;color:var(--text3);margin-top:14px;padding-top:10px;border-top:1px dashed var(--border)">تاريخ التقديم: '+(c.created_at?new Date(c.created_at).toLocaleString('ar-LB'):'—')+'</div>'
+    + '</div>';
+
+  container.innerHTML = html;
+}
+
+function escHtml(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function openHelp(p){
   var c='<b style="color:#1a6eb5;font-size:14px">👥 بوابة المواطن</b><br><br>📋 <b>تقديم طلب</b>: اسمك+هاتفك إلزاميان، اختر النوع لترى المستندات، احتفظ بالرقم المرجعي.<br><br>🔍 <b>متابعة طلب</b>: أدخل الرقم المرجعي ← أدخل هاتفك للتحقق ← ترى الحالة.<br><br>⚠️ شكوى(3-5أيام) | 🤝 رعاية(5-7) | 🏗️ ترخيص(7-14) | ❓ استفسار(1-2) | 📜 إفادة(5-10) | 💧 ري(2-4)';

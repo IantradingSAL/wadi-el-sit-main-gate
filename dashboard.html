@@ -880,7 +880,7 @@ async function saveC(c){
         window.PWA.sendPush({
           title: title,
           body: `الطلب رقم #${c.id}: تغيّرت الحالة من "${oldStatus}" إلى "${c.status}".${noteSuffix}`,
-          url: 'citizen.html?case='+c.id,
+          url: 'citizen.html?case='+c.id+'&phone='+encodeURIComponent(c.phone||''),
           toUserPhone: c.phone,
           sentBy: currentUser?.email || 'staff'
         }).catch(e => console.warn('Push on status change failed:', e));
@@ -889,7 +889,7 @@ async function saveC(c){
         window.PWA.sendPush({
           title: '💬 تعليق جديد على طلبك',
           body: `الطلب #${c.id}: ${c.public_note.slice(0,160)}`,
-          url: 'citizen.html?case='+c.id,
+          url: 'citizen.html?case='+c.id+'&phone='+encodeURIComponent(c.phone||''),
           toUserPhone: c.phone,
           sentBy: currentUser?.email || 'staff'
         }).catch(e => console.warn('Push on note failed:', e));
@@ -1227,7 +1227,7 @@ async function doApprove(id,dec){
       body: isApproved
         ? `الطلب رقم #${c.id} تمّت الموافقة عليه. يمكنك مراجعة التفاصيل.`
         : `الطلب رقم #${c.id} تمّ رفضه. يمكنك مراجعة التفاصيل والأسباب.`,
-      url: 'citizen.html?case='+c.id,
+      url: 'citizen.html?case='+c.id+'&phone='+encodeURIComponent(c.phone||''),
       toUserPhone: c.phone,
       sentBy: by
     }).then(r => console.log('Push sent:', r)).catch(e => console.warn('Push failed:', e));
