@@ -218,6 +218,114 @@ input,textarea,select{font-family:var(--font);outline:none}
 .field-input,.field-textarea,.field-select{width:100%;padding:12px 14px;background:#fff;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:var(--font);color:var(--text);transition:.15s}
 .field-input:focus,.field-textarea:focus,.field-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary4)}
 .field-textarea{min-height:90px;resize:vertical}
+.photo-thumb{position:relative;width:74px;height:74px;border-radius:10px;overflow:hidden;background:var(--surface2);border:1.5px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb-rm{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.photo-thumb-rm:active{background:rgba(0,0,0,.9)}
+.product-mgr-card{background:#fff;border:1px solid var(--border);border-radius:var(--r2);padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+
+/* ───── Professional Seller Dashboard ───── */
+.seller-dash{padding:14px;padding-bottom:80px}
+.seller-hero{background:linear-gradient(135deg,var(--primary),var(--primary2));border-radius:18px;padding:18px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(15,77,130,.2)}
+.seller-hero-bg{position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(255,255,255,.18) 0%,transparent 50%),radial-gradient(circle at 20% 80%,rgba(255,255,255,.1) 0%,transparent 40%);pointer-events:none}
+.seller-hero-content{position:relative;z-index:1;display:flex;align-items:center;gap:14px}
+.seller-avatar-lg{width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.25);backdrop-filter:blur(8px);border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;flex-shrink:0}
+.seller-hero-info{flex:1;min-width:0}
+.seller-hero-name{font-size:18px;font-weight:900;margin-bottom:6px;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.seller-hero-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:11.5px}
+.seller-badge{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);padding:3px 8px;border-radius:8px;font-weight:700}
+.seller-area{opacity:.9}
+
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;border:1px solid var(--border);transition:.2s;position:relative;overflow:hidden}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,77,130,.1)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.stat-blue::before{background:var(--primary)}
+.stat-amber::before{background:var(--accent)}
+.stat-green::before{background:var(--green)}
+.stat-due::before{background:#7c3aed}
+.stat-icon{font-size:24px;margin-bottom:6px;line-height:1}
+.stat-num{font-size:22px;font-weight:900;line-height:1.1;margin-bottom:4px}
+.stat-blue .stat-num{color:var(--primary)}
+.stat-amber .stat-num{color:var(--accent)}
+.stat-green .stat-num{color:var(--green)}
+.stat-due .stat-num{color:#7c3aed}
+.stat-label{font-size:10.5px;color:var(--text3);font-weight:700;line-height:1.2}
+
+.seller-actions{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+
+.dash-section{margin-bottom:18px}
+.dash-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px}
+.dash-section-title{font-size:14px;font-weight:800;color:var(--text)}
+.dash-section-cnt{font-size:11px;color:var(--text3);background:var(--surface2);padding:3px 10px;border-radius:9px;font-weight:700}
+
+.empty-tiny{text-align:center;padding:24px 16px;background:#fff;border:1.5px dashed var(--border);border-radius:12px}
+.empty-tiny-icon{font-size:32px;margin-bottom:6px}
+.empty-tiny-txt{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px}
+.empty-tiny-sub{font-size:11px;color:var(--text3)}
+
+/* ───── Professional Order Cards (for seller) ───── */
+.order-card-pro{background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;transition:.15s}
+.order-card-pro:hover{border-color:var(--primary3);box-shadow:0 4px 10px rgba(15,77,130,.06)}
+.order-card-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.order-card-id{font-size:11px;color:var(--text3);font-weight:700;font-family:monospace;letter-spacing:.5px}
+.order-card-status{font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;letter-spacing:.2px}
+.status-pending{background:#fef3c7;color:#92400e}
+.status-confirmed{background:#dbeafe;color:#1e40af}
+.status-delivered,.status-completed{background:#d1fae5;color:#065f46}
+.status-cancelled{background:#fee2e2;color:#991b1b}
+.order-card-product{font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3}
+.order-card-row2,.order-card-row3{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;font-size:11.5px}
+.order-card-customer{color:var(--text2);font-weight:600}
+.order-card-date{color:var(--text3)}
+.order-card-total{font-size:14px;font-weight:900;color:var(--primary)}
+.order-card-acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.oc-btn{flex:1;min-width:80px;padding:7px 10px;border-radius:8px;border:none;font-family:var(--font);font-size:11.5px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:3px}
+.oc-btn:active{transform:scale(.96)}
+.oc-btn-ok{background:var(--green3);color:var(--green2)}
+.oc-btn-ok:hover{background:var(--green);color:#fff}
+.oc-btn-cancel{background:var(--red3);color:var(--red)}
+.oc-btn-cancel:hover{background:var(--red);color:#fff}
+.oc-btn-wa{background:#25D366;color:#fff}
+.oc-btn-wa:hover{background:#128C7E}
+
+/* ───── Delivery option cards (radio) ───── */
+.dlv-options{display:flex;flex-direction:column;gap:8px}
+.dlv-option{cursor:pointer;display:block}
+.dlv-option input[type="radio"]{position:absolute;opacity:0;pointer-events:none}
+.dlv-option-card{border:1.5px solid var(--border);background:#fff;border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;transition:.15s}
+.dlv-option:hover .dlv-option-card{border-color:var(--primary3)}
+.dlv-option input:checked+.dlv-option-card{border-color:var(--primary);background:var(--primary4);box-shadow:0 0 0 3px var(--primary4)}
+.dlv-option-icon{font-size:24px;flex-shrink:0;width:42px;height:42px;background:var(--surface2);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.dlv-option input:checked+.dlv-option-card .dlv-option-icon{background:var(--primary);color:#fff;filter:brightness(1.2)}
+.dlv-option-info{flex:1;min-width:0}
+.dlv-option-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px}
+.dlv-option-sub{font-size:11px;color:var(--text3);line-height:1.3}
+.dlv-option-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:transparent;flex-shrink:0;transition:.15s}
+.dlv-option input:checked+.dlv-option-card .dlv-option-check{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ───── Floating Cart Total Bar (running total for purchaser) ───── */
+.cart-total-bar{position:fixed;bottom:calc(var(--nav-h) + var(--safe-bot) + 8px);left:14px;right:14px;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-radius:14px;padding:12px 16px;display:none;align-items:center;gap:10px;z-index:50;box-shadow:0 8px 24px rgba(15,77,130,.4);cursor:pointer;transition:.2s}
+.cart-total-bar.visible{display:flex;animation:slideUp .3s ease}
+.cart-total-bar:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(15,77,130,.5)}
+.cart-total-bar:active{transform:scale(.98)}
+@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+.ctb-icon{width:36px;height:36px;background:rgba(255,255,255,.25);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;position:relative}
+.ctb-badge{position:absolute;top:-4px;right:-4px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid var(--primary)}
+.ctb-info{flex:1;min-width:0}
+.ctb-label{font-size:11px;opacity:.85;font-weight:600;line-height:1}
+.ctb-amount{font-size:17px;font-weight:900;line-height:1.2;margin-top:2px}
+.ctb-arrow{font-size:18px;opacity:.85}
+.product-mgr-img{width:54px;height:54px;border-radius:8px;background:var(--surface2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.product-mgr-img img{width:100%;height:100%;object-fit:cover}
+.product-mgr-info{flex:1;min-width:0}
+.product-mgr-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.product-mgr-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.product-mgr-acts{display:flex;gap:4px;flex-shrink:0}
+.product-mgr-acts button{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:14px;transition:.15s}
+.product-mgr-acts button:active{transform:scale(.92)}
+.product-mgr-acts .edit-btn:hover{border-color:var(--primary);color:var(--primary)}
+.product-mgr-acts .del-btn:hover{border-color:var(--red);color:var(--red);background:var(--red3)}
 .field-hint{font-size:11px;color:var(--text3);margin-top:5px}
 
 /* ───── Product Detail ───── */
@@ -624,6 +732,16 @@ input,textarea,select{font-family:var(--font);outline:none}
   <div id="admin-content"></div>
 </div>
 
+<!-- ═══════════════════════ FLOATING CART TOTAL (running total for purchaser) ═══════════════════════ -->
+<div class="cart-total-bar" id="cart-total-bar" onclick="openCart()">
+  <div class="ctb-icon">🛒<span class="ctb-badge" id="ctb-badge">0</span></div>
+  <div class="ctb-info">
+    <div class="ctb-label">المجموع المستحقّ</div>
+    <div class="ctb-amount" id="ctb-amount">0 ل.ل.</div>
+  </div>
+  <div class="ctb-arrow">←</div>
+</div>
+
 <!-- ═══════════════════════ BOTTOM NAVIGATION ═══════════════════════ -->
 <nav class="bottom-nav" id="bottom-nav">
   <button class="nav-item active" data-tab="home" onclick="switchTab('home')">
@@ -689,10 +807,41 @@ input,textarea,select{font-family:var(--font);outline:none}
       </div>
       <div class="field">
         <label class="field-label">طريقة التسليم *</label>
-        <select class="field-select" id="ck-delivery">
-          <option value="pickup">🏪 استلام شخصي من البائع</option>
-          <option value="delivery">🚗 توصيل (سيتواصل البائع لتحديد الرسوم)</option>
-        </select>
+        <div class="dlv-options">
+          <label class="dlv-option">
+            <input type="radio" name="ck-delivery" value="pickup" checked>
+            <div class="dlv-option-card">
+              <div class="dlv-option-icon">🏪</div>
+              <div class="dlv-option-info">
+                <div class="dlv-option-title">استلام من البائع</div>
+                <div class="dlv-option-sub">مجّاناً · في موعد متّفق عليه</div>
+              </div>
+              <div class="dlv-option-check">✓</div>
+            </div>
+          </label>
+          <label class="dlv-option">
+            <input type="radio" name="ck-delivery" value="delivery">
+            <div class="dlv-option-card">
+              <div class="dlv-option-icon">🚗</div>
+              <div class="dlv-option-info">
+                <div class="dlv-option-title">توصيل لعنوانك</div>
+                <div class="dlv-option-sub">رسوم التوصيل يحدّدها البائع</div>
+              </div>
+              <div class="dlv-option-check">✓</div>
+            </div>
+          </label>
+          <label class="dlv-option">
+            <input type="radio" name="ck-delivery" value="meeting">
+            <div class="dlv-option-card">
+              <div class="dlv-option-icon">📍</div>
+              <div class="dlv-option-info">
+                <div class="dlv-option-title">نقطة لقاء</div>
+                <div class="dlv-option-sub">مكان متّفق عليه (السوبرماركت، البلدية...)</div>
+              </div>
+              <div class="dlv-option-check">✓</div>
+            </div>
+          </label>
+        </div>
       </div>
       <div class="field">
         <label class="field-label">ملاحظات (اختياري)</label>
@@ -706,6 +855,58 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeCheckout()">إلغاء</button>
       <button class="btn btn-primary" style="flex:1" onclick="placeOrder()">تأكيد الطلب ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ADD PRODUCT MODAL (SELLER) ═══════════════════════ -->
+<div class="modal-overlay" id="modal-product">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="modal-product-title">إضافة منتج جديد</div>
+      <button class="drawer-close" onclick="closeProductModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label class="field-label">اسم المنتج *</label>
+        <input class="field-input" id="prod-name" placeholder="مثلاً: زيت زيتون عضوي">
+      </div>
+      <div class="field">
+        <label class="field-label">الفئة *</label>
+        <select class="field-select" id="prod-category"></select>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label class="field-label">السعر (ل.ل.) *</label>
+          <input class="field-input" id="prod-price" type="number" inputmode="numeric" placeholder="50000" style="direction:ltr;text-align:right">
+        </div>
+        <div class="field">
+          <label class="field-label">الوحدة *</label>
+          <input class="field-input" id="prod-unit" placeholder="كغ / لتر / قطعة">
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">الكمية المتوفّرة *</label>
+        <input class="field-input" id="prod-stock" type="number" inputmode="numeric" placeholder="10" style="direction:ltr;text-align:right">
+      </div>
+      <div class="field">
+        <label class="field-label">الوصف</label>
+        <textarea class="field-textarea" id="prod-desc" placeholder="معلومات عن المنتج، طريقة الإنتاج، إلخ..."></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label">صور المنتج (حدّ أقصى 3)</label>
+        <input type="file" id="prod-photos" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
+        <div id="prod-photo-thumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+        <button type="button" class="btn btn-ghost btn-block" id="prod-photo-btn" onclick="document.getElementById('prod-photos').click()">📷 اختيار صور</button>
+      </div>
+      <div class="banner info">
+        <span class="banner-icon">ℹ️</span>
+        <div class="banner-content">سيظهر منتجك مباشرة في المتجر بعد الحفظ. يمكنك تعديله أو حذفه لاحقاً من لوحة بائع.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeProductModal()">إلغاء</button>
+      <button class="btn btn-primary" style="flex:1" id="prod-save-btn" onclick="saveProduct()">حفظ المنتج ✓</button>
     </div>
   </div>
 </div>
@@ -947,6 +1148,9 @@ function switchTab(tab){
   else if(tab==='orders') renderOrdersPage();
   else if(tab==='sell') renderSellPage();
   else if(tab==='settings') renderSettingsPage();
+
+  // Update floating cart total bar visibility
+  updateCartTotalBar();
 }
 
 function goShop(view){
@@ -1273,6 +1477,24 @@ function updateCartBadge(){
       el.classList.toggle('hi',total===0);
     }
   });
+  // Update floating cart total bar
+  updateCartTotalBar();
+}
+
+function updateCartTotalBar(){
+  const bar=document.getElementById('cart-total-bar');
+  if(!bar) return;
+  const itemCount=cart.reduce((s,c)=>s+c.qty,0);
+  const totalAmount=cart.reduce((s,c)=>s+c.qty*c.price,0);
+  // Show only when cart has items AND we're on the shop page (not in product detail or other)
+  const onShop=currentTab==='shop'||currentTab==='home';
+  if(itemCount>0 && onShop){
+    bar.classList.add('visible');
+    document.getElementById('ctb-amount').textContent=formatPrice(totalAmount);
+    document.getElementById('ctb-badge').textContent=itemCount;
+  }else{
+    bar.classList.remove('visible');
+  }
 }
 
 function openCart(){
@@ -1359,7 +1581,8 @@ async function placeOrder(){
   const name=document.getElementById('ck-name').value.trim();
   const phone=document.getElementById('ck-phone').value.trim();
   const addr=document.getElementById('ck-addr').value.trim();
-  const delivery=document.getElementById('ck-delivery').value;
+  const dlvRadio=document.querySelector('input[name="ck-delivery"]:checked');
+  const delivery=dlvRadio?dlvRadio.value:'pickup';
   const notes=document.getElementById('ck-notes').value.trim();
 
   if(!name){toast('الاسم مطلوب','err');return;}
@@ -1883,36 +2106,79 @@ function renderSellerDashboard(){
     `;
     return;
   }
-  // Approved seller dashboard - simplified for now
+  // ✅ Approved seller — PROFESSIONAL DASHBOARD
   c.innerHTML=`
-    <div style="padding:16px">
-      <div class="profile-card" style="margin:0 0 14px">
-        <div class="profile-avatar">${escapeHtml((currentSeller.display_name||'?').charAt(0))}</div>
-        <div class="profile-info">
-          <div class="profile-name">${escapeHtml(currentSeller.display_name)}</div>
-          <div class="profile-phone">✓ بائع معتمد · ${escapeHtml(currentSeller.area||'وادي الست')}</div>
-        </div>
-      </div>
-      <div class="row-2 mb-2">
-        <div class="settings-item" style="cursor:default">
-          <div style="flex:1;text-align:center">
-            <div style="font-size:24px;font-weight:900;color:var(--primary)" id="seller-product-count">0</div>
-            <div style="font-size:11px;color:var(--text3);font-weight:700">منتج</div>
-          </div>
-        </div>
-        <div class="settings-item" style="cursor:default">
-          <div style="flex:1;text-align:center">
-            <div style="font-size:24px;font-weight:900;color:var(--accent)" id="seller-pending-count">0</div>
-            <div style="font-size:11px;color:var(--text3);font-weight:700">طلب جديد</div>
+    <div class="seller-dash">
+      <!-- Profile header -->
+      <div class="seller-hero">
+        <div class="seller-hero-bg"></div>
+        <div class="seller-hero-content">
+          <div class="seller-avatar-lg">${escapeHtml((currentSeller.display_name||'?').charAt(0))}</div>
+          <div class="seller-hero-info">
+            <div class="seller-hero-name">${escapeHtml(currentSeller.display_name)}</div>
+            <div class="seller-hero-meta">
+              <span class="seller-badge">✓ بائع معتمد</span>
+              <span class="seller-area">📍 ${escapeHtml(currentSeller.area||'وادي الست')}</span>
+            </div>
           </div>
         </div>
       </div>
-      <button class="btn btn-primary btn-block mb-2" onclick="addSellerProduct()">+ أضف منتجاً جديداً</button>
-      <div class="section-title mb-1">📦 منتجاتي</div>
-      <div id="seller-products-list"></div>
-      <div class="section-title mt-3 mb-1">📋 طلباتي الأخيرة</div>
-      <div id="seller-orders-list"></div>
-      <button class="btn btn-ghost btn-block mt-3" onclick="logoutSeller()">تسجيل خروج البائع</button>
+
+      <!-- 4 Professional Stat Cards -->
+      <div class="stats-grid">
+        <div class="stat-card stat-blue">
+          <div class="stat-icon">📦</div>
+          <div class="stat-num" id="seller-product-count">0</div>
+          <div class="stat-label">منتج معروض</div>
+        </div>
+        <div class="stat-card stat-amber">
+          <div class="stat-icon">📋</div>
+          <div class="stat-num" id="seller-pending-count">0</div>
+          <div class="stat-label">طلب قيد التنفيذ</div>
+        </div>
+        <div class="stat-card stat-green">
+          <div class="stat-icon">💰</div>
+          <div class="stat-num" id="seller-total-sales">0</div>
+          <div class="stat-label">إجمالي المبيعات (ل.ل.)</div>
+        </div>
+        <div class="stat-card stat-due">
+          <div class="stat-icon">💳</div>
+          <div class="stat-num" id="seller-amount-due">0</div>
+          <div class="stat-label">المستحق لك (ل.ل.)</div>
+        </div>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="seller-actions">
+        <button class="btn btn-primary btn-block" onclick="addSellerProduct()">
+          <span style="font-size:18px">+</span> أضف منتجاً جديداً
+        </button>
+        <button class="btn btn-ghost btn-block" onclick="requestPayout()">
+          💸 طلب سحب الرصيد
+        </button>
+      </div>
+
+      <!-- My products -->
+      <div class="dash-section">
+        <div class="dash-section-hdr">
+          <div class="dash-section-title">📦 منتجاتي</div>
+          <div class="dash-section-cnt" id="my-prod-count">0</div>
+        </div>
+        <div id="seller-products-list"></div>
+      </div>
+
+      <!-- Recent orders -->
+      <div class="dash-section">
+        <div class="dash-section-hdr">
+          <div class="dash-section-title">📋 طلباتي الأخيرة</div>
+          <div class="dash-section-cnt" id="my-ord-count">0</div>
+        </div>
+        <div id="seller-orders-list"></div>
+      </div>
+
+      <button class="btn btn-ghost btn-block" style="margin-top:18px" onclick="logoutSeller()">
+        🚪 تسجيل خروج البائع
+      </button>
     </div>
   `;
   loadSellerStats();
@@ -1921,54 +2187,108 @@ function renderSellerDashboard(){
 async function loadSellerStats(){
   if(!currentSeller) return;
   try{
+    // Load all products by this seller
     const pRes=await sb.from('coop_products').select('*').eq('seller_id',currentSeller.id).order('created_at',{ascending:false});
     const products=pRes.data||[];
     document.getElementById('seller-product-count').textContent=products.length;
+    const myProdCntEl = document.getElementById('my-prod-count');
+    if(myProdCntEl) myProdCntEl.textContent = products.length;
     
-    const oRes=await sb.from('coop_orders').select('*').eq('seller_id',currentSeller.id).order('created_at',{ascending:false}).limit(5);
+    // Load all orders for this seller
+    const oRes=await sb.from('coop_orders').select('*').eq('seller_id',currentSeller.id).order('created_at',{ascending:false});
     const orders=oRes.data||[];
-    const pendingCount=orders.filter(o=>o.status==='pending').length;
+    
+    // Statistics
+    const pendingCount=orders.filter(o=>o.status==='pending'||o.status==='confirmed').length;
     document.getElementById('seller-pending-count').textContent=pendingCount;
-
+    const myOrdCntEl = document.getElementById('my-ord-count');
+    if(myOrdCntEl) myOrdCntEl.textContent = orders.length;
+    
+    // Total Sales = sum of all delivered/completed orders
+    const completedOrders = orders.filter(o => o.status === 'delivered' || o.status === 'completed');
+    const totalSales = completedOrders.reduce((s,o) => s + (parseFloat(o.total)||0), 0);
+    
+    // Pending payout = completed orders not yet paid out
+    // Use coop_transactions to know what's been paid
+    let paidOut = 0;
+    try{
+      const tRes = await sb.from('coop_transactions').select('amount,type').eq('seller_id', currentSeller.id);
+      if(!tRes.error && tRes.data){
+        paidOut = tRes.data.filter(t => t.type === 'payout').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+      }
+    }catch(e){console.warn('transactions not available',e);}
+    const amountDue = Math.max(0, totalSales - paidOut);
+    
+    const totalSalesEl = document.getElementById('seller-total-sales');
+    const amountDueEl = document.getElementById('seller-amount-due');
+    if(totalSalesEl) totalSalesEl.textContent = formatPriceShort(totalSales);
+    if(amountDueEl) amountDueEl.textContent = formatPriceShort(amountDue);
+    
+    // Cache for payout request
+    window._sellerAmountDue = amountDue;
+    window._sellerTotalSales = totalSales;
+    
+    // === RENDER PRODUCTS LIST ===
     const pl=document.getElementById('seller-products-list');
+    window._sellerProducts = products;
     if(products.length===0){
-      pl.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:14px">لا توجد منتجات بعد</div>';
+      pl.innerHTML='<div class="empty-tiny"><div class="empty-tiny-icon">📦</div><div class="empty-tiny-txt">لا توجد منتجات بعد</div><div class="empty-tiny-sub">اضغط "+ أضف منتجاً جديداً" للبدء</div></div>';
     }else{
       pl.innerHTML='';
-      products.slice(0,5).forEach(p=>{
+      products.forEach(p=>{
         const el=document.createElement('div');
-        el.className='cart-item';
+        el.className='product-mgr-card';
         const img=p.photo_urls?.[0]?`<img src="${escapeAttr(p.photo_urls[0])}">`:getCategoryIcon(p.category_id);
+        const stockColor = p.stock > 0 ? 'var(--green)' : 'var(--red)';
+        const stockTxt = p.stock > 0 ? '✓ متوفّر: '+p.stock : '✗ نفذ';
         el.innerHTML=`
-          <div class="cart-item-img">${img}</div>
-          <div class="cart-item-info">
-            <div class="cart-item-name">${escapeHtml(p.name)}</div>
-            <div class="cart-item-price">${formatPrice(p.price)} · مخزون: ${p.stock||0}</div>
+          <div class="product-mgr-img">${img}</div>
+          <div class="product-mgr-info">
+            <div class="product-mgr-name">${escapeHtml(p.name)}</div>
+            <div class="product-mgr-meta">${formatPrice(p.price)} / ${escapeHtml(p.unit||'-')} · <span style="color:${stockColor};font-weight:700">${stockTxt}</span></div>
+          </div>
+          <div class="product-mgr-acts">
+            <button class="edit-btn" onclick="editSellerProduct('${escapeAttr(p.id)}')" title="تعديل">✏️</button>
+            <button class="del-btn" onclick="deleteSellerProduct('${escapeAttr(p.id)}')" title="حذف">🗑️</button>
           </div>
         `;
         pl.appendChild(el);
       });
     }
 
+    // === RENDER ORDERS LIST ===
     const ol=document.getElementById('seller-orders-list');
     if(orders.length===0){
-      ol.innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;padding:14px">لا توجد طلبات بعد</div>';
+      ol.innerHTML='<div class="empty-tiny"><div class="empty-tiny-icon">📋</div><div class="empty-tiny-txt">لا توجد طلبات بعد</div><div class="empty-tiny-sub">ستظهر هنا عند طلب الزبائن</div></div>';
     }else{
       ol.innerHTML='';
-      orders.forEach(o=>{
+      orders.slice(0, 10).forEach(o=>{
         const card=document.createElement('div');
-        card.className='order-card';
+        card.className='order-card-pro';
         const items=o.items||[];
+        const itemsTxt = items.length === 0 ? '-' : (items[0]?.name||'-') + (items.length>1 ? ` +${items.length-1}` : '');
+        const statusClass = `status-${o.status||'pending'}`;
+        const statusLabel = statusBadge(o.status||'pending');
+        const dlvIcon = o.delivery_method === 'pickup' ? '🏪' : '🚗';
+        const dlvTxt = o.delivery_method === 'pickup' ? 'استلام' : 'توصيل';
         card.innerHTML=`
-          <div class="order-row">
-            <span class="order-id">#${(''+o.id).slice(0,8).toUpperCase()}</span>
-            <span class="order-status os-${o.status}">${statusBadge(o.status)}</span>
+          <div class="order-card-row1">
+            <div class="order-card-id">طلب #${(''+o.id).slice(0,8).toUpperCase()}</div>
+            <div class="order-card-status ${statusClass}">${statusLabel}</div>
           </div>
-          <div class="order-product">${escapeHtml(items[0]?.name||'-')}${items.length>1?' +'+(items.length-1):''}</div>
-          <div class="order-meta">${escapeHtml(o.customer_name)} · ${escapeHtml(o.customer_phone)}</div>
-          <div class="order-foot">
-            <span class="order-date">${formatDate(o.created_at)}</span>
-            <span class="order-total">${formatPrice(o.total)}</span>
+          <div class="order-card-product">${escapeHtml(itemsTxt)}</div>
+          <div class="order-card-row2">
+            <div class="order-card-customer">👤 ${escapeHtml(o.customer_name||'-')} · 📞 ${escapeHtml(o.customer_phone||'-')}</div>
+          </div>
+          <div class="order-card-row3">
+            <div class="order-card-date">${formatDate(o.created_at)} · ${dlvIcon} ${dlvTxt}</div>
+            <div class="order-card-total">${formatPrice(o.total)}</div>
+          </div>
+          <div class="order-card-acts">
+            ${o.status === 'pending' ? `<button class="oc-btn oc-btn-ok" onclick="updateOrderStatus('${o.id}','confirmed')">✓ تأكيد</button>` : ''}
+            ${o.status === 'confirmed' ? `<button class="oc-btn oc-btn-ok" onclick="updateOrderStatus('${o.id}','delivered')">📦 تمّ التسليم</button>` : ''}
+            ${(o.status === 'pending' || o.status === 'confirmed') ? `<button class="oc-btn oc-btn-cancel" onclick="updateOrderStatus('${o.id}','cancelled')">✗ إلغاء</button>` : ''}
+            ${o.customer_phone ? `<button class="oc-btn oc-btn-wa" onclick="contactCustomerWA('${escapeAttr(o.customer_phone)}','${escapeAttr(o.customer_name||'')}','${escapeAttr(itemsTxt)}',${parseFloat(o.total)||0})">💬 واتساب</button>` : ''}
           </div>
         `;
         ol.appendChild(card);
@@ -1977,9 +2297,255 @@ async function loadSellerStats(){
   }catch(e){console.error(e);}
 }
 
+function formatPriceShort(amt){
+  if(!amt) return '0';
+  if(amt >= 1000000) return (amt/1000000).toFixed(1) + 'M';
+  if(amt >= 1000) return (amt/1000).toFixed(0) + 'K';
+  return Math.round(amt).toString();
+}
+
+async function updateOrderStatus(orderId, newStatus){
+  if(!confirm(`تأكيد تغيير حالة الطلب إلى "${newStatus}"؟`)) return;
+  try{
+    const res = await sb.from('coop_orders').update({status: newStatus}).eq('id', orderId);
+    if(res.error){toast('فشل: '+res.error.message,'err');return;}
+    toast('✅ تمّ تحديث الحالة','ok');
+    loadSellerStats();
+  }catch(e){console.error(e);toast('حدث خطأ','err');}
+}
+
+function contactCustomerWA(phone, name, item, total){
+  if(!phone){toast('رقم الزبون غير متاح','err');return;}
+  const msg = `مرحباً ${name||''}\n\nبخصوص طلبك من تعاونيّة بلدية وادي الست:\n${item}\nالإجمالي: ${formatPrice(total)}\n\n`;
+  let cleanWa = phone.replace(/[^0-9]/g,'');
+  if(cleanWa.startsWith('961')){/*ok*/}
+  else if(cleanWa.startsWith('0')) cleanWa='961'+cleanWa.substring(1);
+  else cleanWa='961'+cleanWa;
+  window.open('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function requestPayout(){
+  const due = window._sellerAmountDue || 0;
+  if(due <= 0){
+    toast('لا يوجد رصيد قابل للسحب حالياً','err');
+    return;
+  }
+  if(!confirm(`طلب سحب الرصيد المستحقّ: ${formatPrice(due)} ل.ل.؟\n\nسيتمّ التواصل معك من قبل البلدية لتنسيق التسليم.`)) return;
+  // Send WhatsApp to municipality
+  const msg = `📥 طلب سحب رصيد — تعاونيّة بلدية وادي الست\n\n`+
+              `البائع: ${currentSeller.display_name}\n`+
+              `الهاتف: ${currentSeller.phone}\n`+
+              `المبلغ المطلوب سحبه: ${formatPrice(due)} ل.ل.\n\n`+
+              `يرجى التواصل لتنسيق التسليم. شكراً.`;
+  window.open('https://wa.me/96176789039?text='+encodeURIComponent(msg),'_blank');
+  toast('✅ تمّ إرسال طلب السحب','ok');
+}
+
+/* ═══════ PRODUCT MANAGEMENT (SELLER) ═══════ */
+let pendingPhotos = []; // {file, preview, uploaded_url}
+let editingProductId = null;
+
 function addSellerProduct(){
-  toast('💡 ميزة إضافة المنتجات قريباً!','ok');
-  // TODO: full add product modal
+  if(!currentSeller){toast('يجب تسجيل الدخول كبائع','err');return;}
+  if(currentSeller.status!=='approved' && currentSeller.status!=='active'){
+    toast('حسابك غير مفعّل بعد','err');return;
+  }
+  editingProductId = null;
+  pendingPhotos = [];
+  document.getElementById('modal-product-title').textContent = 'إضافة منتج جديد';
+  document.getElementById('prod-save-btn').textContent = 'حفظ المنتج ✓';
+  // Reset fields
+  document.getElementById('prod-name').value = '';
+  document.getElementById('prod-price').value = '';
+  document.getElementById('prod-unit').value = 'كغ';
+  document.getElementById('prod-stock').value = '1';
+  document.getElementById('prod-desc').value = '';
+  document.getElementById('prod-photos').value = '';
+  document.getElementById('prod-photo-thumbs').innerHTML = '';
+  // Populate categories
+  const sel = document.getElementById('prod-category');
+  sel.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.icon + ' ' + c.name;
+    sel.appendChild(opt);
+  });
+  document.getElementById('modal-product').classList.add('on');
+  setTimeout(()=>document.getElementById('prod-name').focus(), 300);
+}
+
+function editSellerProduct(productId){
+  if(!currentSeller){return;}
+  const prod = (window._sellerProducts||[]).find(p => p.id === productId);
+  if(!prod){toast('المنتج غير موجود','err');return;}
+  editingProductId = productId;
+  pendingPhotos = (prod.photo_urls||[]).map(u => ({uploaded_url:u, preview:u, isExisting:true}));
+  document.getElementById('modal-product-title').textContent = 'تعديل المنتج';
+  document.getElementById('prod-save-btn').textContent = 'حفظ التعديلات ✓';
+  document.getElementById('prod-name').value = prod.name||'';
+  document.getElementById('prod-price').value = prod.price||'';
+  document.getElementById('prod-unit').value = prod.unit||'';
+  document.getElementById('prod-stock').value = prod.stock||0;
+  document.getElementById('prod-desc').value = prod.description||'';
+  document.getElementById('prod-photos').value = '';
+  // Populate categories
+  const sel = document.getElementById('prod-category');
+  sel.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.icon + ' ' + c.name;
+    if(c.id === prod.category_id) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  renderPhotoThumbs();
+  document.getElementById('modal-product').classList.add('on');
+}
+
+async function deleteSellerProduct(productId){
+  if(!confirm('هل تريد حذف هذا المنتج نهائياً؟ لا يمكن التراجع عن العمليّة.')) return;
+  try{
+    const res = await sb.from('coop_products').delete().eq('id', productId);
+    if(res.error){toast('فشل الحذف: '+res.error.message,'err');return;}
+    toast('✅ تمّ حذف المنتج','ok');
+    loadSellerStats();
+    loadProducts(); // refresh shop
+  }catch(e){console.error(e);toast('حدث خطأ','err');}
+}
+
+function closeProductModal(){
+  document.getElementById('modal-product').classList.remove('on');
+  pendingPhotos = [];
+  editingProductId = null;
+}
+
+function handlePhotoSelect(event){
+  const files = Array.from(event.target.files || []);
+  if(!files.length) return;
+  // Limit total to 3
+  const remaining = 3 - pendingPhotos.length;
+  if(remaining <= 0){toast('الحدّ الأقصى 3 صور','err');return;}
+  const toAdd = files.slice(0, remaining);
+  toAdd.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingPhotos.push({file:f, preview:e.target.result, uploaded_url:null});
+      renderPhotoThumbs();
+    };
+    reader.readAsDataURL(f);
+  });
+  event.target.value = ''; // allow re-selecting same file
+}
+
+function renderPhotoThumbs(){
+  const wrap = document.getElementById('prod-photo-thumbs');
+  wrap.innerHTML = '';
+  pendingPhotos.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'photo-thumb';
+    div.innerHTML = `<img src="${p.preview}" alt=""><button type="button" class="photo-thumb-rm" onclick="removePendingPhoto(${idx})" title="حذف">×</button>`;
+    wrap.appendChild(div);
+  });
+  // Update button text
+  const btn = document.getElementById('prod-photo-btn');
+  if(btn) btn.textContent = pendingPhotos.length ? `📷 إضافة المزيد (${pendingPhotos.length}/3)` : '📷 اختيار صور';
+}
+
+function removePendingPhoto(idx){
+  pendingPhotos.splice(idx, 1);
+  renderPhotoThumbs();
+}
+
+async function uploadProductPhoto(file){
+  // Upload to coop-photos bucket
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const safeExt = ['jpg','jpeg','png','webp','gif'].includes(ext) ? ext : 'jpg';
+  const fname = `${currentSeller.id}/${Date.now()}_${Math.random().toString(36).slice(2,9)}.${safeExt}`;
+  const up = await sb.storage.from('coop-photos').upload(fname, file, {cacheControl:'3600', upsert:false});
+  if(up.error){
+    console.error('Upload error:', up.error);
+    throw up.error;
+  }
+  const {data} = sb.storage.from('coop-photos').getPublicUrl(fname);
+  return data.publicUrl;
+}
+
+async function saveProduct(){
+  const name = document.getElementById('prod-name').value.trim();
+  const price = parseFloat(document.getElementById('prod-price').value);
+  const unit = document.getElementById('prod-unit').value.trim();
+  const stock = parseInt(document.getElementById('prod-stock').value) || 0;
+  const desc = document.getElementById('prod-desc').value.trim();
+  const cat = document.getElementById('prod-category').value;
+  
+  if(!name){toast('اسم المنتج مطلوب','err');return;}
+  if(!price || price <= 0){toast('السعر غير صحيح','err');return;}
+  if(!unit){toast('الوحدة مطلوبة','err');return;}
+  if(!cat){toast('اختر الفئة','err');return;}
+  
+  const btn = document.getElementById('prod-save-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الحفظ...';
+  
+  try{
+    // Upload new photos (those without uploaded_url)
+    const photoUrls = [];
+    for(const p of pendingPhotos){
+      if(p.uploaded_url){
+        photoUrls.push(p.uploaded_url);
+      }else if(p.file){
+        try{
+          btn.textContent = `⏳ رفع الصور (${photoUrls.length+1}/${pendingPhotos.length})...`;
+          const url = await uploadProductPhoto(p.file);
+          photoUrls.push(url);
+        }catch(e){
+          console.error('Photo upload failed:', e);
+          toast('فشل رفع صورة، تخطّي...','err');
+        }
+      }
+    }
+    
+    btn.textContent = '⏳ حفظ البيانات...';
+    
+    const productData = {
+      seller_id: currentSeller.id,
+      name: name,
+      description: desc || null,
+      category_id: cat,
+      price: price,
+      unit: unit,
+      stock: stock,
+      photo_urls: photoUrls,
+      status: 'active'
+    };
+    
+    let res;
+    if(editingProductId){
+      res = await sb.from('coop_products').update(productData).eq('id', editingProductId).select().single();
+    }else{
+      res = await sb.from('coop_products').insert([productData]).select().single();
+    }
+    
+    if(res.error){
+      console.error('Save error:', res.error);
+      toast('فشل: '+(res.error.message||'خطأ غير معروف'),'err');
+      btn.disabled = false;
+      btn.textContent = editingProductId ? 'حفظ التعديلات ✓' : 'حفظ المنتج ✓';
+      return;
+    }
+    
+    toast(editingProductId ? '✅ تمّ تحديث المنتج' : '✅ تمّ إضافة المنتج','ok');
+    closeProductModal();
+    await loadProducts(); // refresh shop products
+    loadSellerStats(); // refresh seller dashboard
+  }catch(e){
+    console.error(e);
+    toast('حدث خطأ غير متوقّع','err');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = editingProductId ? 'حفظ التعديلات ✓' : 'حفظ المنتج ✓';
+  }
 }
 
 function logoutSeller(){
