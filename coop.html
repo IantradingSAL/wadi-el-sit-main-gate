@@ -1594,7 +1594,7 @@ async function placeOrder(){
     existing.name=name;existing.phone=phone;
     if(addr) existing.address=addr;
     existing.onboarded_at=existing.onboarded_at||new Date().toISOString();
-    localStorage.setItem('wadi_user',JSON.stringify(existing));
+    localStorage.setItem('wadi_user',JSON.stringify(existing)); localStorage.removeItem('wadi_push_linked');
     localStorage.setItem('wadi_onboarded','1');
   }catch(e){}
 
@@ -1829,7 +1829,7 @@ function saveProfile(){
     existing.name=n;existing.phone=p;
     if(a) existing.address=a;
     existing.onboarded_at=existing.onboarded_at||new Date().toISOString();
-    localStorage.setItem('wadi_user',JSON.stringify(existing));
+    localStorage.setItem('wadi_user',JSON.stringify(existing)); localStorage.removeItem('wadi_push_linked');
     localStorage.setItem('wadi_onboarded','1');
     updateProfileCard();
     closeProfileModal();

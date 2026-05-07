@@ -18,6 +18,14 @@
         // Check for updates every hour while page is open
         setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
       }).catch((err) => console.warn('[PWA] SW registration failed:', err));
+
+      // 🔄 AUTO-LINK push subscription with stored identity (every page load)
+      // Wait 2.5s for SW + supabase to settle, then sync identity
+      setTimeout(() => {
+        if (window.PWA && window.PWA.autoLink) {
+          window.PWA.autoLink().catch(e => console.warn('[PWA] autoLink failed:', e));
+        }
+      }, 2500);
     });
   }
 
@@ -298,9 +306,42 @@
             user_role: role || 'citizen'
           })
         });
+        console.log('[PWA] Subscription linked to user:', userName, phoneNorm);
         return true;
       } catch (e) {
         console.warn('linkToUser failed:', e);
+        return false;
+      }
+    },
+
+    // 🔄 AUTO-LINK: runs automatically on every page load
+    // If there's a push subscription AND wadi_user in localStorage,
+    // ensure the subscription is linked with the current name/phone.
+    // This catches cases where the user enabled push BEFORE entering name.
+    autoLink: async () => {
+      try {
+        const sub = await window.PWA.getCurrentSubscription();
+        if (!sub) return false; // no subscription, nothing to link
+        
+        const raw = localStorage.getItem('wadi_user');
+        if (!raw) return false;
+        
+        const u = JSON.parse(raw);
+        if (!u || !u.phone) return false; // need at least a phone
+        
+        // Check if linked already (avoid spam) — store last-linked phone
+        const lastLinked = localStorage.getItem('wadi_push_linked');
+        const currentSig = (u.phone || '') + '|' + (u.name || '');
+        if (lastLinked === currentSig) return false; // already linked
+        
+        const ok = await window.PWA.linkToUser(u.phone, u.name || '', u.role || 'citizen');
+        if (ok) {
+          localStorage.setItem('wadi_push_linked', currentSig);
+          console.log('[PWA] Auto-linked subscription on page load');
+        }
+        return ok;
+      } catch (e) {
+        console.warn('[PWA] autoLink error:', e);
         return false;
       }
     },

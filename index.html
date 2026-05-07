@@ -674,7 +674,7 @@ function saveIdentity(name, phone){
       name: name || '',
       phone: phone || '',
       onboarded_at: new Date().toISOString()
-    }));
+    })); localStorage.removeItem('wadi_push_linked');
     localStorage.setItem('wadi_onboarded', '1');
   } catch(e){ console.warn('saveIdentity failed:', e); }
 }

@@ -798,6 +798,21 @@ async function doSubmitCit(){
   if(!phone){err.textContent='يرجى إدخال رقم هاتفك';return;}
   if(!desc){err.textContent='يرجى وصف طلبك';return;}
   if(!dbR){err.textContent='⚠️ الخدمة غير متاحة حالياً';return;}
+
+  // ★ Save identity to localStorage so it autofills next time (other pages too)
+  try {
+    var savedRaw = localStorage.getItem('wadi_user');
+    var saved = savedRaw ? JSON.parse(savedRaw) : {};
+    var changed = false;
+    if (name && saved.name !== name) { saved.name = name; changed = true; }
+    if (phone && saved.phone !== phone) { saved.phone = phone; changed = true; }
+    if (changed) {
+      saved.onboarded_at = saved.onboarded_at || new Date().toISOString();
+      localStorage.setItem('wadi_user', JSON.stringify(saved)); localStorage.removeItem('wadi_push_linked');
+      localStorage.setItem('wadi_onboarded', '1');
+    }
+  } catch(e) {}
+
   btn.disabled=true;btn.textContent='⏳ جاري الإرسال…';
   const today=new Date().toISOString().slice(0,10);
   const na=['permit','welfare'].includes(type);
@@ -1079,6 +1094,18 @@ document.addEventListener('DOMContentLoaded', async function(){
     var gs=await sb.auth.getSession();
     if(gs.data&&gs.data.session&&gs.data.session.user){citUser=gs.data.session.user;setupCitDashboard();}
   }catch(e){}
+
+  // ★ Auto-fill name and phone from saved identity (set during welcome onboarding)
+  try {
+    var savedRaw = localStorage.getItem('wadi_user');
+    if (savedRaw) {
+      var saved = JSON.parse(savedRaw);
+      var nameField = document.getElementById('c-name');
+      var phoneField = document.getElementById('c-phone');
+      if (saved.name && nameField && !nameField.value) nameField.value = saved.name;
+      if (saved.phone && phoneField && !phoneField.value) phoneField.value = saved.phone;
+    }
+  } catch(e) { console.warn('autofill identity failed:', e); }
 
   // Auto-open case if ?case=ID in URL (came from a push notification click)
   var urlParams = new URLSearchParams(window.location.search);
