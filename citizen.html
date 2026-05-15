@@ -393,6 +393,35 @@ I18N.extend({
   }
 });
 
+/* Required-docs panel translations */
+I18N.extend({
+  ar: {
+    requiredDocsTitle: 'المستندات المطلوبة',
+    requiredLabel: '✅ إلزامية:',
+    optionalLabel: '📎 اختيارية (تُقوّي طلبك):',
+    requiredBadge: 'مطلوب',
+    optionalBadge: 'اختياري',
+    attachHint: '💡 يمكنك إرفاق المستندات في حقل الملفات أدناه أو إحضارها لمركز البلدية',
+  },
+  en: {
+    requiredDocsTitle: 'Required documents',
+    requiredLabel: '✅ Mandatory:',
+    optionalLabel: '📎 Optional (strengthen your request):',
+    requiredBadge: 'required',
+    optionalBadge: 'optional',
+    attachHint: '💡 Attach documents in the file field below, or bring them to the municipality office',
+  },
+  fr: {
+    requiredDocsTitle: 'Documents requis',
+    requiredLabel: '✅ Obligatoires :',
+    optionalLabel: '📎 Optionnels (renforcent votre demande) :',
+    requiredBadge: 'requis',
+    optionalBadge: 'optionnel',
+    attachHint: '💡 Joignez les documents dans le champ ci-dessous, ou apportez-les au bureau de la municipalité',
+  }
+});
+
+
 /* When language changes, re-render the type dropdown and required-docs box */
 I18N.onApply(function(lang){
   /* Refresh select options */
@@ -802,7 +831,7 @@ function updateCitizenTypeSelect() {
   if (!sel) return;
   var cats = getCats();
   sel.innerHTML = cats.map(function(c) {
-    return '<option value="' + c.id + '">' + c.icon + ' ' + c.label + '</option>';
+    return '<option value="' + c.id + '">' + c.icon + ' ' + pickLang(c.labelI18n||c.label) + '</option>';
   }).join('');
 }
 function showCitizenHero(){
@@ -1169,29 +1198,40 @@ function showRequiredDocs(typeId) {
   }
   var required = config.docs.filter(function(d){ return d.required; });
   var optional = config.docs.filter(function(d){ return !d.required; });
-  
+  // Pick the language version of each field (handles both string and {ar,en,fr} object)
+  var L_ = (typeof L === 'function') ? L() : {};
+  var pickL = (typeof pickLang === 'function') ? pickLang : function(x){ return typeof x === 'string' ? x : (x && (x.ar || x.en || x.fr)) || ''; };
+  var labelStr = pickL(config.label);
+  var descStr  = pickL(config.description);
+  var reqDocsTitle = L_.requiredDocsTitle || 'المستندات المطلوبة';
+  var requiredLabel = L_.requiredLabel || '✅ إلزامية:';
+  var optionalLabel = L_.optionalLabel || '📎 اختيارية (تُقوّي طلبك):';
+  var requiredBadge = L_.requiredBadge || 'مطلوب';
+  var optionalBadge = L_.optionalBadge || 'اختياري';
+  var attachHint    = L_.attachHint || '💡 يمكنك إرفاق المستندات في حقل الملفات أدناه أو إحضارها لمركز البلدية';
+
   el.style.display = 'block';
   el.innerHTML = 
     '<div style="background:linear-gradient(120deg,#0f4d82,#1a6eb5);color:#fff;padding:10px 14px;border-radius:10px 10px 0 0;font-weight:800;font-size:13px">' +
-    config.icon + ' المستندات المطلوبة — ' + config.label + '</div>' +
+    config.icon + ' ' + reqDocsTitle + ' — ' + labelStr + '</div>' +
     '<div style="background:#f8faff;border:1.5px solid #daeaf8;border-top:none;border-radius:0 0 10px 10px;padding:12px 14px">' +
-    '<div style="font-size:12px;color:#555;margin-bottom:8px">' + config.description + '</div>' +
+    '<div style="font-size:12px;color:#555;margin-bottom:8px">' + descStr + '</div>' +
     (required.length ? 
-      '<div style="font-size:12px;font-weight:700;color:#0f4d82;margin-bottom:6px">✅ إلزامية:</div>' +
+      '<div style="font-size:12px;font-weight:700;color:#0f4d82;margin-bottom:6px">' + requiredLabel + '</div>' +
       required.map(function(d){ 
         return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e8eef8;font-size:13px">' +
-          '<span>' + d.icon + '</span><span>' + d.name + '</span>' +
-          '<span style="margin-right:auto;font-size:10px;background:#fdeaea;color:#b02020;padding:2px 7px;border-radius:4px;font-weight:700">مطلوب</span></div>';
+          '<span>' + d.icon + '</span><span>' + pickL(d.name) + '</span>' +
+          '<span style="margin-inline-start:auto;font-size:10px;background:#fdeaea;color:#b02020;padding:2px 7px;border-radius:4px;font-weight:700">' + requiredBadge + '</span></div>';
       }).join('') : '') +
     (optional.length ? 
-      '<div style="font-size:12px;font-weight:700;color:#555;margin:8px 0 6px">📎 اختيارية (تُقوّي طلبك):</div>' +
+      '<div style="font-size:12px;font-weight:700;color:#555;margin:8px 0 6px">' + optionalLabel + '</div>' +
       optional.map(function(d){
         return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eee;font-size:13px;color:#666">' +
-          '<span>' + d.icon + '</span><span>' + d.name + '</span>' +
-          '<span style="margin-right:auto;font-size:10px;background:#eef0f6;color:#666;padding:2px 7px;border-radius:4px">اختياري</span></div>';
+          '<span>' + d.icon + '</span><span>' + pickL(d.name) + '</span>' +
+          '<span style="margin-inline-start:auto;font-size:10px;background:#eef0f6;color:#666;padding:2px 7px;border-radius:4px">' + optionalBadge + '</span></div>';
       }).join('') : '') +
     '<div style="font-size:11px;color:#888;margin-top:8px;padding-top:8px;border-top:1px dashed #ddd">' +
-    '💡 يمكنك إرفاق المستندات في حقل الملفات أدناه أو إحضارها لمركز البلدية</div>' +
+    attachHint + '</div>' +
     '</div>';
 }
 async function submitCitCase(){
@@ -1571,6 +1611,20 @@ function showCitUpdateFiles(input) {
     return '<div style="font-size:12px;color:var(--text2);padding:3px 0">📎 ' + f.name + 
       ' <button onclick="citUpdateFiles.splice('+i+',1);showCitUpdateFiles({files:citUpdateFiles})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px">✕</button></div>';
   }).join('');
+}
+</script>
+<script>
+/* Re-render required-docs panel when language changes */
+if (typeof I18N !== 'undefined' && typeof I18N.onApply === 'function') {
+  I18N.onApply(function(){
+    try {
+      var typeSel = document.getElementById('cit-type');
+      if (typeSel && typeSel.value && typeof showRequiredDocs === 'function') {
+        showRequiredDocs(getDbType(typeSel.value));
+      }
+      if (typeof updateCitizenTypeSelect === 'function') updateCitizenTypeSelect();
+    } catch(e){}
+  });
 }
 </script>
 </body>
