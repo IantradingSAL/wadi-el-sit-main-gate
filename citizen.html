@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>بوابة المواطن — بلدية وادي الست</title>
+<title data-i18n="pageTitle">بوابة المواطن — بلدية وادي الست</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -16,7 +16,7 @@
   --purple:#6535a8;--purple-bg:#ede8f8;--font:'Tajawal',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.65;direction:rtl;}body.dark-mode{filter:invert(1) hue-rotate(180deg);}body.dark-mode img{filter:invert(1) hue-rotate(180deg);}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.65;}body.dark-mode{filter:invert(1) hue-rotate(180deg);}body.dark-mode img{filter:invert(1) hue-rotate(180deg);}
 
 /* ── LOGIN ── */
 .ls{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,var(--blue2),var(--blue) 50%,var(--green2));padding:24px;}
@@ -219,6 +219,204 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="i18n.js"></script>
+<script>
+I18N.extend({
+  ar: {
+    pageTitle: 'بوابة المواطن — بلدية وادي الست',
+    backToGate: 'البوابة الرئيسية',
+    backToGateTitle: 'العودة للبوابة الرئيسية',
+    hdrName: 'بلدية وادي الست',
+    hdrSubLong: 'قضاء الشوف · جبل لبنان',
+    home: '← الرئيسية',
+    pushCardTitle: 'إشعارات تحديث طلبك',
+    pushCardSub: 'فعّل الإشعارات لتعرف فوراً عند تحديث حالة طلبك',
+    trackTitle: '🔍 تتبع حالة طلبك',
+    trackDesc: 'أدخل رقم الطلب الذي حصلت عليه عند التقديم',
+    trackPh: 'رقم الطلب — مثال: 1001',
+    trackBtn: 'متابعة',
+    verifyTitle: 'تحقق من هويتك',
+    verifyDesc1: 'أدخل رقم هاتفك للتأكد أنك صاحب الطلب',
+    verifyDesc2: 'أدخل رقم الهاتف المسجّل في طلبك',
+    phonePh: 'مثال: 03xxxxxx',
+    phonePhShort: '03xxxxxx',
+    cancel: 'إلغاء',
+    confirm: 'تأكيد ←',
+    confirmCheck: '✓ تأكيد',
+    submitTitle: '📋 تقديم طلب جديد',
+    fullName: 'الاسم الكامل *',
+    fullNamePh: 'اسمك الكامل',
+    phone: 'رقم الهاتف *',
+    email: 'البريد الإلكتروني',
+    emailNotice: '📧 سيتم إرسال إشعار إلكتروني إلى بريدك لتأكيد استلام طلبك',
+    requestType: 'نوع الطلب *',
+    address: 'العنوان',
+    addressPh: 'حارة، منطقة…',
+    description: 'وصف الطلب *',
+    descriptionPh: 'اشرح طلبك بالتفصيل…',
+    docsOptional: 'المستندات والصور (اختياري)',
+    chooseFiles: '📁 اختر ملفات',
+    takePhoto: '📸 التقط صورة',
+    submitRequest: '📤 إرسال الطلب',
+    successTitle: 'تم استلام طلبك!',
+    successSub: 'سيتواصل معك فريق البلدية في أقرب وقت',
+    emailSent: 'تم إرسال إشعار إلكتروني إلى بريدك بتفاصيل طلبك ورقمه المرجعي',
+    refNumber: 'رقمك المرجعي — احتفظ به',
+    refNumberUse: 'استخدم هذا الرقم لمتابعة حالة طلبك أعلاه',
+    newRequest: '+ تقديم طلب جديد',
+    helpBtn: 'مساعدة',
+    /* Errors / dynamic */
+    errNameRequired: 'يرجى إدخال اسمك الكامل',
+    errPhoneRequired: 'يرجى إدخال رقم هاتفك',
+    errDescRequired: 'يرجى وصف طلبك',
+    errServiceUnavailable: '⚠️ الخدمة غير متاحة حالياً',
+    errTrackNumRequired: '⚠️ يرجى إدخال رقم الطلب',
+    checking: '⏳ جاري التحقق…',
+    serviceUnavailable: 'الخدمة غير متاحة',
+    errCaseNotFound: '❌ لم يتم العثور على طلب بهذا الرقم',
+    phoneNotMatch: 'رقم الهاتف غير مطابق',
+    phoneNotMatchSub: 'تحقق من الرقم وحاول مجدداً',
+    fileLabel: 'الملف',
+    fileTooLarge: 'أكبر من 20MB',
+  },
+  en: {
+    pageTitle: 'Citizen Portal — Wadi El Sit Municipality',
+    backToGate: 'Main Gate',
+    backToGateTitle: 'Back to main gate',
+    hdrName: 'Wadi El Sit Municipality',
+    hdrSubLong: 'Chouf District · Mount Lebanon',
+    home: '← Home',
+    pushCardTitle: 'Request status notifications',
+    pushCardSub: 'Enable notifications to know immediately when your request status changes',
+    trackTitle: '🔍 Track your request',
+    trackDesc: 'Enter the request number you received when submitting',
+    trackPh: 'Request number — e.g. 1001',
+    trackBtn: 'Track',
+    verifyTitle: 'Verify your identity',
+    verifyDesc1: 'Enter your phone number to confirm you are the owner of the request',
+    verifyDesc2: 'Enter the phone number registered with your request',
+    phonePh: 'e.g. 03xxxxxx',
+    phonePhShort: '03xxxxxx',
+    cancel: 'Cancel',
+    confirm: 'Confirm →',
+    confirmCheck: '✓ Confirm',
+    submitTitle: '📋 Submit a new request',
+    fullName: 'Full name *',
+    fullNamePh: 'Your full name',
+    phone: 'Phone number *',
+    email: 'Email',
+    emailNotice: '📧 An email notification will be sent to your inbox confirming receipt of your request',
+    requestType: 'Request type *',
+    address: 'Address',
+    addressPh: 'Street, area…',
+    description: 'Description *',
+    descriptionPh: 'Describe your request in detail…',
+    docsOptional: 'Documents and photos (optional)',
+    chooseFiles: '📁 Choose files',
+    takePhoto: '📸 Take photo',
+    submitRequest: '📤 Submit request',
+    successTitle: 'Your request has been received!',
+    successSub: 'The municipality team will contact you shortly',
+    emailSent: 'An email notification with your request details and reference number has been sent to your inbox',
+    refNumber: 'Your reference number — keep it safe',
+    refNumberUse: 'Use this number to track your request status above',
+    newRequest: '+ Submit a new request',
+    helpBtn: 'Help',
+    errNameRequired: 'Please enter your full name',
+    errPhoneRequired: 'Please enter your phone number',
+    errDescRequired: 'Please describe your request',
+    errServiceUnavailable: '⚠️ Service currently unavailable',
+    errTrackNumRequired: '⚠️ Please enter the request number',
+    checking: '⏳ Checking…',
+    serviceUnavailable: 'Service unavailable',
+    errCaseNotFound: '❌ No request found with this number',
+    phoneNotMatch: 'Phone number does not match',
+    phoneNotMatchSub: 'Check the number and try again',
+    fileLabel: 'The file',
+    fileTooLarge: 'is larger than 20MB',
+  },
+  fr: {
+    pageTitle: 'Portail Citoyen — Municipalité de Wadi El Sit',
+    backToGate: 'Portail principal',
+    backToGateTitle: 'Retour au portail principal',
+    hdrName: 'Municipalité de Wadi El Sit',
+    hdrSubLong: 'Caza du Chouf · Mont-Liban',
+    home: '← Accueil',
+    pushCardTitle: 'Notifications de mise à jour de demande',
+    pushCardSub: "Activez les notifications pour savoir immédiatement quand l'état de votre demande change",
+    trackTitle: '🔍 Suivre votre demande',
+    trackDesc: 'Saisissez le numéro de demande reçu lors de la soumission',
+    trackPh: 'Numéro de demande — ex. 1001',
+    trackBtn: 'Suivre',
+    verifyTitle: 'Vérifiez votre identité',
+    verifyDesc1: 'Saisissez votre numéro de téléphone pour confirmer que vous êtes le propriétaire de la demande',
+    verifyDesc2: 'Saisissez le numéro de téléphone enregistré avec votre demande',
+    phonePh: 'ex. 03xxxxxx',
+    phonePhShort: '03xxxxxx',
+    cancel: 'Annuler',
+    confirm: 'Confirmer →',
+    confirmCheck: '✓ Confirmer',
+    submitTitle: '📋 Soumettre une nouvelle demande',
+    fullName: 'Nom complet *',
+    fullNamePh: 'Votre nom complet',
+    phone: 'Numéro de téléphone *',
+    email: 'Email',
+    emailNotice: '📧 Une notification par email vous sera envoyée pour confirmer la réception de votre demande',
+    requestType: 'Type de demande *',
+    address: 'Adresse',
+    addressPh: 'Rue, quartier…',
+    description: 'Description *',
+    descriptionPh: 'Décrivez votre demande en détail…',
+    docsOptional: 'Documents et photos (facultatif)',
+    chooseFiles: '📁 Choisir des fichiers',
+    takePhoto: '📸 Prendre une photo',
+    submitRequest: '📤 Envoyer la demande',
+    successTitle: 'Votre demande a été reçue !',
+    successSub: "L'équipe municipale vous contactera dans les plus brefs délais",
+    emailSent: 'Une notification par email avec les détails et le numéro de référence de votre demande a été envoyée à votre boîte',
+    refNumber: 'Votre numéro de référence — gardez-le précieusement',
+    refNumberUse: "Utilisez ce numéro pour suivre l'état de votre demande ci-dessus",
+    newRequest: '+ Soumettre une nouvelle demande',
+    helpBtn: 'Aide',
+    errNameRequired: 'Veuillez saisir votre nom complet',
+    errPhoneRequired: 'Veuillez saisir votre numéro de téléphone',
+    errDescRequired: 'Veuillez décrire votre demande',
+    errServiceUnavailable: '⚠️ Service actuellement indisponible',
+    errTrackNumRequired: '⚠️ Veuillez saisir le numéro de demande',
+    checking: '⏳ Vérification…',
+    serviceUnavailable: 'Service indisponible',
+    errCaseNotFound: '❌ Aucune demande trouvée avec ce numéro',
+    phoneNotMatch: 'Numéro de téléphone non correspondant',
+    phoneNotMatchSub: 'Vérifiez le numéro et réessayez',
+    fileLabel: 'Le fichier',
+    fileTooLarge: 'dépasse 20Mo',
+  }
+});
+
+/* When language changes, re-render the type dropdown and required-docs box */
+I18N.onApply(function(lang){
+  /* Refresh select options */
+  try {
+    var sel = document.getElementById('c-type');
+    if (sel && typeof getCats === 'function') {
+      var cats = getCats();
+      var currentVal = sel.value;
+      sel.innerHTML = cats.map(function(c){
+        return '<option value="'+c.id+'">'+c.icon+' '+pickLang(c.labelI18n||c.label)+'</option>';
+      }).join('');
+      sel.value = currentVal;
+    }
+  } catch(e){}
+  /* Re-show required docs if a type is selected */
+  try {
+    var sel = document.getElementById('c-type');
+    if (sel && sel.value && typeof showRequiredDocs === 'function'){
+      showRequiredDocs(sel.value);
+    }
+  } catch(e){}
+});
+</script>
+
 <script src="pwa.js" defer></script>
 </head>
 <body>
@@ -231,17 +429,17 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 @media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:7px 11px;font-size:11.5px}.back-to-gate-i{font-size:14px}}
 @media print{.back-to-gate{display:none}}
 </style>
-<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
+<a href="index.html" class="back-to-gate" data-i18n-title="backToGateTitle" title="العودة للبوابة الرئيسية">
   <span class="back-to-gate-i">🏛️</span>
-  <span class="back-to-gate-l">البوابة الرئيسية</span>
+  <span class="back-to-gate-l" data-i18n="backToGate">البوابة الرئيسية</span>
 </a>
 
 <div id="CP" style="display:block">
 <div style="min-height:100vh;background:var(--bg)">
   <div style="background:linear-gradient(120deg,var(--blue2),var(--blue) 60%,var(--green2));color:#fff;padding:14px 22px;display:flex;align-items:center;gap:14px">
     <img src="data:image/png;base64,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" style="height:46px">
-    <div><div style="font-size:15px;font-weight:800">بلدية وادي الست</div><div style="font-size:11px;opacity:0.6">قضاء الشوف · جبل لبنان</div></div>
-    <button onclick="showLanding()" style="margin-right:auto;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:var(--font);font-size:13px">← الرئيسية</button>
+    <div><div style="font-size:15px;font-weight:800" data-i18n="hdrName">بلدية وادي الست</div><div style="font-size:11px;opacity:0.6" data-i18n="hdrSubLong">قضاء الشوف · جبل لبنان</div></div>
+    <button onclick="showLanding()" data-i18n="home" style="margin-right:auto;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:var(--font);font-size:13px">← الرئيسية</button>
   </div>
   <div style="max-width:620px;margin:28px auto;padding:0 16px">
 
@@ -255,37 +453,37 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
     <div id="cit-push-card">
       <div style="width:42px;height:42px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 2px 6px rgba(15,77,130,.1)">🔔</div>
       <div class="pc-info">
-        <div style="font-size:14px;font-weight:800;color:var(--blue2);margin-bottom:2px">إشعارات تحديث طلبك</div>
-        <div style="font-size:12px;color:var(--text2);line-height:1.5">فعّل الإشعارات لتعرف فوراً عند تحديث حالة طلبك</div>
+        <div style="font-size:14px;font-weight:800;color:var(--blue2);margin-bottom:2px" data-i18n="pushCardTitle">إشعارات تحديث طلبك</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.5" data-i18n="pushCardSub">فعّل الإشعارات لتعرف فوراً عند تحديث حالة طلبك</div>
       </div>
       <div id="cit-push-toggle"></div>
     </div>
 
     <!-- TRACK CASE -->
     <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:18px">
-      <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:4px;text-align:center">🔍 تتبع حالة طلبك</div>
-      <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:14px">أدخل رقم الطلب الذي حصلت عليه عند التقديم</div>
+      <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:4px;text-align:center" data-i18n="trackTitle">🔍 تتبع حالة طلبك</div>
+      <div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:14px" data-i18n="trackDesc">أدخل رقم الطلب الذي حصلت عليه عند التقديم</div>
       <div style="display:flex;gap:10px">
-        <input type="number" id="track-num" placeholder="رقم الطلب — مثال: 1001"
+        <input type="number" id="track-num" placeholder="رقم الطلب — مثال: 1001" data-i18n-placeholder="trackPh"
             style="flex:1;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:15px;outline:none;direction:ltr;text-align:center"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
             onkeydown="if(event.key==='Enter')doTrack()">
-        <button onclick="doTrack()" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">متابعة</button>
+        <button onclick="doTrack()" data-i18n="trackBtn" style="padding:11px 22px;background:var(--blue);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">متابعة</button>
       </div>
 
       <div id="phone-popup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
         <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:100%;text-align:center;direction:rtl">
           <div style="font-size:48px;margin-bottom:12px">📱</div>
-          <div style="font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:6px">تحقق من هويتك</div>
-          <div style="font-size:13px;color:var(--text3);margin-bottom:20px">أدخل رقم هاتفك للتأكد أنك صاحب الطلب</div>
-          <input type="tel" id="popup-phone" placeholder="مثال: 03xxxxxx"
+          <div style="font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:6px" data-i18n="verifyTitle">تحقق من هويتك</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:20px" data-i18n="verifyDesc1">أدخل رقم هاتفك للتأكد أنك صاحب الطلب</div>
+          <input type="tel" id="popup-phone" placeholder="مثال: 03xxxxxx" data-i18n-placeholder="phonePh"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;outline:none;direction:ltr;margin-bottom:8px"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
             onkeydown="if(event.key==='Enter')confirmPhone()">
           <div id="popup-err" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
-            <button onclick="closePhonePopup()" style="flex:1;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;color:var(--text2)">إلغاء</button>
-            <button onclick="confirmPhone()" style="flex:2;padding:12px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">تأكيد ←</button>
+            <button onclick="closePhonePopup()" data-i18n="cancel" style="flex:1;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;color:var(--text2)">إلغاء</button>
+            <button onclick="confirmPhone()" data-i18n="confirm" style="flex:2;padding:12px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">تأكيد ←</button>
           </div>
         </div>
       </div>
@@ -294,16 +492,16 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
       <div id="phone-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;direction:rtl">
         <div style="background:#fff;border-radius:20px;padding:28px 24px;max-width:360px;width:90%;text-align:center;animation:popIn .2s ease">
           <div style="font-size:48px;margin-bottom:12px">📱</div>
-          <div style="font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:8px">تحقق من هويتك</div>
-          <div style="font-size:14px;color:var(--text3);margin-bottom:20px;line-height:1.6">أدخل رقم الهاتف المسجّل في طلبك</div>
-          <input type="tel" id="modal-phone" placeholder="مثال: 03xxxxxx"
+          <div style="font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:8px" data-i18n="verifyTitle">تحقق من هويتك</div>
+          <div style="font-size:14px;color:var(--text3);margin-bottom:20px;line-height:1.6" data-i18n="verifyDesc2">أدخل رقم الهاتف المسجّل في طلبك</div>
+          <input type="tel" id="modal-phone" placeholder="مثال: 03xxxxxx" data-i18n-placeholder="phonePh"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;direction:ltr;outline:none;margin-bottom:8px;box-sizing:border-box"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
             onkeydown="if(event.key==='Enter')confirmPhone()">
           <div id="phone-err" style="color:var(--danger);font-size:13px;min-height:20px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
-            <button onclick="confirmPhone()" style="flex:2;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">✓ تأكيد</button>
-            <button onclick="closePhoneModal()" style="flex:1;padding:13px;background:var(--surface2);color:var(--text2);border:none;border-radius:10px;font-family:var(--font);font-size:15px;cursor:pointer">إلغاء</button>
+            <button onclick="confirmPhone()" data-i18n="confirmCheck" style="flex:2;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">✓ تأكيد</button>
+            <button onclick="closePhoneModal()" data-i18n="cancel" style="flex:1;padding:13px;background:var(--surface2);color:var(--text2);border:none;border-radius:10px;font-family:var(--font);font-size:15px;cursor:pointer">إلغاء</button>
           </div>
         </div>
       </div>
@@ -314,32 +512,32 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 
     <!-- SUBMIT REQUEST -->
     <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:22px" id="submit-form-wrap">
-      <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:16px;text-align:center">📋 تقديم طلب جديد</div>
+      <div style="font-size:16px;font-weight:800;color:var(--blue2);margin-bottom:16px;text-align:center" data-i18n="submitTitle">📋 تقديم طلب جديد</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
-        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">الاسم الكامل *</div>
-          <input type="text" id="c-name" class="fi" placeholder="اسمك الكامل"></div>
-        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">رقم الهاتف *</div>
-          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" style="direction:ltr"></div>
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="fullName">الاسم الكامل *</div>
+          <input type="text" id="c-name" class="fi" placeholder="اسمك الكامل" data-i18n-placeholder="fullNamePh"></div>
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="phone">رقم الهاتف *</div>
+          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" data-i18n-placeholder="phonePhShort" style="direction:ltr"></div>
       </div>
-      <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">البريد الإلكتروني</div>
+      <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="email">البريد الإلكتروني</div>
         <input type="email" id="c-email" class="fi" placeholder="email@example.com" style="direction:ltr"></div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:5px;margin-bottom:2px;font-size:12px;color:var(--green2)">📧 سيتم إرسال إشعار إلكتروني إلى بريدك لتأكيد استلام طلبك</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px;margin-bottom:2px;font-size:12px;color:var(--green2)" data-i18n="emailNotice">📧 سيتم إرسال إشعار إلكتروني إلى بريدك لتأكيد استلام طلبك</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px">
-        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">نوع الطلب *</div>
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="requestType">نوع الطلب *</div>
           <select id="c-type" class="fi" style="appearance:none;-webkit-appearance:none" onchange="showRequiredDocs(this.value)"></select></div>
       <div id="required-docs-box" style="display:none;margin:4px 0 12px;border-radius:10px;overflow:hidden;font-size:13px"></div>
-        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">العنوان</div>
-          <input type="text" id="c-addr" class="fi" placeholder="حارة، منطقة…"></div>
+        <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="address">العنوان</div>
+          <input type="text" id="c-addr" class="fi" placeholder="حارة، منطقة…" data-i18n-placeholder="addressPh"></div>
       </div>
-      <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">وصف الطلب *</div>
-        <textarea id="c-desc" class="fi" placeholder="اشرح طلبك بالتفصيل…" style="min-height:100px;resize:vertical"></textarea></div>
+      <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="description">وصف الطلب *</div>
+        <textarea id="c-desc" class="fi" placeholder="اشرح طلبك بالتفصيل…" data-i18n-placeholder="descriptionPh" style="min-height:100px;resize:vertical"></textarea></div>
       <div style="margin-top:13px">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:8px">المستندات والصور (اختياري)</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:8px" data-i18n="docsOptional">المستندات والصور (اختياري)</div>
         <div style="display:flex;gap:9px;margin-bottom:8px">
           <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--blue3);border:1.5px dashed var(--blue);border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--blue)">
-            <input type="file" id="c-files" multiple accept="image/*,video/*,.pdf" onchange="addCitFiles(this.files)" style="display:none">📁 اختر ملفات</label>
+            <input type="file" id="c-files" multiple accept="image/*,video/*,.pdf" onchange="addCitFiles(this.files)" style="display:none"><span data-i18n="chooseFiles">📁 اختر ملفات</span></label>
           <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--green3);border:1.5px dashed var(--green);border-radius:10px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--green2)">
-            <input type="file" id="c-camera" accept="image/*" capture="environment" onchange="addCitFiles(this.files)" style="display:none">📸 التقط صورة</label>
+            <input type="file" id="c-camera" accept="image/*" capture="environment" onchange="addCitFiles(this.files)" style="display:none"><span data-i18n="takePhoto">📸 التقط صورة</span></label>
         </div>
         <div id="c-files-list" style="display:flex;flex-direction:column;gap:6px"></div>
         <div id="c-prog-wrap" style="display:none;margin-top:8px">
@@ -348,24 +546,24 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
         </div>
       </div>
       <div id="c-err" style="color:var(--danger);font-size:13px;margin-top:10px;text-align:center;min-height:18px"></div>
-      <button onclick="doSubmitCit()" id="c-btn" style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer">📤 إرسال الطلب</button>
+      <button onclick="doSubmitCit()" id="c-btn" data-i18n="submitRequest" style="width:100%;margin-top:14px;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:16px;font-weight:700;cursor:pointer">📤 إرسال الطلب</button>
     </div>
 
     <!-- SUCCESS -->
     <div id="c-success" style="display:none;background:#fff;border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;margin-top:18px">
       <div style="font-size:52px;margin-bottom:14px">🎉</div>
-      <div style="font-size:20px;font-weight:800;color:var(--green2);margin-bottom:8px">تم استلام طلبك!</div>
-      <div style="font-size:14px;color:var(--text2);margin-bottom:12px">سيتواصل معك فريق البلدية في أقرب وقت</div>
+      <div style="font-size:20px;font-weight:800;color:var(--green2);margin-bottom:8px" data-i18n="successTitle">تم استلام طلبك!</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:12px" data-i18n="successSub">سيتواصل معك فريق البلدية في أقرب وقت</div>
       <div style="background:#f0f8ea;border:1.5px solid #a8d9b4;border-radius:10px;padding:11px 14px;margin-bottom:16px;font-size:14px;color:#1e5429;display:flex;align-items:center;gap:8px;justify-content:center">
         <span style="font-size:18px">📧</span>
-        <span>تم إرسال إشعار إلكتروني إلى بريدك بتفاصيل طلبك ورقمه المرجعي</span>
+        <span data-i18n="emailSent">تم إرسال إشعار إلكتروني إلى بريدك بتفاصيل طلبك ورقمه المرجعي</span>
       </div>
       <div style="background:var(--blue3);border:1.5px solid var(--blue);border-radius:12px;padding:18px;margin-bottom:20px">
-        <div style="font-size:12px;font-weight:700;color:var(--blue2);margin-bottom:6px">رقمك المرجعي — احتفظ به</div>
+        <div style="font-size:12px;font-weight:700;color:var(--blue2);margin-bottom:6px" data-i18n="refNumber">رقمك المرجعي — احتفظ به</div>
         <div style="font-size:36px;font-weight:800;color:var(--blue);direction:ltr" id="c-ref">—</div>
-        <div style="font-size:12px;color:var(--text3);margin-top:6px">استخدم هذا الرقم لمتابعة حالة طلبك أعلاه</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:6px" data-i18n="refNumberUse">استخدم هذا الرقم لمتابعة حالة طلبك أعلاه</div>
       </div>
-      <button onclick="resetCit()" style="padding:11px 24px;border:2px solid var(--blue);background:transparent;color:var(--blue);border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">+ تقديم طلب جديد</button>
+      <button onclick="resetCit()" data-i18n="newRequest" style="padding:11px 24px;border:2px solid var(--blue);background:transparent;color:var(--blue);border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">+ تقديم طلب جديد</button>
     </div>
 
   </div>
@@ -383,7 +581,7 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
     <div id="wn-modal-body" style="padding:16px 20px"></div>
   </div>
 </div>
-<button class="help-btn" onclick="openHelp('c')" title="مساعدة">?</button>
+<button class="help-btn" onclick="openHelp('c')" data-i18n-title="helpBtn" title="مساعدة">?</button>
 <script>var OFFICERS = [];
 
 const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
@@ -392,12 +590,12 @@ const MUN_ID='00000000-0000-0000-0000-000000000001';
 let sb=null,dbR=false,citUser=null,citFiles=[],_cats=null;
 
 const WADI_CATS_DEFAULT = [
-  {id:'complaint', icon:'⚠️', label:'شكوى'},
-  {id:'welfare',   icon:'🤝', label:'رعاية اجتماعية'},
-  {id:'permit',    icon:'🏗️', label:'ترخيص'},
-  {id:'inquiry',   icon:'❓', label:'استفسار'},
-  {id:'ifada',     icon:'📜', label:'إفادة عقارية'},
-  {id:'water',     icon:'💧', label:'شكوى ري'},
+  {id:'complaint', icon:'⚠️', label:'شكوى',           labelI18n:{ar:'شكوى',en:'Complaint',fr:'Plainte'}},
+  {id:'welfare',   icon:'🤝', label:'رعاية اجتماعية', labelI18n:{ar:'رعاية اجتماعية',en:'Social welfare',fr:'Aide sociale'}},
+  {id:'permit',    icon:'🏗️', label:'ترخيص',          labelI18n:{ar:'ترخيص',en:'Building permit',fr:'Permis'}},
+  {id:'inquiry',   icon:'❓', label:'استفسار',         labelI18n:{ar:'استفسار',en:'Inquiry',fr:'Demande'}},
+  {id:'ifada',     icon:'📜', label:'إفادة عقارية',   labelI18n:{ar:'إفادة عقارية',en:'Property attestation',fr:'Attestation immobilière'}},
+  {id:'water',     icon:'💧', label:'شكوى ري',        labelI18n:{ar:'شكوى ري',en:'Irrigation complaint',fr:"Plainte d'irrigation"}},
 ];
 const WN_DEFAULT = [
   {icon:'🎭', title:'نظام إدارة الأدوار المتقدم', desc:'إنشاء أدوار مخصصة مع تحديد الصلاحيات والإشعارات لكل دور', isNew:true, date:'2026-04-08', color:'var(--blue3)', titleColor:'var(--blue2)'},
@@ -432,67 +630,77 @@ const WN_VERSIONS = [
 ];
 const REQUIRED_DOCS = {
   ifada: {
-    label: 'إفادة عقارية',
+    label: {ar:'إفادة عقارية',en:'Property Attestation',fr:'Attestation immobilière'},
     icon: '📜',
-    description: 'تُستخدم لإثبات الملكية العقارية أو وضع العقار القانوني',
+    description: {ar:'تُستخدم لإثبات الملكية العقارية أو وضع العقار القانوني',
+                  en:'Used to prove property ownership or legal status of real estate',
+                  fr:"Sert à prouver la propriété immobilière ou le statut juridique du bien"},
     docs: [
-      {name: 'صورة عن الهوية الشخصية', required: true,  icon: '🪪'},
-      {name: 'صورة عن سند الملكية (طابو)',required: true, icon: '📄'},
-      {name: 'صورة عن وثيقة المساحة',   required: true,  icon: '📐'},
-      {name: 'شهادة عائلية (قيد نفوس)', required: false, icon: '👨‍👩‍👧'},
-      {name: 'وكالة قانونية (إن وُجدت)',required: false, icon: '⚖️'},
-      {name: 'رسم طابو حديث (6 أشهر)',  required: true,  icon: '🗓️'},
+      {name:{ar:'صورة عن الهوية الشخصية',en:'Copy of personal ID',fr:"Copie de la pièce d'identité"}, required:true, icon:'🪪'},
+      {name:{ar:'صورة عن سند الملكية (طابو)',en:'Copy of title deed (Tabou)',fr:'Copie du titre de propriété (Tabou)'}, required:true, icon:'📄'},
+      {name:{ar:'صورة عن وثيقة المساحة',en:'Copy of survey document',fr:'Copie du document de superficie'}, required:true, icon:'📐'},
+      {name:{ar:'شهادة عائلية (قيد نفوس)',en:'Family certificate',fr:'Certificat de famille'}, required:false, icon:'👨‍👩‍👧'},
+      {name:{ar:'وكالة قانونية (إن وُجدت)',en:'Power of attorney (if any)',fr:"Procuration (si applicable)"}, required:false, icon:'⚖️'},
+      {name:{ar:'رسم طابو حديث (6 أشهر)',en:'Recent Tabou plan (6 months)',fr:'Plan Tabou récent (6 mois)'}, required:true, icon:'🗓️'},
     ]
   },
   permit: {
-    label: 'رخصة بناء / ترخيص',
+    label: {ar:'رخصة بناء / ترخيص',en:'Building Permit / License',fr:'Permis de construire'},
     icon: '🏗️',
-    description: 'مطلوبة لأي أعمال بناء أو هدم أو تعديل',
+    description: {ar:'مطلوبة لأي أعمال بناء أو هدم أو تعديل',
+                  en:'Required for any construction, demolition, or modification work',
+                  fr:'Requis pour tout travail de construction, démolition ou modification'},
     docs: [
-      {name: 'صورة عن الهوية الشخصية',    required: true,  icon: '🪪'},
-      {name: 'مخطط هندسي موقّع من مهندس', required: true,  icon: '📐'},
-      {name: 'سند الملكية',               required: true,  icon: '📄'},
-      {name: 'موافقة الجيران (إن لزم)',    required: false, icon: '🤝'},
-      {name: 'صور فوتوغرافية للموقع',     required: false, icon: '📷'},
+      {name:{ar:'صورة عن الهوية الشخصية',en:'Copy of personal ID',fr:"Copie de la pièce d'identité"}, required:true, icon:'🪪'},
+      {name:{ar:'مخطط هندسي موقّع من مهندس',en:'Engineer-signed plans',fr:"Plans signés par un ingénieur"}, required:true, icon:'📐'},
+      {name:{ar:'سند الملكية',en:'Title deed',fr:'Titre de propriété'}, required:true, icon:'📄'},
+      {name:{ar:'موافقة الجيران (إن لزم)',en:'Neighbors approval (if needed)',fr:'Accord des voisins (si requis)'}, required:false, icon:'🤝'},
+      {name:{ar:'صور فوتوغرافية للموقع',en:'Photos of the site',fr:'Photos du site'}, required:false, icon:'📷'},
     ]
   },
   welfare: {
-    label: 'رعاية اجتماعية',
+    label: {ar:'رعاية اجتماعية',en:'Social Welfare',fr:'Aide sociale'},
     icon: '🤝',
-    description: 'طلبات الدعم والمساعدة الاجتماعية',
+    description: {ar:'طلبات الدعم والمساعدة الاجتماعية',
+                  en:'Requests for social support and assistance',
+                  fr:"Demandes de soutien et d'aide sociale"},
     docs: [
-      {name: 'صورة عن الهوية الشخصية',   required: true,  icon: '🪪'},
-      {name: 'شهادة عائلية (قيد نفوس)',  required: true,  icon: '👨‍👩‍👧'},
-      {name: 'وثيقة إثبات السكن',         required: true,  icon: '🏠'},
-      {name: 'وثيقة الدخل / شهادة فقر',  required: false, icon: '📋'},
-      {name: 'تقرير طبي (إن لزم)',       required: false, icon: '🏥'},
+      {name:{ar:'صورة عن الهوية الشخصية',en:'Copy of personal ID',fr:"Copie de la pièce d'identité"}, required:true, icon:'🪪'},
+      {name:{ar:'شهادة عائلية (قيد نفوس)',en:'Family certificate',fr:'Certificat de famille'}, required:true, icon:'👨‍👩‍👧'},
+      {name:{ar:'وثيقة إثبات السكن',en:'Proof of residence',fr:'Justificatif de domicile'}, required:true, icon:'🏠'},
+      {name:{ar:'وثيقة الدخل / شهادة فقر',en:'Income document / hardship certificate',fr:"Justificatif de revenus / certificat d'indigence"}, required:false, icon:'📋'},
+      {name:{ar:'تقرير طبي (إن لزم)',en:'Medical report (if needed)',fr:'Rapport médical (si requis)'}, required:false, icon:'🏥'},
     ]
   },
   complaint: {
-    label: 'شكوى',
+    label: {ar:'شكوى',en:'Complaint',fr:'Plainte'},
     icon: '⚠️',
-    description: 'تقديم شكوى رسمية للبلدية',
+    description: {ar:'تقديم شكوى رسمية للبلدية',
+                  en:'Submit an official complaint to the municipality',
+                  fr:'Déposer une plainte officielle auprès de la municipalité'},
     docs: [
-      {name: 'صورة عن الهوية الشخصية', required: true,  icon: '🪪'},
-      {name: 'صور أو وثائق داعمة',     required: false, icon: '📷'},
+      {name:{ar:'صورة عن الهوية الشخصية',en:'Copy of personal ID',fr:"Copie de la pièce d'identité"}, required:true, icon:'🪪'},
+      {name:{ar:'صور أو وثائق داعمة',en:'Supporting photos or documents',fr:'Photos ou documents justificatifs'}, required:false, icon:'📷'},
     ]
   },
   inquiry: {
-    label: 'استفسار',
+    label: {ar:'استفسار',en:'Inquiry',fr:'Demande de renseignements'},
     icon: '❓',
-    description: 'استفسار عام',
+    description: {ar:'استفسار عام',en:'General inquiry',fr:'Demande générale'},
     docs: [
-      {name: 'صورة عن الهوية الشخصية', required: false, icon: '🪪'},
+      {name:{ar:'صورة عن الهوية الشخصية',en:'Copy of personal ID',fr:"Copie de la pièce d'identité"}, required:false, icon:'🪪'},
     ]
   },
   water: {
-    label: 'شكوى ري',
+    label: {ar:'شكوى ري',en:'Irrigation Complaint',fr:"Plainte d'irrigation"},
     icon: '💧',
-    description: 'شكوى تتعلق بمياه الري — وضّح المشكلة وموقعها',
+    description: {ar:'شكوى تتعلق بمياه الري — وضّح المشكلة وموقعها',
+                  en:'Complaint about irrigation water — specify the problem and its location',
+                  fr:"Plainte concernant l'eau d'irrigation — précisez le problème et son emplacement"},
     docs: [
-      {name: 'صورة عن الهوية الشخصية', required: true,  icon: '🪪'},
-      {name: 'وصف المشكلة والموقع',      required: true,  icon: '📝'},
-      {name: 'صور توضيحية للمشكلة',     required: false, icon: '📸'},
+      {name:{ar:'صورة عن الهوية الشخصية',en:'Copy of personal ID',fr:"Copie de la pièce d'identité"}, required:true, icon:'🪪'},
+      {name:{ar:'وصف المشكلة والموقع',en:'Description of problem and location',fr:'Description du problème et lieu'}, required:true, icon:'📝'},
+      {name:{ar:'صور توضيحية للمشكلة',en:'Photos illustrating the problem',fr:'Photos illustrant le problème'}, required:false, icon:'📸'},
     ]
   }
 };
@@ -517,7 +725,7 @@ async function saveCats(c) {
   if(sel) {
     sel.innerHTML = getDynTypes().map(function(t){
       var cat=getCats().find(function(x){return x.id===t;});
-      return '<option value="'+t+'">'+(cat?cat.icon+' '+cat.label:(TL[t]||t))+'</option>';
+      return '<option value="'+t+'">'+(cat?cat.icon+' '+pickLang(cat.labelI18n||cat.label):(TL[t]||t))+'</option>';
     }).join('');
   }
   if(typeof tick === 'function') setTimeout(tick, 100);
@@ -685,7 +893,7 @@ function showPhonePopup() {
   const ref = document.getElementById('track-num').value.toString().trim();
   const el = document.getElementById('track-res');
   if (!ref) {
-    el.innerHTML = '<div style="color:var(--danger);font-size:13px;text-align:center;padding:10px">⚠️ يرجى إدخال رقم الطلب أولاً</div>';
+    el.innerHTML = '<div style="color:var(--danger);font-size:13px;text-align:center;padding:10px">' + L().errTrackNumRequired + '</div>';
     return;
   }
   document.getElementById('popup-phone').value = '';
@@ -700,7 +908,7 @@ function closePhonePopup() {
 async function doTrack(phone=""){
   const ref=document.getElementById('track-num').value.toString().trim();
   const el=document.getElementById('track-res');
-  if(!ref){el.innerHTML='<div style="color:var(--danger);font-size:13px;text-align:center;padding:10px">⚠️ يرجى إدخال رقم الطلب</div>';return;}
+  if(!ref){el.innerHTML='<div style="color:var(--danger);font-size:13px;text-align:center;padding:10px">' + L().errTrackNumRequired + '</div>';return;}
   document.getElementById('modal-phone').value='';
   document.getElementById('phone-err').textContent='';
   document.getElementById('phone-modal').style.display='flex';
@@ -714,17 +922,17 @@ async function confirmPhone(){
   if(!phone){errEl.textContent='⚠️ يرجى إدخال رقم الهاتف';return;}
   errEl.textContent='';
   closePhoneModal();
-  el.innerHTML='<div style="text-align:center;padding:14px;color:var(--text3)">⏳ جاري التحقق…</div>';
-  if(!dbR){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center">الخدمة غير متاحة</div>';return;}
+  el.innerHTML='<div style="text-align:center;padding:14px;color:var(--text3)">' + L().checking + '</div>';
+  if(!dbR){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center">' + L().serviceUnavailable + '</div>';return;}
   try{
     const{data,error}=await sb.from('cases')
       .select('id,name,phone,email,address,type,status,description,created_at,timeline,documents,public_note,priority,assigned')
       .eq('id',ref).single();
-    if(error||!data){el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:16px;text-align:center;color:var(--danger)">❌ لم يتم العثور على طلب بهذا الرقم</div>';return;}
+    if(error||!data){el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:16px;text-align:center;color:var(--danger)">' + L().errCaseNotFound + '</div>';return;}
     const storedPhone=(data.phone||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');
     const inputPhone=phone.replace(/^[+]?961/,'').replace(/^0/,'');
     if(data.phone&&storedPhone&&inputPhone&&inputPhone!==storedPhone){
-      el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:20px;text-align:center;color:var(--danger)"><div style="font-size:32px;margin-bottom:8px">🔒</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">رقم الهاتف غير مطابق</div><div style="font-size:13px;opacity:.8">تحقق من الرقم وحاول مجدداً</div></div>';
+      el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:20px;text-align:center;color:var(--danger)"><div style="font-size:32px;margin-bottom:8px">🔒</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">' + L().phoneNotMatch + '</div><div style="font-size:13px;opacity:.8">' + L().phoneNotMatchSub + '</div></div>';
       return;
     }
     const TL={complaint:'شكوى',welfare:'رعاية اجتماعية',permit:'ترخيص',inquiry:'استفسار'};
@@ -794,10 +1002,10 @@ async function doSubmitCit(){
   const err=document.getElementById('c-err');
   const btn=document.getElementById('c-btn');
   err.textContent='';
-  if(!name){err.textContent='يرجى إدخال اسمك الكامل';return;}
-  if(!phone){err.textContent='يرجى إدخال رقم هاتفك';return;}
-  if(!desc){err.textContent='يرجى وصف طلبك';return;}
-  if(!dbR){err.textContent='⚠️ الخدمة غير متاحة حالياً';return;}
+  if(!name){err.textContent=L().errNameRequired;return;}
+  if(!phone){err.textContent=L().errPhoneRequired;return;}
+  if(!desc){err.textContent=L().errDescRequired;return;}
+  if(!dbR){err.textContent=L().errServiceUnavailable;return;}
 
   // ★ Save identity to localStorage so it autofills next time (other pages too)
   try {
@@ -879,7 +1087,7 @@ async function doSubmitCit(){
     document.getElementById('submit-form-wrap').style.display='none';
     document.getElementById('c-success').style.display='block';
     document.getElementById('c-success').scrollIntoView({behavior:'smooth'});
-  }catch(e){err.textContent='خطأ: '+e.message;btn.disabled=false;btn.textContent='📤 إرسال الطلب';}
+  }catch(e){err.textContent='خطأ: '+e.message;btn.disabled=false;btn.textContent=L().submitRequest;}
 }
 function resetCit(){
   citFiles=[];
@@ -893,7 +1101,7 @@ function resetCit(){
 }
 function addCitFiles(files) {
   Array.from(files).forEach(f => {
-    if (f.size > 20*1024*1024) { alert('الملف ' + f.name + ' أكبر من 20MB'); return; }
+    if (f.size > 20*1024*1024) { alert(L().fileLabel + ' ' + f.name + ' ' + L().fileTooLarge); return; }
     if (!citFiles.find(x => x.name===f.name && x.size===f.size)) citFiles.push(f);
   });
   renderCitFiles();

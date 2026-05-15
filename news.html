@@ -5,17 +5,133 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f4d82">
 <meta name="description" content="أخبار وإعلانات بلدية وادي الست">
-<title>📰 أخبار البلدية — وادي الست</title>
+<title data-i18n="pageTitle">📰 أخبار البلدية — وادي الست</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="i18n.js"></script>
+<script>
+/* ═══ News page translations ═══ */
+I18N.extend({
+  ar: {
+    pageTitle: '📰 أخبار البلدية — وادي الست',
+    backToGate: '🏛️ البوابة الرئيسية',
+    newsTitle: '📰 أخبار البلدية',
+    newsSub: 'الإعلانات والفعّاليات والتنبيهات',
+    refresh: 'تحديث',
+    pushBannerStrong: 'لا تفوّت أيّ خبر!',
+    pushBannerSub: 'فعّل الإشعارات لتستلم الأخبار الجديدة فوراً',
+    pushEnable: '🔔 تفعيل الإشعارات',
+    pushEnabledOk: 'تمّ تفعيل الإشعارات!',
+    catAll: '📰 الكلّ',
+    catAnnouncement: '📢 إعلان',
+    catEvent: '🎉 فعّاليات',
+    catAlert: '⚠️ تنبيه',
+    catUrgent: '🚨 طارئ',
+    catWater: '💧 ماء وري',
+    catTender: '📋 مناقصات',
+    searchPh: 'ابحث في الأخبار...',
+    pinned: '📌 مثبَّت',
+    loadingNews: 'جاري تحميل الأخبار...',
+    refreshing: 'جاري التحديث...',
+    errLoadingNews: 'تعذّر تحميل الأخبار',
+    noResultsFor: 'لا نتائج لـ',
+    tryDifferentWords: 'جرّب كلمات مختلفة أو اختر فئة أخرى',
+    noNewsInCategory: 'لا توجد أخبار في هذه الفئة',
+    newsWillAppearSoon: 'سيتمّ نشر الأخبار هنا بمجرّد توفّرها',
+    timeJustNow: 'الآن',
+    timeMin: 'دقيقة',
+    timeAgo: 'منذ',
+    timeHr: 'ساعة',
+    timeDay: 'يوم',
+    alertSystemLoading: '⚠️ النظام يحمّل... أعد المحاولة بعد ثانيتين.',
+    error: 'خطأ',
+  },
+  en: {
+    pageTitle: '📰 Municipality News — Wadi El Sit',
+    backToGate: '🏛️ Main Gate',
+    newsTitle: '📰 Municipality News',
+    newsSub: 'Announcements, events, and alerts',
+    refresh: 'Refresh',
+    pushBannerStrong: "Don't miss any news!",
+    pushBannerSub: 'Enable notifications to receive new updates instantly',
+    pushEnable: '🔔 Enable Notifications',
+    pushEnabledOk: 'Notifications enabled!',
+    catAll: '📰 All',
+    catAnnouncement: '📢 Announcement',
+    catEvent: '🎉 Events',
+    catAlert: '⚠️ Alert',
+    catUrgent: '🚨 Urgent',
+    catWater: '💧 Water & Irrigation',
+    catTender: '📋 Tenders',
+    searchPh: 'Search news...',
+    pinned: '📌 Pinned',
+    loadingNews: 'Loading news...',
+    refreshing: 'Refreshing...',
+    errLoadingNews: 'Could not load news',
+    noResultsFor: 'No results for',
+    tryDifferentWords: 'Try different keywords or pick another category',
+    noNewsInCategory: 'No news in this category',
+    newsWillAppearSoon: 'News will be published here as soon as available',
+    timeJustNow: 'just now',
+    timeMin: 'min',
+    timeAgo: '',
+    timeHr: 'hr ago',
+    timeDay: 'd ago',
+    alertSystemLoading: '⚠️ System is loading... try again in two seconds.',
+    error: 'Error',
+  },
+  fr: {
+    pageTitle: '📰 Actualités municipales — Wadi El Sit',
+    backToGate: '🏛️ Portail principal',
+    newsTitle: '📰 Actualités municipales',
+    newsSub: 'Annonces, événements et alertes',
+    refresh: 'Actualiser',
+    pushBannerStrong: 'Ne manquez aucune actualité !',
+    pushBannerSub: 'Activez les notifications pour recevoir les nouvelles instantanément',
+    pushEnable: '🔔 Activer les notifications',
+    pushEnabledOk: 'Notifications activées !',
+    catAll: '📰 Tout',
+    catAnnouncement: '📢 Annonce',
+    catEvent: '🎉 Événements',
+    catAlert: '⚠️ Alerte',
+    catUrgent: '🚨 Urgent',
+    catWater: '💧 Eau & Irrigation',
+    catTender: "📋 Appels d'offres",
+    searchPh: 'Rechercher dans les actualités...',
+    pinned: '📌 Épinglé',
+    loadingNews: 'Chargement des actualités...',
+    refreshing: 'Actualisation...',
+    errLoadingNews: 'Impossible de charger les actualités',
+    noResultsFor: 'Aucun résultat pour',
+    tryDifferentWords: "Essayez d'autres mots-clés ou choisissez une autre catégorie",
+    noNewsInCategory: 'Aucune actualité dans cette catégorie',
+    newsWillAppearSoon: "Les actualités seront publiées ici dès qu'elles seront disponibles",
+    timeJustNow: "à l'instant",
+    timeMin: 'min',
+    timeAgo: 'il y a',
+    timeHr: 'h',
+    timeDay: 'j',
+    alertSystemLoading: '⚠️ Le système se charge... réessayez dans deux secondes.',
+    error: 'Erreur',
+  }
+});
+
+/* Re-render news cards when language changes */
+I18N.onApply(function(lang){
+  if (typeof renderNews === 'function' && typeof allNews !== 'undefined' && allNews.length){
+    try { renderNews(); } catch(e){}
+  }
+});
+</script>
+
 <script src="pwa.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0;--shadow:0 2px 10px rgba(15,77,130,.06)}
-html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* HEADER */
 .app-hdr{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;padding:18px 16px 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(15,77,130,.18)}
@@ -89,13 +205,13 @@ html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text
 
 <header class="app-hdr">
   <div class="hdr-row">
-    <a href="index.html" class="hdr-back">🏛️ البوابة الرئيسية</a>
+    <a href="index.html" class="hdr-back" data-i18n="backToGate">🏛️ البوابة الرئيسية</a>
     <div class="hdr-ttl">
-      <h1>📰 أخبار البلدية</h1>
-      <p>الإعلانات والفعّاليات والتنبيهات</p>
+      <h1 data-i18n="newsTitle">📰 أخبار البلدية</h1>
+      <p data-i18n="newsSub">الإعلانات والفعّاليات والتنبيهات</p>
     </div>
     <div class="hdr-actions">
-      <button class="hdr-btn" onclick="loadNews()" title="تحديث">🔄</button>
+      <button class="hdr-btn" onclick="loadNews()" title="تحديث" data-i18n-title="refresh">🔄</button>
     </div>
   </div>
 </header>
@@ -105,39 +221,39 @@ html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text
   <!-- PUSH BANNER (if not subscribed) -->
   <div id="push-banner" class="push-banner" style="display:none">
     <div class="push-banner-i">🔔</div>
-    <div class="push-banner-text"><strong>لا تفوّت أيّ خبر!</strong><br>فعّل الإشعارات لتستلم الأخبار الجديدة فوراً</div>
-    <button class="push-banner-btn" onclick="enableNewsPush()">🔔 تفعيل الإشعارات</button>
+    <div class="push-banner-text"><strong data-i18n="pushBannerStrong">لا تفوّت أيّ خبر!</strong><br><span data-i18n="pushBannerSub">فعّل الإشعارات لتستلم الأخبار الجديدة فوراً</span></div>
+    <button class="push-banner-btn" onclick="enableNewsPush()" data-i18n="pushEnable">🔔 تفعيل الإشعارات</button>
   </div>
 
   <!-- CATEGORY FILTER -->
   <div class="cats">
-    <button class="cat on" data-cat="all" onclick="setCategory('all')">📰 الكلّ</button>
-    <button class="cat" data-cat="announcement" onclick="setCategory('announcement')">📢 إعلان</button>
-    <button class="cat" data-cat="event" onclick="setCategory('event')">🎉 فعّاليات</button>
-    <button class="cat" data-cat="alert" onclick="setCategory('alert')">⚠️ تنبيه</button>
-    <button class="cat" data-cat="urgent" onclick="setCategory('urgent')">🚨 طارئ</button>
-    <button class="cat" data-cat="water" onclick="setCategory('water')">💧 ماء وري</button>
-    <button class="cat" data-cat="tender" onclick="setCategory('tender')">📋 مناقصات</button>
+    <button class="cat on" data-cat="all" onclick="setCategory('all')" data-i18n="catAll">📰 الكلّ</button>
+    <button class="cat" data-cat="announcement" onclick="setCategory('announcement')" data-i18n="catAnnouncement">📢 إعلان</button>
+    <button class="cat" data-cat="event" onclick="setCategory('event')" data-i18n="catEvent">🎉 فعّاليات</button>
+    <button class="cat" data-cat="alert" onclick="setCategory('alert')" data-i18n="catAlert">⚠️ تنبيه</button>
+    <button class="cat" data-cat="urgent" onclick="setCategory('urgent')" data-i18n="catUrgent">🚨 طارئ</button>
+    <button class="cat" data-cat="water" onclick="setCategory('water')" data-i18n="catWater">💧 ماء وري</button>
+    <button class="cat" data-cat="tender" onclick="setCategory('tender')" data-i18n="catTender">📋 مناقصات</button>
   </div>
 
   <!-- SEARCH -->
   <div class="search-row">
     <div class="search-box">
       <span style="color:var(--text3);font-size:14px">🔍</span>
-      <input type="text" id="search-input" placeholder="ابحث في الأخبار..." oninput="filterNews()">
+      <input type="text" id="search-input" placeholder="ابحث في الأخبار..." data-i18n-placeholder="searchPh" oninput="filterNews()">
     </div>
   </div>
 
   <!-- PINNED -->
   <div id="pinned-section" class="pinned-section" style="display:none">
-    <div class="pinned-label">📌 مثبَّت</div>
+    <div class="pinned-label" data-i18n="pinned">📌 مثبَّت</div>
     <div id="pinned-list" class="news-grid"></div>
   </div>
 
   <!-- NEWS LIST -->
   <div id="news-list" class="news-grid">
     <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">
-      <span class="spin"></span> جاري تحميل الأخبار...
+      <span class="spin"></span> <span data-i18n="loadingNews">جاري تحميل الأخبار...</span>
     </div>
   </div>
 
@@ -159,13 +275,13 @@ let allNews = [];
 let currentCategory = 'all';
 
 const CAT_INFO = {
-  general:      {label:'📢 عام',          color:'#1a6eb5', bg:'#dbeafe'},
-  announcement: {label:'📢 إعلان رسمي',    color:'#0f4d82', bg:'#dbeafe'},
-  event:        {label:'🎉 فعّالية',       color:'#7c3aed', bg:'#ede9fe'},
-  alert:        {label:'⚠️ تنبيه',          color:'#d97706', bg:'#fef3c7'},
-  urgent:       {label:'🚨 طارئ',           color:'#bf2424', bg:'#fee2e2'},
-  water:        {label:'💧 ماء/ري',         color:'#0891b2', bg:'#cffafe'},
-  tender:       {label:'📋 مناقصة',          color:'#15803d', bg:'#d4f0dc'}
+  general:      {label:{ar:'📢 عام',ar2:'',en:'📢 General',fr:'📢 Général'},          color:'#1a6eb5', bg:'#dbeafe'},
+  announcement: {label:{ar:'📢 إعلان رسمي',en:'📢 Official',fr:'📢 Annonce officielle'},    color:'#0f4d82', bg:'#dbeafe'},
+  event:        {label:{ar:'🎉 فعّالية',en:'🎉 Event',fr:'🎉 Événement'},       color:'#7c3aed', bg:'#ede9fe'},
+  alert:        {label:{ar:'⚠️ تنبيه',en:'⚠️ Alert',fr:'⚠️ Alerte'},          color:'#d97706', bg:'#fef3c7'},
+  urgent:       {label:{ar:'🚨 طارئ',en:'🚨 Urgent',fr:'🚨 Urgent'},           color:'#bf2424', bg:'#fee2e2'},
+  water:        {label:{ar:'💧 ماء/ري',en:'💧 Water/Irrigation',fr:'💧 Eau/Irrigation'},         color:'#0891b2', bg:'#cffafe'},
+  tender:       {label:{ar:'📋 مناقصة',en:'📋 Tender',fr:'📋 Appel d\'offres'},          color:'#15803d', bg:'#d4f0dc'}
 };
 
 const CAT_ICONS = {
@@ -175,7 +291,7 @@ const CAT_ICONS = {
 
 async function loadNews(){
   const list = document.getElementById('news-list');
-  list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3)"><span class="spin"></span> جاري التحديث...</div>';
+  list.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3)"><span class="spin"></span> ' + L().refreshing + '</div>';
   try {
     const {data, error} = await sb.from('news_articles')
       .select('*')
@@ -194,7 +310,7 @@ async function loadNews(){
       setTimeout(() => { window.location.href = 'news-detail.html?id=' + id; }, 200);
     }
   } catch(ex) {
-    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">⚠️</div><div class="empty-t">تعذّر تحميل الأخبار</div><div class="empty-d">${esc(ex.message)}</div></div>`;
+    list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">⚠️</div><div class="empty-t">${L().errLoadingNews}</div><div class="empty-d">${esc(ex.message)}</div></div>`;
   }
 }
 
@@ -241,9 +357,9 @@ function renderNews(){
   const list = document.getElementById('news-list');
   if (!regular.length) {
     if (q) {
-      list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">🔍</div><div class="empty-t">لا نتائج لـ "${esc(q)}"</div><div class="empty-d">جرّب كلمات مختلفة أو اختر فئة أخرى</div></div>`;
+      list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">🔍</div><div class="empty-t">${L().noResultsFor} "${esc(q)}"</div><div class="empty-d">${L().tryDifferentWords}</div></div>`;
     } else {
-      list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">📰</div><div class="empty-t">لا توجد أخبار في هذه الفئة</div><div class="empty-d">سيتمّ نشر الأخبار هنا بمجرّد توفّرها</div></div>`;
+      list.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-i">📰</div><div class="empty-t">${L().noNewsInCategory}</div><div class="empty-d">${L().newsWillAppearSoon}</div></div>`;
     }
     return;
   }
@@ -260,8 +376,8 @@ function renderCard(n, isPinned){
   return `<div class="news-card ${isPinned?'pinned':''}" onclick="openNews(${n.id})">
     <div class="news-card-img">
       ${cover}
-      <div class="news-card-cat" style="color:${cat.color}">${cat.label}</div>
-      ${isPinned?'<div class="news-card-pin">📌 مثبَّت</div>':''}
+      <div class="news-card-cat" style="color:${cat.color}">${pickLang(cat.label)}</div>
+      ${isPinned?'<div class="news-card-pin">📌 ' + L().pinned.replace('📌 ','') + '</div>':''}
     </div>
     <div class="news-card-body">
       <div class="news-card-title">${esc(n.title)}</div>
@@ -284,12 +400,15 @@ function formatRelativeDate(iso){
   if (!iso) return '—';
   const d = new Date(iso);
   const now = new Date();
-  const diff = (now - d) / 1000; // seconds
-  if (diff < 60) return 'الآن';
-  if (diff < 3600) return Math.floor(diff/60) + ' دقيقة';
-  if (diff < 86400) return 'منذ ' + Math.floor(diff/3600) + ' ساعة';
-  if (diff < 604800) return 'منذ ' + Math.floor(diff/86400) + ' يوم';
-  return d.toLocaleDateString('ar-LB', {day:'2-digit', month:'short', year:'numeric'});
+  const diff = (now - d) / 1000;
+  const lang = document.documentElement.lang || 'ar';
+  const locale = lang === 'ar' ? 'ar-LB' : lang === 'fr' ? 'fr-FR' : 'en-GB';
+  const t = L();
+  if (diff < 60) return t.timeJustNow;
+  if (diff < 3600) return Math.floor(diff/60) + ' ' + t.timeMin;
+  if (diff < 86400) return t.timeAgo + ' ' + Math.floor(diff/3600) + ' ' + t.timeHr;
+  if (diff < 604800) return t.timeAgo + ' ' + Math.floor(diff/86400) + ' ' + t.timeDay;
+  return d.toLocaleDateString(locale, {day:'2-digit', month:'short', year:'numeric'});
 }
 
 // Push notification banner (for users not yet subscribed)
@@ -307,16 +426,16 @@ async function checkPushBanner(){
 async function enableNewsPush(){
   try {
     if (!window.PWA || !window.PWA.enablePush) {
-      alert('⚠️ النظام يحمّل... أعد المحاولة بعد ثانيتين.');
+      alert(L().alertSystemLoading);
       return;
     }
     await window.PWA.enablePush(['general','news']);
-    document.getElementById('push-banner').innerHTML = '<div style="text-align:center;width:100%;color:var(--green);font-weight:700;padding:6px">✅ تمّ تفعيل الإشعارات!</div>';
+    document.getElementById('push-banner').innerHTML = '<div style="text-align:center;width:100%;color:var(--green);font-weight:700;padding:6px">✅ ' + L().pushEnabledOk + '</div>';
     setTimeout(() => {
       document.getElementById('push-banner').style.display = 'none';
     }, 2500);
   } catch(ex) {
-    alert('⚠️ ' + (ex.message || 'خطأ'));
+    alert('⚠️ ' + (ex.message || L().error));
   }
 }
 
