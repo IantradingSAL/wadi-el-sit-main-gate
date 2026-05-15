@@ -569,6 +569,80 @@ I18N.onApply(function(lang){
   try { if(typeof renderHomeCategories==='function') renderHomeCategories(); } catch(e){}
   try { if(typeof renderShopByCat==='function' && typeof currentShopTab!=='undefined' && currentShopTab==='cat') renderShopByCat(); } catch(e){}
 });
+
+/* ═══ Unified Wadi shared strings (header + help modal) ═══ */
+I18N.extend({
+  ar: {
+    wadiMunName: 'بلدية وادي الست',
+    wadiQadaa: 'قضاء الشوف',
+    wadiHomeAria: 'العودة للبوابة الرئيسية',
+    wadiHelpAria: 'مساعدة ودليل الاستخدام',
+    wadiLangAria: 'تغيير اللغة',
+    whTitle: '❓ دليل وادي الست — كيف تعمل المنصّة؟',
+    whIntro: 'مرحباً بك في المنصّة الرقميّة لبلدية وادي الست. هذا الدليل يشرح أهم الميزات في كل صفحة.',
+    whLangT: '🌐 تغيير اللغة',
+    whLangD: 'اضغط على AR / EN / FR في أعلى الصفحة لتغيير لغة الواجهة. اللغة تُحفظ تلقائياً وتُطبَّق في كل صفحات المنصّة عند زيارتك التالية.',
+    whNotifT: '🔔 الإشعارات (Push)',
+    whNotifD: 'فعّل الإشعارات لتستلم تحديثات طلبك، تذكير دورة الري، وأخبار البلدية فوراً على هاتفك دون فتح التطبيق. اضغط على زر "تفعيل الإشعارات" في الصفحة المعنية ووافق على الإذن.',
+    whCurrT: '💵 العملتان: ليرة لبنانيّة (LBP) ودولار أمريكي (USD)',
+    whCurrD: 'تَستخدم التعاونيّة والخدمات المدفوعة الليرة اللبنانيّة (LBP) والدولار الأمريكي (USD). الأسعار قابلة للتحويل بسعر الصرف المُحدَّث من البلديّة. تحقّق دائماً من العملة المعروضة قبل إتمام أي طلب.',
+    whReqT: '📋 بوابة المواطن (الطلبات)',
+    whReqD: 'قدِّم: شكوى، طلب رعاية اجتماعيّة، طلب ترخيص بناء، استفسار، إفادة عقاريّة، أو شكوى ريّ. ستحصل على رقم مرجعيّ احتفظ به لمتابعة طلبك لاحقاً عبر نفس البوابة باستخدام رقم هاتفك.',
+    whCoopT: '🛒 التعاونيّة (Coop)',
+    whCoopD: 'سوق إلكترونيّ للمنتجات المحلّيّة والمزروعات. تصفّح المنتجات، أضِفها للسلّة، وأكمل الطلب عبر واتساب مع البائع مباشرةً. الدفع والتسليم يُتمَّان بين الزبون والبائع.',
+    whDirT: '📒 الدليل (Yellow Pages)',
+    whDirD: 'دليل أرقام أهالي وادي الست والخدمات. ابحث بالاسم، العائلة، المهنة، أو المنطقة. يمكنك حفظ جهة الاتصال مباشرةً على هاتفك كـ vCard أو الاتّصال بضغطة واحدة.',
+    whFoot: 'للاستفسار أو الإبلاغ عن مشكلة — توجّه لمركز البلديّة أو استخدم بوابة المواطن.',
+    whClose: 'إغلاق',
+  },
+  en: {
+    wadiMunName: 'Wadi El Sit Municipality',
+    wadiQadaa: 'Chouf District',
+    wadiHomeAria: 'Back to main gate',
+    wadiHelpAria: 'Help & user guide',
+    wadiLangAria: 'Change language',
+    whTitle: '❓ Wadi El Sit Guide — How does the platform work?',
+    whIntro: 'Welcome to the digital platform of Wadi El Sit Municipality. This guide explains the main features across all pages.',
+    whLangT: '🌐 Change language',
+    whLangD: 'Tap AR / EN / FR at the top of any page to change the interface language. Your choice is saved automatically and applied across all pages on your next visit.',
+    whNotifT: '🔔 Push notifications',
+    whNotifD: 'Enable notifications to receive request updates, irrigation cycle reminders, and municipality news instantly on your phone — without opening the app. Tap "Enable notifications" on the relevant page and accept the permission.',
+    whCurrT: '💵 Two currencies: Lebanese Pound (LBP) & US Dollar (USD)',
+    whCurrD: 'The cooperative and paid services use both Lebanese Pound (LBP) and US Dollar (USD). Prices are convertible at the exchange rate set by the municipality. Always verify the displayed currency before completing any order.',
+    whReqT: '📋 Citizen Portal (requests)',
+    whReqD: 'Submit: complaints, social welfare requests, building permits, inquiries, property attestations, or irrigation complaints. You will receive a reference number — keep it to track your request later via the same portal using your phone number.',
+    whCoopT: '🛒 Cooperative (Coop)',
+    whCoopD: 'Online marketplace for local products and produce. Browse products, add to cart, and complete the order via WhatsApp directly with the seller. Payment and delivery are arranged between buyer and seller.',
+    whDirT: '📒 Directory (Yellow Pages)',
+    whDirD: 'Directory of Wadi El Sit residents and services. Search by name, family, profession, or area. Save the contact directly to your phone as a vCard, or call with a single tap.',
+    whFoot: 'For questions or to report an issue — visit the municipality office or use the Citizen Portal.',
+    whClose: 'Close',
+  },
+  fr: {
+    wadiMunName: 'Municipalité de Wadi El Sit',
+    wadiQadaa: 'Caza du Chouf',
+    wadiHomeAria: 'Retour au portail principal',
+    wadiHelpAria: "Aide & guide d'utilisation",
+    wadiLangAria: 'Changer de langue',
+    whTitle: '❓ Guide Wadi El Sit — Comment fonctionne la plateforme ?',
+    whIntro: 'Bienvenue sur la plateforme numérique de la Municipalité de Wadi El Sit. Ce guide présente les fonctionnalités principales de chaque page.',
+    whLangT: '🌐 Changer de langue',
+    whLangD: "Appuyez sur AR / EN / FR en haut de la page pour changer la langue de l'interface. Votre choix est sauvegardé automatiquement et appliqué à toutes les pages lors de votre prochaine visite.",
+    whNotifT: '🔔 Notifications push',
+    whNotifD: "Activez les notifications pour recevoir les mises à jour de votre demande, les rappels du cycle d'irrigation et les actualités municipales instantanément sur votre téléphone — sans ouvrir l'application. Appuyez sur « Activer les notifications » et acceptez l'autorisation.",
+    whCurrT: '💵 Deux monnaies : Livre libanaise (LBP) & Dollar américain (USD)',
+    whCurrD: "La coopérative et les services payants utilisent à la fois la livre libanaise (LBP) et le dollar américain (USD). Les prix sont convertibles au taux de change fixé par la municipalité. Vérifiez toujours la monnaie affichée avant de finaliser une commande.",
+    whReqT: '📋 Portail citoyen (demandes)',
+    whReqD: "Soumettez : plaintes, demandes d'aide sociale, permis de construire, demandes d'information, attestations immobilières, ou plaintes d'irrigation. Vous recevrez un numéro de référence — conservez-le pour suivre votre demande depuis le même portail à l'aide de votre numéro de téléphone.",
+    whCoopT: '🛒 Coopérative (Coop)',
+    whCoopD: "Marché en ligne pour les produits locaux et les récoltes. Parcourez les produits, ajoutez au panier, et finalisez la commande via WhatsApp directement avec le vendeur. Le paiement et la livraison sont organisés entre l'acheteur et le vendeur.",
+    whDirT: '📒 Annuaire (Yellow Pages)',
+    whDirD: "Annuaire des habitants et services de Wadi El Sit. Recherchez par nom, famille, profession ou région. Enregistrez le contact directement sur votre téléphone (vCard) ou appelez d'un seul geste.",
+    whFoot: "Pour toute question ou pour signaler un problème — rendez-vous au bureau de la municipalité ou utilisez le Portail Citoyen.",
+    whClose: 'Fermer',
+  }
+});
+
 </script>
 
 <script src="pwa.js" defer></script>
@@ -1022,9 +1096,68 @@ input,textarea,select{font-family:var(--font);outline:none}
 .text-c{text-align:center}
 .mt-1{margin-top:8px}.mt-2{margin-top:14px}.mt-3{margin-top:20px}
 .mb-1{margin-bottom:8px}.mb-2{margin-bottom:14px}.mb-3{margin-bottom:20px}
+
+/* ═══════════ UNIFIED WADI HEADER ADDITIONS ═══════════ */
+.wadi-logo-link{display:inline-flex;align-items:center;text-decoration:none;color:inherit;flex-shrink:0;border-radius:50%;transition:transform .15s;cursor:pointer;}
+.wadi-logo-link:hover,.wadi-logo-link:active{transform:scale(1.06);}
+.wadi-lang-pill{display:inline-flex;align-items:center;gap:1px;background:rgba(255,255,255,.18);border-radius:999px;padding:2px;flex-shrink:0;font-family:'Tajawal',sans-serif;}
+.wadi-lang-btn{background:none;border:none;color:#fff;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.5px;opacity:.65;transition:all .15s;line-height:1;min-width:28px;}
+.wadi-lang-btn.on{background:#fff;color:#0f4d82;opacity:1;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+.wadi-lang-btn:hover{opacity:1;}
+.wadi-help-trigger{background:rgba(255,255,255,.18);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0;transition:all .15s;font-weight:800;}
+.wadi-help-trigger:hover,.wadi-help-trigger:active{background:rgba(255,255,255,.32);}
+/* ═══════════ UNIFIED WADI HELP MODAL ═══════════ */
+.wadi-help-ov{position:fixed;inset:0;background:rgba(15,30,60,.58);z-index:99500;display:none;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto;}
+.wadi-help-ov.open{display:flex;}
+.wadi-help-mo{background:#fff;border-radius:18px;max-width:560px;width:100%;margin:auto;box-shadow:0 24px 60px rgba(0,0,0,.32);font-family:'Tajawal',sans-serif;direction:rtl;color:#191c24;animation:wadiHelpPop .22s ease;}
+html[lang="en"] .wadi-help-mo,html[lang="fr"] .wadi-help-mo{direction:ltr;}
+@keyframes wadiHelpPop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.wadi-help-mh{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#fff;border-radius:18px 18px 0 0;z-index:1;}
+.wadi-help-mh-i{font-size:24px;}
+.wadi-help-mh-t{flex:1;font-size:17px;font-weight:800;color:#0f4d82;line-height:1.25;}
+.wadi-help-mh-x{background:none;border:none;cursor:pointer;font-size:22px;color:#8d93a6;padding:4px 9px;border-radius:7px;line-height:1;font-family:inherit;}
+.wadi-help-mh-x:hover{background:#eef0f6;color:#191c24;}
+.wadi-help-mb{padding:18px 22px 24px;}
+.wadi-help-intro{font-size:13.5px;color:#515668;line-height:1.7;margin-bottom:16px;padding:11px 13px;background:linear-gradient(135deg,#daeaf8,#eef5fc);border-radius:11px;border:1px solid #c7dff5;}
+.wadi-help-sec{margin-bottom:14px;border-right:3px solid #1a6eb5;padding-right:12px;}
+html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;border-left:3px solid #1a6eb5;padding-right:0;padding-left:12px;}
+.wadi-help-sec:last-child{margin-bottom:2px;}
+.wadi-help-sec-t{font-size:14.5px;font-weight:800;color:#0f4d82;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.wadi-help-sec-d{font-size:13.5px;color:#515668;line-height:1.72;}
+.wadi-help-foot{margin-top:18px;padding:11px 13px;background:#fff8e6;border:1px solid #f5d481;border-radius:10px;font-size:12.5px;color:#7a5500;line-height:1.55;text-align:center;}
+@media(max-width:540px){.wadi-help-ov{padding:14px 10px;}.wadi-help-mh{padding:14px 16px;}.wadi-help-mh-t{font-size:15.5px;}.wadi-help-mb{padding:14px 16px 20px;}}
+@media print{.wadi-help-ov,.wadi-help-trigger,.wadi-lang-pill{display:none!important;}}
+
+/* ═══════════ COOP FLOATING TOP STRIP (logo + lang + help) ═══════════ */
+.wadi-coop-strip{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;left:8px;z-index:200;display:flex;align-items:center;gap:8px;pointer-events:none;}
+.wadi-coop-strip > *{pointer-events:auto;}
+.wadi-coop-strip .wadi-logo-link{background:#0f4d82;border-radius:50%;padding:3px;box-shadow:0 3px 10px rgba(0,0,0,.25);}
+.wadi-coop-strip .wadi-logo-link img{width:32px;height:32px;border-radius:50%;background:#fff;display:block;}
+.wadi-coop-strip .wadi-lang-pill,.wadi-coop-strip .wadi-help-trigger{margin-right:auto;}
+html[lang="en"] .wadi-coop-strip .wadi-lang-pill,html[lang="fr"] .wadi-coop-strip .wadi-lang-pill,
+html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-strip .wadi-help-trigger{margin-right:0;margin-left:auto;}
+.wadi-coop-strip .wadi-lang-pill{background:rgba(15,77,130,.92);backdrop-filter:blur(8px);box-shadow:0 3px 10px rgba(0,0,0,.25);}
+.wadi-coop-strip .wadi-help-trigger{background:rgba(15,77,130,.92);backdrop-filter:blur(8px);width:32px;height:32px;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,.25);}
+.appbar{padding-top:calc(var(--safe-top) + 50px) !important;}
+@media(max-width:540px){.appbar{padding-top:calc(var(--safe-top) + 48px) !important;}}
+@media print{.wadi-coop-strip{display:none;}}
+
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════ WADI COOP TOP STRIP (logo + lang + help) ═══════════════════════ -->
+<div class="wadi-coop-strip">
+  <a href="index.html" class="wadi-logo-link" aria-label="Main gate" data-i18n-aria-label="wadiHomeAria">
+    <img src="data:image/png;base64,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" alt="شعار بلدية وادي الست">
+  </a>
+  <div class="wadi-lang-pill" role="group" aria-label="Language" data-i18n-aria-label="wadiLangAria">
+  <button class="wadi-lang-btn" data-lang="ar" onclick="wadiSetLang('ar')">AR</button>
+  <button class="wadi-lang-btn" data-lang="en" onclick="wadiSetLang('en')">EN</button>
+  <button class="wadi-lang-btn" data-lang="fr" onclick="wadiSetLang('fr')">FR</button>
+</div>
+<button class="wadi-help-trigger" onclick="wadiOpenHelp()" aria-label="Help" data-i18n-aria-label="wadiHelpAria" title="Help" data-i18n-title="wadiHelpAria">?</button>
+</div>
 
 <!-- ═══════════════════════ TOAST ═══════════════════════ -->
 <div class="toast" id="toast"></div>
@@ -1246,14 +1379,6 @@ input,textarea,select{font-family:var(--font);outline:none}
       <div class="settings-arrow">‹</div>
     </div>
 
-    <div class="settings-item" onclick="goHomePage()">
-      <div class="settings-icon">🏛</div>
-      <div class="settings-text">
-        <div class="settings-title" data-i18n="mainGate">البوابة الرئيسية</div>
-        <div class="settings-sub" data-i18n="mainGateSub">العودة لبوابة البلدية</div>
-      </div>
-      <div class="settings-arrow">‹</div>
-    </div>
   </div>
 
   <button class="logout-btn" onclick="clearIdentity()" id="logout-btn" style="display:none">
@@ -3579,6 +3704,121 @@ function shadeColor(c,p){
   const R=f>>16,G=(f>>8)&0xff,B=f&0xff;
   return '#'+(0x1000000+(Math.round((t-R)*P)+R)*0x10000+(Math.round((t-G)*P)+G)*0x100+(Math.round((t-B)*P)+B)).toString(16).slice(1);
 }
+
+</script>
+
+<!-- ═══ UNIFIED WADI HELP MODAL ═══ -->
+<div id="WADI_HELP_OV" class="wadi-help-ov" onclick="if(event.target===this)wadiCloseHelp()" role="dialog" aria-modal="true">
+  <div class="wadi-help-mo">
+    <div class="wadi-help-mh">
+      <div class="wadi-help-mh-i">❓</div>
+      <div class="wadi-help-mh-t" data-i18n="whTitle">❓ دليل وادي الست — كيف تعمل المنصّة؟</div>
+      <button class="wadi-help-mh-x" onclick="wadiCloseHelp()" aria-label="Close" data-i18n-aria-label="whClose">✕</button>
+    </div>
+    <div class="wadi-help-mb">
+      <div class="wadi-help-intro" data-i18n="whIntro">مرحباً بك في المنصّة الرقميّة لبلدية وادي الست. هذا الدليل يشرح أهم الميزات في كل صفحة.</div>
+      <div class="wadi-help-sec">
+        <div class="wadi-help-sec-t" data-i18n="whLangT">🌐 تغيير اللغة</div>
+        <div class="wadi-help-sec-d" data-i18n="whLangD">اضغط على AR / EN / FR في أعلى الصفحة لتغيير لغة الواجهة. اللغة تُحفظ تلقائياً وتُطبَّق في كل صفحات المنصّة عند زيارتك التالية.</div>
+      </div>
+      <div class="wadi-help-sec">
+        <div class="wadi-help-sec-t" data-i18n="whNotifT">🔔 الإشعارات (Push)</div>
+        <div class="wadi-help-sec-d" data-i18n="whNotifD">فعّل الإشعارات لتستلم تحديثات طلبك، تذكير دورة الري، وأخبار البلدية فوراً على هاتفك دون فتح التطبيق.</div>
+      </div>
+      <div class="wadi-help-sec">
+        <div class="wadi-help-sec-t" data-i18n="whCurrT">💵 العملتان: ليرة لبنانيّة (LBP) ودولار أمريكي (USD)</div>
+        <div class="wadi-help-sec-d" data-i18n="whCurrD">تَستخدم التعاونيّة والخدمات المدفوعة الليرة اللبنانيّة (LBP) والدولار الأمريكي (USD). الأسعار قابلة للتحويل بسعر الصرف المُحدَّث من البلديّة.</div>
+      </div>
+      <div class="wadi-help-sec">
+        <div class="wadi-help-sec-t" data-i18n="whReqT">📋 بوابة المواطن (الطلبات)</div>
+        <div class="wadi-help-sec-d" data-i18n="whReqD">قدِّم: شكوى، طلب رعاية اجتماعيّة، طلب ترخيص بناء، استفسار، إفادة عقاريّة، أو شكوى ريّ. احصل على رقم مرجعيّ احتفظ به لمتابعة طلبك لاحقاً.</div>
+      </div>
+      <div class="wadi-help-sec">
+        <div class="wadi-help-sec-t" data-i18n="whCoopT">🛒 التعاونيّة (Coop)</div>
+        <div class="wadi-help-sec-d" data-i18n="whCoopD">سوق إلكترونيّ للمنتجات المحلّيّة. تصفّح المنتجات، أضِفها للسلّة، وأكمل الطلب عبر واتساب مع البائع.</div>
+      </div>
+      <div class="wadi-help-sec">
+        <div class="wadi-help-sec-t" data-i18n="whDirT">📒 الدليل (Yellow Pages)</div>
+        <div class="wadi-help-sec-d" data-i18n="whDirD">دليل أرقام أهالي وادي الست والخدمات. ابحث بالاسم، العائلة، المهنة، أو المنطقة. احفظ جهة الاتصال كـ vCard أو اتّصل بضغطة واحدة.</div>
+      </div>
+      <div class="wadi-help-foot" data-i18n="whFoot">للاستفسار أو الإبلاغ عن مشكلة — توجّه لمركز البلديّة أو استخدم بوابة المواطن.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+/* ═══ Unified Wadi helpers (lang pill, help modal) ═══ */
+(function(){
+  function applyAttr(){
+    // Apply data-i18n-aria-label since base i18n.js may not handle it
+    try{
+      var lang = (window.I18N && I18N.getLang) ? I18N.getLang() : (document.documentElement.lang||'ar');
+      var store = (window.I18N && I18N.store) ? I18N.store[lang] : null;
+      if(!store) return;
+      document.querySelectorAll('[data-i18n-aria-label]').forEach(function(el){
+        var k = el.getAttribute('data-i18n-aria-label');
+        if(store[k]) el.setAttribute('aria-label', store[k]);
+      });
+    }catch(e){}
+  }
+  window.wadiSetLang = function(lang){
+    if(!lang || (lang!=='ar' && lang!=='en' && lang!=='fr')) return;
+    try{ localStorage.setItem('wadi_lang', lang); }catch(e){}
+    document.documentElement.lang = lang;
+    document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
+    var applied = false;
+    if(window.I18N){
+      if(typeof I18N.setLang === 'function'){ I18N.setLang(lang); applied = true; }
+      else if(typeof I18N.apply === 'function'){ I18N.apply(lang); applied = true; }
+      else if(typeof I18N.use === 'function'){ I18N.use(lang); applied = true; }
+      else if(typeof I18N.set === 'function'){ I18N.set(lang); applied = true; }
+    }
+    document.querySelectorAll('.wadi-lang-btn').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+    });
+    if(!applied){
+      // Fallback: reload page so i18n.js can re-initialize from localStorage
+      setTimeout(function(){ location.reload(); }, 50);
+      return;
+    }
+    setTimeout(applyAttr, 30);
+  };
+  window.wadiOpenHelp = function(){
+    var ov = document.getElementById('WADI_HELP_OV');
+    if(ov){ ov.classList.add('open'); document.body.style.overflow='hidden'; }
+  };
+  window.wadiCloseHelp = function(){
+    var ov = document.getElementById('WADI_HELP_OV');
+    if(ov){ ov.classList.remove('open'); document.body.style.overflow=''; }
+  };
+  function initLangPill(){
+    var cur = 'ar';
+    try{ var s = localStorage.getItem('wadi_lang'); if(s==='en'||s==='fr'||s==='ar') cur = s; }catch(e){}
+    if(window.I18N && I18N.getLang){ try{ cur = I18N.getLang() || cur; }catch(e){} }
+    document.querySelectorAll('.wadi-lang-btn').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-lang') === cur);
+    });
+    applyAttr();
+  }
+  if(window.I18N && typeof I18N.onApply === 'function'){
+    I18N.onApply(function(lang){
+      document.querySelectorAll('.wadi-lang-btn').forEach(function(b){
+        b.classList.toggle('on', b.getAttribute('data-lang') === lang);
+      });
+      setTimeout(applyAttr, 30);
+    });
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initLangPill);
+  else initLangPill();
+  // Esc to close
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      var ov = document.getElementById('WADI_HELP_OV');
+      if(ov && ov.classList.contains('open')) wadiCloseHelp();
+    }
+  });
+})();
 
 </script>
 </body>
