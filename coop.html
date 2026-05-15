@@ -529,6 +529,41 @@ I18N.extend({
   }
 });
 
+
+/* Currency feature translations */
+I18N.extend({
+  ar: {
+    currencyLabel: 'العملة',
+    priceLabel: 'السعر',
+    currencyTitle: '💱 العملة وسعر الصرف',
+    rateLabel: 'سعر صرف 1 USD (ل.ل.)',
+    rateHint: 'يُطبَّق فوراً على كل الأسعار المعروضة في المتجر',
+    rateSaved: 'تم حفظ سعر الصرف',
+    rateInvalid: 'سعر صرف غير صحيح',
+    now: 'الآن',
+  },
+  en: {
+    currencyLabel: 'Currency',
+    priceLabel: 'Price',
+    currencyTitle: '💱 Currency & exchange rate',
+    rateLabel: 'Exchange rate: 1 USD (LBP)',
+    rateHint: 'Applies instantly to all prices in the shop',
+    rateSaved: 'Exchange rate saved',
+    rateInvalid: 'Invalid exchange rate',
+    now: 'Now',
+  },
+  fr: {
+    currencyLabel: 'Devise',
+    priceLabel: 'Prix',
+    currencyTitle: '💱 Devise & taux de change',
+    rateLabel: 'Taux de change : 1 USD (LBP)',
+    rateHint: "S'applique immédiatement à tous les prix affichés",
+    rateSaved: 'Taux de change enregistré',
+    rateInvalid: 'Taux de change invalide',
+    now: 'Maintenant',
+  }
+});
+
 /* Re-render home + shop content when language changes */
 I18N.onApply(function(lang){
   try { if(typeof renderHomeCategories==='function') renderHomeCategories(); } catch(e){}
@@ -1397,10 +1432,24 @@ input,textarea,select{font-family:var(--font);outline:none}
         <label class="field-label" data-i18n="category">الفئة *</label>
         <select class="field-select" id="prod-category"></select>
       </div>
+      <div class="field">
+        <label class="field-label" data-i18n="currencyLabel">العملة *</label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <label style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center;font-weight:700" id="cur-lbp-label">
+            <input type="radio" name="prod-currency" id="prod-cur-lbp" value="LBP" checked onchange="onCurrencyChange()" style="margin:0">
+            <span>🇱🇧 LBP (ل.ل.)</span>
+          </label>
+          <label style="flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center;font-weight:700" id="cur-usd-label">
+            <input type="radio" name="prod-currency" id="prod-cur-usd" value="USD" onchange="onCurrencyChange()" style="margin:0">
+            <span>🇺🇸 USD ($)</span>
+          </label>
+        </div>
+      </div>
       <div class="row-2">
         <div class="field">
-          <label class="field-label" data-i18n="priceLBP">السعر (ل.ل.) *</label>
-          <input class="field-input" id="prod-price" type="number" inputmode="numeric" placeholder="50000" style="direction:ltr;text-align:right">
+          <label class="field-label" id="prod-price-label" data-i18n="priceLabel">السعر *</label>
+          <input class="field-input" id="prod-price" type="number" inputmode="decimal" placeholder="50000" style="direction:ltr;text-align:right" oninput="updatePriceConverted()">
+          <div id="prod-price-converted" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:end"></div>
         </div>
         <div class="field">
           <label class="field-label" data-i18n="unit">الوحدة *</label>
@@ -1618,6 +1667,7 @@ document.addEventListener('DOMContentLoaded',async function(){
   }catch(e){console.error('Supabase init failed:',e);}
 
   // Load saved state
+  loadCurrencyRate();
   try{const c=localStorage.getItem('coop_cart');if(c)cart=JSON.parse(c);}catch(e){}
   try{const s=localStorage.getItem('coop_seller');if(s)currentSeller=JSON.parse(s);}catch(e){}
   // SECURITY: removed localStorage admin trust (post-audit C1). currentAdmin is re-verified via restoreAdminSession() below.
@@ -1746,7 +1796,7 @@ function renderProductCarousel(containerId,products){
       <div class="pcard-mini-body">
         <div class="pcard-mini-brand">${escapeHtml(p.coop_sellers?.display_name||'')}</div>
         <div class="pcard-mini-name">${escapeHtml(p.name)}</div>
-        <div class="pcard-mini-price">${formatPrice(p.price)}</div>
+        <div class="pcard-mini-price">${formatPriceDual(p.price, p.currency)}</div>
       </div>
     `;
     c.appendChild(card);
@@ -1825,7 +1875,7 @@ function renderShopPage(){
         <div class="pcard-brand">${escapeHtml(p.coop_sellers?.display_name||'')}</div>
         <div class="pcard-name">${escapeHtml(p.name)}</div>
         <div class="pcard-foot">
-          <div class="pcard-price">${formatPrice(p.price)}</div>
+          <div class="pcard-price">${formatPriceDual(p.price, p.currency)}</div>
           <div class="pcard-acts">
             ${waBtn}
             <button class="pcard-add ${inCart?'in-cart':''}" data-pid="${escapeAttr(p.id)}">${inCart?'✓':'+'}</button>
@@ -1894,7 +1944,7 @@ function openProductDetail(p){
       <h1 class="pdetail-name">${escapeHtml(p.name)}</h1>
       ${cat?`<div class="pdetail-cat">${cat.icon} ${(typeof cat.name==="object"?pickLang(cat.name):cat.name)}</div>`:''}
       <div class="pdetail-price-row">
-        <div class="pdetail-price">${formatPrice(p.price)}</div>
+        <div class="pdetail-price">${formatPriceDual(p.price, p.currency)}</div>
         <div class="pdetail-unit">/ ${escapeHtml(p.unit||'قطعة')}</div>
       </div>
       <div style="margin-bottom:14px">${stockText}</div>
@@ -2768,7 +2818,7 @@ async function loadSellerStats(){
           <div class="product-mgr-img">${img}</div>
           <div class="product-mgr-info">
             <div class="product-mgr-name">${escapeHtml(p.name)}</div>
-            <div class="product-mgr-meta">${formatPrice(p.price)} / ${escapeHtml(p.unit||'-')} · <span style="color:${stockColor};font-weight:700">${stockTxt}</span></div>
+            <div class="product-mgr-meta">${formatPriceDual(p.price, p.currency)} / ${escapeHtml(p.unit||'-')} · <span style="color:${stockColor};font-weight:700">${stockTxt}</span></div>
           </div>
           <div class="product-mgr-acts">
             <button class="edit-btn" onclick="editSellerProduct('${escapeAttr(p.id)}')" title="تعديل">✏️</button>
@@ -2880,6 +2930,11 @@ function addSellerProduct(){
   // Reset fields
   document.getElementById('prod-name').value = '';
   document.getElementById('prod-price').value = '';
+  // Reset currency to LBP
+  const lbpRadio = document.getElementById('prod-cur-lbp');
+  if (lbpRadio) { lbpRadio.checked = true; onCurrencyChange(); }
+  const convEl = document.getElementById('prod-price-converted');
+  if (convEl) convEl.textContent = '';
   document.getElementById('prod-unit').value = 'كغ';
   document.getElementById('prod-stock').value = '1';
   document.getElementById('prod-desc').value = '';
@@ -2908,6 +2963,9 @@ function editSellerProduct(productId){
   document.getElementById('prod-save-btn').textContent = L().saveEdits;
   document.getElementById('prod-name').value = prod.name||'';
   document.getElementById('prod-price').value = prod.price||'';
+  // Set currency radio
+  const curRadio = document.getElementById('prod-cur-' + (prod.currency === 'USD' ? 'usd' : 'lbp'));
+  if (curRadio) { curRadio.checked = true; onCurrencyChange(); }
   document.getElementById('prod-unit').value = prod.unit||'';
   document.getElementById('prod-stock').value = prod.stock||0;
   document.getElementById('prod-desc').value = prod.description||'';
@@ -2994,6 +3052,40 @@ async function uploadProductPhoto(file){
   return data.publicUrl;
 }
 
+function onCurrencyChange(){
+  const isUSD = document.getElementById('prod-cur-usd')?.checked;
+  const label = document.getElementById('prod-price-label');
+  if (label) {
+    const L_ = typeof L === 'function' ? L() : {};
+    label.textContent = (L_.priceLabel || 'السعر') + ' ' + (isUSD ? '($)' : '(ل.ل.)') + ' *';
+  }
+  updatePriceConverted();
+  // Visual highlight selected radio
+  const lbpLabel = document.getElementById('cur-lbp-label');
+  const usdLabel = document.getElementById('cur-usd-label');
+  if (lbpLabel && usdLabel) {
+    lbpLabel.style.borderColor = isUSD ? 'var(--border)' : 'var(--primary)';
+    lbpLabel.style.background  = isUSD ? '' : 'var(--primary4)';
+    usdLabel.style.borderColor = isUSD ? 'var(--primary)' : 'var(--border)';
+    usdLabel.style.background  = isUSD ? 'var(--primary4)' : '';
+  }
+}
+
+function updatePriceConverted(){
+  const priceInput = document.getElementById('prod-price');
+  const conv = document.getElementById('prod-price-converted');
+  if (!priceInput || !conv) return;
+  const isUSD = document.getElementById('prod-cur-usd')?.checked;
+  const price = parseFloat(priceInput.value) || 0;
+  const rate = window.currencyRate || 89500;
+  if (price <= 0){ conv.textContent = ''; return; }
+  if (isUSD) {
+    conv.textContent = '≈ ' + (price * rate).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',') + ' ل.ل.';
+  } else {
+    conv.textContent = '≈ $' + (price / rate).toFixed(price/rate < 10 ? 2 : 0);
+  }
+}
+
 async function saveProduct(){
   const name = document.getElementById('prod-name').value.trim();
   const price = parseFloat(document.getElementById('prod-price').value);
@@ -3031,12 +3123,14 @@ async function saveProduct(){
     
     btn.textContent = '⏳ '+L().savingData;
     
+    const currency = document.querySelector('input[name="prod-currency"]:checked')?.value || 'LBP';
     const productData = {
       seller_id: currentSeller.id,
       name: name,
       description: desc || null,
       category_id: cat,
       price: price,
+      currency: currency,
       unit: unit,
       stock: stock,
       photo_urls: photoUrls,
@@ -3248,10 +3342,24 @@ async function loadAdminPanel(){
         <div class="section-title mt-3 mb-1">📋 آخر الطلبات</div>
         <div id="admin-recent-orders"></div>
         
+        <div class="section-title mt-3 mb-1" data-i18n="currencyTitle">💱 العملة وسعر الصرف</div>
+        <div class="settings-item" style="cursor:default;flex-direction:column;align-items:stretch;padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:13px;color:var(--text3);font-weight:700" data-i18n="rateLabel">سعر صرف 1 USD (ل.ل.)</div>
+            <div style="font-size:11px;color:var(--text3)" id="rate-updated"></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <input class="field-input" id="rate-input" type="number" step="100" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="89500">
+            <button class="btn btn-primary" onclick="saveCurrencyRate()" data-i18n="save">حفظ ✓</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px" data-i18n="rateHint">يُطبَّق فوراً على كل الأسعار المعروضة في المتجر</div>
+        </div>
+        
         <button class="btn btn-ghost btn-block mt-3" onclick="logoutAdmin()">تسجيل خروج الإدارة</button>
       </div>
     `;
     
+    populateCurrencyAdmin();
     // Pending sellers
     const ps=document.getElementById('admin-pending-sellers');
     const pendingS=sellers.filter(x=>x.status==='pending');
@@ -3354,6 +3462,41 @@ async function loadAdminPanel(){
   }
 }
 
+
+async function saveCurrencyRate(){
+  if (!currentAdmin || !['mayor','admin'].includes(currentAdmin.role)) {
+    toast(L().notAdmin || 'Not authorized','err'); return;
+  }
+  const newRate = parseFloat(document.getElementById('rate-input').value);
+  if (!newRate || newRate <= 0) { toast(L().rateInvalid || 'سعر غير صحيح','err'); return; }
+  try {
+    const {error} = await sb.from('currency_settings')
+      .update({ rate_usd_to_lbp: newRate, updated_at: new Date().toISOString() })
+      .eq('id', 1);
+    if (error) { toast(L().errLoadData + ': ' + error.message,'err'); return; }
+    window.currencyRate = newRate;
+    toast((L().rateSaved || 'تم حفظ سعر الصرف') + ' ✓','ok');
+    // Refresh visible prices
+    if (typeof renderHomePage === 'function') renderHomePage();
+    if (typeof renderShopPage === 'function') renderShopPage();
+    // Update updated-at display
+    const upd = document.getElementById('rate-updated');
+    if (upd) upd.textContent = (L().now || 'الآن');
+  } catch(e) { toast('Error: ' + e.message,'err'); }
+}
+
+function populateCurrencyAdmin(){
+  const inp = document.getElementById('rate-input');
+  if (inp && window.currencyRate) inp.value = window.currencyRate;
+  const upd = document.getElementById('rate-updated');
+  if (upd && window.currencyRateUpdatedAt) {
+    try {
+      const d = new Date(window.currencyRateUpdatedAt);
+      upd.textContent = d.toLocaleDateString();
+    } catch(e){}
+  }
+}
+
 function logoutAdmin(){
   if(!confirm('تسجيل خروج الإدارة؟')) return;
   currentAdmin=null;
@@ -3372,8 +3515,38 @@ function toast(msg,type){
 
 function formatPrice(n){
   n=parseFloat(n)||0;
-  if(n>=1000) return (n/1000).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')+' ل.ل.';
+  if(n>=1000) return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')+' ل.ل.';
   return n+' ل.ل.';
+}
+
+/* ═══════ TWO-CURRENCY DISPLAY ═══════ */
+// Display BOTH the base price and the converted equivalent.
+//   product in LBP @ rate 89500:  "50,000 ل.ل. (~$0.56)"
+//   product in USD @ rate 89500:  "$10 (~895,000 ل.ل.)"
+function formatPriceDual(price, currency){
+  price = parseFloat(price) || 0;
+  currency = (currency || 'LBP').toUpperCase();
+  const rate = (window.currencyRate && window.currencyRate > 0) ? window.currencyRate : 89500;
+  if (currency === 'USD'){
+    const lbp = price * rate;
+    return '$' + price.toFixed(price < 10 ? 2 : 0) + ' <span style="color:var(--text3);font-size:0.85em">(~' + 
+           lbp.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',') + ' ل.ل.)</span>';
+  } else {
+    const usd = rate > 0 ? price / rate : 0;
+    return price.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',') + ' ل.ل. <span style="color:var(--text3);font-size:0.85em">(~$' + 
+           usd.toFixed(usd < 10 ? 2 : 0) + ')</span>';
+  }
+}
+
+async function loadCurrencyRate(){
+  try {
+    const {data, error} = await sb.from('currency_settings').select('rate_usd_to_lbp,updated_at').eq('id', 1).single();
+    if (!error && data) {
+      window.currencyRate = parseFloat(data.rate_usd_to_lbp) || 89500;
+      window.currencyRateUpdatedAt = data.updated_at;
+      console.log('💱 Currency rate loaded:', window.currencyRate, 'LBP/USD');
+    }
+  } catch(e) { console.warn('Could not load currency rate, using default 89500'); window.currencyRate = 89500; }
 }
 
 function formatDate(iso){
