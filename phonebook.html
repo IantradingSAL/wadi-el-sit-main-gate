@@ -8,11 +8,183 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="دليل وادي الست">
 <meta name="description" content="دليل بلدية وادي الست — أرقام وعائلات ومهن أهالي البلدية">
-<title>دليل وادي الست</title>
+<title data-i18n="pageTitle">دليل وادي الست</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<script src="i18n.js"></script>
+<script>
+I18N.extend({
+  ar: {
+    pageTitle: 'دليل وادي الست',
+    hdTitle: 'دليل وادي الست',
+    hdSub: 'دليل البلدية — أرقام، عائلات، مهن، وخدمات',
+    backToGate: 'البوابة الرئيسية',
+    backToGateTitle: 'العودة لبوابة الخدمات الإلكترونية',
+    back: 'العودة',
+    helpFullTitle: 'دليل الاستخدام والمساعدة',
+    helpBtn: 'المساعدة',
+    newBadge: 'جديد',
+    addContactTitle: 'إضافة جهة اتصال',
+    add: 'إضافة',
+    adminPanel: 'لوحة الإدارة',
+    print: 'طباعة',
+    searchPh: 'ابحث: اسم • عائلة • رقم • مهنة (عربي / English / Français)',
+    clear: 'مسح',
+    filters: 'فلاتر',
+    close: 'إغلاق',
+    loading: 'جاري التحميل…',
+    clearFilters: '✕ مسح الفلاتر',
+    emptyTitle: 'لم نجد ما تبحث عنه',
+    emptySub: 'جرّب كلمات أخرى، أو امسح الفلاتر، أو…',
+    addNewContact: '➕ أضف جهة جديدة',
+    howDirectoryWorks: '❓ كيف يعمل الدليل؟',
+    filtersTitle: 'الفلاتر والتصفية',
+    filtersSub: 'اختر ما تريد عرضه',
+    firstLetter: '🔤 الحرف الأول',
+    family: '👨‍👩‍👧 العائلة',
+    locationNbhd: '📍 الموقع / الحي',
+    occupation: '💼 الوظيفة',
+    options: '⚙️ خيارات',
+    reset: 'إعادة تعيين',
+    showResults: 'عرض النتائج',
+    all: 'الكل',
+    withOccupation: 'مع مهنة',
+    haveOccupation: 'لديهم مهنة',
+    withPhoto: 'مع صورة',
+    recentlyAdded: 'مضافة حديثاً',
+    contactDetails: 'تفاصيل جهة الاتصال',
+    pendingReview: 'إرسالك قيد المراجعة',
+    shareContact: 'مشاركة جهة الاتصال',
+    correctRequest: 'طلب تصحيح بسيط',
+    correctRequestSub: 'للأخطاء الصغيرة فقط',
+    editRequest: 'طلب تعديل المعلومات',
+    addContactSub: 'سيتم مراجعة الإضافة قبل النشر',
+    enableLocation: 'لتفعيل تحديد موقعك',
+    enableLocationSub: 'يحتاج التطبيق إذن الوصول إلى GPS',
+    adminLogin: 'دخول الإدارة',
+    adminLoginSub: 'للموظفين والمسؤولين فقط',
+    adminDashboard: 'لوحة الإدارة',
+    confirmDelete: 'تأكيد الحذف الدائم',
+    confirmDeleteSub: 'هذا إجراء لا يمكن التراجع عنه',
+  },
+  en: {
+    pageTitle: 'Wadi El Sit Directory',
+    hdTitle: 'Wadi El Sit Directory',
+    hdSub: 'Municipality directory — numbers, families, occupations, and services',
+    backToGate: 'Main Gate',
+    backToGateTitle: 'Back to the e-services portal',
+    back: 'Back',
+    helpFullTitle: 'User guide & help',
+    helpBtn: 'Help',
+    newBadge: 'New',
+    addContactTitle: 'Add a contact',
+    add: 'Add',
+    adminPanel: 'Admin panel',
+    print: 'Print',
+    searchPh: 'Search: name • family • number • occupation (Arabic / English / French)',
+    clear: 'Clear',
+    filters: 'Filters',
+    close: 'Close',
+    loading: 'Loading…',
+    clearFilters: '✕ Clear filters',
+    emptyTitle: "We couldn't find what you're looking for",
+    emptySub: 'Try different keywords, clear filters, or…',
+    addNewContact: '➕ Add a new contact',
+    howDirectoryWorks: '❓ How the directory works',
+    filtersTitle: 'Filters & sorting',
+    filtersSub: 'Choose what you want to display',
+    firstLetter: '🔤 First letter',
+    family: '👨‍👩‍👧 Family',
+    locationNbhd: '📍 Location / Neighborhood',
+    occupation: '💼 Occupation',
+    options: '⚙️ Options',
+    reset: 'Reset',
+    showResults: 'Show results',
+    all: 'All',
+    withOccupation: 'with occupation',
+    haveOccupation: 'have an occupation',
+    withPhoto: 'with photo',
+    recentlyAdded: 'recently added',
+    contactDetails: 'Contact details',
+    pendingReview: 'Your submission is under review',
+    shareContact: 'Share contact',
+    correctRequest: 'Simple correction request',
+    correctRequestSub: 'For small errors only',
+    editRequest: 'Edit information request',
+    addContactSub: 'Your addition will be reviewed before publishing',
+    enableLocation: 'To enable location detection',
+    enableLocationSub: 'The app needs GPS access permission',
+    adminLogin: 'Admin login',
+    adminLoginSub: 'For staff and administrators only',
+    adminDashboard: 'Admin dashboard',
+    confirmDelete: 'Confirm permanent deletion',
+    confirmDeleteSub: 'This action cannot be undone',
+  },
+  fr: {
+    pageTitle: 'Annuaire de Wadi El Sit',
+    hdTitle: 'Annuaire de Wadi El Sit',
+    hdSub: 'Annuaire municipal — numéros, familles, professions et services',
+    backToGate: 'Portail principal',
+    backToGateTitle: 'Retour au portail des services électroniques',
+    back: 'Retour',
+    helpFullTitle: "Guide d'utilisation & aide",
+    helpBtn: 'Aide',
+    newBadge: 'Nouveau',
+    addContactTitle: 'Ajouter un contact',
+    add: 'Ajouter',
+    adminPanel: 'Panneau admin',
+    print: 'Imprimer',
+    searchPh: 'Rechercher : nom • famille • numéro • profession (Arabe / English / Français)',
+    clear: 'Effacer',
+    filters: 'Filtres',
+    close: 'Fermer',
+    loading: 'Chargement…',
+    clearFilters: '✕ Effacer les filtres',
+    emptyTitle: "Nous n'avons pas trouvé ce que vous cherchez",
+    emptySub: "Essayez d'autres mots-clés, effacez les filtres, ou…",
+    addNewContact: '➕ Ajouter un nouveau contact',
+    howDirectoryWorks: "❓ Comment fonctionne l'annuaire",
+    filtersTitle: 'Filtres & tri',
+    filtersSub: 'Choisissez ce que vous voulez afficher',
+    firstLetter: '🔤 Première lettre',
+    family: '👨‍👩‍👧 Famille',
+    locationNbhd: '📍 Lieu / Quartier',
+    occupation: '💼 Profession',
+    options: '⚙️ Options',
+    reset: 'Réinitialiser',
+    showResults: 'Afficher les résultats',
+    all: 'Tous',
+    withOccupation: 'avec profession',
+    haveOccupation: 'ont une profession',
+    withPhoto: 'avec photo',
+    recentlyAdded: 'récemment ajouté',
+    contactDetails: 'Détails du contact',
+    pendingReview: 'Votre soumission est en cours de révision',
+    shareContact: 'Partager le contact',
+    correctRequest: 'Demande de correction simple',
+    correctRequestSub: 'Pour les petites erreurs seulement',
+    editRequest: 'Demande de modification des informations',
+    addContactSub: "Votre ajout sera révisé avant publication",
+    enableLocation: 'Pour activer la détection de votre position',
+    enableLocationSub: "L'app a besoin de l'autorisation d'accès au GPS",
+    adminLogin: 'Connexion admin',
+    adminLoginSub: 'Pour le personnel et les administrateurs uniquement',
+    adminDashboard: 'Tableau de bord admin',
+    confirmDelete: 'Confirmer la suppression définitive',
+    confirmDeleteSub: 'Cette action est irréversible',
+  }
+});
+
+/* Re-render UI when language changes */
+I18N.onApply(function(lang){
+  /* Re-render filter drawer and the letter row if functions exist */
+  try { if(typeof renderFilters === 'function') renderFilters(); } catch(e){}
+  try { if(typeof renderLetters === 'function') renderLetters(); } catch(e){}
+});
+</script>
+
 <script src="pwa.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,7 +214,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;direction:rtl;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior-y:none;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior-y:none;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit;}
 input,textarea,select{font-family:inherit;color:inherit;font-size:inherit;}
 img{display:block;max-width:100%;}
@@ -479,22 +651,22 @@ textarea.fm-i{resize:vertical;min-height:80px;}
       <img id="LOGO" alt="شعار بلدية وادي الست">
     </div>
     <div class="hd-title-wrap">
-      <div class="hd-title">دليل وادي الست <span class="hd-yp">Yellow Pages</span></div>
-      <div class="hd-sub">دليل البلدية — أرقام، عائلات، مهن، وخدمات</div>
+      <div class="hd-title"><span data-i18n="hdTitle">دليل وادي الست</span> <span class="hd-yp">Yellow Pages</span></div>
+      <div class="hd-sub" data-i18n="hdSub">دليل البلدية — أرقام، عائلات، مهن، وخدمات</div>
     </div>
     <div class="hd-actions">
-      <a class="hd-iconbtn hd-back" href="https://iantradingsal.github.io/wadi-el-sit-main-gate/" title="العودة لبوابة الخدمات الإلكترونية" aria-label="العودة">
+      <a class="hd-iconbtn hd-back" href="https://iantradingsal.github.io/wadi-el-sit-main-gate/" title="العودة لبوابة الخدمات الإلكترونية" data-i18n-title="backToGateTitle" aria-label="العودة" data-i18n-aria="back">
         <span class="hd-back-i">🏛️</span>
-        <span class="hd-back-l">البوابة الرئيسية</span>
+        <span class="hd-back-l" data-i18n="backToGate">البوابة الرئيسية</span>
       </a>
-      <button class="hd-iconbtn hd-help" onclick="markWhatsNewSeen();openInfoModal('whatsnew');" title="دليل الاستخدام والمساعدة" aria-label="المساعدة">
+      <button class="hd-iconbtn hd-help" onclick="markWhatsNewSeen();openInfoModal('whatsnew');" title="دليل الاستخدام والمساعدة" data-i18n-title="helpFullTitle" aria-label="المساعدة" data-i18n-aria="helpBtn">
         <span class="hd-help-i">❓</span>
-        <span class="hd-help-l">دليل الاستخدام والمساعدة</span>
-        <span class="hd-help-new" id="HD_HELP_NEW">جديد</span>
+        <span class="hd-help-l" data-i18n="helpFullTitle">دليل الاستخدام والمساعدة</span>
+        <span class="hd-help-new" id="HD_HELP_NEW" data-i18n="newBadge">جديد</span>
       </button>
-      <button class="hd-iconbtn desktop-only" onclick="openAdd()" title="إضافة جهة اتصال" aria-label="إضافة">➕</button>
-      <button class="hd-iconbtn desktop-only" id="HD_ADM" onclick="openAdmin()" title="لوحة الإدارة" aria-label="الإدارة">🛡️<span class="dot"></span></button>
-      <button class="hd-iconbtn desktop-only" onclick="window.print()" title="طباعة" aria-label="طباعة">🖨️</button>
+      <button class="hd-iconbtn desktop-only" onclick="openAdd()" title="إضافة جهة اتصال" data-i18n-title="addContactTitle" aria-label="إضافة" data-i18n-aria="add">➕</button>
+      <button class="hd-iconbtn desktop-only" id="HD_ADM" onclick="openAdmin()" title="لوحة الإدارة" data-i18n-title="adminPanel" aria-label="الإدارة" data-i18n-aria="adminPanel">🛡️<span class="dot"></span></button>
+      <button class="hd-iconbtn desktop-only" onclick="window.print()" title="طباعة" data-i18n-title="print" aria-label="طباعة" data-i18n-aria="print">🖨️</button>
     </div>
   </div>
 </header>
@@ -505,10 +677,10 @@ textarea.fm-i{resize:vertical;min-height:80px;}
     <div class="sb-row">
       <div class="sb-search">
         <span class="sb-icon">🔍</span>
-        <input type="search" id="Q" placeholder="ابحث: اسم • عائلة • رقم • مهنة (عربي / English / Français)" autocomplete="off" inputmode="search" dir="auto">
-        <button class="sb-clear" id="QC" onclick="clearSearch()" aria-label="مسح">✕</button>
+        <input type="search" id="Q" placeholder="ابحث: اسم • عائلة • رقم • مهنة (عربي / English / Français)" data-i18n-placeholder="searchPh" autocomplete="off" inputmode="search" dir="auto">
+        <button class="sb-clear" id="QC" onclick="clearSearch()" aria-label="مسح" data-i18n-aria="clear">✕</button>
       </div>
-      <button class="sb-filter-btn" id="FB" onclick="openDrawer()" aria-label="فلاتر">
+      <button class="sb-filter-btn" id="FB" onclick="openDrawer()" aria-label="فلاتر" data-i18n-aria="filters">
         🎚️
         <span class="ct" id="FB_CT" style="display:none">0</span>
       </button>
@@ -524,17 +696,17 @@ textarea.fm-i{resize:vertical;min-height:80px;}
 <!-- ═══════════ CONTENT ═══════════ -->
 <div class="ct">
   <div class="ri">
-    <div class="ri-text" id="RIT">جاري التحميل…</div>
-    <button class="ri-clear" id="RIC" style="display:none" onclick="clearAll()">✕ مسح الفلاتر</button>
+    <div class="ri-text" id="RIT" data-i18n="loading">جاري التحميل…</div>
+    <button class="ri-clear" id="RIC" style="display:none" onclick="clearAll()" data-i18n="clearFilters">✕ مسح الفلاتر</button>
   </div>
   <div class="grid" id="GRD"></div>
   <div id="EMP" class="empty" style="display:none">
     <div class="empty-icon">🔍</div>
-    <div class="empty-t">لم نجد ما تبحث عنه</div>
-    <div class="empty-s">جرّب كلمات أخرى، أو امسح الفلاتر، أو…</div>
+    <div class="empty-t" data-i18n="emptyTitle">لم نجد ما تبحث عنه</div>
+    <div class="empty-s" data-i18n="emptySub">جرّب كلمات أخرى، أو امسح الفلاتر، أو…</div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
-      <button class="btn btn-grn btn-sm" onclick="openAdd()">➕ أضف جهة جديدة</button>
-      <button class="btn btn-out btn-sm" onclick="openHelp()">❓ كيف يعمل الدليل؟</button>
+      <button class="btn btn-grn btn-sm" onclick="openAdd()" data-i18n="addNewContact">➕ أضف جهة جديدة</button>
+      <button class="btn btn-out btn-sm" onclick="openHelp()" data-i18n="howDirectoryWorks">❓ كيف يعمل الدليل؟</button>
     </div>
   </div>
   <div class="pg" id="PG"></div>
@@ -545,36 +717,36 @@ textarea.fm-i{resize:vertical;min-height:80px;}
 <div class="drw" id="DRW">
   <div class="drw-hd">
     <div style="flex:1">
-      <div class="modal-t" style="font-size:16px">الفلاتر والتصفية</div>
-      <div class="modal-s" style="color:var(--text3);font-size:11.5px">اختر ما تريد عرضه</div>
+      <div class="modal-t" style="font-size:16px" data-i18n="filtersTitle">الفلاتر والتصفية</div>
+      <div class="modal-s" style="color:var(--text3);font-size:11.5px" data-i18n="filtersSub">اختر ما تريد عرضه</div>
     </div>
-    <button class="modal-x" style="background:var(--surface2);color:var(--text)" onclick="closeDrawer()" aria-label="إغلاق">✕</button>
+    <button class="modal-x" style="background:var(--surface2);color:var(--text)" onclick="closeDrawer()" aria-label="إغلاق" data-i18n-aria="close">✕</button>
   </div>
   <div class="drw-bd">
     <div class="drw-section">
-      <div class="drw-section-t">🔤 الحرف الأول</div>
+      <div class="drw-section-t" data-i18n="firstLetter">🔤 الحرف الأول</div>
       <div class="drw-letters" id="DRW_LTR"></div>
     </div>
     <div class="drw-section">
-      <div class="drw-section-t">👨‍👩‍👧 العائلة</div>
+      <div class="drw-section-t" data-i18n="family">👨‍👩‍👧 العائلة</div>
       <div class="drw-fams" id="DRW_FAM"></div>
     </div>
     <div class="drw-section">
-      <div class="drw-section-t">📍 الموقع / الحي</div>
+      <div class="drw-section-t" data-i18n="locationNbhd">📍 الموقع / الحي</div>
       <div class="drw-fams" id="DRW_LOC"></div>
     </div>
     <div class="drw-section">
-      <div class="drw-section-t">💼 الوظيفة</div>
+      <div class="drw-section-t" data-i18n="occupation">💼 الوظيفة</div>
       <div class="drw-fams" id="DRW_OCC"></div>
     </div>
     <div class="drw-section">
-      <div class="drw-section-t">⚙️ خيارات</div>
+      <div class="drw-section-t" data-i18n="options">⚙️ خيارات</div>
       <div class="drw-toggles" id="DRW_TG"></div>
     </div>
   </div>
   <div class="drw-foot">
-    <button class="btn btn-out" onclick="clearAll();closeDrawer()">إعادة تعيين</button>
-    <button class="btn btn-prim" onclick="closeDrawer()">عرض النتائج</button>
+    <button class="btn btn-out" onclick="clearAll();closeDrawer()" data-i18n="reset">إعادة تعيين</button>
+    <button class="btn btn-prim" onclick="closeDrawer()" data-i18n="showResults">عرض النتائج</button>
   </div>
 </div>
 
@@ -1002,11 +1174,11 @@ function renderLettersBar(){
   const all = getAllPublic();
   const present = new Set(all.map(c=>firstLetter(c.first||c.name)));
   // Desktop bar
-  const dHtml = ['<button class="sb-letter '+(!letterF?'on':'')+'" onclick="setLetter(\'\')">الكل</button>'];
+  const dHtml = ['<button class="sb-letter '+(!letterF?'on':'')+'" onclick="setLetter(\'\')">'+L().all+'</button>'];
   AR_FIRST_LETTERS.forEach(l => { if(present.has(l)) dHtml.push(`<button class="sb-letter ${letterF===l?'on':''}" onclick="setLetter('${l}')">${l}</button>`); });
   document.getElementById('LTR_D').innerHTML = dHtml.join('');
   // Drawer letters
-  const drwHtml = ['<button class="drw-letter '+(!letterF?'on':'')+'" onclick="setLetter(\'\')">الكل</button>'];
+  const drwHtml = ['<button class="drw-letter '+(!letterF?'on':'')+'" onclick="setLetter(\'\')">'+L().all+'</button>'];
   AR_FIRST_LETTERS.forEach(l => { if(present.has(l)) drwHtml.push(`<button class="drw-letter ${letterF===l?'on':''}" onclick="setLetter('${l}')">${l}</button>`); });
   document.getElementById('DRW_LTR').innerHTML = drwHtml.join('');
 }
@@ -1045,13 +1217,13 @@ function renderFiltersBar(){
   sortedFams.slice(0,3).forEach(([f,n]) => {
     dHtml.push(`<button class="drw-fam ${famF===f?'on':''}" onclick="setFamily('${escHtml(f).replace(/'/g,"\\'")}')">${escHtml(f)} <span class="ct">${n}</span></button>`);
   });
-  dHtml.push(`<button class="drw-toggle sun ${occF?'on':''}" onclick="toggleOcc()">💼 مع مهنة</button>`);
-  dHtml.push(`<button class="drw-toggle ${imgF?'on':''}" onclick="toggleImg()">📷 مع صورة</button>`);
-  dHtml.push(`<button class="drw-toggle ${addedF?'on':''}" onclick="toggleAdded()">➕ مُضافة</button>`);
+  dHtml.push(`<button class="drw-toggle sun ${occF?'on':''}" onclick="toggleOcc()">💼 ${L().withOccupation}</button>`);
+  dHtml.push(`<button class="drw-toggle ${imgF?'on':''}" onclick="toggleImg()">📷 ${L().withPhoto}</button>`);
+  dHtml.push(`<button class="drw-toggle ${addedF?'on':''}" onclick="toggleAdded()">➕ ${L().recentlyAdded}</button>`);
   document.getElementById('FLT_D').innerHTML = dHtml.join('');
 
   // Drawer family chips
-  const drwFamHtml = [`<button class="drw-fam ${!famF?'on':''}" onclick="setFamily('')">الكل</button>`];
+  const drwFamHtml = [`<button class="drw-fam ${!famF?'on':''}" onclick="setFamily('')">${L().all}</button>`];
   sortedFams.forEach(([f,n]) => {
     drwFamHtml.push(`<button class="drw-fam ${famF===f?'on':''}" onclick="setFamily('${escHtml(f).replace(/'/g,"\\'")}')">${escHtml(f)} <span class="ct">${n}</span></button>`);
   });
@@ -1063,7 +1235,7 @@ function renderFiltersBar(){
     if(sortedLocs.length === 0){
       drwLocEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:6px">لا توجد مواقع مسجّلة بعد</div>`;
     } else {
-      const drwLocHtml = [`<button class="drw-fam ${!locF?'on':''}" onclick="setLocation('')">الكل</button>`];
+      const drwLocHtml = [`<button class="drw-fam ${!locF?'on':''}" onclick="setLocation('')">${L().all}</button>`];
       sortedLocs.forEach(([l,n]) => {
         drwLocHtml.push(`<button class="drw-fam ${locF===l?'on':''}" onclick="setLocation('${escHtml(l).replace(/'/g,"\\'")}')">📍 ${escHtml(l)} <span class="ct">${n}</span></button>`);
       });
@@ -1077,7 +1249,7 @@ function renderFiltersBar(){
     if(sortedOccs.length === 0){
       drwOccEl.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:6px">لا توجد وظائف مسجّلة بعد</div>`;
     } else {
-      const drwOccHtml = [`<button class="drw-fam ${!occNameF?'on':''}" onclick="setOccupation('')">الكل</button>`];
+      const drwOccHtml = [`<button class="drw-fam ${!occNameF?'on':''}" onclick="setOccupation('')">${L().all}</button>`];
       sortedOccs.forEach(([o,n]) => {
         drwOccHtml.push(`<button class="drw-fam ${occNameF===o?'on':''}" onclick="setOccupation('${escHtml(o).replace(/'/g,"\\'")}')">💼 ${escHtml(o)} <span class="ct">${n}</span></button>`);
       });
@@ -1087,9 +1259,9 @@ function renderFiltersBar(){
 
   // Drawer toggles
   const drwTgHtml = [];
-  drwTgHtml.push(`<button class="drw-toggle sun ${occF?'on':''}" onclick="toggleOcc()">💼 لديهم مهنة</button>`);
+  drwTgHtml.push(`<button class="drw-toggle sun ${occF?'on':''}" onclick="toggleOcc()">💼 ${L().haveOccupation}</button>`);
   drwTgHtml.push(`<button class="drw-toggle ${imgF?'on':''}" onclick="toggleImg()">📷 مع صورة</button>`);
-  drwTgHtml.push(`<button class="drw-toggle ${addedF?'on':''}" onclick="toggleAdded()">➕ مضافة حديثاً</button>`);
+  drwTgHtml.push(`<button class="drw-toggle ${addedF?'on':''}" onclick="toggleAdded()">➕ ${L().recentlyAdded}</button>`);
   document.getElementById('DRW_TG').innerHTML = drwTgHtml.join('');
 
   // Active filter count badge
@@ -1417,8 +1589,8 @@ function openDetail(c){
     <div class="modal-handle"></div>
     <div class="modal-hd">
       <div class="modal-hd-content">
-        <div class="modal-t">تفاصيل جهة الاتصال</div>
-        ${c._myPending ? '<div class="modal-s">⏳ إرسالك قيد المراجعة</div>' : ''}
+        <div class="modal-t">${L().contactDetails}</div>
+        ${c._myPending ? '<div class="modal-s">⏳ ' + L().pendingReview + '</div>' : ''}
       </div>
       <button class="modal-x" onclick="closeModal()" aria-label="إغلاق">✕</button>
     </div>
@@ -1554,7 +1726,7 @@ function shareContact(c){
     <div class="modal-handle"></div>
     <div class="modal-hd">
       <div class="modal-hd-content">
-        <div class="modal-t">🔗 مشاركة جهة الاتصال</div>
+        <div class="modal-t">🔗 ${L().shareContact}</div>
         <div class="modal-s">${escHtml(c.name||'')}</div>
       </div>
       <button class="modal-x" onclick="closeModal()" aria-label="إغلاق">✕</button>
@@ -1811,7 +1983,7 @@ function openEdit(c){
     <div class="modal-handle"></div>
     <div class="modal-hd sun">
       <div class="modal-hd-content">
-        <div class="modal-t">طلب تعديل المعلومات</div>
+        <div class="modal-t">${L().editRequest}</div>
         <div class="modal-s">${escHtml(c.name)}</div>
       </div>
       <button class="modal-x" onclick="closeModal()" aria-label="إغلاق">✕</button>
@@ -1996,7 +2168,7 @@ function openCorrect(c){
   const html = `<div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
     <div class="modal-hd sun">
-      <div class="modal-hd-content"><div class="modal-t">طلب تصحيح بسيط</div><div class="modal-s">للأخطاء الصغيرة فقط</div></div>
+      <div class="modal-hd-content"><div class="modal-t">${L().correctRequest}</div><div class="modal-s">${L().correctRequestSub}</div></div>
       <button class="modal-x" onclick="closeModal()" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-bd">
@@ -2082,7 +2254,7 @@ function openAdd(){
   const html = `<div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
     <div class="modal-hd green">
-      <div class="modal-hd-content"><div class="modal-t">إضافة جهة اتصال جديدة</div><div class="modal-s">سيتم مراجعة الإضافة قبل النشر</div></div>
+      <div class="modal-hd-content"><div class="modal-t">${L().addContactTitle}</div><div class="modal-s">${L().addContactSub}</div></div>
       <button class="modal-x" onclick="closeModal();setBNActive('home')" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-bd">
@@ -2291,8 +2463,8 @@ function showLocationHelp(reason){
     <div class="modal-handle"></div>
     <div class="modal-hd sun">
       <div class="modal-hd-content">
-        <div class="modal-t">📍 لتفعيل تحديد موقعك</div>
-        <div class="modal-s">يحتاج التطبيق إذن الوصول إلى GPS</div>
+        <div class="modal-t">📍 ${L().enableLocation}</div>
+        <div class="modal-s">${L().enableLocationSub}</div>
       </div>
       <button class="modal-x" onclick="closeModal()" aria-label="إغلاق">✕</button>
     </div>
@@ -2497,7 +2669,7 @@ function openLogin(){
   const html = `<div class="modal" onclick="event.stopPropagation()">
     <div class="modal-handle"></div>
     <div class="modal-hd purple">
-      <div class="modal-hd-content"><div class="modal-t">دخول الإدارة</div><div class="modal-s">للموظفين والمسؤولين فقط</div></div>
+      <div class="modal-hd-content"><div class="modal-t">${L().adminLogin}</div><div class="modal-s">${L().adminLoginSub}</div></div>
       <button class="modal-x" onclick="closeModal();setBNActive('home')" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-bd">
@@ -2582,7 +2754,7 @@ function renderAdminPanel(){
     <div class="modal-handle"></div>
     <div class="modal-hd purple">
       <div class="modal-hd-content">
-        <div class="modal-t">🛡️ لوحة الإدارة</div>
+        <div class="modal-t">🛡️ ${L().adminDashboard}</div>
         <div class="modal-s">${escHtml(currentUser?.email||'')} — ${userRole}</div>
       </div>
       <button class="modal-x" onclick="closeModal();setBNActive('home')" aria-label="إغلاق">✕</button>

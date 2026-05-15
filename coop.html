@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>تعاونية وادي الست — متجر القرية</title>
+<title data-i18n="pageTitle">تعاونية وادي الست — متجر القرية</title>
 <meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -14,6 +14,370 @@
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js"></script>
+<script>
+I18N.extend({
+  ar: {
+    pageTitle: 'تعاونية وادي الست — متجر القرية',
+    appbarTitle: 'تعاونية وادي الست',
+    appbarSub: 'منتجات بلدتك بين يديك 🌿',
+    cart: 'السلة',
+    heroEyebrow: '🌟 جديد',
+    heroTitle: 'اشترِ من جيرانك',
+    heroDesc: 'منتجات طازجة من القرية مباشرة إلى منزلك مع توصيل آمن وسريع',
+    shopNow: 'تسوّق الآن ←',
+    sectionCategories: 'الأقسام',
+    sectionFeatured: 'منتجات مميّزة 🏆',
+    sectionSellers: 'باعة القرية',
+    sectionLatest: 'آخر المضاف',
+    viewAll: 'عرض الكل ←',
+    more: 'المزيد ←',
+    all: 'الكل ←',
+    promoTitle: 'توصيل مجاني',
+    promoSub: 'للطلبات فوق 500,000 ل.ل.',
+    shop: 'المتجر',
+    searchShopPh: 'ابحث في المتجر...',
+    byCategory: '📦 حسب القسم',
+    bySeller: '🏪 حسب البائع',
+    myOrders: 'طلباتي',
+    ordersActive: '📦 نشطة',
+    ordersHistory: '📚 السجل',
+    seller: 'بائع',
+    sellerManage: 'إدارة منتجاتك وطلباتك',
+    myAccount: 'حسابي',
+    guest: 'زائر',
+    setIdentity: 'اضغط لتعيين الهويّة',
+    profile: 'الملف الشخصي',
+    profileSub: 'الاسم والهاتف والعنوان',
+    ordersSub: 'سجل جميع الطلبات',
+    beSeller: 'كن بائعاً',
+    beSellerSub: 'بِع منتجاتك في التعاونية',
+    beSellerTitle: 'كن بائعاً في التعاونية',
+    sellerLogin: 'دخول البائع',
+    sellerSignup: 'إنشاء حساب بائع',
+    deliveryAgent: 'عامل توصيل',
+    deliveryAgentSub: 'انضمّ كمندوب توصيل',
+    notifs: 'الإشعارات',
+    notifsEnable: 'فعّل التنبيهات',
+    adminPanel: 'لوحة الإدارة',
+    adminPanelSub: 'للموظّفين المخوّلين فقط',
+    helpSupport: 'المساعدة والدعم',
+    helpSupportSub: 'تواصل مع البلدية',
+    aboutApp: 'حول التطبيق',
+    aboutAppSub: 'الإصدار 2.0',
+    mainGate: 'البوابة الرئيسية',
+    mainGateSub: 'العودة لبوابة البلدية',
+    logout: 'تسجيل الخروج',
+    navHome: 'الرئيسية',
+    navShop: 'المتجر',
+    navOrders: 'طلباتي',
+    navSeller: 'بائع',
+    navAccount: 'حسابي',
+    cartTotalLabel: 'المجموع المستحقّ',
+    yourCart: '🛒 سلّتك',
+    subtotal: 'المجموع الفرعي',
+    delivery: 'التوصيل',
+    setLater: 'يُحدَّد لاحقاً',
+    total: 'الإجمالي',
+    continueCheckout: 'متابعة الشراء ←',
+    completeOrder: 'إتمام الطلب',
+    fullName: 'الاسم الكامل *',
+    fullNamePh: 'مثلاً: أحمد محمد',
+    phone: 'رقم الهاتف *',
+    addressDelivery: 'العنوان (للتوصيل)',
+    addressPh: 'مثلاً: جانب البلدية، خلف الكنيسة',
+    deliveryMethod: 'طريقة التسليم *',
+    dlvPickup: 'استلام من البائع',
+    dlvPickupSub: 'مجّاناً · في موعد متّفق عليه',
+    dlvHome: 'توصيل لعنوانك',
+    dlvHomeSub: 'رسوم التوصيل يحدّدها البائع',
+    dlvMeet: 'نقطة لقاء',
+    dlvMeetSub: 'مكان متّفق عليه (السوبرماركت، البلدية...)',
+    notesOptional: 'ملاحظات (اختياري)',
+    notesPh: 'أي ملاحظات إضافيّة...',
+    checkoutInfo: 'سيتواصل معك البائع عبر الهاتف أو الواتساب لتأكيد الطلب وتنسيق التسليم.',
+    cancel: 'إلغاء',
+    confirmOrder: 'تأكيد الطلب ✓',
+    addProduct: 'إضافة منتج جديد',
+    productName: 'اسم المنتج *',
+    productNamePh: 'مثلاً: زيت زيتون عضوي',
+    category: 'الفئة *',
+    priceLBP: 'السعر (ل.ل.) *',
+    unit: 'الوحدة *',
+    unitPh: 'كغ / لتر / قطعة',
+    qtyAvailable: 'الكمية المتوفّرة *',
+    descLabel: 'الوصف',
+    prodDescPh: 'معلومات عن المنتج، طريقة الإنتاج، إلخ...',
+    productPhotos: 'صور المنتج (حدّ أقصى 3)',
+    choosePhotos: '📷 اختيار صور',
+    productInfo: 'سيظهر منتجك مباشرة في المتجر بعد الحفظ. يمكنك تعديله أو حذفه لاحقاً من لوحة بائع.',
+    saveProduct: 'حفظ المنتج ✓',
+    /* Toast messages */
+    sellerNoWA: 'البائع لم يسجّل واتساب',
+    addedToCart: '✅ تمت الإضافة للسلّة',
+    cartEmpty: 'سلّتك فارغة',
+    errNameReq: 'الاسم مطلوب',
+    errPhoneInvalid: 'الهاتف غير صحيح',
+    errFailed: 'فشل',
+    errUnknown: 'خطأ غير معروف',
+    errOrderNoData: 'فشل إرسال الطلب — لا توجد بيانات',
+    orderSentOk: '✅ تمّ إرسال طلبك بنجاح!',
+    errTryAgain: 'حدث خطأ، حاول مرة أخرى',
+    savedOk: '✅ تمّ الحفظ',
+    saveFailed: 'فشل الحفظ',
+    loggedOut: 'تمّ تسجيل الخروج',
+    pushOnOk: '✅ تمّ تفعيل الإشعارات',
+    pushAlreadyOn: 'الإشعارات مُفعّلة',
+    errWaInvalid: 'الواتساب غير صحيح',
+    errAreaReq: 'المنطقة مطلوبة',
+    errVehicleReq: 'وسيلة النقل مطلوبة',
+    noSellers: 'لا يوجد باعة بعد',
+    noProducts: 'لا توجد منتجات بعد',
+    errLoadOrders: 'تعذّر تحميل الطلبات',
+  },
+  en: {
+    pageTitle: 'Wadi El Sit Cooperative — Village Store',
+    appbarTitle: 'Wadi El Sit Cooperative',
+    appbarSub: 'Your village products at your fingertips 🌿',
+    cart: 'Cart',
+    heroEyebrow: '🌟 New',
+    heroTitle: 'Buy from your neighbors',
+    heroDesc: 'Fresh products from the village delivered to your home, safely and quickly',
+    shopNow: 'Shop now →',
+    sectionCategories: 'Categories',
+    sectionFeatured: 'Featured products 🏆',
+    sectionSellers: 'Village sellers',
+    sectionLatest: 'Latest additions',
+    viewAll: 'View all →',
+    more: 'More →',
+    all: 'All →',
+    promoTitle: 'Free delivery',
+    promoSub: 'For orders over 500,000 LBP',
+    shop: 'Shop',
+    searchShopPh: 'Search the store...',
+    byCategory: '📦 By category',
+    bySeller: '🏪 By seller',
+    myOrders: 'My orders',
+    ordersActive: '📦 Active',
+    ordersHistory: '📚 History',
+    seller: 'Seller',
+    sellerManage: 'Manage your products and orders',
+    myAccount: 'My account',
+    guest: 'Guest',
+    setIdentity: 'Tap to set your identity',
+    profile: 'Profile',
+    profileSub: 'Name, phone and address',
+    ordersSub: 'History of all orders',
+    beSeller: 'Become a seller',
+    beSellerSub: 'Sell your products on the cooperative',
+    beSellerTitle: 'Become a seller on the cooperative',
+    sellerLogin: 'Seller login',
+    sellerSignup: 'Create a seller account',
+    deliveryAgent: 'Delivery agent',
+    deliveryAgentSub: 'Join as a delivery agent',
+    notifs: 'Notifications',
+    notifsEnable: 'Enable alerts',
+    adminPanel: 'Admin panel',
+    adminPanelSub: 'For authorized staff only',
+    helpSupport: 'Help & support',
+    helpSupportSub: 'Contact the municipality',
+    aboutApp: 'About the app',
+    aboutAppSub: 'Version 2.0',
+    mainGate: 'Main gate',
+    mainGateSub: 'Back to the municipality portal',
+    logout: 'Log out',
+    navHome: 'Home',
+    navShop: 'Shop',
+    navOrders: 'Orders',
+    navSeller: 'Seller',
+    navAccount: 'Account',
+    cartTotalLabel: 'Amount due',
+    yourCart: '🛒 Your cart',
+    subtotal: 'Subtotal',
+    delivery: 'Delivery',
+    setLater: 'Set later',
+    total: 'Total',
+    continueCheckout: 'Continue to checkout →',
+    completeOrder: 'Complete order',
+    fullName: 'Full name *',
+    fullNamePh: 'e.g. Ahmad Mohammad',
+    phone: 'Phone number *',
+    addressDelivery: 'Address (for delivery)',
+    addressPh: 'e.g. next to the municipality, behind the church',
+    deliveryMethod: 'Delivery method *',
+    dlvPickup: 'Pickup from seller',
+    dlvPickupSub: 'Free · at a time agreed with the seller',
+    dlvHome: 'Delivery to your address',
+    dlvHomeSub: 'Delivery fee set by the seller',
+    dlvMeet: 'Meeting point',
+    dlvMeetSub: 'Agreed location (supermarket, municipality...)',
+    notesOptional: 'Notes (optional)',
+    notesPh: 'Any additional notes...',
+    checkoutInfo: 'The seller will contact you via phone or WhatsApp to confirm the order and arrange delivery.',
+    cancel: 'Cancel',
+    confirmOrder: 'Confirm order ✓',
+    addProduct: 'Add new product',
+    productName: 'Product name *',
+    productNamePh: 'e.g. organic olive oil',
+    category: 'Category *',
+    priceLBP: 'Price (LBP) *',
+    unit: 'Unit *',
+    unitPh: 'kg / L / piece',
+    qtyAvailable: 'Quantity available *',
+    descLabel: 'Description',
+    prodDescPh: 'Information about the product, production method, etc...',
+    productPhotos: 'Product photos (max 3)',
+    choosePhotos: '📷 Choose photos',
+    productInfo: 'Your product will appear in the store immediately after saving. You can edit or delete it later from your seller dashboard.',
+    saveProduct: 'Save product ✓',
+    sellerNoWA: "Seller hasn't registered WhatsApp",
+    addedToCart: '✅ Added to cart',
+    cartEmpty: 'Your cart is empty',
+    errNameReq: 'Name is required',
+    errPhoneInvalid: 'Phone number is invalid',
+    errFailed: 'Failed',
+    errUnknown: 'Unknown error',
+    errOrderNoData: 'Failed to send order — no data',
+    orderSentOk: '✅ Your order was sent successfully!',
+    errTryAgain: 'An error occurred, please try again',
+    savedOk: '✅ Saved',
+    saveFailed: 'Save failed',
+    loggedOut: 'Logged out',
+    pushOnOk: '✅ Notifications enabled',
+    pushAlreadyOn: 'Notifications already enabled',
+    errWaInvalid: 'WhatsApp number is invalid',
+    errAreaReq: 'Area is required',
+    errVehicleReq: 'Vehicle is required',
+    noSellers: 'No sellers yet',
+    noProducts: 'No products yet',
+    errLoadOrders: 'Could not load orders',
+  },
+  fr: {
+    pageTitle: 'Coopérative de Wadi El Sit — Magasin du village',
+    appbarTitle: 'Coopérative de Wadi El Sit',
+    appbarSub: 'Les produits de votre village à portée de main 🌿',
+    cart: 'Panier',
+    heroEyebrow: '🌟 Nouveau',
+    heroTitle: 'Achetez chez vos voisins',
+    heroDesc: 'Produits frais du village livrés chez vous, en toute sécurité et rapidement',
+    shopNow: 'Acheter maintenant →',
+    sectionCategories: 'Catégories',
+    sectionFeatured: 'Produits en vedette 🏆',
+    sectionSellers: 'Vendeurs du village',
+    sectionLatest: 'Derniers ajouts',
+    viewAll: 'Tout voir →',
+    more: 'Plus →',
+    all: 'Tous →',
+    promoTitle: 'Livraison gratuite',
+    promoSub: 'Pour les commandes de plus de 500 000 LL',
+    shop: 'Magasin',
+    searchShopPh: 'Rechercher dans le magasin...',
+    byCategory: '📦 Par catégorie',
+    bySeller: '🏪 Par vendeur',
+    myOrders: 'Mes commandes',
+    ordersActive: '📦 Actives',
+    ordersHistory: '📚 Historique',
+    seller: 'Vendeur',
+    sellerManage: 'Gérez vos produits et commandes',
+    myAccount: 'Mon compte',
+    guest: 'Invité',
+    setIdentity: "Appuyez pour définir votre identité",
+    profile: 'Profil',
+    profileSub: 'Nom, téléphone et adresse',
+    ordersSub: 'Historique de toutes les commandes',
+    beSeller: 'Devenir vendeur',
+    beSellerSub: 'Vendez vos produits sur la coopérative',
+    beSellerTitle: 'Devenir vendeur sur la coopérative',
+    sellerLogin: 'Connexion vendeur',
+    sellerSignup: 'Créer un compte vendeur',
+    deliveryAgent: 'Livreur',
+    deliveryAgentSub: 'Rejoignez-nous comme livreur',
+    notifs: 'Notifications',
+    notifsEnable: 'Activer les alertes',
+    adminPanel: 'Panneau admin',
+    adminPanelSub: 'Pour le personnel autorisé uniquement',
+    helpSupport: 'Aide & support',
+    helpSupportSub: 'Contacter la municipalité',
+    aboutApp: "À propos de l'app",
+    aboutAppSub: 'Version 2.0',
+    mainGate: 'Portail principal',
+    mainGateSub: 'Retour au portail municipal',
+    logout: 'Déconnexion',
+    navHome: 'Accueil',
+    navShop: 'Magasin',
+    navOrders: 'Commandes',
+    navSeller: 'Vendeur',
+    navAccount: 'Compte',
+    cartTotalLabel: 'Montant dû',
+    yourCart: '🛒 Votre panier',
+    subtotal: 'Sous-total',
+    delivery: 'Livraison',
+    setLater: 'À définir',
+    total: 'Total',
+    continueCheckout: 'Passer à la caisse →',
+    completeOrder: 'Finaliser la commande',
+    fullName: 'Nom complet *',
+    fullNamePh: 'ex. Ahmad Mohammad',
+    phone: 'Numéro de téléphone *',
+    addressDelivery: 'Adresse (pour la livraison)',
+    addressPh: "ex. à côté de la municipalité, derrière l'église",
+    deliveryMethod: 'Mode de livraison *',
+    dlvPickup: 'Retrait chez le vendeur',
+    dlvPickupSub: "Gratuit · à un horaire convenu avec le vendeur",
+    dlvHome: 'Livraison à votre adresse',
+    dlvHomeSub: 'Frais de livraison fixés par le vendeur',
+    dlvMeet: 'Point de rencontre',
+    dlvMeetSub: 'Lieu convenu (supermarché, municipalité...)',
+    notesOptional: 'Notes (facultatif)',
+    notesPh: 'Toute note supplémentaire...',
+    checkoutInfo: 'Le vendeur vous contactera par téléphone ou WhatsApp pour confirmer la commande et organiser la livraison.',
+    cancel: 'Annuler',
+    confirmOrder: 'Confirmer la commande ✓',
+    addProduct: 'Ajouter un nouveau produit',
+    productName: 'Nom du produit *',
+    productNamePh: "ex. huile d'olive biologique",
+    category: 'Catégorie *',
+    priceLBP: 'Prix (LL) *',
+    unit: 'Unité *',
+    unitPh: 'kg / L / pièce',
+    qtyAvailable: 'Quantité disponible *',
+    descLabel: 'Description',
+    prodDescPh: 'Informations sur le produit, méthode de production, etc...',
+    productPhotos: 'Photos du produit (max 3)',
+    choosePhotos: '📷 Choisir des photos',
+    productInfo: "Votre produit apparaîtra dans le magasin dès l'enregistrement. Vous pouvez le modifier ou le supprimer plus tard depuis votre tableau de bord vendeur.",
+    saveProduct: 'Enregistrer le produit ✓',
+    sellerNoWA: "Le vendeur n'a pas enregistré son WhatsApp",
+    addedToCart: '✅ Ajouté au panier',
+    cartEmpty: 'Votre panier est vide',
+    errNameReq: 'Le nom est requis',
+    errPhoneInvalid: 'Numéro de téléphone invalide',
+    errFailed: 'Échec',
+    errUnknown: 'Erreur inconnue',
+    errOrderNoData: 'Échec de l\'envoi de la commande — aucune donnée',
+    orderSentOk: '✅ Votre commande a été envoyée avec succès !',
+    errTryAgain: "Une erreur s'est produite, veuillez réessayer",
+    savedOk: '✅ Enregistré',
+    saveFailed: "Échec de l'enregistrement",
+    loggedOut: 'Déconnecté',
+    pushOnOk: '✅ Notifications activées',
+    pushAlreadyOn: 'Notifications déjà activées',
+    errWaInvalid: 'Numéro WhatsApp invalide',
+    errAreaReq: 'La zone est requise',
+    errVehicleReq: 'Le véhicule est requis',
+    noSellers: 'Pas encore de vendeurs',
+    noProducts: 'Pas encore de produits',
+    errLoadOrders: 'Impossible de charger les commandes',
+  }
+});
+
+/* Re-render home + shop content when language changes */
+I18N.onApply(function(lang){
+  try { if(typeof renderHomeCategories==='function') renderHomeCategories(); } catch(e){}
+  try { if(typeof renderShopByCat==='function' && typeof currentShopTab!=='undefined' && currentShopTab==='cat') renderShopByCat(); } catch(e){}
+});
+</script>
+
 <script src="pwa.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -40,7 +404,7 @@ html,body{
   overscroll-behavior-y:none;
 }
 body::-webkit-scrollbar,html::-webkit-scrollbar{display:none}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;direction:rtl;padding-bottom:calc(var(--nav-h) + var(--safe-bot))}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;padding-bottom:calc(var(--nav-h) + var(--safe-bot))}
 
 a{color:inherit;text-decoration:none}
 button{font-family:var(--font);cursor:pointer;border:none;outline:none}
@@ -476,10 +840,10 @@ input,textarea,select{font-family:var(--font);outline:none}
 <div class="page active" id="page-home">
   <div class="appbar">
     <div style="flex:1">
-      <div class="appbar-title">تعاونية وادي الست</div>
-      <div class="appbar-sub">منتجات بلدتك بين يديك 🌿</div>
+      <div class="appbar-title" data-i18n="appbarTitle">تعاونية وادي الست</div>
+      <div class="appbar-sub" data-i18n="appbarSub">منتجات بلدتك بين يديك 🌿</div>
     </div>
-    <button class="appbar-cart" onclick="openCart()" aria-label="السلة">
+    <button class="appbar-cart" onclick="openCart()" aria-label="السلة" data-i18n-aria="cart">
       🛒
       <div class="cart-bdg hi" id="cart-badge">0</div>
     </button>
@@ -488,18 +852,18 @@ input,textarea,select{font-family:var(--font);outline:none}
   <!-- Hero Banner -->
   <div class="hero-banner">
     <div class="hero-banner-content">
-      <span class="hero-eyebrow">🌟 جديد</span>
-      <h1>اشترِ من جيرانك</h1>
-      <p>منتجات طازجة من القرية مباشرة إلى منزلك مع توصيل آمن وسريع</p>
-      <button class="hero-cta" onclick="goShop()">تسوّق الآن ←</button>
+      <span class="hero-eyebrow" data-i18n="heroEyebrow">🌟 جديد</span>
+      <h1 data-i18n="heroTitle">اشترِ من جيرانك</h1>
+      <p data-i18n="heroDesc">منتجات طازجة من القرية مباشرة إلى منزلك مع توصيل آمن وسريع</p>
+      <button class="hero-cta" onclick="goShop()" data-i18n="shopNow">تسوّق الآن ←</button>
     </div>
   </div>
 
   <!-- Categories -->
   <div class="section">
     <div class="section-hdr">
-      <div class="section-title">الأقسام</div>
-      <a class="section-link" onclick="goShop('cat')">عرض الكل ←</a>
+      <div class="section-title" data-i18n="sectionCategories">الأقسام</div>
+      <a class="section-link" onclick="goShop('cat')" data-i18n="viewAll">عرض الكل ←</a>
     </div>
   </div>
   <div class="cat-grid" id="home-cats"></div>
@@ -508,16 +872,16 @@ input,textarea,select{font-family:var(--font);outline:none}
   <div class="promo-card">
     <div class="promo-icon">🚚</div>
     <div class="promo-text">
-      <div class="promo-title">توصيل مجاني</div>
-      <div class="promo-sub">للطلبات فوق 500,000 ل.ل.</div>
+      <div class="promo-title" data-i18n="promoTitle">توصيل مجاني</div>
+      <div class="promo-sub" data-i18n="promoSub">للطلبات فوق 500,000 ل.ل.</div>
     </div>
   </div>
 
   <!-- Featured products -->
   <div class="section">
     <div class="section-hdr">
-      <div class="section-title">منتجات مميّزة 🏆</div>
-      <a class="section-link" onclick="goShop()">المزيد ←</a>
+      <div class="section-title" data-i18n="sectionFeatured">منتجات مميّزة 🏆</div>
+      <a class="section-link" onclick="goShop()" data-i18n="more">المزيد ←</a>
     </div>
   </div>
   <div class="product-carousel" id="home-featured"></div>
@@ -525,8 +889,8 @@ input,textarea,select{font-family:var(--font);outline:none}
   <!-- Sellers -->
   <div class="section">
     <div class="section-hdr">
-      <div class="section-title">باعة القرية</div>
-      <a class="section-link" onclick="switchTab('shop')">الكل ←</a>
+      <div class="section-title" data-i18n="sectionSellers">باعة القرية</div>
+      <a class="section-link" onclick="switchTab('shop')" data-i18n="all">الكل ←</a>
     </div>
   </div>
   <div class="brand-grid" id="home-sellers"></div>
@@ -534,8 +898,8 @@ input,textarea,select{font-family:var(--font);outline:none}
   <!-- Latest products -->
   <div class="section">
     <div class="section-hdr">
-      <div class="section-title">آخر المضاف</div>
-      <a class="section-link" onclick="goShop()">عرض الكل ←</a>
+      <div class="section-title" data-i18n="sectionLatest">آخر المضاف</div>
+      <a class="section-link" onclick="goShop()" data-i18n="viewAll">عرض الكل ←</a>
     </div>
   </div>
   <div class="product-carousel" id="home-latest"></div>
@@ -546,7 +910,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 <!-- ═══════════════════════ SHOP PAGE ═══════════════════════ -->
 <div class="page" id="page-shop">
   <div class="appbar">
-    <div class="appbar-title">المتجر</div>
+    <div class="appbar-title" data-i18n="shop">المتجر</div>
     <button class="appbar-cart" onclick="openCart()">
       🛒
       <div class="cart-bdg hi" id="cart-badge-2">0</div>
@@ -556,13 +920,13 @@ input,textarea,select{font-family:var(--font);outline:none}
   <div class="search-wrap">
     <div class="search-bar">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search-input" placeholder="ابحث في المتجر..." oninput="onSearchInput()">
+      <input type="text" id="search-input" placeholder="ابحث في المتجر..." data-i18n-placeholder="searchShopPh" oninput="onSearchInput()">
     </div>
   </div>
 
   <div class="tab-bar">
-    <div class="tab-pill active" data-shop-tab="cat" onclick="setShopTab('cat')">📦 حسب القسم</div>
-    <div class="tab-pill" data-shop-tab="brand" onclick="setShopTab('brand')">🏪 حسب البائع</div>
+    <div class="tab-pill active" data-shop-tab="cat" onclick="setShopTab('cat')" data-i18n="byCategory">📦 حسب القسم</div>
+    <div class="tab-pill" data-shop-tab="brand" onclick="setShopTab('brand')" data-i18n="bySeller">🏪 حسب البائع</div>
   </div>
 
   <!-- Pills filter (categories or sellers depending on tab) -->
@@ -575,7 +939,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 <!-- ═══════════════════════ ORDERS PAGE ═══════════════════════ -->
 <div class="page" id="page-orders">
   <div class="appbar">
-    <div class="appbar-title">طلباتي</div>
+    <div class="appbar-title" data-i18n="myOrders">طلباتي</div>
     <button class="appbar-cart" onclick="openCart()">
       🛒
       <div class="cart-bdg hi" id="cart-badge-3">0</div>
@@ -583,8 +947,8 @@ input,textarea,select{font-family:var(--font);outline:none}
   </div>
 
   <div class="tab-bar">
-    <div class="tab-pill active" data-orders-tab="active" onclick="setOrdersTab('active')">📦 نشطة</div>
-    <div class="tab-pill" data-orders-tab="history" onclick="setOrdersTab('history')">📚 السجل</div>
+    <div class="tab-pill active" data-orders-tab="active" onclick="setOrdersTab('active')" data-i18n="ordersActive">📦 نشطة</div>
+    <div class="tab-pill" data-orders-tab="history" onclick="setOrdersTab('history')" data-i18n="ordersHistory">📚 السجل</div>
   </div>
 
   <div id="orders-content" style="padding:14px 16px"></div>
@@ -593,8 +957,8 @@ input,textarea,select{font-family:var(--font);outline:none}
 <!-- ═══════════════════════ SELL PAGE ═══════════════════════ -->
 <div class="page" id="page-sell">
   <div class="appbar">
-    <div class="appbar-title">بائع</div>
-    <div class="appbar-sub" id="sell-status-sub" style="display:none">إدارة منتجاتك وطلباتك</div>
+    <div class="appbar-title" data-i18n="seller">بائع</div>
+    <div class="appbar-sub" id="sell-status-sub" data-i18n="sellerManage" style="display:none">إدارة منتجاتك وطلباتك</div>
   </div>
 
   <div id="sell-content"></div>
@@ -603,15 +967,15 @@ input,textarea,select{font-family:var(--font);outline:none}
 <!-- ═══════════════════════ SETTINGS PAGE ═══════════════════════ -->
 <div class="page" id="page-settings">
   <div class="appbar">
-    <div class="appbar-title">حسابي</div>
+    <div class="appbar-title" data-i18n="myAccount">حسابي</div>
   </div>
 
   <!-- Profile card at top -->
   <div class="profile-card" id="profile-card" onclick="openProfileModal()">
     <div class="profile-avatar" id="profile-avatar">👤</div>
     <div class="profile-info">
-      <div class="profile-name" id="profile-name">زائر</div>
-      <div class="profile-phone" id="profile-phone">اضغط لتعيين الهويّة</div>
+      <div class="profile-name" id="profile-name" data-i18n="guest">زائر</div>
+      <div class="profile-phone" id="profile-phone" data-i18n="setIdentity">اضغط لتعيين الهويّة</div>
     </div>
     <div class="profile-edit-icon">✏️</div>
   </div>
@@ -620,8 +984,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="openProfileModal()">
       <div class="settings-icon">👤</div>
       <div class="settings-text">
-        <div class="settings-title">الملف الشخصي</div>
-        <div class="settings-sub">الاسم والهاتف والعنوان</div>
+        <div class="settings-title" data-i18n="profile">الملف الشخصي</div>
+        <div class="settings-sub" data-i18n="profileSub">الاسم والهاتف والعنوان</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -629,8 +993,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="switchTab('orders')">
       <div class="settings-icon">📦</div>
       <div class="settings-text">
-        <div class="settings-title">طلباتي</div>
-        <div class="settings-sub">سجل جميع الطلبات</div>
+        <div class="settings-title" data-i18n="myOrders">طلباتي</div>
+        <div class="settings-sub" data-i18n="ordersSub">سجل جميع الطلبات</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -638,8 +1002,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="switchTab('sell')">
       <div class="settings-icon">🏪</div>
       <div class="settings-text">
-        <div class="settings-title">كن بائعاً</div>
-        <div class="settings-sub">بِع منتجاتك في التعاونية</div>
+        <div class="settings-title" data-i18n="beSeller">كن بائعاً</div>
+        <div class="settings-sub" data-i18n="beSellerSub">بِع منتجاتك في التعاونية</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -647,8 +1011,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="openDeliveryAgent()">
       <div class="settings-icon">🚚</div>
       <div class="settings-text">
-        <div class="settings-title">عامل توصيل</div>
-        <div class="settings-sub">انضمّ كمندوب توصيل</div>
+        <div class="settings-title" data-i18n="deliveryAgent">عامل توصيل</div>
+        <div class="settings-sub" data-i18n="deliveryAgentSub">انضمّ كمندوب توصيل</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -656,8 +1020,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="toggleNotifs()">
       <div class="settings-icon">🔔</div>
       <div class="settings-text">
-        <div class="settings-title">الإشعارات</div>
-        <div class="settings-sub" id="notifs-status">فعّل التنبيهات</div>
+        <div class="settings-title" data-i18n="notifs">الإشعارات</div>
+        <div class="settings-sub" id="notifs-status" data-i18n="notifsEnable">فعّل التنبيهات</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -665,8 +1029,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="checkAdminAccess()">
       <div class="settings-icon">⚙️</div>
       <div class="settings-text">
-        <div class="settings-title">لوحة الإدارة</div>
-        <div class="settings-sub">للموظّفين المخوّلين فقط</div>
+        <div class="settings-title" data-i18n="adminPanel">لوحة الإدارة</div>
+        <div class="settings-sub" data-i18n="adminPanelSub">للموظّفين المخوّلين فقط</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -674,8 +1038,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="openHelp()">
       <div class="settings-icon">❓</div>
       <div class="settings-text">
-        <div class="settings-title">المساعدة والدعم</div>
-        <div class="settings-sub">تواصل مع البلدية</div>
+        <div class="settings-title" data-i18n="helpSupport">المساعدة والدعم</div>
+        <div class="settings-sub" data-i18n="helpSupportSub">تواصل مع البلدية</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -683,8 +1047,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="openAbout()">
       <div class="settings-icon">ℹ️</div>
       <div class="settings-text">
-        <div class="settings-title">حول التطبيق</div>
-        <div class="settings-sub">الإصدار 2.0</div>
+        <div class="settings-title" data-i18n="aboutApp">حول التطبيق</div>
+        <div class="settings-sub" data-i18n="aboutAppSub">الإصدار 2.0</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -692,8 +1056,8 @@ input,textarea,select{font-family:var(--font);outline:none}
     <div class="settings-item" onclick="goHomePage()">
       <div class="settings-icon">🏛</div>
       <div class="settings-text">
-        <div class="settings-title">البوابة الرئيسية</div>
-        <div class="settings-sub">العودة لبوابة البلدية</div>
+        <div class="settings-title" data-i18n="mainGate">البوابة الرئيسية</div>
+        <div class="settings-sub" data-i18n="mainGateSub">العودة لبوابة البلدية</div>
       </div>
       <div class="settings-arrow">‹</div>
     </div>
@@ -701,7 +1065,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 
   <button class="logout-btn" onclick="clearIdentity()" id="logout-btn" style="display:none">
     <span style="font-size:16px">↗</span>
-    <span>تسجيل الخروج</span>
+    <span data-i18n="logout">تسجيل الخروج</span>
   </button>
 
   <div style="height:30px"></div>
@@ -736,7 +1100,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 <div class="cart-total-bar" id="cart-total-bar" onclick="openCart()">
   <div class="ctb-icon">🛒<span class="ctb-badge" id="ctb-badge">0</span></div>
   <div class="ctb-info">
-    <div class="ctb-label">المجموع المستحقّ</div>
+    <div class="ctb-label" data-i18n="cartTotalLabel">المجموع المستحقّ</div>
     <div class="ctb-amount" id="ctb-amount">0 ل.ل.</div>
   </div>
   <div class="ctb-arrow">←</div>
@@ -746,23 +1110,23 @@ input,textarea,select{font-family:var(--font);outline:none}
 <nav class="bottom-nav" id="bottom-nav">
   <button class="nav-item active" data-tab="home" onclick="switchTab('home')">
     <div class="nav-icon-bg"><span class="nav-icon">🏠</span></div>
-    <span>الرئيسية</span>
+    <span data-i18n="navHome">الرئيسية</span>
   </button>
   <button class="nav-item" data-tab="shop" onclick="switchTab('shop')">
     <div class="nav-icon-bg"><span class="nav-icon">🛍️</span></div>
-    <span>المتجر</span>
+    <span data-i18n="navShop">المتجر</span>
   </button>
   <button class="nav-item" data-tab="orders" onclick="switchTab('orders')">
     <div class="nav-icon-bg"><span class="nav-icon">📦</span><div class="nav-dot"></div></div>
-    <span>طلباتي</span>
+    <span data-i18n="navOrders">طلباتي</span>
   </button>
   <button class="nav-item" data-tab="sell" onclick="switchTab('sell')">
     <div class="nav-icon-bg"><span class="nav-icon">🏪</span></div>
-    <span>بائع</span>
+    <span data-i18n="navSeller">بائع</span>
   </button>
   <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
     <div class="nav-icon-bg"><span class="nav-icon">⚙️</span></div>
-    <span>حسابي</span>
+    <span data-i18n="navAccount">حسابي</span>
   </button>
 </nav>
 
@@ -771,17 +1135,17 @@ input,textarea,select{font-family:var(--font);outline:none}
 <div class="drawer" id="cart-drawer">
   <div class="drawer-handle"></div>
   <div class="drawer-hdr">
-    <div class="drawer-title">🛒 سلّتك</div>
+    <div class="drawer-title" data-i18n="yourCart">🛒 سلّتك</div>
     <button class="drawer-close" onclick="closeCart()">×</button>
   </div>
   <div class="drawer-body" id="cart-items"></div>
   <div class="drawer-foot" id="cart-foot" style="display:none">
     <div class="cart-summary">
-      <div class="cart-summary-row"><span>المجموع الفرعي</span><span id="cart-subtotal">0 ل.ل.</span></div>
-      <div class="cart-summary-row"><span>التوصيل</span><span id="cart-delivery">يُحدَّد لاحقاً</span></div>
-      <div class="cart-summary-row total"><span>الإجمالي</span><span id="cart-total">0 ل.ل.</span></div>
+      <div class="cart-summary-row"><span data-i18n="subtotal">المجموع الفرعي</span><span id="cart-subtotal">0 ل.ل.</span></div>
+      <div class="cart-summary-row"><span data-i18n="delivery">التوصيل</span><span id="cart-delivery" data-i18n="setLater">يُحدَّد لاحقاً</span></div>
+      <div class="cart-summary-row total"><span data-i18n="total">الإجمالي</span><span id="cart-total">0 ل.ل.</span></div>
     </div>
-    <button class="btn btn-primary btn-block" onclick="openCheckout()">متابعة الشراء ←</button>
+    <button class="btn btn-primary btn-block" onclick="openCheckout()" data-i18n="continueCheckout">متابعة الشراء ←</button>
   </div>
 </div>
 
@@ -789,32 +1153,32 @@ input,textarea,select{font-family:var(--font);outline:none}
 <div class="modal-overlay" id="modal-checkout">
   <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title">إتمام الطلب</div>
+      <div class="modal-title" data-i18n="completeOrder">إتمام الطلب</div>
       <button class="drawer-close" onclick="closeCheckout()">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
-        <label class="field-label">الاسم الكامل *</label>
-        <input class="field-input" id="ck-name" placeholder="مثلاً: أحمد محمد">
+        <label class="field-label" data-i18n="fullName">الاسم الكامل *</label>
+        <input class="field-input" id="ck-name" placeholder="مثلاً: أحمد محمد" data-i18n-placeholder="fullNamePh">
       </div>
       <div class="field">
-        <label class="field-label">رقم الهاتف *</label>
+        <label class="field-label" data-i18n="phone">رقم الهاتف *</label>
         <input class="field-input" id="ck-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
       </div>
       <div class="field">
-        <label class="field-label">العنوان (للتوصيل)</label>
-        <input class="field-input" id="ck-addr" placeholder="مثلاً: جانب البلدية، خلف الكنيسة">
+        <label class="field-label" data-i18n="addressDelivery">العنوان (للتوصيل)</label>
+        <input class="field-input" id="ck-addr" placeholder="مثلاً: جانب البلدية، خلف الكنيسة" data-i18n-placeholder="addressPh">
       </div>
       <div class="field">
-        <label class="field-label">طريقة التسليم *</label>
+        <label class="field-label" data-i18n="deliveryMethod">طريقة التسليم *</label>
         <div class="dlv-options">
           <label class="dlv-option">
             <input type="radio" name="ck-delivery" value="pickup" checked>
             <div class="dlv-option-card">
               <div class="dlv-option-icon">🏪</div>
               <div class="dlv-option-info">
-                <div class="dlv-option-title">استلام من البائع</div>
-                <div class="dlv-option-sub">مجّاناً · في موعد متّفق عليه</div>
+                <div class="dlv-option-title" data-i18n="dlvPickup">استلام من البائع</div>
+                <div class="dlv-option-sub" data-i18n="dlvPickupSub">مجّاناً · في موعد متّفق عليه</div>
               </div>
               <div class="dlv-option-check">✓</div>
             </div>
@@ -824,8 +1188,8 @@ input,textarea,select{font-family:var(--font);outline:none}
             <div class="dlv-option-card">
               <div class="dlv-option-icon">🚗</div>
               <div class="dlv-option-info">
-                <div class="dlv-option-title">توصيل لعنوانك</div>
-                <div class="dlv-option-sub">رسوم التوصيل يحدّدها البائع</div>
+                <div class="dlv-option-title" data-i18n="dlvHome">توصيل لعنوانك</div>
+                <div class="dlv-option-sub" data-i18n="dlvHomeSub">رسوم التوصيل يحدّدها البائع</div>
               </div>
               <div class="dlv-option-check">✓</div>
             </div>
@@ -835,8 +1199,8 @@ input,textarea,select{font-family:var(--font);outline:none}
             <div class="dlv-option-card">
               <div class="dlv-option-icon">📍</div>
               <div class="dlv-option-info">
-                <div class="dlv-option-title">نقطة لقاء</div>
-                <div class="dlv-option-sub">مكان متّفق عليه (السوبرماركت، البلدية...)</div>
+                <div class="dlv-option-title" data-i18n="dlvMeet">نقطة لقاء</div>
+                <div class="dlv-option-sub" data-i18n="dlvMeetSub">مكان متّفق عليه (السوبرماركت، البلدية...)</div>
               </div>
               <div class="dlv-option-check">✓</div>
             </div>
@@ -844,17 +1208,17 @@ input,textarea,select{font-family:var(--font);outline:none}
         </div>
       </div>
       <div class="field">
-        <label class="field-label">ملاحظات (اختياري)</label>
-        <textarea class="field-textarea" id="ck-notes" placeholder="أي ملاحظات إضافيّة..."></textarea>
+        <label class="field-label" data-i18n="notesOptional">ملاحظات (اختياري)</label>
+        <textarea class="field-textarea" id="ck-notes" placeholder="أي ملاحظات إضافيّة..." data-i18n-placeholder="notesPh"></textarea>
       </div>
       <div class="banner info">
         <span class="banner-icon">ℹ️</span>
-        <div class="banner-content">سيتواصل معك البائع عبر الهاتف أو الواتساب لتأكيد الطلب وتنسيق التسليم.</div>
+        <div class="banner-content" data-i18n="checkoutInfo">سيتواصل معك البائع عبر الهاتف أو الواتساب لتأكيد الطلب وتنسيق التسليم.</div>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeCheckout()">إلغاء</button>
-      <button class="btn btn-primary" style="flex:1" onclick="placeOrder()">تأكيد الطلب ✓</button>
+      <button class="btn btn-ghost" onclick="closeCheckout()" data-i18n="cancel">إلغاء</button>
+      <button class="btn btn-primary" style="flex:1" onclick="placeOrder()" data-i18n="confirmOrder">تأكيد الطلب ✓</button>
     </div>
   </div>
 </div>
@@ -863,50 +1227,50 @@ input,textarea,select{font-family:var(--font);outline:none}
 <div class="modal-overlay" id="modal-product">
   <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title" id="modal-product-title">إضافة منتج جديد</div>
+      <div class="modal-title" id="modal-product-title" data-i18n="addProduct">إضافة منتج جديد</div>
       <button class="drawer-close" onclick="closeProductModal()">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
-        <label class="field-label">اسم المنتج *</label>
-        <input class="field-input" id="prod-name" placeholder="مثلاً: زيت زيتون عضوي">
+        <label class="field-label" data-i18n="productName">اسم المنتج *</label>
+        <input class="field-input" id="prod-name" placeholder="مثلاً: زيت زيتون عضوي" data-i18n-placeholder="productNamePh">
       </div>
       <div class="field">
-        <label class="field-label">الفئة *</label>
+        <label class="field-label" data-i18n="category">الفئة *</label>
         <select class="field-select" id="prod-category"></select>
       </div>
       <div class="row-2">
         <div class="field">
-          <label class="field-label">السعر (ل.ل.) *</label>
+          <label class="field-label" data-i18n="priceLBP">السعر (ل.ل.) *</label>
           <input class="field-input" id="prod-price" type="number" inputmode="numeric" placeholder="50000" style="direction:ltr;text-align:right">
         </div>
         <div class="field">
-          <label class="field-label">الوحدة *</label>
-          <input class="field-input" id="prod-unit" placeholder="كغ / لتر / قطعة">
+          <label class="field-label" data-i18n="unit">الوحدة *</label>
+          <input class="field-input" id="prod-unit" placeholder="كغ / لتر / قطعة" data-i18n-placeholder="unitPh">
         </div>
       </div>
       <div class="field">
-        <label class="field-label">الكمية المتوفّرة *</label>
+        <label class="field-label" data-i18n="qtyAvailable">الكمية المتوفّرة *</label>
         <input class="field-input" id="prod-stock" type="number" inputmode="numeric" placeholder="10" style="direction:ltr;text-align:right">
       </div>
       <div class="field">
-        <label class="field-label">الوصف</label>
-        <textarea class="field-textarea" id="prod-desc" placeholder="معلومات عن المنتج، طريقة الإنتاج، إلخ..."></textarea>
+        <label class="field-label" data-i18n="descLabel">الوصف</label>
+        <textarea class="field-textarea" id="prod-desc" placeholder="معلومات عن المنتج، طريقة الإنتاج، إلخ..." data-i18n-placeholder="prodDescPh"></textarea>
       </div>
       <div class="field">
-        <label class="field-label">صور المنتج (حدّ أقصى 3)</label>
+        <label class="field-label" data-i18n="productPhotos">صور المنتج (حدّ أقصى 3)</label>
         <input type="file" id="prod-photos" accept="image/*" multiple style="display:none" onchange="handlePhotoSelect(event)">
         <div id="prod-photo-thumbs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
-        <button type="button" class="btn btn-ghost btn-block" id="prod-photo-btn" onclick="document.getElementById('prod-photos').click()">📷 اختيار صور</button>
+        <button type="button" class="btn btn-ghost btn-block" id="prod-photo-btn" onclick="document.getElementById('prod-photos').click()" data-i18n="choosePhotos">📷 اختيار صور</button>
       </div>
       <div class="banner info">
         <span class="banner-icon">ℹ️</span>
-        <div class="banner-content">سيظهر منتجك مباشرة في المتجر بعد الحفظ. يمكنك تعديله أو حذفه لاحقاً من لوحة بائع.</div>
+        <div class="banner-content" data-i18n="productInfo">سيظهر منتجك مباشرة في المتجر بعد الحفظ. يمكنك تعديله أو حذفه لاحقاً من لوحة بائع.</div>
       </div>
     </div>
     <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeProductModal()">إلغاء</button>
-      <button class="btn btn-primary" style="flex:1" id="prod-save-btn" onclick="saveProduct()">حفظ المنتج ✓</button>
+      <button class="btn btn-ghost" onclick="closeProductModal()" data-i18n="cancel">إلغاء</button>
+      <button class="btn btn-primary" style="flex:1" id="prod-save-btn" onclick="saveProduct()" data-i18n="saveProduct">حفظ المنتج ✓</button>
     </div>
   </div>
 </div>
@@ -915,7 +1279,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 <div class="modal-overlay" id="modal-profile">
   <div class="modal">
     <div class="modal-hdr">
-      <div class="modal-title">الملف الشخصي</div>
+      <div class="modal-title" data-i18n="profile">الملف الشخصي</div>
       <button class="drawer-close" onclick="closeProfileModal()">×</button>
     </div>
     <div class="modal-body">
@@ -1079,14 +1443,14 @@ let currentProductDetail=null;
 let pendingQty=1;
 
 const CATEGORIES=[
-  {id:'food',name:'أطعمة',icon:'🍞',color:'#c8910a'},
-  {id:'dairy',name:'ألبان وأجبان',icon:'🧀',color:'#e0a83a'},
-  {id:'produce',name:'خضار وفواكه',icon:'🥕',color:'#2d7a3e'},
-  {id:'crafts',name:'صناعات يدويّة',icon:'🧺',color:'#8b5cf6'},
-  {id:'oil',name:'زيت وزيتون',icon:'🫒',color:'#558b2f'},
-  {id:'honey',name:'عسل ومعجّنات',icon:'🍯',color:'#f59e0b'},
-  {id:'plants',name:'نباتات',icon:'🌿',color:'#16a34a'},
-  {id:'other',name:'أخرى',icon:'📦',color:'#1a6eb5'}
+  {id:'food',name:{ar:'أطعمة',en:'Food',fr:'Alimentation'},icon:'🍞',color:'#c8910a'},
+  {id:'dairy',name:{ar:'ألبان وأجبان',en:'Dairy & cheese',fr:'Produits laitiers'},icon:'🧀',color:'#e0a83a'},
+  {id:'produce',name:{ar:'خضار وفواكه',en:'Fruits & vegetables',fr:'Fruits & légumes'},icon:'🥕',color:'#2d7a3e'},
+  {id:'crafts',name:{ar:'صناعات يدويّة',en:'Handicrafts',fr:'Artisanat'},icon:'🧺',color:'#8b5cf6'},
+  {id:'oil',name:{ar:'زيت وزيتون',en:'Oil & olives',fr:'Huile & olives'},icon:'🫒',color:'#558b2f'},
+  {id:'honey',name:{ar:'عسل ومعجّنات',en:'Honey & pastries',fr:'Miel & pâtisseries'},icon:'🍯',color:'#f59e0b'},
+  {id:'plants',name:{ar:'نباتات',en:'Plants',fr:'Plantes'},icon:'🌿',color:'#16a34a'},
+  {id:'other',name:{ar:'أخرى',en:'Other',fr:'Autre'},icon:'📦',color:'#1a6eb5'}
 ];
 
 /* ═══════ INIT ═══════ */
@@ -1170,7 +1534,7 @@ function renderHomeCategories(){
     const el=document.createElement('div');
     el.className='cat-card';
     // White background — colored stripe on top + colored icon for category identity
-    el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div><div class="cat-icon">${cat.icon}</div><div class="cat-name">${escapeHtml(cat.name)}</div>`;
+    el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div><div class="cat-icon">${cat.icon}</div><div class="cat-name">${escapeHtml((typeof cat.name==="object"?pickLang(cat.name):cat.name))}</div>`;
     el.onclick=()=>{currentShopTab='cat';currentShopFilter=cat.id;switchTab('shop');};
     grid.appendChild(el);
   });
@@ -1188,7 +1552,7 @@ function renderHomePage(){
   const sellersGrid=document.getElementById('home-sellers');
   sellersGrid.innerHTML='';
   if(allSellers.length===0){
-    sellersGrid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3);font-size:13px">لا يوجد باعة بعد</div>';
+    sellersGrid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--text3);font-size:13px">' + L().noSellers + '</div>';
   }else{
     allSellers.slice(0,6).forEach(s=>{
       const productCount=allProducts.filter(p=>p.seller_id===s.id).length;
@@ -1210,7 +1574,7 @@ function renderProductCarousel(containerId,products){
   if(!c) return;
   c.innerHTML='';
   if(products.length===0){
-    c.innerHTML='<div style="padding:30px 16px;color:var(--text3);font-size:13px">لا توجد منتجات بعد</div>';
+    c.innerHTML='<div style="padding:30px 16px;color:var(--text3);font-size:13px">' + L().noProducts + '</div>';
     return;
   }
   products.forEach(p=>{
@@ -1329,7 +1693,7 @@ function addPill(parent,id,label,active){
 /* ═══════ WHATSAPP CONTACT ═══════ */
 function contactSellerWA(p){
   const wa=p.coop_sellers?.whatsapp||p.coop_sellers?.phone||'';
-  if(!wa){toast('البائع لم يسجّل واتساب','err');return;}
+  if(!wa){toast(L().sellerNoWA,'err');return;}
   let userName='';
   try{userName=(JSON.parse(localStorage.getItem('wadi_user')||'{}')).name||'';}catch(e){}
   const greeting=userName?'مرحباً، أنا '+userName+'.':'مرحباً،';
@@ -1370,7 +1734,7 @@ function openProductDetail(p){
     <div class="pdetail-body">
       <div class="pdetail-brand">${escapeHtml(seller.display_name||'')}</div>
       <h1 class="pdetail-name">${escapeHtml(p.name)}</h1>
-      ${cat?`<div class="pdetail-cat">${cat.icon} ${cat.name}</div>`:''}
+      ${cat?`<div class="pdetail-cat">${cat.icon} ${(typeof cat.name==="object"?pickLang(cat.name):cat.name)}</div>`:''}
       <div class="pdetail-price-row">
         <div class="pdetail-price">${formatPrice(p.price)}</div>
         <div class="pdetail-unit">/ ${escapeHtml(p.unit||'قطعة')}</div>
@@ -1446,7 +1810,7 @@ function addToCart(product,qty){
   }
   saveCart();
   updateCartBadge();
-  toast('✅ تمت الإضافة للسلّة','ok');
+  toast(L().addedToCart,'ok');
   if(currentTab==='shop') renderShopPage();
 }
 
@@ -1561,7 +1925,7 @@ function renderCart(){
 
 /* ═══════ CHECKOUT ═══════ */
 function openCheckout(){
-  if(cart.length===0){toast('سلّتك فارغة','err');return;}
+  if(cart.length===0){toast(L().cartEmpty,'err');return;}
   closeCart();
   // Hydrate form from saved profile
   try{
@@ -1585,8 +1949,8 @@ async function placeOrder(){
   const delivery=dlvRadio?dlvRadio.value:'pickup';
   const notes=document.getElementById('ck-notes').value.trim();
 
-  if(!name){toast('الاسم مطلوب','err');return;}
-  if(!phone||phone.length<7){toast('الهاتف غير صحيح','err');return;}
+  if(!name){toast(L().errNameReq,'err');return;}
+  if(!phone||phone.length<7){toast(L().errPhoneInvalid,'err');return;}
 
   // Save to wadi_user
   try{
@@ -1621,12 +1985,12 @@ async function placeOrder(){
     const res=await sb.from('coop_orders').insert(orders).select();
     if(res.error){
       console.error('Order insert error:',res.error);
-      toast('فشل: '+(res.error.message||'خطأ غير معروف'),'err');
+      toast(L().errFailed+': '+(res.error.message||L().errUnknown),'err');
       return;
     }
     if(!res.data||!res.data.length){
       console.error('No data returned from order insert');
-      toast('فشل إرسال الطلب — لا توجد بيانات','err');
+      toast(L().errOrderNoData,'err');
       return;
     }
     
@@ -1657,11 +2021,11 @@ async function placeOrder(){
     saveCart();
     updateCartBadge();
     closeCheckout();
-    toast('✅ تمّ إرسال طلبك بنجاح!','ok');
+    toast(L().orderSentOk,'ok');
     setTimeout(()=>{switchTab('orders');renderOrdersPage();},800);
   }catch(e){
     console.error(e);
-    toast('حدث خطأ، حاول مرة أخرى','err');
+    toast(L().errTryAgain,'err');
   }
 }
 
@@ -1726,7 +2090,7 @@ async function renderOrdersPage(){
     });
   }catch(e){
     console.error(e);
-    c.innerHTML='<div class="empty-state"><div class="empty-text">تعذّر تحميل الطلبات</div></div>';
+    c.innerHTML='<div class="empty-state"><div class="empty-text">' + L().errLoadOrders + '</div></div>';
   }
 }
 
@@ -1833,8 +2197,8 @@ function saveProfile(){
     localStorage.setItem('wadi_onboarded','1');
     updateProfileCard();
     closeProfileModal();
-    toast('✅ تمّ الحفظ','ok');
-  }catch(e){console.error(e);toast('فشل الحفظ','err');}
+    toast(L().savedOk,'ok');
+  }catch(e){console.error(e);toast(L().saveFailed,'err');}
 }
 
 function clearIdentity(){
@@ -1842,7 +2206,7 @@ function clearIdentity(){
   localStorage.removeItem('coop_seller');
   localStorage.removeItem('coop_admin');
   currentSeller=null;currentAdmin=null;
-  toast('تمّ تسجيل الخروج','ok');
+  toast(L().loggedOut,'ok');
   switchTab('home');
 }
 
@@ -1858,10 +2222,10 @@ function toggleNotifs(){
   if('Notification' in window&&Notification.permission!=='granted'){
     Notification.requestPermission().then(p=>{
       updateNotifsStatus();
-      if(p==='granted') toast('✅ تمّ تفعيل الإشعارات','ok');
+      if(p==='granted') toast(L().pushOnOk,'ok');
     });
   }else{
-    toast('الإشعارات مُفعّلة','ok');
+    toast(L().pushAlreadyOn,'ok');
   }
 }
 
@@ -1946,9 +2310,9 @@ async function submitDeliveryAgent(){
   
   if(!name){toast('الاسم مطلوب','err');return;}
   if(!phone||phone.length<7){toast('الهاتف غير صحيح','err');return;}
-  if(!wa||wa.length<7){toast('الواتساب غير صحيح','err');return;}
-  if(!area){toast('المنطقة مطلوبة','err');return;}
-  if(!vehicle){toast('وسيلة النقل مطلوبة','err');return;}
+  if(!wa||wa.length<7){toast(L().errWaInvalid,'err');return;}
+  if(!area){toast(L().errAreaReq,'err');return;}
+  if(!vehicle){toast(L().errVehicleReq,'err');return;}
 
   try{
     const res=await sb.from('coop_delivery_agents').insert([{
@@ -1974,7 +2338,7 @@ function renderSellPage(){
     c.innerHTML=`
       <div style="padding:30px 20px;text-align:center">
         <div style="width:90px;height:90px;border-radius:50%;background:var(--primary4);margin:20px auto 16px;display:flex;align-items:center;justify-content:center;font-size:42px">🏪</div>
-        <h2 style="font-size:20px;font-weight:900;margin-bottom:8px">كن بائعاً في التعاونية</h2>
+        <h2 data-i18n="beSellerTitle" style="font-size:20px;font-weight:900;margin-bottom:8px">كن بائعاً في التعاونية</h2>
         <p style="color:var(--text3);font-size:14px;line-height:1.6;margin-bottom:24px">سجّل دخول إذا كان لديك حساب بائع، أو اطلب الانضمام إذا كنت جديداً.</p>
         <button class="btn btn-primary btn-block mb-2" onclick="showSellerLogin()">دخول البائع</button>
         <button class="btn btn-outline btn-block" onclick="showSellerRegister()">إنشاء حساب جديد</button>
@@ -1990,7 +2354,7 @@ function showSellerLogin(){
   const c=document.getElementById('sell-content');
   c.innerHTML=`
     <div style="padding:24px 20px">
-      <h2 style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">دخول البائع</h2>
+      <h2 data-i18n="sellerLogin" style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">دخول البائع</h2>
       <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px">أدخل بياناتك لعرض لوحة البائع</p>
       <div class="field"><label class="field-label">اسم المستخدم</label><input class="field-input" id="sl-user" style="direction:ltr;text-align:right"></div>
       <div class="field"><label class="field-label">كلمة المرور</label><input class="field-input" id="sl-pw" type="password" style="direction:ltr;text-align:right" onkeydown="if(event.key==='Enter')doSellerLogin()"></div>
@@ -2010,7 +2374,7 @@ function showSellerRegister(){
   const u=JSON.parse(localStorage.getItem('wadi_user')||'{}');
   c.innerHTML=`
     <div style="padding:24px 20px">
-      <h2 style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">إنشاء حساب بائع</h2>
+      <h2 data-i18n="sellerSignup" style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">إنشاء حساب بائع</h2>
       <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px">سيتمّ مراجعة حسابك من قبل البلدية</p>
       <div class="row-2">
         <div class="field"><label class="field-label">الاسم الأوّل *</label><input class="field-input" id="sr-fname" value="${escapeAttr((u.name||'').split(/\s+/)[0]||'')}"></div>
