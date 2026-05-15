@@ -584,6 +584,37 @@ I18N.onApply(function(lang){
 <button class="help-btn" onclick="openHelp('c')" data-i18n-title="helpBtn" title="مساعدة">?</button>
 <script>var OFFICERS = [];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SECURITY: Server-side role lookup (post-audit C2 fix)
+// Replaces reads of user_metadata.role which is user-editable.
+// ─────────────────────────────────────────────────────────────────────────────
+async function getCurrentUserRole(){
+  try {
+    if (!sb) return 'citizen';
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await sb.from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
+    if (error || !data) return 'citizen';
+    return data.role;
+  } catch(e) { return 'citizen'; }
+}
+async function getCurrentUserProfile(){
+  try {
+    if (!sb) return null;
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) return null;
+    const { data } = await sb.from('profiles').select('name,phone,lang').eq('user_id', user.id).maybeSingle();
+    return data || null;
+  } catch(e) { return null; }
+}
+
+// Helper to read current language for case submissions
+function _currentLang(){
+  try { var l = localStorage.getItem('wadi_lang'); return (l==='en'||l==='fr'||l==='ar')?l:'ar'; }
+  catch(e){ return 'ar'; }
+}
+
+
 const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
 const MUN_ID='00000000-0000-0000-0000-000000000001';
@@ -842,7 +873,13 @@ async function citRegister(){
   try{
     const{data,error}=await sb.auth.signUp({
       email,password:pw,
-      options:{data:{name,phone,role:'citizen'}}
+      options:{data:{
+        name: name,       // server trigger copies this into profiles.name
+        phone: phone,     // server trigger copies this into profiles.phone
+        lang: (function(){ try { return (localStorage.getItem('wadi_lang')||'ar'); } catch(e){ return 'ar'; } })()
+        // role is INTENTIONALLY OMITTED — set server-side by handle_new_user() trigger.
+        // Allowing role in user_metadata would let users self-promote to admin.
+      }}
     });
     if(error)throw error;
     // After signup, immediately sign in to get a valid session
@@ -1028,7 +1065,7 @@ async function doSubmitCit(){
     assigned:'',status:na?'pending-approval':'new',
     approval_state:na?'pending':null,approval_by:null,approval_date:null,
     timeline:[{a:'تم تقديم الطلب عبر الموقع الإلكتروني',by:name,d:today,cls:''}],
-    documents:[],source:'website'};
+    documents:[],source:'website',lang:_currentLang()};
   try{
     const{data,error}=await sb.from('cases').insert([nc]).select().single();
     if(error)throw error;

@@ -218,6 +218,24 @@ function _t(key, ar){
 
       // Save to Supabase
       const subJson = sub.toJSON();
+      // Read user's chosen language from localStorage (set by i18n.js)
+      var __lang = 'ar';
+      try { var __l = localStorage.getItem('wadi_lang'); if(__l==='ar'||__l==='en'||__l==='fr') __lang = __l; } catch(e){}
+      // Read user identity (set by enablePush opts or by linkToUser)
+      var __userPhone = null, __userName = null, __userRole = null;
+      try {
+        var __wu = localStorage.getItem('wadi_user');
+        if(__wu){ var __u = JSON.parse(__wu); __userPhone = __u.phone || null; __userName = __u.name || null; __userRole = __u.role || null; }
+      } catch(e){}
+      // opts override (passed to enablePush): user_phone, user_name, role
+      if(opts && opts.userPhone) __userPhone = opts.userPhone;
+      if(opts && opts.userName)  __userName  = opts.userName;
+      if(opts && opts.role)      __userRole  = opts.role;
+      // Normalize phone: strip non-digits, drop leading +961 and leading 0
+      if(__userPhone){
+        __userPhone = String(__userPhone).replace(/[^0-9+]/g,'').replace(/^\+/,'').replace(/^961/,'').replace(/^0/,'');
+      }
+
       const payload = {
         mun_id: MUN_ID,
         endpoint: subJson.endpoint,
@@ -225,7 +243,11 @@ function _t(key, ar){
         auth: subJson.keys.auth,
         user_agent: navigator.userAgent.slice(0, 200),
         topics: topics,
-        is_active: true
+        is_active: true,
+        lang: __lang,
+        user_phone: __userPhone,
+        user_name: __userName,
+        role: __userRole
       };
 
       const resp = await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`, {
@@ -527,5 +549,30 @@ if (typeof window !== 'undefined' && window.I18N && typeof window.I18N.extend ==
       pushOnlyImportant: 'Nous vous enverrons uniquement des mises à jour importantes',
       pushConfirmDisable: 'Voulez-vous vraiment désactiver les notifications ? Vous ne recevrez plus les mises à jour de la municipalité.',
     }
+  });
+}
+
+/* When the user changes language while subscribed, update their push_subscription.lang
+   so future notifications arrive in the new language. */
+if (typeof window !== 'undefined' && window.I18N && typeof window.I18N.onApply === 'function') {
+  window.I18N.onApply(async function(lang){
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      var reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return;
+      var sub = await reg.pushManager.getSubscription();
+      if (!sub) return;
+      // Update the subscription's lang in Supabase
+      await fetch(SUPABASE_URL + '/rest/v1/push_subscriptions?endpoint=eq.' + encodeURIComponent(sub.endpoint), {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ lang: lang })
+      });
+    } catch(e) { /* silent */ }
   });
 }

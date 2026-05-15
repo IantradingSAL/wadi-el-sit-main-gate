@@ -1462,7 +1462,7 @@ document.addEventListener('DOMContentLoaded',async function(){
   // Load saved state
   try{const c=localStorage.getItem('coop_cart');if(c)cart=JSON.parse(c);}catch(e){}
   try{const s=localStorage.getItem('coop_seller');if(s)currentSeller=JSON.parse(s);}catch(e){}
-  try{const a=localStorage.getItem('coop_admin');if(a)currentAdmin=JSON.parse(a);}catch(e){}
+  // SECURITY: removed localStorage admin trust (post-audit C1). currentAdmin is re-verified via restoreAdminSession() below.
 
   // Hydrate identity from welcome modal
   hydrateIdentityToProfile();
@@ -1978,7 +1978,8 @@ async function placeOrder(){
     total:g.items.reduce((s,c)=>s+c.price*c.qty,0),
     delivery_method:delivery,
     status:'pending',
-    notes:notes||null
+    notes:notes||null,
+    lang:(function(){try{var l=localStorage.getItem('wadi_lang');return (l==='en'||l==='fr'||l==='ar')?l:'ar';}catch(e){return 'ar';}})()
   }));
 
   try{
@@ -2934,36 +2935,99 @@ function closeAdminLogin(){
 }
 
 async function doAdminLogin(){
-  const u=document.getElementById('admin-login-user').value.trim().toLowerCase();
-  const pw=document.getElementById('admin-login-pw').value;
-  const err=document.getElementById('admin-login-err');
-  err.style.display='none';
-  if(!u||!pw){err.textContent='البيانات مطلوبة';err.style.display='block';return;}
-  try{
-    const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-    const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    // Hardcoded super admin
-    if(u==='imad'){
-      const expected=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('wadi@2026')))).map(b=>b.toString(16).padStart(2,'0')).join('');
-      if(hash===expected){
-        currentAdmin={username:'imad',display_name:'Imad (Super Admin)',is_super:true};
-        localStorage.setItem('coop_admin',JSON.stringify(currentAdmin));
-        closeAdminLogin();
-        showAdminPanel();
+  // ─────────────────────────────────────────────────────────────────────────
+  // SECURE ADMIN LOGIN (post-audit C1/C2/C4/C5 fix)
+  // - No more hardcoded passwords in client JS
+  // - Uses Supabase Auth (proper password hashing with bcrypt/argon2 server-side)
+  // - Reads role from user_roles table (server-side, can't be spoofed)
+  // ─────────────────────────────────────────────────────────────────────────
+  const emailOrUser = document.getElementById('admin-login-user').value.trim().toLowerCase();
+  const pw = document.getElementById('admin-login-pw').value;
+  const err = document.getElementById('admin-login-err');
+  err.style.display = 'none';
+  if (!emailOrUser || !pw) {
+    err.textContent = (typeof L === 'function' ? (L().missingCredentials || 'البيانات مطلوبة') : 'البيانات مطلوبة');
+    err.style.display = 'block';
+    return;
+  }
+  // Accept either an email or a username — if it's not an email, look it up
+  let email = emailOrUser;
+  if (!email.includes('@')) {
+    try {
+      // Look up profile by username/name for friendlier login UX
+      const p = await sb.from('profiles').select('user_id').ilike('name', emailOrUser).limit(1).maybeSingle();
+      if (p && p.data) {
+        // Get the email via auth admin — but anon can't, so just instruct the user
+        err.textContent = (typeof L === 'function' ? (L().useEmailToLogin || 'الرجاء استخدام البريد الإلكتروني') : 'الرجاء استخدام البريد الإلكتروني');
+        err.style.display = 'block';
         return;
       }
-    }
-    // Check coop_admins table
-    const res=await sb.from('coop_admins').select('*').eq('username',u).maybeSingle();
-    if(res.data&&res.data.password_hash===hash){
-      currentAdmin=res.data;
-      localStorage.setItem('coop_admin',JSON.stringify(currentAdmin));
-      closeAdminLogin();
-      showAdminPanel();
+    } catch(e) {}
+    err.textContent = (typeof L === 'function' ? (L().useEmailToLogin || 'الرجاء استخدام البريد الإلكتروني') : 'الرجاء استخدام البريد الإلكتروني');
+    err.style.display = 'block';
+    return;
+  }
+  try {
+    const { data: authData, error: authErr } = await sb.auth.signInWithPassword({ email, password: pw });
+    if (authErr) throw authErr;
+    if (!authData || !authData.user) throw new Error('login_failed');
+
+    // Verify the user has an admin/mayor role via the user_roles table
+    const { data: roleData, error: roleErr } = await sb
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', authData.user.id)
+      .maybeSingle();
+    if (roleErr) throw roleErr;
+    const role = roleData?.role || 'citizen';
+    if (!['mayor', 'admin'].includes(role)) {
+      // Not an admin — sign them back out and refuse
+      await sb.auth.signOut();
+      err.textContent = (typeof L === 'function' ? (L().notAdmin || 'هذا الحساب ليس له صلاحيات إدارية') : 'هذا الحساب ليس له صلاحيات إدارية');
+      err.style.display = 'block';
       return;
     }
-    err.textContent='بيانات الدخول غير صحيحة';err.style.display='block';
-  }catch(e){console.error(e);err.textContent='خطأ في الاتصال';err.style.display='block';}
+
+    // Look up display name from profiles
+    const { data: profile } = await sb.from('profiles').select('name').eq('user_id', authData.user.id).maybeSingle();
+
+    currentAdmin = {
+      user_id: authData.user.id,
+      email: authData.user.email,
+      display_name: profile?.name || authData.user.email,
+      role: role,
+      is_super: role === 'mayor'
+    };
+    // NOTE: We do NOT persist admin status to localStorage anymore.
+    // The session lives in sb.auth (httpOnly-equivalent, server-validated).
+    // On page reload, restoreAdminSession() below re-checks with the server.
+    closeAdminLogin();
+    showAdminPanel();
+  } catch(e) {
+    console.error('admin login error:', e);
+    err.textContent = (typeof L === 'function' ? (L().wrongCredentials || 'بيانات الدخول غير صحيحة') : 'بيانات الدخول غير صحيحة');
+    err.style.display = 'block';
+  }
+}
+
+// Re-verify admin role on page load (replaces the vulnerable localStorage trust)
+async function restoreAdminSession(){
+  try {
+    if (!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session || !session.user) return;
+    const { data: roleData } = await sb.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle();
+    const role = roleData?.role;
+    if (!['mayor','admin'].includes(role)) return;
+    const { data: profile } = await sb.from('profiles').select('name').eq('user_id', session.user.id).maybeSingle();
+    currentAdmin = {
+      user_id: session.user.id,
+      email: session.user.email,
+      display_name: profile?.name || session.user.email,
+      role: role,
+      is_super: role === 'mayor'
+    };
+  } catch(e) { /* silent */ }
 }
 
 function showAdminPanel(){

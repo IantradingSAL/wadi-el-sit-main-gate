@@ -2704,7 +2704,11 @@ async function submitLogin(e){
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if(error) throw error;
     currentUser = data.user;
-    userRole = data.user?.user_metadata?.role || null;
+    // SECURITY (post-audit C2): read role from server-side user_roles table, not user_metadata
+    try {
+      const _rr = await sb.from('user_roles').select('role').eq('user_id', data.user.id).maybeSingle();
+      userRole = _rr.data?.role || 'citizen';
+    } catch(_e) { userRole = 'citizen'; }
     isAdmin = ADMIN_ROLES.includes(userRole);
     if(!isAdmin){
       await sb.auth.signOut();
@@ -3566,7 +3570,11 @@ async function checkSession(){
     const { data } = await sb.auth.getSession();
     if(data?.session?.user){
       currentUser = data.session.user;
-      userRole = currentUser.user_metadata?.role || null;
+      // SECURITY (post-audit C2): read role from server-side user_roles table
+      try {
+        const _rr = await sb.from('user_roles').select('role').eq('user_id', currentUser.id).maybeSingle();
+        userRole = _rr.data?.role || 'citizen';
+      } catch(_e) { userRole = 'citizen'; }
       isAdmin = ADMIN_ROLES.includes(userRole);
       if(isAdmin){
         await loadAdminQueues();
