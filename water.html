@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title data-i18n="pageTitle">بوابة الري — بلدية وادي الست</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 <style>
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
 --text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;--bg:#f5f7fa;--font:'Tahoma',Arial,sans-serif;}
@@ -78,7 +78,7 @@ html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;
 <script src="i18n.js"></script>
 <script>
 /* ═══ Water page translations ═══ */
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     pageTitle: 'بوابة الري — بلدية وادي الست',
     backToGate: 'البوابة الرئيسية',
@@ -271,10 +271,10 @@ I18N.extend({
       "<b style=\"color:#15803d\">📞 Pour contacter le comité d'irrigation :</b><br>"+
       'Appelez directement le bureau municipal de Wadi El Sit ou présentez-vous en personne</div>',
   }
-});
+}); }catch(e){} }
 
 /* Re-render results when language changes */
-I18N.onApply(function(lang){
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
   /* Reposition help modal if open */
   var hm = document.getElementById('_whm');
   if(hm && hm.style.display !== 'none'){
@@ -291,7 +291,7 @@ I18N.onApply(function(lang){
     var p = document.getElementById('wp-phone');
     if(p && p.value) lookupWaterOwner();
   }
-});
+}); }catch(e){} }
 
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
 window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
@@ -405,7 +405,7 @@ function getOwnerSched(owner,offset){
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async function(){
-  sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{enabled:false}});
+  sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false,storage:{getItem:function(){return null;},setItem:function(){},removeItem:function(){}}},realtime:{enabled:false}});
   // Safety timeout: always show UI after 4 seconds regardless of DB state
   var safetyTimer = setTimeout(function(){
     var lm=document.getElementById('loading-msg');
