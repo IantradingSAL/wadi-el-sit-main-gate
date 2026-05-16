@@ -12,7 +12,7 @@
 <script src="i18n.js"></script>
 <script>
 /* ═══ News page translations ═══ */
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     pageTitle: '📰 أخبار البلدية — وادي الست',
     backToGate: '🏛️ البوابة الرئيسية',
@@ -115,14 +115,14 @@ I18N.extend({
     alertSystemLoading: '⚠️ Le système se charge... réessayez dans deux secondes.',
     error: 'Erreur',
   }
-});
+}); }catch(e){} }
 
 /* Re-render news cards when language changes */
-I18N.onApply(function(lang){
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
   if (typeof renderNews === 'function' && typeof allNews !== 'undefined' && allNews.length){
     try { renderNews(); } catch(e){}
   }
-});
+}); }catch(e){} }
 
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
 window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
