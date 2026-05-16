@@ -15,7 +15,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="i18n.js"></script>
 <script>
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     pageTitle: 'دليل وادي الست',
     hdTitle: 'دليل وادي الست',
@@ -175,16 +175,16 @@ I18N.extend({
     confirmDelete: 'Confirmer la suppression définitive',
     confirmDeleteSub: 'Cette action est irréversible',
   }
-});
+}); }catch(e){} }
 
 /* Re-render UI when language changes */
-I18N.onApply(function(lang){
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
   try { if(typeof renderFilters === 'function') renderFilters(); } catch(e){}
   try { if(typeof renderLetters === 'function') renderLetters(); } catch(e){}
   try { if(typeof renderCards === 'function') renderCards(); } catch(e){}
   try { if(typeof renderStats === 'function') renderStats(); } catch(e){}
   try { if(typeof refreshUI === 'function') refreshUI(); } catch(e){}
-});
+}); }catch(e){} }
 
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
 window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
@@ -211,6 +211,18 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
   for(var lng in _p){ for(var k in _p[lng]){ window.__WADI_STRINGS__[lng][k] = _p[lng][k]; } }
   if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){
     try{ I18N.extend(_p); }catch(e){}
+  }
+})();
+</script>
+
+<script>
+/* Phonebook form-strings dict — defensive */
+(function(){
+  var _f = {"ar": {"optional": "اختياري", "example": "مثال", "close": "إغلاق", "addWarnBanner": "⚠️ لن تظهر الجهة في الدليل العام إلا بعد موافقة البلدية.", "fldPhoto": "الصورة", "imgUploadPrompt": "انقر لرفع صورة", "imgSizeHint": "JPG/PNG حتى 2MB", "imgRemove": "✕ إزالة الصورة", "fldFirstName": "الاسم الأول", "fldFamily": "العائلة", "fldFather": "اسم الأب", "fldMother": "اسم الأم", "fldFullName": "الاسم الكامل", "fullNameAuto": "(يُملأ تلقائياً)", "fldPhone": "رقم الهاتف الشخصي", "fldAddress": "العنوان", "fldLocation": "📍 الموقع الجغرافي", "fldEmail": "البريد الإلكتروني", "fldOccupation": "المهنة", "fldWorkPhone": "☎️ هاتف العمل", "fldWorkAddr": "🏢 عنوان العمل", "fldWorkLoc": "🗺️ موقع العمل", "fldNotes": "ملاحظات إضافية", "noteAnyExtra": "أي معلومات إضافية", "familyHelp": "إذا كانت عائلتك غير موجودة، تواصل مع البلدية لإضافتها.", "verifySection": "معلومات العمل", "verifyYourInfo": "👤 معلوماتك للتحقق:", "yourName": "اسمك", "yourPhone": "هاتفك", "myLocation": "📍 موقعي", "submitForReview": "➕ إرسال للمراجعة", "phEx_imad": "مثال: عماد", "phEx_botrous": "مثال: بطرس", "phEx_joelle": "مثال: جويل", "phEx_fullName": "مثال: عماد بطرس أبي الحسن", "phEx_addr": "مثال: وادي الست — حي الكنيسة", "phEx_workAddr": "مثال: بيروت — الأشرفية", "phEx_phone": "+961 76 ...", "phEx_workPhone": "+961...", "phEx_email": "name@domain.com", "phEx_latlng": "lat, lng", "chooseFamily": "— اختر العائلة —", "crHint": "💡 إذا كنت تريد تعديل عدة حقول، استخدم زر <strong>\"تعديل ✏️\"</strong> بدلاً من ذلك.", "currentInfo": "المعلومات الحالية:", "whatToFix": "ما الذي يحتاج إلى تصحيح؟", "chooseDots": "اختر…", "fName": "الاسم", "fFamily": "العائلة", "fPhone": "رقم الهاتف", "fOccupation": "المهنة", "fAddress": "العنوان", "fEmail": "البريد", "fOther": "أخرى", "correctValue": "المعلومة الصحيحة", "phCorrectValue": "مثال: الرقم الصحيح هو...", "sendCorrection": "✏️ إرسال طلب التصحيح", "orViaWa": "💬 أو عبر واتساب البلدية"}, "en": {"optional": "optional", "example": "e.g.", "close": "Close", "addWarnBanner": "⚠️ The contact will only appear in the public directory after municipality approval.", "fldPhoto": "Photo", "imgUploadPrompt": "Click to upload a photo", "imgSizeHint": "JPG/PNG up to 2MB", "imgRemove": "✕ Remove photo", "fldFirstName": "First name", "fldFamily": "Family", "fldFather": "Father's name", "fldMother": "Mother's name", "fldFullName": "Full name", "fullNameAuto": "(auto-filled)", "fldPhone": "Personal phone number", "fldAddress": "Address", "fldLocation": "📍 Geographic location", "fldEmail": "Email", "fldOccupation": "Occupation", "fldWorkPhone": "☎️ Work phone", "fldWorkAddr": "🏢 Work address", "fldWorkLoc": "🗺️ Work location", "fldNotes": "Additional notes", "noteAnyExtra": "Any additional information", "familyHelp": "If your family is not listed, contact the municipality to add it.", "verifySection": "Work info", "verifyYourInfo": "👤 Your info (for verification):", "yourName": "Your name", "yourPhone": "Your phone", "myLocation": "📍 My location", "submitForReview": "➕ Submit for review", "phEx_imad": "e.g. John", "phEx_botrous": "e.g. Peter", "phEx_joelle": "e.g. Mary", "phEx_fullName": "e.g. John Peter Smith", "phEx_addr": "e.g. Wadi El Sit — Church area", "phEx_workAddr": "e.g. Beirut — Achrafieh", "phEx_phone": "+961 76 ...", "phEx_workPhone": "+961...", "phEx_email": "name@domain.com", "phEx_latlng": "lat, lng", "chooseFamily": "— Choose family —", "crHint": "💡 If you want to edit several fields, use the <strong>\"Edit ✏️\"</strong> button instead.", "currentInfo": "Current information:", "whatToFix": "What needs to be corrected?", "chooseDots": "Choose…", "fName": "Name", "fFamily": "Family", "fPhone": "Phone number", "fOccupation": "Occupation", "fAddress": "Address", "fEmail": "Email", "fOther": "Other", "correctValue": "Correct information", "phCorrectValue": "e.g. The correct number is...", "sendCorrection": "✏️ Send correction request", "orViaWa": "💬 Or via municipality WhatsApp"}, "fr": {"optional": "facultatif", "example": "p. ex.", "close": "Fermer", "addWarnBanner": "⚠️ Le contact n'apparaîtra dans l'annuaire public qu'après approbation de la municipalité.", "fldPhoto": "Photo", "imgUploadPrompt": "Cliquez pour téléverser une photo", "imgSizeHint": "JPG/PNG jusqu'à 2 Mo", "imgRemove": "✕ Supprimer la photo", "fldFirstName": "Prénom", "fldFamily": "Famille", "fldFather": "Nom du père", "fldMother": "Nom de la mère", "fldFullName": "Nom complet", "fullNameAuto": "(rempli automatiquement)", "fldPhone": "Numéro de téléphone personnel", "fldAddress": "Adresse", "fldLocation": "📍 Localisation géographique", "fldEmail": "E-mail", "fldOccupation": "Profession", "fldWorkPhone": "☎️ Téléphone professionnel", "fldWorkAddr": "🏢 Adresse professionnelle", "fldWorkLoc": "🗺️ Lieu de travail", "fldNotes": "Notes supplémentaires", "noteAnyExtra": "Toute information supplémentaire", "familyHelp": "Si votre famille n'est pas listée, contactez la municipalité.", "verifySection": "Informations professionnelles", "verifyYourInfo": "👤 Vos informations (vérification) :", "yourName": "Votre nom", "yourPhone": "Votre téléphone", "myLocation": "📍 Ma position", "submitForReview": "➕ Soumettre pour révision", "phEx_imad": "p. ex. Jean", "phEx_botrous": "p. ex. Pierre", "phEx_joelle": "p. ex. Marie", "phEx_fullName": "p. ex. Jean Pierre Dupont", "phEx_addr": "p. ex. Wadi El Sit — Quartier de l'église", "phEx_workAddr": "p. ex. Beyrouth — Achrafieh", "phEx_phone": "+961 76 ...", "phEx_workPhone": "+961...", "phEx_email": "nom@domain.com", "phEx_latlng": "lat, lng", "chooseFamily": "— Choisissez la famille —", "crHint": "💡 Si vous voulez modifier plusieurs champs, utilisez le bouton <strong>« Modifier ✏️ »</strong>.", "currentInfo": "Informations actuelles :", "whatToFix": "Qu'est-ce qui doit être corrigé ?", "chooseDots": "Choisissez…", "fName": "Nom", "fFamily": "Famille", "fPhone": "Numéro de téléphone", "fOccupation": "Profession", "fAddress": "Adresse", "fEmail": "E-mail", "fOther": "Autre", "correctValue": "Information correcte", "phCorrectValue": "p. ex. Le numéro correct est...", "sendCorrection": "✏️ Envoyer la demande de correction", "orViaWa": "💬 Ou via WhatsApp de la municipalité"}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _f){ for(var k in _f[lng]){ window.__WADI_STRINGS__[lng][k] = _f[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){
+    try{ I18N.extend(_f); }catch(e){}
   }
 })();
 </script>
@@ -1517,7 +1529,7 @@ function professionOptionsHtml(selected){
 }
 function familyOptionsHtml(selected){
   const fams = Array.from(new Set(getAllPublic().map(c=>c.family).filter(x=>x))).sort((a,b)=>a.localeCompare(b,'ar'));
-  let html = '<option value="">— اختر العائلة —</option>';
+  let html = '<option value="" data-i18n="chooseFamily">— اختر العائلة —</option>';
   fams.forEach(f => { html += `<option value="${escHtml(f)}" ${selected===f?'selected':''}>${escHtml(f)}</option>`; });
   return html;
 }
@@ -2089,7 +2101,7 @@ function openEdit(c){
           <input class="fm-i ltr" type="email" id="ED_EMAIL" value="${escHtml(c.email||'')}">
         </div>
 
-        <div class="fm-section-t">معلومات العمل</div>
+        <div class="fm-section-t" data-i18n="verifySection">معلومات العمل</div>
         <div class="fm-grp">
           <label class="fm-l">المهنة</label>
           <select class="fm-i" id="ED_OCC"></select>
@@ -2118,7 +2130,7 @@ function openEdit(c){
           <textarea class="fm-i" id="ED_REASON" placeholder="ما الذي تغيّر؟ مثلاً: تحديث رقم بعد تغيير الشريحة"></textarea>
         </div>
 
-        <div class="fm-info">👤 معلوماتك للتحقق:</div>
+        <div class="fm-info" data-i18n="verifyYourInfo">👤 معلوماتك للتحقق:</div>
         <div class="fm-grp row2">
           <div>
             <label class="fm-l">اسمك <span class="req">*</span></label>
@@ -2235,34 +2247,34 @@ function openCorrect(c){
       <button class="modal-x" onclick="closeModal()" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-bd">
-      <div class="fm-info">💡 إذا كنت تريد تعديل عدة حقول، استخدم زر <strong>"تعديل ✏️"</strong> بدلاً من ذلك.</div>
+      <div class="fm-info" data-i18n="crHint">💡 إذا كنت تريد تعديل عدة حقول، استخدم زر <strong>"تعديل ✏️"</strong> بدلاً من ذلك.</div>
       <div style="background:var(--surface2);padding:12px;border-radius:var(--r);margin:14px 0;font-size:13px">
-        <div style="font-weight:700;margin-bottom:5px">المعلومات الحالية:</div>
+        <div style="font-weight:700;margin-bottom:5px" data-i18n="currentInfo">المعلومات الحالية:</div>
         <div>👤 ${escHtml(c.name)}</div>
         ${c.family?`<div>👨‍👩‍👧 ${escHtml(c.family)}</div>`:''}
         ${c.phone&&!c.phone_hidden?`<div>📞 ${escHtml(c.phone)}</div>`:''}
       </div>
       <form class="fm" id="CR_FM" onsubmit='submitCorrect(event,${c._src==="registry"?c.id:"null"},${c._src==="user_added"?`"${c.id}"`:"null"})'>
         <div class="fm-grp">
-          <label class="fm-l">ما الذي يحتاج إلى تصحيح؟ <span class="req">*</span></label>
+          <label class="fm-l"><span data-i18n="whatToFix">ما الذي يحتاج إلى تصحيح؟</span> <span class="req">*</span></label>
           <select class="fm-i" id="CR_FIELD" required>
-            <option value="">اختر…</option>
-            <option value="name">الاسم</option><option value="family">العائلة</option>
-            <option value="phone">رقم الهاتف</option><option value="occupation">المهنة</option>
-            <option value="address">العنوان</option><option value="email">البريد</option>
-            <option value="other">أخرى</option>
+            <option value="" data-i18n="chooseDots">اختر…</option>
+            <option value="name" data-i18n="fName">الاسم</option><option value="family" data-i18n="fFamily">العائلة</option>
+            <option value="phone" data-i18n="fPhone">رقم الهاتف</option><option value="occupation" data-i18n="fOccupation">المهنة</option>
+            <option value="address" data-i18n="fAddress">العنوان</option><option value="email" data-i18n="fEmail">البريد</option>
+            <option value="other" data-i18n="fOther">أخرى</option>
           </select>
         </div>
-        <div class="fm-grp"><label class="fm-l">المعلومة الصحيحة <span class="req">*</span></label>
-          <textarea class="fm-i" id="CR_VAL" required placeholder="مثال: الرقم الصحيح هو..."></textarea>
+        <div class="fm-grp"><label class="fm-l"><span data-i18n="correctValue">المعلومة الصحيحة</span> <span class="req">*</span></label>
+          <textarea class="fm-i" id="CR_VAL" required placeholder="مثال: الرقم الصحيح هو..." data-i18n-placeholder="phCorrectValue"></textarea>
         </div>
         <div class="fm-grp row2">
-          <div><label class="fm-l">اسمك <span class="req">*</span></label><input class="fm-i" id="CR_NAME" required></div>
-          <div><label class="fm-l">هاتفك <span class="req">*</span></label><input class="fm-i ltr" id="CR_PH" required inputmode="tel"></div>
+          <div><label class="fm-l"><span data-i18n="yourName">اسمك</span> <span class="req">*</span></label><input class="fm-i" id="CR_NAME" required></div>
+          <div><label class="fm-l"><span data-i18n="yourPhone">هاتفك</span> <span class="req">*</span></label><input class="fm-i ltr" id="CR_PH" required inputmode="tel"></div>
         </div>
         <div id="CR_ERR"></div>
-        <button type="submit" class="btn btn-sun btn-block" id="CR_SUB">✏️ إرسال طلب التصحيح</button>
-        <button type="button" class="btn btn-out btn-block" onclick='sendCorrectWa(${c._src==="registry"?c.id:"null"})'>💬 أو عبر واتساب البلدية</button>
+        <button type="submit" class="btn btn-sun btn-block" id="CR_SUB" data-i18n="sendCorrection">✏️ إرسال طلب التصحيح</button>
+        <button type="button" class="btn btn-out btn-block" onclick='sendCorrectWa(${c._src==="registry"?c.id:"null"})' data-i18n="orViaWa">💬 أو عبر واتساب البلدية</button>
       </form>
     </div>
   </div>`;
@@ -2321,86 +2333,86 @@ function openAdd(){
       <button class="modal-x" onclick="closeModal();setBNActive('home')" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-bd">
-      <div class="fm-warn">⚠️ لن تظهر الجهة في الدليل العام إلا بعد موافقة البلدية.</div>
+      <div class="fm-warn" data-i18n="addWarnBanner">⚠️ لن تظهر الجهة في الدليل العام إلا بعد موافقة البلدية.</div>
       <form class="fm" id="AD_FM" novalidate style="margin-top:14px">
         <div class="fm-grp">
-          <label class="fm-l">الصورة <span class="opt">(اختياري)</span></label>
+          <label class="fm-l"><span data-i18n="fldPhoto">الصورة</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
           <label class="fm-img-area" id="AD_IMG_LBL" for="AD_IMG_INPUT">
-            <div id="AD_IMG_PLH"><div class="fm-img-icon">📷</div><div class="fm-img-t">انقر لرفع صورة</div><div class="fm-img-s">JPG/PNG حتى 2MB</div></div>
+            <div id="AD_IMG_PLH"><div class="fm-img-icon">📷</div><div class="fm-img-t" data-i18n="imgUploadPrompt">انقر لرفع صورة</div><div class="fm-img-s" data-i18n="imgSizeHint">JPG/PNG حتى 2MB</div></div>
             <input type="file" id="AD_IMG_INPUT" accept="image/*" hidden onchange="onImgPick(event,'AD_')">
           </label>
         </div>
 
         <div class="fm-grp row2">
-          <div><label class="fm-l">الاسم الأول <span class="req">*</span></label><input class="fm-i" id="AD_FIRST" placeholder="مثال: عماد"></div>
+          <div><label class="fm-l"><span data-i18n="fldFirstName">الاسم الأول</span> <span class="req">*</span></label><input class="fm-i" id="AD_FIRST" placeholder="مثال: عماد" data-i18n-placeholder="phEx_imad"></div>
           <div>
-            <label class="fm-l">العائلة <span class="req">*</span></label>
+            <label class="fm-l"><span data-i18n="fldFamily">العائلة</span> <span class="req">*</span></label>
             <select class="fm-i" id="AD_FAM"></select>
-            <div class="fm-help">إذا كانت عائلتك غير موجودة، تواصل مع البلدية لإضافتها.</div>
+            <div class="fm-help" data-i18n="familyHelp">إذا كانت عائلتك غير موجودة، تواصل مع البلدية لإضافتها.</div>
           </div>
         </div>
         <div class="fm-grp row2">
-          <div><label class="fm-l">اسم الأب <span class="req">*</span></label><input class="fm-i" id="AD_FATHER" placeholder="مثال: بطرس"></div>
-          <div><label class="fm-l">اسم الأم <span class="opt">(اختياري)</span></label><input class="fm-i" id="AD_MOTHER" placeholder="مثال: جويل"></div>
+          <div><label class="fm-l"><span data-i18n="fldFather">اسم الأب</span> <span class="req">*</span></label><input class="fm-i" id="AD_FATHER" placeholder="مثال: بطرس" data-i18n-placeholder="phEx_botrous"></div>
+          <div><label class="fm-l"><span data-i18n="fldMother">اسم الأم</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label><input class="fm-i" id="AD_MOTHER" placeholder="مثال: جويل" data-i18n-placeholder="phEx_joelle"></div>
         </div>
         <div class="fm-grp">
-          <label class="fm-l">الاسم الكامل <span class="opt">(يُملأ تلقائياً)</span></label>
-          <input class="fm-i" id="AD_FULL" placeholder="مثال: عماد بطرس أبي الحسن">
+          <label class="fm-l"><span data-i18n="fldFullName">الاسم الكامل</span> <span class="opt" data-i18n="fullNameAuto">(يُملأ تلقائياً)</span></label>
+          <input class="fm-i" id="AD_FULL" placeholder="مثال: عماد بطرس أبي الحسن" data-i18n-placeholder="phEx_fullName">
         </div>
         <div class="fm-grp">
-          <label class="fm-l">رقم الهاتف الشخصي <span class="req">*</span></label>
-          <input class="fm-i ltr" id="AD_PH" placeholder="+961 76 ..." inputmode="tel">
+          <label class="fm-l"><span data-i18n="fldPhone">رقم الهاتف الشخصي</span> <span class="req">*</span></label>
+          <input class="fm-i ltr" id="AD_PH" placeholder="+961 76 ..." data-i18n-placeholder="phEx_phone" inputmode="tel">
         </div>
         <div class="fm-grp">
-          <label class="fm-l">العنوان <span class="opt">(اختياري)</span></label>
-          <input class="fm-i" id="AD_ADDR" placeholder="مثال: وادي الست — حي الكنيسة">
+          <label class="fm-l"><span data-i18n="fldAddress">العنوان</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
+          <input class="fm-i" id="AD_ADDR" placeholder="مثال: وادي الست — حي الكنيسة" data-i18n-placeholder="phEx_addr">
         </div>
         <div class="fm-grp">
-          <label class="fm-l">📍 الموقع الجغرافي <span class="opt">(اختياري)</span></label>
+          <label class="fm-l"><span data-i18n="fldLocation">📍 الموقع الجغرافي</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
           <div class="fm-loc">
             <input class="fm-i ltr" id="AD_LL" placeholder="lat, lng">
-            <button type="button" class="fm-loc-btn" onclick="useMyLocation('AD_LL',event)">📍 موقعي</button>
+            <button type="button" class="fm-loc-btn" onclick="useMyLocation('AD_LL',event)" data-i18n="myLocation">📍 موقعي</button>
           </div>
         </div>
         <div class="fm-grp">
-          <label class="fm-l">البريد الإلكتروني <span class="opt">(اختياري)</span></label>
-          <input class="fm-i ltr" type="email" id="AD_EMAIL" placeholder="name@domain.com">
+          <label class="fm-l"><span data-i18n="fldEmail">البريد الإلكتروني</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
+          <input class="fm-i ltr" type="email" id="AD_EMAIL" placeholder="name@domain.com" data-i18n-placeholder="phEx_email">
         </div>
 
         <div class="fm-section-t">معلومات العمل</div>
         <div class="fm-grp">
-          <label class="fm-l">المهنة <span class="opt">(اختياري)</span></label>
+          <label class="fm-l"><span data-i18n="fldOccupation">المهنة</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
           <select class="fm-i" id="AD_OCC"></select>
         </div>
         <div class="fm-grp">
-          <label class="fm-l">☎️ هاتف العمل <span class="opt">(اختياري)</span></label>
+          <label class="fm-l"><span data-i18n="fldWorkPhone">☎️ هاتف العمل</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
           <input class="fm-i ltr" id="AD_WPH" placeholder="+961..." inputmode="tel">
         </div>
         <div class="fm-grp">
-          <label class="fm-l">🏢 عنوان العمل <span class="opt">(اختياري)</span></label>
-          <input class="fm-i" id="AD_WADDR" placeholder="مثال: بيروت — الأشرفية">
+          <label class="fm-l"><span data-i18n="fldWorkAddr">🏢 عنوان العمل</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
+          <input class="fm-i" id="AD_WADDR" placeholder="مثال: بيروت — الأشرفية" data-i18n-placeholder="phEx_workAddr">
         </div>
         <div class="fm-grp">
-          <label class="fm-l">🗺️ موقع العمل <span class="opt">(اختياري)</span></label>
+          <label class="fm-l"><span data-i18n="fldWorkLoc">🗺️ موقع العمل</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
           <div class="fm-loc">
             <input class="fm-i ltr" id="AD_WLL" placeholder="lat, lng">
-            <button type="button" class="fm-loc-btn" onclick="useMyLocation('AD_WLL',event)">📍 موقعي</button>
+            <button type="button" class="fm-loc-btn" onclick="useMyLocation('AD_WLL',event)" data-i18n="myLocation">📍 موقعي</button>
           </div>
         </div>
 
         <div class="fm-grp">
-          <label class="fm-l">ملاحظات إضافية <span class="opt">(اختياري)</span></label>
-          <textarea class="fm-i" id="AD_NOTES" placeholder="أي معلومات إضافية"></textarea>
+          <label class="fm-l"><span data-i18n="fldNotes">ملاحظات إضافية</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
+          <textarea class="fm-i" id="AD_NOTES" placeholder="أي معلومات إضافية" data-i18n-placeholder="noteAnyExtra"></textarea>
         </div>
 
         <div class="fm-info">👤 معلوماتك للتحقق:</div>
         <div class="fm-grp row2">
-          <div><label class="fm-l">اسمك <span class="req">*</span></label><input class="fm-i" id="AD_BY_NM"></div>
-          <div><label class="fm-l">هاتفك <span class="req">*</span></label><input class="fm-i ltr" id="AD_BY_PH" inputmode="tel"></div>
+          <div><label class="fm-l"><span data-i18n="yourName">اسمك</span> <span class="req">*</span></label><input class="fm-i" id="AD_BY_NM"></div>
+          <div><label class="fm-l"><span data-i18n="yourPhone">هاتفك</span> <span class="req">*</span></label><input class="fm-i ltr" id="AD_BY_PH" inputmode="tel"></div>
         </div>
 
         <div id="AD_ERR"></div>
-        <button type="button" class="btn btn-grn btn-block" id="AD_SUB" onclick="submitAdd(event)">➕ إرسال للمراجعة</button>
+        <button type="button" class="btn btn-grn btn-block" id="AD_SUB" onclick="submitAdd(event)" data-i18n="submitForReview">➕ إرسال للمراجعة</button>
       </form>
     </div>
   </div>`;
@@ -2438,7 +2450,7 @@ function onImgPick(e, prefix){
     const lbl = document.getElementById(prefix+'IMG_LBL');
     lbl.classList.add('has');
     lbl.innerHTML = `<img class="fm-img-prev" src="${ev.target.result}" alt="">
-      <div class="fm-img-rm" onclick="event.preventDefault();event.stopPropagation();removeImg('${prefix}')">✕ إزالة الصورة</div>
+      <div class="fm-img-rm" onclick="event.preventDefault();event.stopPropagation();removeImg('${prefix}')" data-i18n="imgRemove">✕ إزالة الصورة</div>
       <input type="file" id="${prefix}IMG_INPUT" accept="image/*" hidden>`;
     lbl.dataset.img = ev.target.result;
   };
@@ -2448,7 +2460,7 @@ function removeImg(prefix){
   const lbl = document.getElementById(prefix+'IMG_LBL');
   lbl.classList.remove('has');
   delete lbl.dataset.img;
-  lbl.innerHTML = `<div id="${prefix}IMG_PLH"><div class="fm-img-icon">📷</div><div class="fm-img-t">انقر لرفع صورة</div><div class="fm-img-s">JPG/PNG حتى 2MB</div></div>
+  lbl.innerHTML = `<div id="${prefix}IMG_PLH"><div class="fm-img-icon">📷</div><div class="fm-img-t" data-i18n="imgUploadPrompt">انقر لرفع صورة</div><div class="fm-img-s" data-i18n="imgSizeHint">JPG/PNG حتى 2MB</div></div>
     <input type="file" id="${prefix}IMG_INPUT" accept="image/*" hidden onchange="onImgPick(event,'${prefix}')">`;
 }
 
@@ -3818,6 +3830,69 @@ init();
       if(ov && ov.classList.contains('open')) wadiCloseHelp();
     }
   });
+
+  /* ═══ MutationObserver: re-apply translations when modals/forms are dynamically inserted ═══ */
+  function setupObserver(){
+    if(!window.MutationObserver) return;
+    var observer = new MutationObserver(function(mutations){
+      var needsApply = false;
+      for(var i = 0; i < mutations.length; i++){
+        var m = mutations[i];
+        if(m.addedNodes && m.addedNodes.length){
+          for(var j = 0; j < m.addedNodes.length; j++){
+            var n = m.addedNodes[j];
+            if(n.nodeType === 1 && (
+              n.matches && n.matches('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-aria-label]') ||
+              n.querySelector && n.querySelector('[data-i18n], [data-i18n-placeholder], [data-i18n-title], [data-i18n-aria], [data-i18n-aria-label]')
+            )){
+              needsApply = true;
+              break;
+            }
+          }
+        }
+        if(needsApply) break;
+      }
+      if(needsApply){
+        setTimeout(function(){ manualApply(getCurrentLang()); }, 20);
+      }
+    });
+    observer.observe(document.body, {childList: true, subtree: true});
+  }
+  /* ═══ Hide any DUPLICATE AR/EN/FR pill (auto-injected by i18n.js or similar) ═══ */
+  function hideDuplicatePills(){
+    try{
+      var allBtns = document.querySelectorAll('button, a');
+      var seen = new Set();
+      for(var i = 0; i < allBtns.length; i++){
+        var btn = allBtns[i];
+        var txt = (btn.textContent || '').trim();
+        if(txt === 'AR' || txt === 'EN' || txt === 'FR'){
+          /* Skip if it's inside MY wadi-lang-pill */
+          if(btn.closest('.wadi-lang-pill')) continue;
+          /* Hide the parent container that holds these AR/EN/FR buttons */
+          var container = btn.parentElement;
+          /* Walk up to find a container with all 3 langs */
+          for(var k = 0; k < 4 && container; k++){
+            var hasAr = container.querySelector && Array.from(container.querySelectorAll('button,a')).some(function(b){return (b.textContent||'').trim()==='AR';});
+            var hasEn = container.querySelector && Array.from(container.querySelectorAll('button,a')).some(function(b){return (b.textContent||'').trim()==='EN';});
+            var hasFr = container.querySelector && Array.from(container.querySelectorAll('button,a')).some(function(b){return (b.textContent||'').trim()==='FR';});
+            if(hasAr && hasEn && hasFr){
+              container.style.display = 'none';
+              break;
+            }
+            container = container.parentElement;
+          }
+        }
+      }
+    }catch(e){}
+  }
+  /* Run hide after initial load + once more after a brief delay (catch late injects) */
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ hideDuplicatePills(); setupObserver(); setTimeout(hideDuplicatePills, 500); setTimeout(hideDuplicatePills, 1500); });
+  } else {
+    hideDuplicatePills(); setupObserver(); setTimeout(hideDuplicatePills, 500); setTimeout(hideDuplicatePills, 1500);
+  }
+
 })();
 
 </script>
