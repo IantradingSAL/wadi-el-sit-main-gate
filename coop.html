@@ -600,6 +600,13 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
   for(var lng in _s){ for(var k in _s[lng]){ window.__WADI_STRINGS__[lng][k] = _s[lng][k]; } }
   if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_s); }catch(e){} }
 })();</script>
+
+<script>(function(){
+  var _q = {"ar": {"errSave": "خطأ في الحفظ", "errDetails": "التفاصيل", "currencyMasterNote": "💡 السعر الذي تُدخله أعلاه هو السعر «الأساسي» — سيُعرض للزبائن بهذه العملة، مع إظهار التحويل تلقائياً.", "productNameRequired": "اسم المنتج مطلوب", "priceInvalid": "السعر غير صحيح", "unitRequired": "الوحدة مطلوبة", "categoryRequired": "اختر الفئة", "productUpdated": "✅ تمّ تحديث المنتج", "productAdded": "✅ تمّ إضافة المنتج", "photoUploadFailedSkip": "فشل رفع صورة، تخطّي..."}, "en": {"errSave": "Save error", "errDetails": "Details", "currencyMasterNote": "💡 The price you enter above is the \"master\" price — customers will see it in this currency, with conversion shown automatically.", "productNameRequired": "Product name required", "priceInvalid": "Invalid price", "unitRequired": "Unit required", "categoryRequired": "Choose a category", "productUpdated": "✅ Product updated", "productAdded": "✅ Product added", "photoUploadFailedSkip": "Photo upload failed, skipping..."}, "fr": {"errSave": "Erreur d'enregistrement", "errDetails": "Détails", "currencyMasterNote": "💡 Le prix saisi ci-dessus est le prix « maître » — les clients le verront dans cette devise, avec la conversion automatique.", "productNameRequired": "Nom du produit requis", "priceInvalid": "Prix invalide", "unitRequired": "Unité requise", "categoryRequired": "Choisissez une catégorie", "productUpdated": "✅ Produit mis à jour", "productAdded": "✅ Produit ajouté", "photoUploadFailedSkip": "Échec du téléversement, ignoré..."}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _q){ for(var k in _q[lng]){ window.__WADI_STRINGS__[lng][k] = _q[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_q); }catch(e){} }
+})();</script>
 <script src="pwa.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1524,6 +1531,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
             <span>🇺🇸 USD ($)</span>
           </label>
         </div>
+        <div data-i18n="currencyMasterNote" style="margin-top:8px;padding:8px 10px;background:#fff8e1;border:1px solid #f5d481;border-radius:8px;font-size:11.5px;color:#7a5500;line-height:1.5">💡 السعر الذي تُدخله أعلاه هو السعر «الأساسي» — سيُعرض للزبائن بهذه العملة، مع إظهار التحويل تلقائياً.</div>
       </div>
       <div class="row-2">
         <div class="field">
@@ -3201,10 +3209,10 @@ async function saveProduct(){
   const desc = document.getElementById('prod-desc').value.trim();
   const cat = document.getElementById('prod-category').value;
   
-  if(!name){toast('اسم المنتج مطلوب','err');return;}
-  if(!price || price <= 0){toast('السعر غير صحيح','err');return;}
-  if(!unit){toast('الوحدة مطلوبة','err');return;}
-  if(!cat){toast('اختر الفئة','err');return;}
+  if(!name){toast((window.__wadi_t&&window.__wadi_t('productNameRequired'))||'اسم المنتج مطلوب','err');return;}
+  if(!price || price <= 0){toast((window.__wadi_t&&window.__wadi_t('priceInvalid'))||'السعر غير صحيح','err');return;}
+  if(!unit){toast((window.__wadi_t&&window.__wadi_t('unitRequired'))||'الوحدة مطلوبة','err');return;}
+  if(!cat){toast((window.__wadi_t&&window.__wadi_t('categoryRequired'))||'اختر الفئة','err');return;}
   
   const btn = document.getElementById('prod-save-btn');
   btn.disabled = true;
@@ -3223,7 +3231,7 @@ async function saveProduct(){
           photoUrls.push(url);
         }catch(e){
           console.error('Photo upload failed:', e);
-          toast('فشل رفع صورة، تخطّي...','err');
+          toast((window.__wadi_t&&window.__wadi_t('photoUploadFailedSkip'))||'فشل رفع صورة، تخطّي...','err');
         }
       }
     }
@@ -3253,19 +3261,21 @@ async function saveProduct(){
     
     if(res.error){
       console.error('Save error:', res.error);
-      toast('فشل: '+(res.error.message||'خطأ غير معروف'),'err');
+      toast(((window.__wadi_t&&window.__wadi_t('errSave'))||'خطأ في الحفظ')+': '+(res.error.message||'unknown'),'err');
       btn.disabled = false;
       btn.textContent = editingProductId ? L().saveEdits : L().saveProduct;
       return;
     }
     
-    toast(editingProductId ? '✅ تمّ تحديث المنتج' : '✅ تمّ إضافة المنتج','ok');
+    toast(editingProductId ? ((window.__wadi_t&&window.__wadi_t('productUpdated'))||'✅ تمّ تحديث المنتج') : ((window.__wadi_t&&window.__wadi_t('productAdded'))||'✅ تمّ إضافة المنتج'),'ok');
     closeProductModal();
     await loadProducts(); // refresh shop products
     loadSellerStats(); // refresh seller dashboard
   }catch(e){
-    console.error(e);
-    toast('حدث خطأ غير متوقّع','err');
+    console.error('saveSellerProduct exception:', e);
+    var msg = e && e.message ? e.message : String(e);
+    var label = (window.__wadi_t && window.__wadi_t('errSave')) || 'خطأ في الحفظ';
+    toast(label + ': ' + msg, 'err');
   }finally{
     btn.disabled = false;
     btn.textContent = editingProductId ? 'حفظ التعديلات ✓' : 'حفظ المنتج ✓';
