@@ -253,7 +253,7 @@ html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="i18n.js"></script>
 <script>
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     pageTitle: 'بوابة المواطن — بلدية وادي الست',
     backToGate: 'البوابة الرئيسية',
@@ -423,10 +423,10 @@ I18N.extend({
     fileLabel: 'Le fichier',
     fileTooLarge: 'dépasse 20Mo',
   }
-});
+}); }catch(e){} }
 
 /* Required-docs panel translations */
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     requiredDocsTitle: 'المستندات المطلوبة',
     requiredLabel: '✅ إلزامية:',
@@ -451,7 +451,7 @@ I18N.extend({
     optionalBadge: 'optionnel',
     attachHint: '💡 Joignez les documents dans le champ ci-dessous, ou apportez-les au bureau de la municipalité',
   }
-});
+}); }catch(e){} }
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
 window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
 (function(){
@@ -484,7 +484,7 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
 
 
 /* When language changes, re-render the type dropdown and required-docs box */
-I18N.onApply(function(lang){
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
   /* Refresh select options */
   try {
     var sel = document.getElementById('c-type');
@@ -504,7 +504,7 @@ I18N.onApply(function(lang){
       showRequiredDocs(sel.value);
     }
   } catch(e){}
-});
+}); }catch(e){} }
 </script>
 
 <script src="pwa.js" defer></script>
