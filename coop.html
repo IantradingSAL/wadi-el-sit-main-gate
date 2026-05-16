@@ -16,7 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="i18n.js"></script>
 <script>
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     pageTitle: 'تعاونية وادي الست — متجر القرية',
     appbarTitle: 'تعاونية وادي الست',
@@ -369,11 +369,11 @@ I18N.extend({
     noProducts: 'Pas encore de produits',
     errLoadOrders: 'Impossible de charger les commandes',
   }
-});
+}); }catch(e){} }
 
 
 /* ─── EXTENDED translations for dynamic strings + remaining UI ─── */
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     profFullName: 'الاسم الكامل',
     profFullNamePh: 'اسمك الكامل',
@@ -527,11 +527,11 @@ I18N.extend({
     notAdmin: "Ce compte n'a pas de privilèges admin",
     wrongCredentials: 'Identifiants invalides',
   }
-});
+}); }catch(e){} }
 
 
 /* Currency feature translations */
-I18N.extend({
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
     currencyLabel: 'العملة',
     priceLabel: 'السعر',
@@ -562,13 +562,13 @@ I18N.extend({
     rateInvalid: 'Taux de change invalide',
     now: 'Maintenant',
   }
-});
+}); }catch(e){} }
 
 /* Re-render home + shop content when language changes */
-I18N.onApply(function(lang){
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
   try { if(typeof renderHomeCategories==='function') renderHomeCategories(); } catch(e){}
   try { if(typeof renderShopByCat==='function' && typeof currentShopTab!=='undefined' && currentShopTab==='cat') renderShopByCat(); } catch(e){}
-});
+}); }catch(e){} }
 
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
 window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
