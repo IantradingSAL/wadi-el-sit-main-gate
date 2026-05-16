@@ -586,6 +586,13 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
 
 </script>
 
+
+<script>(function(){
+  var _co = {"ar": {"ordersEmptyActive": "لا طلبات نشطة", "ordersEmptyActiveSub": "طلباتك النشطة ستظهر هنا", "ordersEmptyPast": "لا سجل طلبات", "ordersEmptyPastSub": "الطلبات السابقة ستظهر هنا", "browseShop": "← تصفّح المتجر", "browseShop2": "تصفّح المتجر ←", "cartEmptySub": "ابدأ بإضافة منتجات من المتجر", "createNewAcc": "إنشاء حساب جديد", "beSellerSubInfo": "سجِّل دخول إذا كان لديك حساب بائع، أو اطلب الانضمام إذا كنت جديداً.", "pwdField": "كلمة المرور", "pwdFieldReq": "كلمة المرور *"}, "en": {"ordersEmptyActive": "No active orders", "ordersEmptyActiveSub": "Your active orders will appear here", "ordersEmptyPast": "No order history", "ordersEmptyPastSub": "Previous orders will appear here", "browseShop": "← Browse store", "browseShop2": "Browse store →", "cartEmptySub": "Start adding products from the store", "createNewAcc": "Create new account", "beSellerSubInfo": "Sign in if you have a seller account, or request to join if you are new.", "pwdField": "Password", "pwdFieldReq": "Password *"}, "fr": {"ordersEmptyActive": "Aucune commande active", "ordersEmptyActiveSub": "Vos commandes actives apparaîtront ici", "ordersEmptyPast": "Aucun historique de commandes", "ordersEmptyPastSub": "Les commandes précédentes apparaîtront ici", "browseShop": "← Parcourir la boutique", "browseShop2": "Parcourir la boutique →", "cartEmptySub": "Commencez à ajouter des produits depuis la boutique", "createNewAcc": "Créer un nouveau compte", "beSellerSubInfo": "Connectez-vous si vous avez un compte vendeur, ou demandez à rejoindre si vous êtes nouveau.", "pwdField": "Mot de passe", "pwdFieldReq": "Mot de passe *"}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _co){ for(var k in _co[lng]){ window.__WADI_STRINGS__[lng][k] = _co[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_co); }catch(e){} }
+})();</script>
 <script src="pwa.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2154,9 +2161,9 @@ function renderCart(){
     body.innerHTML=`
       <div class="empty-state">
         <div class="empty-icon-wrap">🛒</div>
-        <div class="empty-title">سلّتك فارغة</div>
-        <div class="empty-text">ابدأ بإضافة منتجات من المتجر</div>
-        <button class="empty-cta" onclick="closeCart();switchTab('shop')">تصفّح المتجر ←</button>
+        <div class="empty-title" data-i18n="cartEmpty">سلّتك فارغة</div>
+        <div class="empty-text"><span data-i18n="cartEmptySub">ابدأ بإضافة منتجات من المتجر</span></div>
+        <button class="empty-cta" onclick="closeCart();switchTab('shop')" data-i18n="browseShop2">تصفّح المتجر ←</button>
       </div>`;
     return;
   }
@@ -2335,9 +2342,9 @@ async function renderOrdersPage(){
       c.innerHTML=`
         <div class="empty-state">
           <div class="empty-icon-wrap">📭</div>
-          <div class="empty-title">لا ${currentOrdersTab==='active'?'طلبات نشطة':'سجل طلبات'}</div>
-          <div class="empty-text">${currentOrdersTab==='active'?'طلباتك النشطة ستظهر هنا':'الطلبات السابقة ستظهر هنا'}</div>
-          <button class="empty-cta" onclick="switchTab('shop')">تصفّح المتجر ←</button>
+          <div class="empty-title">${currentOrdersTab==='active'?((window.__wadi_t&&window.__wadi_t('ordersEmptyActive'))||'لا طلبات نشطة'):((window.__wadi_t&&window.__wadi_t('ordersEmptyPast'))||'لا سجل طلبات')}</div>
+          <div class="empty-text">${currentOrdersTab==='active'?((window.__wadi_t&&window.__wadi_t('ordersEmptyActiveSub'))||'طلباتك النشطة ستظهر هنا'):((window.__wadi_t&&window.__wadi_t('ordersEmptyPastSub'))||'الطلبات السابقة ستظهر هنا')}</div>
+          <button class="empty-cta" onclick="switchTab('shop')" data-i18n="browseShop2">تصفّح المتجر ←</button>
         </div>`;
       return;
     }
@@ -2615,8 +2622,8 @@ function renderSellPage(){
         <div style="width:90px;height:90px;border-radius:50%;background:var(--primary4);margin:20px auto 16px;display:flex;align-items:center;justify-content:center;font-size:42px">🏪</div>
         <h2 data-i18n="beSellerTitle" style="font-size:20px;font-weight:900;margin-bottom:8px">كن بائعاً في التعاونية</h2>
         <p style="color:var(--text3);font-size:14px;line-height:1.6;margin-bottom:24px">سجّل دخول إذا كان لديك حساب بائع، أو اطلب الانضمام إذا كنت جديداً.</p>
-        <button class="btn btn-primary btn-block mb-2" onclick="showSellerLogin()">دخول البائع</button>
-        <button class="btn btn-outline btn-block" onclick="showSellerRegister()">إنشاء حساب جديد</button>
+        <button class="btn btn-primary btn-block mb-2" onclick="showSellerLogin()" data-i18n="sellerLogin">دخول البائع</button>
+        <button class="btn btn-outline btn-block" onclick="showSellerRegister()" data-i18n="createNewAcc">إنشاء حساب جديد</button>
       </div>
     `;
     return;
@@ -2632,7 +2639,7 @@ function showSellerLogin(){
       <h2 data-i18n="sellerLogin" style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">دخول البائع</h2>
       <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px">أدخل بياناتك لعرض لوحة البائع</p>
       <div class="field"><label class="field-label">اسم المستخدم</label><input class="field-input" id="sl-user" style="direction:ltr;text-align:right"></div>
-      <div class="field"><label class="field-label">كلمة المرور</label><input class="field-input" id="sl-pw" type="password" style="direction:ltr;text-align:right" onkeydown="if(event.key==='Enter')doSellerLogin()"></div>
+      <div class="field"><label class="field-label" data-i18n="pwdField">كلمة المرور</label><input class="field-input" id="sl-pw" type="password" style="direction:ltr;text-align:right" onkeydown="if(event.key==='Enter')doSellerLogin()"></div>
       <div id="sl-err" style="color:var(--red);font-size:12px;text-align:center;display:none;margin-bottom:10px"></div>
       <button class="btn btn-primary btn-block" onclick="doSellerLogin()">دخول ←</button>
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
@@ -2660,7 +2667,7 @@ function showSellerRegister(){
       <div class="field"><label class="field-label">وصف نشاطك (اختياري)</label><textarea class="field-textarea" id="sr-bio" placeholder="مثلاً: ألبان وأجبان منزليّة"></textarea></div>
       <div class="row-2">
         <div class="field"><label class="field-label">اسم المستخدم *</label><input class="field-input" id="sr-user" placeholder="username" style="direction:ltr;text-align:right"></div>
-        <div class="field"><label class="field-label">كلمة المرور *</label><input class="field-input" id="sr-pw" type="password" style="direction:ltr;text-align:right"></div>
+        <div class="field"><label class="field-label" data-i18n="pwdFieldReq">كلمة المرور *</label><input class="field-input" id="sr-pw" type="password" style="direction:ltr;text-align:right"></div>
       </div>
       <div class="field-hint mb-2">📌 اختر اسم مستخدم بأحرف إنجليزيّة فقط، بدون مسافات</div>
       <div id="sr-err" style="color:var(--red);font-size:12px;text-align:center;display:none;margin-bottom:10px"></div>
