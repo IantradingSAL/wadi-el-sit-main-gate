@@ -521,7 +521,14 @@ setTimeout(checkPushBanner, 1500);
 (function(){
   'use strict';
   function getSavedLang(){
-    try{ var s = localStorage.getItem('wadi_lang'); if(s==='en'||s==='fr'||s==='ar') return s; }catch(e){}
+    /* Check multiple possible keys (different i18n libs use different keys) */
+    var keys = ['wadi_lang','lang','i18n_lang','i18nLang','language'];
+    for(var i = 0; i < keys.length; i++){
+      try{
+        var s = localStorage.getItem(keys[i]);
+        if(s==='en'||s==='fr'||s==='ar') return s;
+      }catch(e){}
+    }
     return null;
   }
   function getCurrentLang(){
@@ -580,7 +587,13 @@ setTimeout(checkPushBanner, 1500);
   
   window.wadiSetLang = function(lang){
     if(!lang || (lang!=='ar' && lang!=='en' && lang!=='fr')) return;
-    try{ localStorage.setItem('wadi_lang', lang); }catch(e){}
+    try{
+      localStorage.setItem('wadi_lang', lang);
+      localStorage.setItem('lang', lang);
+      localStorage.setItem('i18n_lang', lang);
+      localStorage.setItem('i18nLang', lang);
+      localStorage.setItem('language', lang);
+    }catch(e){}
     document.documentElement.lang = lang;
     document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
     if(typeof window.I18N !== 'undefined' && I18N){
@@ -602,25 +615,40 @@ setTimeout(checkPushBanner, 1500);
   window.wadiOpenHelp = function(){ var ov=document.getElementById('WADI_HELP_OV'); if(ov){ov.classList.add('open');document.body.style.overflow='hidden';} };
   window.wadiCloseHelp = function(){ var ov=document.getElementById('WADI_HELP_OV'); if(ov){ov.classList.remove('open');document.body.style.overflow='';} };
   
-  function init(){
-    var cur = getCurrentLang();
+  function applyLangFully(cur){
+    /* Force-apply language: update html attrs, tell i18n.js, run manualApply, highlight pill */
     document.documentElement.lang = cur;
     document.documentElement.dir = (cur==='ar') ? 'rtl' : 'ltr';
     var btns = document.querySelectorAll('.wadi-lang-btn');
     for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-lang')===cur);
-    /* If saved lang differs from i18n's current, tell i18n */
     if(typeof window.I18N !== 'undefined' && I18N){
-      var i18nLang = (typeof I18N.getLang === 'function') ? (function(){try{return I18N.getLang();}catch(e){return null;}})() : null;
-      if(i18nLang && i18nLang !== cur){
-        try{
-          if(typeof I18N.setLang === 'function') I18N.setLang(cur);
-          else if(typeof I18N.apply === 'function') I18N.apply(cur);
-          else if(typeof I18N.use === 'function') I18N.use(cur);
-          else if(typeof I18N.set === 'function') I18N.set(cur);
-        }catch(e){}
-      }
+      try{
+        if(typeof I18N.setLang === 'function') I18N.setLang(cur);
+        else if(typeof I18N.apply === 'function') I18N.apply(cur);
+        else if(typeof I18N.use === 'function') I18N.use(cur);
+        else if(typeof I18N.set === 'function') I18N.set(cur);
+        else if(typeof I18N.change === 'function') I18N.change(cur);
+      }catch(e){}
     }
     manualApply(cur);
+  }
+  function init(){
+    var cur = getCurrentLang();
+    /* Save to ALL possible localStorage keys so any i18n lib finds it */
+    try{
+      localStorage.setItem('wadi_lang', cur);
+      localStorage.setItem('lang', cur);
+      localStorage.setItem('i18n_lang', cur);
+      localStorage.setItem('i18nLang', cur);
+      localStorage.setItem('language', cur);
+    }catch(e){}
+    /* Apply NOW + at staggered intervals to override any late i18n.js auto-render */
+    applyLangFully(cur);
+    setTimeout(function(){ applyLangFully(cur); }, 100);
+    setTimeout(function(){ applyLangFully(cur); }, 500);
+    setTimeout(function(){ applyLangFully(cur); }, 1500);
+    setTimeout(function(){ applyLangFully(cur); }, 3000);
+    /* Hook into i18n.js's onApply for future language changes */
     if(typeof window.I18N !== 'undefined' && I18N && typeof I18N.onApply === 'function'){
       try{
         I18N.onApply(function(lang){
