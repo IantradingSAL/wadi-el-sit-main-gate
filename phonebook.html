@@ -226,6 +226,27 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
   }
 })();
 </script>
+
+<script>
+/* Phonebook MORE strings — defensive */
+(function(){
+  var _e = {"ar": {"dtMap": "خريطة", "copyBtn": "نسخ", "shareCorrection": "✏️ طلب تصحيح", "shareShare": "🔗 مشاركة", "shareWa": "واتساب", "shareGeneric": "📤 مشاركة عامّة", "shareCopyText": "📋 نسخ النصّ", "shareEmail": "✉️ بريد إلكتروني", "workCall": "📞 اتصال بالعمل", "workMapBtn": "📍 موقع العمل", "workMapOnMap": "📍 موقع العمل على الخريطة", "phoneHiddenWarn": "🔒 رقم الهاتف مخفي بطلب صاحبه. للتواصل، يرجى المرور عبر البلدية.", "shareNoteTitle": "💡 أو شارك الرسالة كنصّ — تحتوي كل التفاصيل والموقع على الخريطة:", "admLoginInfo": "استخدم نفس بيانات تسجيل الدخول الخاصة بنظام البلدية", "admLoginEmail": "البريد الإلكتروني", "admLoginPwd": "كلمة المرور", "admLoginBtn": "🔓 تسجيل الدخول", "admLoginIn": "جاري الدخول…", "admSupabaseUnavail": "⚠️ Supabase غير متاح", "allLocations": "جميع المواقع", "allOccupations": "جميع الوظائف"}, "en": {"dtMap": "Map", "copyBtn": "Copy", "shareCorrection": "✏️ Correction request", "shareShare": "🔗 Share", "shareWa": "WhatsApp", "shareGeneric": "📤 General share", "shareCopyText": "📋 Copy text", "shareEmail": "✉️ Email", "workCall": "📞 Call work", "workMapBtn": "📍 Work location", "workMapOnMap": "📍 Work location on map", "phoneHiddenWarn": "🔒 Phone number hidden by request. Please contact via the municipality.", "shareNoteTitle": "💡 Or share the message as text — contains all details and map location:", "admLoginInfo": "Use the same login credentials as the municipality system", "admLoginEmail": "Email", "admLoginPwd": "Password", "admLoginBtn": "🔓 Sign in", "admLoginIn": "Signing in…", "admSupabaseUnavail": "⚠️ Supabase unavailable", "allLocations": "All locations", "allOccupations": "All occupations"}, "fr": {"dtMap": "Carte", "copyBtn": "Copier", "shareCorrection": "✏️ Demande de correction", "shareShare": "🔗 Partager", "shareWa": "WhatsApp", "shareGeneric": "📤 Partage général", "shareCopyText": "📋 Copier le texte", "shareEmail": "✉️ E-mail", "workCall": "📞 Appeler le travail", "workMapBtn": "📍 Lieu de travail", "workMapOnMap": "📍 Lieu de travail sur la carte", "phoneHiddenWarn": "🔒 Numéro de téléphone masqué par demande. Veuillez contacter via la municipalité.", "shareNoteTitle": "💡 Ou partagez le message en texte — contient tous les détails et la localisation :", "admLoginInfo": "Utilisez les mêmes identifiants que le système de la municipalité", "admLoginEmail": "E-mail", "admLoginPwd": "Mot de passe", "admLoginBtn": "🔓 Connexion", "admLoginIn": "Connexion…", "admSupabaseUnavail": "⚠️ Supabase indisponible", "allLocations": "Tous les lieux", "allOccupations": "Toutes les professions"}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _e){ for(var k in _e[lng]){ window.__WADI_STRINGS__[lng][k] = _e[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){
+    try{ I18N.extend(_e); }catch(e){}
+  }
+})();
+</script>
+
+<script>(function(){
+  var _x = {ar:{shareGenericLabel:'مشاركة عامّة',shareCopyTextLabel:'نسخ النصّ',shareEmailLabel:'بريد إلكتروني',shareNote:'💡 أو شارك الرسالة كنصّ — تحتوي كل التفاصيل والموقع على الخريطة:'},
+            en:{shareGenericLabel:'General share',shareCopyTextLabel:'Copy text',shareEmailLabel:'Email',shareNote:'💡 Or share the message as text — contains all details and map location:'},
+            fr:{shareGenericLabel:'Partage général',shareCopyTextLabel:'Copier le texte',shareEmailLabel:'E-mail',shareNote:'💡 Ou partagez le message en texte — contient tous les détails :'}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _x){ for(var k in _x[lng]){ window.__WADI_STRINGS__[lng][k] = _x[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_x); }catch(e){} }
+})();</script>
 <script src="pwa.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1682,8 +1703,8 @@ function openDetail(c){
 
       <div class="dt-actions">
         <a class="dt-action tel ${callOk?'':'dis'}" href="${callOk?`tel:${c.phone}`:'#'}"><span class="dt-action-i">📞</span>${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}</a>
-        <a class="dt-action wa ${waOk?'':'dis'}" href="${waOk?`https://wa.me/${c.wa}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">💬</span>واتساب</a>
-        <a class="dt-action map ${mapOk?'':'dis'}" href="${mapOk?`https://www.google.com/maps?q=${c.lat},${c.lng}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">📍</span>خريطة</a>
+        <a class="dt-action wa ${waOk?'':'dis'}" href="${waOk?`https://wa.me/${c.wa}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">💬</span>${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}</a>
+        <a class="dt-action map ${mapOk?'':'dis'}" href="${mapOk?`https://www.google.com/maps?q=${c.lat},${c.lng}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">📍</span>${(window.__wadi_t&&window.__wadi_t('dtMap'))||'خريطة'}</a>
         <button class="dt-action edit" onclick='closeModal();setTimeout(()=>openEdit(${JSON.stringify(c).replace(/'/g,"&apos;")}),200)'><span class="dt-action-i">✏️</span>${(window.__wadi_t&&window.__wadi_t('qaEdit'))||'تعديل'}</button>
       </div>
 
@@ -1691,9 +1712,9 @@ function openDetail(c){
         <div class="dt-field">
           <div class="dt-field-i">📱</div>
           <div class="dt-field-text"><div class="dt-field-l">${(window.__wadi_t&&window.__wadi_t('dtPersonalPhone'))||'رقم الهاتف الشخصي'}</div><div class="dt-field-v">${fmtPhone(c.phone)}</div></div>
-          <button class="dt-field-btn" onclick="copyText('${c.phone}')">📋 نسخ</button>
+          <button class="dt-field-btn" onclick="copyText('${c.phone}')">📋 ${(window.__wadi_t&&window.__wadi_t('copyBtn'))||'نسخ'}</button>
         </div>
-      </div>` : c.phone_hidden ? `<div class="fm-warn">🔒 رقم الهاتف مخفي بطلب صاحبه. للتواصل، يرجى المرور عبر البلدية.</div>` : ''}
+      </div>` : c.phone_hidden ? `<div class="fm-warn">${(window.__wadi_t&&window.__wadi_t('phoneHiddenWarn'))||'🔒 رقم الهاتف مخفي بطلب صاحبه. للتواصل، يرجى المرور عبر البلدية.'}</div>` : ''}
 
       ${personalFields.length ? `<div class="dt-section-title">${(window.__wadi_t&&window.__wadi_t('dtPersonalInfo'))||'المعلومات الشخصية'}</div>
         <div class="dt-fields">
@@ -1711,9 +1732,9 @@ function openDetail(c){
             ${f.copy ? `<button class="dt-field-btn" onclick="copyText('${f.copy}')">📋</button>` : ''}
           </div>`).join('')}
           ${c.work_phone ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:5px">
-            <a class="btn btn-prim btn-sm" href="tel:${c.work_phone}">📞 اتصال بالعمل</a>
-            ${workMapOk ? `<a class="btn btn-grn btn-sm" href="https://www.google.com/maps?q=${c.work_lat},${c.work_lng}" target="_blank" rel="noopener">📍 موقع العمل</a>` : '<span></span>'}
-          </div>` : workMapOk ? `<a class="btn btn-grn btn-sm btn-block" href="https://www.google.com/maps?q=${c.work_lat},${c.work_lng}" target="_blank" rel="noopener">📍 موقع العمل على الخريطة</a>` : ''}
+            <a class="btn btn-prim btn-sm" href="tel:${c.work_phone}">${(window.__wadi_t&&window.__wadi_t('workCall'))||'📞 اتصال بالعمل'}</a>
+            ${workMapOk ? `<a class="btn btn-grn btn-sm" href="https://www.google.com/maps?q=${c.work_lat},${c.work_lng}" target="_blank" rel="noopener">${(window.__wadi_t&&window.__wadi_t('workMapBtn'))||'📍 موقع العمل'}</a>` : '<span></span>'}
+          </div>` : workMapOk ? `<a class="btn btn-grn btn-sm btn-block" href="https://www.google.com/maps?q=${c.work_lat},${c.work_lng}" target="_blank" rel="noopener">${(window.__wadi_t&&window.__wadi_t('workMapOnMap'))||'📍 موقع العمل على الخريطة'}</a>` : ''}
         </div>` : ''}
 
       ${mapHtml}
@@ -1722,8 +1743,8 @@ function openDetail(c){
 
       <div class="dt-foot">
         <div class="dt-foot-row">
-          <button class="btn btn-sun" onclick='openCorrect(${JSON.stringify(c).replace(/'/g,"&apos;")})'>✏️ طلب تصحيح</button>
-          <button class="btn btn-out" onclick="shareContact(${JSON.stringify(c).replace(/"/g,'&quot;')})">🔗 مشاركة</button>
+          <button class="btn btn-sun" onclick='openCorrect(${JSON.stringify(c).replace(/'/g,"&apos;")})'>${(window.__wadi_t&&window.__wadi_t('shareCorrection'))||'✏️ طلب تصحيح'}</button>
+          <button class="btn btn-out" onclick="shareContact(${JSON.stringify(c).replace(/"/g,'&quot;')})">${(window.__wadi_t&&window.__wadi_t('shareShare'))||'🔗 مشاركة'}</button>
         </div>
       </div>
     </div>
@@ -1816,7 +1837,7 @@ function shareContact(c){
         </span>
       </button>
 
-      <div class="fm-info" style="margin-bottom:12px">
+      <div class="fm-info" style="margin-bottom:12px" data-i18n="shareNote">
         💡 أو شارك الرسالة كنصّ — تحتوي كل التفاصيل والموقع على الخريطة:
       </div>
 
@@ -1825,16 +1846,16 @@ function shareContact(c){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
         <button class="btn share-btn-wa" onclick="shareViaWhatsapp()">
           <span class="share-btn-i">${WA_LOGO_SVG}</span>
-          <span>واتساب</span>
+          <span>${(window.__wadi_t&&window.__wadi_t('shareWa'))||'واتساب'}</span>
         </button>
         <button class="btn btn-out" onclick="shareViaSystem()">
-          <span style="font-size:18px">📤</span> مشاركة عامّة
+          <span style="font-size:18px">📤</span> ${(window.__wadi_t&&window.__wadi_t('shareGenericLabel'))||'مشاركة عامّة'}
         </button>
         <button class="btn btn-out" onclick="shareCopy()">
-          <span style="font-size:18px">📋</span> نسخ النصّ
+          <span style="font-size:18px">📋</span> ${(window.__wadi_t&&window.__wadi_t('shareCopyTextLabel'))||'نسخ النصّ'}
         </button>
         <button class="btn btn-out" onclick="shareViaEmail()">
-          <span style="font-size:18px">✉️</span> بريد إلكتروني
+          <span style="font-size:18px">✉️</span> ${(window.__wadi_t&&window.__wadi_t('shareEmailLabel'))||'بريد إلكتروني'}
         </button>
       </div>
 
@@ -2749,18 +2770,18 @@ function openLogin(){
     </div>
     <div class="modal-bd">
       <div style="text-align:center;padding:14px 0;font-size:48px">🛡️</div>
-      <div class="fm-info" style="text-align:center;background:#f3edff;color:#4a2178">استخدم نفس بيانات تسجيل الدخول الخاصة بنظام البلدية</div>
+      <div class="fm-info" style="text-align:center;background:#f3edff;color:#4a2178" data-i18n="admLoginInfo">استخدم نفس بيانات تسجيل الدخول الخاصة بنظام البلدية</div>
       <form class="fm" id="LG_FM" onsubmit="submitLogin(event)" style="margin-top:14px">
         <div class="fm-grp">
-          <label class="fm-l">البريد الإلكتروني <span class="req">*</span></label>
+          <label class="fm-l"><span data-i18n="admLoginEmail">البريد الإلكتروني</span> <span class="req">*</span></label>
           <input class="fm-i ltr" type="email" id="LG_EMAIL" required placeholder="name@example.com">
         </div>
         <div class="fm-grp">
-          <label class="fm-l">كلمة المرور <span class="req">*</span></label>
+          <label class="fm-l"><span data-i18n="admLoginPwd">كلمة المرور</span> <span class="req">*</span></label>
           <input class="fm-i ltr" type="password" id="LG_PASS" required placeholder="••••••••">
         </div>
         <div id="LG_ERR"></div>
-        <button type="submit" class="btn btn-purp btn-block" id="LG_SUB">🔓 تسجيل الدخول</button>
+        <button type="submit" class="btn btn-purp btn-block" id="LG_SUB" data-i18n="admLoginBtn">🔓 تسجيل الدخول</button>
       </form>
     </div>
   </div>`;
