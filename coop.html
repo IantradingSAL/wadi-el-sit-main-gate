@@ -4000,5 +4000,194 @@ function shadeColor(c,p){
 })();
 
 </script>
+
+
+<script>(function(){
+  var _ins = {"ar": {"inst_title": "📲 ثبّت تطبيق وادي الست", "inst_subtitle": "وصول سريع، إشعارات فوريّة، يعمل بدون إنترنت", "inst_btn": "تثبيت الآن", "inst_later": "لاحقاً", "inst_close": "إغلاق", "inst_ios_title": "📲 لتثبيت التطبيق على iPhone", "inst_ios_step1": "1. اضغط زر المشاركة 📤 في أسفل الشاشة", "inst_ios_step2": "2. اختر «أضف إلى الشاشة الرئيسية» أو «Add to Home Screen»", "inst_ios_step3": "3. اضغط «إضافة» في الزاوية العلوية اليمنى", "inst_chrome_title": "📲 لتثبيت التطبيق على Chrome", "inst_chrome_step1": "1. اضغط على القائمة (⋮) في أعلى Chrome", "inst_chrome_step2": "2. اختر «تثبيت التطبيق» أو «Install app»", "inst_chrome_step3": "3. اضغط «تثبيت» للتأكيد", "inst_firefox_step": "في Firefox: اضغط القائمة (⋮) ← «تثبيت» / «Install»", "inst_edge_step": "في Edge: اضغط القائمة (⋯) ← «التطبيقات» ← «تثبيت هذا الموقع كتطبيق»", "inst_done_thanks": "شكراً! تمّ تثبيت التطبيق ✨"}, "en": {"inst_title": "📲 Install the Wadi El Sit app", "inst_subtitle": "Quick access, instant notifications, works offline", "inst_btn": "Install now", "inst_later": "Later", "inst_close": "Close", "inst_ios_title": "📲 To install on iPhone", "inst_ios_step1": "1. Tap the Share button 📤 at the bottom of the screen", "inst_ios_step2": "2. Choose \"Add to Home Screen\"", "inst_ios_step3": "3. Tap \"Add\" in the top-right corner", "inst_chrome_title": "📲 To install on Chrome", "inst_chrome_step1": "1. Tap the menu (⋮) at the top of Chrome", "inst_chrome_step2": "2. Choose \"Install app\"", "inst_chrome_step3": "3. Tap \"Install\" to confirm", "inst_firefox_step": "On Firefox: tap menu (⋮) → \"Install\"", "inst_edge_step": "On Edge: tap menu (⋯) → \"Apps\" → \"Install this site as an app\"", "inst_done_thanks": "Thank you! App installed ✨"}, "fr": {"inst_title": "📲 Installez l'application Wadi El Sit", "inst_subtitle": "Accès rapide, notifications instantanées, fonctionne hors ligne", "inst_btn": "Installer maintenant", "inst_later": "Plus tard", "inst_close": "Fermer", "inst_ios_title": "📲 Pour installer sur iPhone", "inst_ios_step1": "1. Appuyez sur le bouton Partager 📤 en bas de l'écran", "inst_ios_step2": "2. Choisissez « Sur l'écran d'accueil »", "inst_ios_step3": "3. Appuyez sur « Ajouter » en haut à droite", "inst_chrome_title": "📲 Pour installer sur Chrome", "inst_chrome_step1": "1. Appuyez sur le menu (⋮) en haut de Chrome", "inst_chrome_step2": "2. Choisissez « Installer l'application »", "inst_chrome_step3": "3. Appuyez sur « Installer » pour confirmer", "inst_firefox_step": "Sur Firefox : menu (⋮) → « Installer »", "inst_edge_step": "Sur Edge : menu (⋯) → « Applications » → « Installer ce site »", "inst_done_thanks": "Merci ! Application installée ✨"}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _ins){ for(var k in _ins[lng]){ window.__WADI_STRINGS__[lng][k] = _ins[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_ins); }catch(e){} }
+})();</script>
+
+<style>
+.wadi-inst-banner{position:fixed;bottom:14px;left:14px;right:14px;z-index:99800;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 12px 36px rgba(15,77,130,.45),0 4px 12px rgba(0,0,0,.18);font-family:'Tajawal',sans-serif;display:none;align-items:center;gap:12px;animation:wadiInstSlide .4s cubic-bezier(.34,1.56,.64,1);max-width:520px;margin-left:auto;margin-right:auto;}
+.wadi-inst-banner.show{display:flex;}
+@keyframes wadiInstSlide{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.wadi-inst-icon{font-size:30px;flex-shrink:0;line-height:1;}
+.wadi-inst-text{flex:1;line-height:1.35;min-width:0;}
+.wadi-inst-title{font-weight:800;font-size:14px;margin-bottom:2px;}
+.wadi-inst-sub{font-size:11.5px;opacity:.92;}
+.wadi-inst-actions{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+.wadi-inst-btn{background:#fff;color:#0f4d82;border:none;padding:7px 14px;border-radius:999px;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.wadi-inst-btn:hover,.wadi-inst-btn:active{transform:scale(1.04);}
+.wadi-inst-close{background:rgba(255,255,255,.18);color:#fff;border:none;padding:5px 10px;border-radius:999px;font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;}
+.wadi-inst-close:hover{background:rgba(255,255,255,.3);}
+.wadi-inst-hint-ov{position:fixed;inset:0;background:rgba(15,30,60,.6);z-index:99900;display:none;align-items:center;justify-content:center;padding:18px;}
+.wadi-inst-hint-ov.show{display:flex;}
+.wadi-inst-hint-mo{background:#fff;color:#191c24;border-radius:16px;padding:22px 20px;max-width:380px;width:100%;font-family:'Tajawal',sans-serif;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:wadiInstSlide .3s ease;}
+.wadi-inst-hint-t{font-weight:800;font-size:16px;color:#0f4d82;margin-bottom:14px;text-align:center;}
+.wadi-inst-hint-step{font-size:13.5px;line-height:1.7;margin:8px 0;padding:9px 12px;background:#eef5fc;border-radius:9px;}
+.wadi-inst-hint-close{margin-top:14px;width:100%;background:#0f4d82;color:#fff;border:none;padding:10px;border-radius:10px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;}
+@media(max-width:540px){.wadi-inst-banner{padding:10px 12px;gap:8px;}.wadi-inst-title{font-size:13px;}.wadi-inst-sub{font-size:11px;}.wadi-inst-btn{padding:6px 11px;font-size:11.5px;}.wadi-inst-close{padding:4px 8px;font-size:10.5px;}}
+@media print{.wadi-inst-banner,.wadi-inst-hint-ov{display:none!important;}}
+</style>
+
+<div id="WADI_INST_BANNER" class="wadi-inst-banner" role="dialog">
+  <div class="wadi-inst-icon">📲</div>
+  <div class="wadi-inst-text">
+    <div class="wadi-inst-title" data-i18n="inst_title">📲 ثبّت تطبيق وادي الست</div>
+    <div class="wadi-inst-sub" data-i18n="inst_subtitle">وصول سريع، إشعارات فوريّة، يعمل بدون إنترنت</div>
+  </div>
+  <div class="wadi-inst-actions">
+    <button type="button" class="wadi-inst-btn" id="WADI_INST_GO" data-i18n="inst_btn">تثبيت الآن</button>
+    <button type="button" class="wadi-inst-close" id="WADI_INST_DISMISS" data-i18n="inst_later">لاحقاً</button>
+  </div>
+</div>
+<div id="WADI_INST_HINT_OV" class="wadi-inst-hint-ov" onclick="if(event.target===this)wadiCloseInstHint()">
+  <div class="wadi-inst-hint-mo">
+    <div class="wadi-inst-hint-t" id="WADI_INST_HINT_T">📲</div>
+    <div id="WADI_INST_HINT_BODY"></div>
+    <button type="button" class="wadi-inst-hint-close" onclick="wadiCloseInstHint()" data-i18n="inst_close">إغلاق</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var deferredPrompt = null;
+  var DISMISS_KEY = 'wadi_install_dismissed_until';
+  var DISMISS_DAYS = 7;
+  function t(key){ return (window.__wadi_t && window.__wadi_t(key)) || ''; }
+  function isInstalled(){
+    try{
+      if(window.matchMedia('(display-mode: standalone)').matches) return true;
+      if(window.navigator.standalone === true) return true;
+      if(document.referrer && document.referrer.indexOf('android-app://') === 0) return true;
+    }catch(e){}
+    return false;
+  }
+  function isDismissed(){
+    try{ var until = parseInt(localStorage.getItem(DISMISS_KEY)||'0',10); return until > Date.now(); }catch(e){ return false; }
+  }
+  function dismissFor(days){
+    try{ localStorage.setItem(DISMISS_KEY, String(Date.now() + days * 24 * 60 * 60 * 1000)); }catch(e){}
+  }
+  function detectBrowser(){
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPhone|iPad|iPod/i.test(ua);
+    var isSafari = isIOS && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
+    var isChrome = /Chrome|CriOS/i.test(ua) && !/Edg/i.test(ua);
+    var isFirefox = /Firefox|FxiOS/i.test(ua);
+    var isEdge = /Edg/i.test(ua);
+    var isSamsung = /SamsungBrowser/i.test(ua);
+    return {isIOS:isIOS, isSafari:isSafari, isChrome:isChrome, isFirefox:isFirefox, isEdge:isEdge, isSamsung:isSamsung};
+  }
+  function showBanner(){
+    if(isInstalled() || isDismissed()) return;
+    var el = document.getElementById('WADI_INST_BANNER');
+    if(el){
+      el.classList.add('show');
+      try{ if(window.manualApply) window.manualApply(); }catch(e){}
+    }
+  }
+  function hideBanner(){
+    var el = document.getElementById('WADI_INST_BANNER');
+    if(el) el.classList.remove('show');
+  }
+  function showInstallHint(){
+    var b = detectBrowser();
+    var titleEl = document.getElementById('WADI_INST_HINT_T');
+    var bodyEl = document.getElementById('WADI_INST_HINT_BODY');
+    if(!titleEl || !bodyEl) return;
+    bodyEl.innerHTML = '';
+    var title = '', steps = [];
+    if(b.isIOS && b.isSafari){
+      title = t('inst_ios_title') || '📲 iPhone';
+      steps = [t('inst_ios_step1'), t('inst_ios_step2'), t('inst_ios_step3')];
+    } else if(b.isChrome || b.isSamsung){
+      title = t('inst_chrome_title') || '📲 Chrome';
+      steps = [t('inst_chrome_step1'), t('inst_chrome_step2'), t('inst_chrome_step3')];
+    } else if(b.isFirefox){
+      title = t('inst_chrome_title') || '📲';
+      steps = [t('inst_firefox_step')];
+    } else if(b.isEdge){
+      title = t('inst_chrome_title') || '📲';
+      steps = [t('inst_edge_step')];
+    } else {
+      title = t('inst_chrome_title') || '📲';
+      steps = [t('inst_chrome_step1'), t('inst_chrome_step2'), t('inst_chrome_step3')];
+    }
+    titleEl.textContent = title;
+    for(var i = 0; i < steps.length; i++){
+      if(steps[i]){
+        var d = document.createElement('div');
+        d.className = 'wadi-inst-hint-step';
+        d.textContent = steps[i];
+        bodyEl.appendChild(d);
+      }
+    }
+    document.getElementById('WADI_INST_HINT_OV').classList.add('show');
+  }
+  window.wadiCloseInstHint = function(){
+    var ov = document.getElementById('WADI_INST_HINT_OV');
+    if(ov) ov.classList.remove('show');
+  };
+  window.wadiShowInstallHint = showInstallHint;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    showBanner();
+  });
+  window.addEventListener('appinstalled', function(){
+    hideBanner();
+    try{ localStorage.removeItem(DISMISS_KEY); }catch(e){}
+    try{ if(typeof toast === 'function') toast(t('inst_done_thanks')||'✨','ok'); }catch(e){}
+  });
+  function setupButtons(){
+    var go = document.getElementById('WADI_INST_GO');
+    var dismiss = document.getElementById('WADI_INST_DISMISS');
+    if(go){
+      go.onclick = async function(){
+        if(deferredPrompt){
+          try{
+            deferredPrompt.prompt();
+            var choice = await deferredPrompt.userChoice;
+            if(choice && choice.outcome === 'accepted'){ hideBanner(); }
+            else { showInstallHint(); }
+            deferredPrompt = null;
+          }catch(err){
+            console.warn('Install prompt failed:', err);
+            showInstallHint();
+          }
+        } else {
+          showInstallHint();
+        }
+      };
+    }
+    if(dismiss){
+      dismiss.onclick = function(){
+        dismissFor(DISMISS_DAYS);
+        hideBanner();
+      };
+    }
+  }
+  function init(){
+    setupButtons();
+    if(isInstalled() || isDismissed()) return;
+    var b = detectBrowser();
+    if(b.isIOS && b.isSafari){
+      setTimeout(showBanner, 4000);
+    }
+    setTimeout(function(){
+      if(!deferredPrompt && !isInstalled() && !isDismissed() && !b.isIOS){
+        showBanner();
+      }
+    }, 8000);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
+})();
+</script>
+
 </body>
 </html>
