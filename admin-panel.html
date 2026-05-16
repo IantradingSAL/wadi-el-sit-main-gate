@@ -41,4 +41,276 @@ body { font-family: Tahoma, Arial, sans-serif; margin: 0; background: #f0f2f7; m
 .stat-card .stat-lbl { font-size: 11px; color: #555; margin-top: 5px; }
 .stat-total .stat-num { color: #0f4d82; }
 .stat-pending { background: #fff3cd; } .stat-pending .stat-num { color: #856404; }
-.stat-approved { background: #d4edda; } .stat-approved .stat-num { col
+.stat-approved { background: #d4edda; } .stat-approved .stat-num { color: #155724; }
+.stat-suspended { background: #f8d7da; } .stat-suspended .stat-num { color: #721c24; }
+@media (max-width: 540px) { .seller-stats { grid-template-columns: repeat(2,1fr); } }
+.filter-pills { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.pill { padding: 7px 14px; border-radius: 20px; background: #e8eaef; border: none; cursor: pointer; font-size: 13px; color: #444; }
+.pill.active { background: #1a6eb5; color: #fff; font-weight: 700; }
+.seller-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+.seller-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 8px; }
+.seller-info { flex: 1; min-width: 0; }
+.seller-name { font-weight: 800; font-size: 16px; color: #222; }
+.seller-meta { color: #666; font-size: 13px; margin-top: 3px; }
+.seller-row-stats { font-size: 12px; color: #888; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
+.seller-status { font-size: 12px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; font-weight: 600; }
+.seller-status.pending { background: #fff3cd; color: #856404; }
+.seller-status.approved { background: #d4edda; color: #155724; }
+.seller-status.suspended { background: #f8d7da; color: #721c24; }
+.seller-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+.seller-actions button { padding: 6px 12px; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+.btn-act-approve { background: #28a745; }
+.btn-act-suspend { background: #ffc107; color: #000 !important; }
+.btn-act-reactivate { background: #28a745; }
+.btn-act-pwd { background: #17a2b8; }
+.btn-act-delete { background: #dc3545; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="brand"><h1>🏢 لوحة إدارة التعاونية</h1><p>بلدية وادي الست · v3 (debug build)</p></div>
+  
+  <div class="diag">
+    <h4>🔍 فحص تلقائي</h4>
+    <div id="diag-log"><div class="diag-line info">⏳ جارٍ الفحص...</div></div>
+  </div>
+  
+  <div id="adm-login-modal" class="adm-modal-bg" hidden>
+    <div class="adm-modal-card">
+      <div class="adm-modal-header"><h3>🔐 دخول الإدارة</h3></div>
+      <div class="adm-modal-body">
+        <div class="form-group"><label for="adm-username">اسم المستخدم</label><input type="text" id="adm-username" autocomplete="username" placeholder="imad"></div>
+        <div class="form-group"><label for="adm-password">كلمة المرور</label><input type="password" id="adm-password" autocomplete="current-password" placeholder="••••••••"></div>
+        <div id="adm-login-error" class="adm-error" hidden></div>
+        <button class="adm-btn-primary" id="adm-login-btn" onclick="coopAdminLogin()">دخول</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="adm-header" hidden>
+    <div class="adm-header-inner">
+      <div><span class="adm-greeting">👤 <span id="adm-greeting-name">—</span></span><span class="adm-badge-super" id="adm-super-badge" hidden>⭐ Super</span></div>
+      <button class="adm-btn-logout" onclick="coopAdminLogout()">🚪 خروج</button>
+    </div>
+  </div>
+  
+  <div id="adm-sellers-tab" hidden>
+    <div class="seller-stats">
+      <div class="stat-card stat-total"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">الإجمالي</div></div>
+      <div class="stat-card stat-pending"><div class="stat-num" id="stat-pending">0</div><div class="stat-lbl">⏳ ينتظر</div></div>
+      <div class="stat-card stat-approved"><div class="stat-num" id="stat-approved">0</div><div class="stat-lbl">✅ معتمد</div></div>
+      <div class="stat-card stat-suspended"><div class="stat-num" id="stat-suspended">0</div><div class="stat-lbl">⛔ موقوف</div></div>
+    </div>
+    <div class="filter-pills" id="seller-filter-pills">
+      <button class="pill active" data-filter="all">الكل</button>
+      <button class="pill" data-filter="pending">⏳ ينتظر</button>
+      <button class="pill" data-filter="approved">✅ معتمد</button>
+      <button class="pill" data-filter="suspended">⛔ موقوف</button>
+    </div>
+    <button class="adm-btn-secondary" onclick="coopAdminLoadSellers()">🔄 تحديث القائمة</button>
+    <div id="sellers-list"></div>
+  </div>
+</div>
+
+<script>
+function diag(msg, cls) {
+  const el = document.getElementById('diag-log');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.className = 'diag-line ' + (cls || 'info');
+  line.textContent = msg;
+  el.appendChild(line);
+  console.log('[diag]', msg);
+}
+diag('✅ 1. JavaScript يعمل', 'ok');
+diag('🌐 جارٍ تحميل مكتبة Supabase من CDN...', 'info');
+
+async function loadSupabaseJS() {
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js',
+    'https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js',
+    'https://esm.sh/@supabase/supabase-js@2.39.7'
+  ];
+  for (const url of cdns) {
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('failed'));
+        document.head.appendChild(s);
+      });
+      if (typeof supabase !== 'undefined') {
+        diag('✅ 2. Supabase JS تحمّلت من: ' + new URL(url).hostname, 'ok');
+        return true;
+      }
+    } catch (e) {
+      diag('⚠️ فشل CDN: ' + new URL(url).hostname, 'info');
+    }
+  }
+  return false;
+}
+
+(async () => {
+  const loaded = await loadSupabaseJS();
+  if (!loaded) {
+    diag('❌ فشلت كل CDNs — الإنترنت أو الفايروول يحجب', 'fail');
+    return;
+  }
+  initAdminPanel();
+})();
+
+function initAdminPanel() {
+  window.client = supabase.createClient("https://onjbwhkmmtqnymhjnplw.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4");
+  diag('✅ 3. Supabase client تم إنشاؤه', 'ok');
+  fetch("https://onjbwhkmmtqnymhjnplw.supabase.co/rest/v1/", { headers: { 'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4" } })
+    .then(r => diag('✅ 4. اتصال بـ Supabase: HTTP ' + r.status, r.ok ? 'ok' : 'fail'))
+    .catch(e => diag('❌ 4. فشل الاتصال: ' + e.message, 'fail'));
+  diag('✅ 5. اللوحة جاهزة — اضغط دخول', 'ok');
+  coopAdminBoot();
+}
+
+const COOP_ADMIN_TOKEN_KEY = 'coop_admin_token_v3';
+const COOP_ADMIN_INFO_KEY  = 'coop_admin_info_v3';
+let _sellersCache = [];
+let _sellerFilter = 'all';
+const coopTokenGet   = () => localStorage.getItem(COOP_ADMIN_TOKEN_KEY);
+const coopTokenSet   = (t, info) => { localStorage.setItem(COOP_ADMIN_TOKEN_KEY, t); localStorage.setItem(COOP_ADMIN_INFO_KEY, JSON.stringify(info)); };
+const coopTokenClear = () => { localStorage.removeItem(COOP_ADMIN_TOKEN_KEY); localStorage.removeItem(COOP_ADMIN_INFO_KEY); };
+const coopInfoGet    = () => { try { return JSON.parse(localStorage.getItem(COOP_ADMIN_INFO_KEY) || 'null'); } catch { return null; } };
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function coopAdminShowLogin() {
+  document.getElementById('adm-login-modal').hidden = false;
+  document.getElementById('adm-header').hidden = true;
+  document.getElementById('adm-sellers-tab').hidden = true;
+  setTimeout(()=>document.getElementById('adm-username')?.focus(), 100);
+}
+function coopAdminShowDashboard() {
+  document.getElementById('adm-login-modal').hidden = true;
+  document.getElementById('adm-header').hidden = false;
+  document.getElementById('adm-sellers-tab').hidden = false;
+  const info = coopInfoGet();
+  if (info) {
+    document.getElementById('adm-greeting-name').textContent = info.display_name || info.username;
+    document.getElementById('adm-super-badge').hidden = !info.is_super;
+  }
+}
+function coopAdminHandleRpcError(err) {
+  const msg = err?.message || String(err);
+  if (msg.includes('invalid_or_expired_token') || msg.includes('admin_token_required') || msg.includes('admin_account_disabled')) {
+    coopTokenClear(); alert('انتهت الجلسة'); coopAdminShowLogin(); return true;
+  }
+  if (msg.includes('super_admin_required')) { alert('⛔ تتطلب Super Admin'); return true; }
+  return false;
+}
+async function coopAdminLogin() {
+  diag('👆 تم الضغط على دخول', 'info');
+  const username = document.getElementById('adm-username').value.trim();
+  const password = document.getElementById('adm-password').value;
+  const errEl = document.getElementById('adm-login-error');
+  const btn = document.getElementById('adm-login-btn');
+  errEl.hidden = true;
+  if (!username || password.length < 4) {
+    errEl.textContent = 'الرجاء إدخال البيانات أولاً (4 أحرف+)';
+    errEl.hidden = false;
+    diag('⚠️ إدخال فارغ أو قصير', 'info');
+    return;
+  }
+  btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول...';
+  diag('🔐 إرسال لـ Supabase...', 'info');
+  try {
+    const hash = await sha256Hex(password);
+    const { data, error } = await client.rpc('coop_admin_login', { p_username: username, p_password_hash: hash, p_user_agent: navigator.userAgent.slice(0,200) });
+    if (error) throw error;
+    if (!data?.token) throw new Error('No token');
+    coopTokenSet(data.token, data.admin);
+    document.getElementById('adm-password').value = '';
+    diag('✅ دخول ناجح!', 'ok');
+    coopAdminShowDashboard();
+    await coopAdminLoadSellers();
+  } catch (e) {
+    const msg = e?.message || String(e);
+    errEl.textContent = msg.includes('invalid_credentials') ? '❌ المستخدم أو كلمة المرور خاطئة' : '❌ خطأ: ' + msg;
+    errEl.hidden = false;
+    diag('❌ فشل الدخول: ' + msg, 'fail');
+  } finally { btn.disabled = false; btn.textContent = 'دخول'; }
+}
+async function coopAdminLogout() {
+  if (!confirm('تسجيل الخروج؟')) return;
+  const token = coopTokenGet();
+  if (token) { try { await client.rpc('coop_admin_logout', { p_token: token }); } catch {} }
+  coopTokenClear(); coopAdminShowLogin();
+}
+async function coopAdminBoot() {
+  const token = coopTokenGet();
+  if (!token) return coopAdminShowLogin();
+  try {
+    const { data, error } = await client.rpc('coop_admin_whoami', { p_token: token });
+    if (error || !data?.admin) throw error || new Error('No admin');
+    coopTokenSet(token, data.admin);
+    coopAdminShowDashboard();
+    await coopAdminLoadSellers();
+  } catch { coopTokenClear(); coopAdminShowLogin(); }
+}
+async function coopAdminLoadSellers() {
+  const token = coopTokenGet();
+  if (!token) return coopAdminShowLogin();
+  try {
+    const { data: stats, error: e1 } = await client.rpc('coop_admin_seller_stats', { p_admin_token: token });
+    if (e1) throw e1;
+    if (stats) {
+      document.getElementById('stat-total').textContent = stats.total || 0;
+      document.getElementById('stat-pending').textContent = stats.pending || 0;
+      document.getElementById('stat-approved').textContent = stats.approved || 0;
+      document.getElementById('stat-suspended').textContent = stats.suspended || 0;
+    }
+    const { data: sellers, error: e2 } = await client.rpc('coop_admin_list_sellers', { p_admin_token: token });
+    if (e2) throw e2;
+    _sellersCache = sellers || []; coopAdminRenderSellers();
+  } catch (e) { if (!coopAdminHandleRpcError(e)) alert('فشل: ' + (e?.message || e)); }
+}
+function coopAdminRenderSellers() {
+  const list = document.getElementById('sellers-list'); list.innerHTML = '';
+  const filtered = _sellerFilter === 'all' ? _sellersCache : _sellersCache.filter(s => s.status === _sellerFilter);
+  if (filtered.length === 0) { list.innerHTML = '<div style="padding:40px;text-align:center;color:#999;background:#fff;border-radius:12px">لا يوجد بائعين</div>'; return; }
+  const info = coopInfoGet(); const isSuper = info?.is_super === true;
+  filtered.forEach(s => {
+    const card = document.createElement('div'); card.className = 'seller-card';
+    const head = document.createElement('div'); head.className = 'seller-head';
+    const inf = document.createElement('div'); inf.className = 'seller-info';
+    const nm = document.createElement('div'); nm.className = 'seller-name'; nm.textContent = s.display_name || s.username;
+    const mt = document.createElement('div'); mt.className = 'seller-meta'; mt.textContent = '👤 ' + s.username + ' · 📞 ' + (s.phone || '—') + (s.area ? ' · 📍 ' + s.area : '');
+    const st = document.createElement('div'); st.className = 'seller-row-stats';
+    st.innerHTML = '<span>📦 ' + s.product_count + ' منتج</span><span>📋 ' + s.pending_orders + ' طلب</span><span>💰 ' + s.balance + ' ل.ل.</span>';
+    inf.append(nm, mt, st);
+    const stat = document.createElement('span'); stat.className = 'seller-status ' + s.status; stat.textContent = s.status_label;
+    head.append(inf, stat); card.appendChild(head);
+    const acts = document.createElement('div'); acts.className = 'seller-actions';
+    const mkBtn = (cls, text, fn) => { const b = document.createElement('button'); b.className = cls; b.textContent = text; b.onclick = fn; return b; };
+    if (s.status === 'pending') acts.appendChild(mkBtn('btn-act-approve', '✅ اعتماد', () => coopAdminApproveSeller(s.id)));
+    if (s.status === 'approved') acts.appendChild(mkBtn('btn-act-suspend', '⛔ إيقاف', () => coopAdminSuspendSeller(s.id, s.display_name || s.username)));
+    if (s.status === 'suspended') acts.appendChild(mkBtn('btn-act-reactivate', '✅ إعادة تفعيل', () => coopAdminApproveSeller(s.id)));
+    if (isSuper) {
+      acts.appendChild(mkBtn('btn-act-pwd', '🔑 كلمة مرور', () => coopAdminChangePassword(s.id, s.username)));
+      acts.appendChild(mkBtn('btn-act-delete', '🗑️ حذف', () => coopAdminDeleteSeller(s.id, s.display_name || s.username)));
+    }
+    card.appendChild(acts); list.appendChild(card);
+  });
+}
+async function coopAdminApproveSeller(id) { if (!confirm('تأكيد؟')) return; try { const {error} = await client.rpc('coop_admin_approve_seller', {p_admin_token:coopTokenGet(),p_seller_id:id}); if(error)throw error; alert('✅ تم'); coopAdminLoadSellers(); } catch(e){ if(!coopAdminHandleRpcError(e))alert('فشل: '+(e?.message||e)); } }
+async function coopAdminSuspendSeller(id, name) { const r = prompt('سبب الإيقاف؟'); if(r===null)return; try { const {error}=await client.rpc('coop_admin_suspend_seller',{p_admin_token:coopTokenGet(),p_seller_id:id,p_reason:r||null}); if(error)throw error; alert('⛔ تم'); coopAdminLoadSellers(); } catch(e){ if(!coopAdminHandleRpcError(e))alert('فشل: '+(e?.message||e)); } }
+async function coopAdminChangePassword(id, u) { const n = prompt('كلمة المرور الجديدة؟'); if(!n||n.length<4)return; if(!confirm('تأكيد؟'))return; try { const h=await sha256Hex(n); const {error}=await client.rpc('coop_admin_change_seller_password',{p_admin_token:coopTokenGet(),p_seller_id:id,p_new_password_hash:h}); if(error)throw error; alert('🔑 تم'); } catch(e){ if(!coopAdminHandleRpcError(e))alert('فشل: '+(e?.message||e)); } }
+async function coopAdminDeleteSeller(id, name) { if(!confirm('حذف نهائي؟'))return; let f=false; for(let i=0;i<2;i++){ try { const {error}=await client.rpc('coop_admin_delete_seller',{p_admin_token:coopTokenGet(),p_seller_id:id,p_force:f}); if(error)throw error; alert('🗑️ تم'); coopAdminLoadSellers(); return; } catch(e){ const m=e?.message||String(e); if(m.includes('seller_has_orders')&&i===0){if(confirm('عنده طلبات. حذف رغماً؟')){f=true;continue;}return;} if(!coopAdminHandleRpcError(e))alert('فشل: '+m); return; } } }
+document.addEventListener('click', (e) => {
+  if (e.target.matches('#seller-filter-pills .pill')) {
+    document.querySelectorAll('#seller-filter-pills .pill').forEach(p => p.classList.remove('active'));
+    e.target.classList.add('active'); _sellerFilter = e.target.dataset.filter; coopAdminRenderSellers();
+  }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && document.activeElement?.closest('#adm-login-modal')) coopAdminLogin(); });
+</script>
+</body>
+</html>
