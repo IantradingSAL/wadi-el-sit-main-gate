@@ -3,266 +3,1344 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin Panel | Wadi El Sit</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#1a6eb5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="وادي الست">
+<title>لوحة إدارة التعاونيّة — بلدية وادي الست</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-[hidden]{display:none!important}
-:root{--primary:#0f4d82;--primary-light:#1a6eb5;--primary-dark:#0a3a64;--bg:#f5f7fa;--surface:#fff;--text:#1a202c;--text-muted:#718096;--border:#e2e8f0;--success:#38a169;--warning:#d69e2e;--danger:#e53e3e;--info:#3182ce;--shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow:0 4px 12px rgba(0,0,0,.08);--shadow-lg:0 10px 30px rgba(0,0,0,.15);--radius:12px}
-body{font-family:'Tajawal','Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
-body[dir="ltr"]{font-family:'Inter','Segoe UI',sans-serif}
-.app-header{background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;padding:14px 24px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:100}
-.app-header .brand{display:flex;align-items:center;gap:12px}
-.app-header .logo{width:44px;height:44px;background:rgba(255,255,255,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
-.app-header h1{font-size:17px;font-weight:800}
-.app-header .subtitle{font-size:11px;opacity:.85;margin-top:1px}
-.app-header .toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.lang-switch{display:flex;background:rgba(255,255,255,.15);border-radius:8px;padding:3px}
-.lang-btn{background:transparent;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s}
-.lang-btn.active{background:#fff;color:var(--primary)}
-.hdr-link{background:rgba(255,255,255,.15);color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;transition:all .2s}
-.hdr-link:hover{background:rgba(255,255,255,.25)}
-.user-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);padding:7px 14px;border-radius:24px;font-size:13px;font-weight:500}
-.super-badge{background:#ffd700;color:#1a4480;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
-.btn-logout{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
-.btn-logout:hover{background:rgba(255,255,255,.25)}
-.container{max-width:1200px;margin:0 auto;padding:24px}
-.welcome{background:var(--surface);border-radius:var(--radius);padding:18px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm);border-inline-start:4px solid var(--primary)}
-.welcome h2{font-size:20px;font-weight:700;color:var(--primary);margin-bottom:4px}
-.welcome p{color:var(--text-muted);font-size:13px}
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.stat-card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:all .2s;cursor:pointer}
-.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-.stat-card .stat-label{font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:6px}
-.stat-card .stat-value{font-size:30px;font-weight:800;line-height:1}
-.stat-card .stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:18px}
-.stat-card.total .stat-icon{background:#ebf4ff}.stat-card.total .stat-value{color:var(--primary)}
-.stat-card.pending .stat-icon{background:#fef5e7}.stat-card.pending .stat-value{color:var(--warning)}
-.stat-card.approved .stat-icon{background:#d4f4dd}.stat-card.approved .stat-value{color:var(--success)}
-.stat-card.suspended .stat-icon{background:#fde8e8}.stat-card.suspended .stat-value{color:var(--danger)}
-@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
-.toolbar-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.section-title{font-size:18px;font-weight:700}
-.search-box input{padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;width:240px;transition:all .2s}
-.search-box input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,77,130,.1)}
-.filter-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.pill{padding:7px 14px;border-radius:24px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:500;color:var(--text-muted);transition:all .2s;font-family:inherit}
-.pill:hover{background:#f0f4f8}
-.pill.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(15,77,130,.25)}
-.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
-.btn-refresh:hover{border-color:var(--primary);color:var(--primary)}
-.sellers-grid{display:grid;gap:10px}
-.seller-card{background:var(--surface);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:all .2s;cursor:pointer}
-.seller-card:hover{box-shadow:var(--shadow);border-color:var(--primary-light);transform:translateY(-1px)}
-.seller-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.seller-info{flex:1;min-width:200px}
-.seller-name{font-size:16px;font-weight:700;margin-bottom:3px}
-.seller-meta{color:var(--text-muted);font-size:12px;display:flex;gap:12px;flex-wrap:wrap}
-.seller-numbers{margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-muted)}
-.seller-numbers .num{font-weight:700;color:var(--text)}
-.seller-status{font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600;white-space:nowrap}
-.seller-status.pending{background:#fef5e7;color:#975a16}
-.seller-status.approved{background:#d4f4dd;color:#1f7a3a}
-.seller-status.suspended{background:#fde8e8;color:#9b2c2c}
-.view-hint{font-size:11px;color:var(--primary);margin-top:8px;font-weight:600}
-.empty-state{background:var(--surface);border-radius:var(--radius);padding:48px 20px;text-align:center;color:var(--text-muted);border:1px dashed var(--border);font-size:14px}
-.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
-.login-card{background:var(--surface);border-radius:20px;width:100%;max-width:400px;overflow:hidden;box-shadow:var(--shadow-lg)}
-.login-header{padding:32px 28px 18px;text-align:center}
-.logo-large{width:64px;height:64px;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:30px;color:#fff;margin-bottom:14px;box-shadow:0 6px 16px rgba(15,77,130,.3)}
-.login-header h2{font-size:22px;font-weight:800;margin-bottom:4px}
-.login-header p{font-size:13px;color:var(--text-muted)}
-.login-body{padding:0 28px 28px}
-.lang-switch-login{display:flex;justify-content:center;gap:6px;margin-bottom:16px}
-.lang-switch-login button{background:#f0f4f8;color:var(--text-muted);border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;transition:all .15s}
-.lang-switch-login button.active{background:var(--primary);color:#fff}
+/* ════════════════════════════════════════════════════════════
+   PALETTE — verbatim from index.html / admin-panel.html
+   ════════════════════════════════════════════════════════════ */
+:root{
+  --blue:#1a6eb5; --blue2:#0f4d82; --blue3:#daeaf8; --blue4:#f0f5fa; --blue5:#e8f2ff;
+  --green:#28a745; --green2:#155724; --green3:#d4edda;
+  --yellow:#ffc107; --yellow2:#856404; --yellow3:#fff3cd;
+  --red:#dc3545; --red2:#721c24; --red3:#f8d7da;
+  --cyan:#17a2b8;
+  --gold:#ffd700;
+  --bg:#f0f2f7;
+  --surface:#fff;
+  --text:#1a2332; --text2:#4a5568; --text3:#8a95a3; --text4:#bcc4cf;
+  --border:#e0e6ef; --border2:#d0d4dc;
+  --shadow-sm:0 1px 3px rgba(15,77,130,.06);
+  --shadow:0 4px 20px rgba(15,77,130,.1);
+  --shadow-lg:0 16px 40px rgba(15,77,130,.18);
+  --r:12px; --r2:16px; --r3:20px;
+  --font:'Tajawal',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font-family:var(--font);cursor:pointer;border:none;outline:none;background:none;color:inherit}
+input,select{font-family:var(--font);outline:none;color:inherit}
+a{color:inherit;text-decoration:none}
+
+/* ════════════════════════════════════════════════════════════
+   ROUND LOGO BUTTON — click goes back to index.html
+   ════════════════════════════════════════════════════════════ */
+.brand-block{
+  text-align:center;
+  padding:32px 16px 18px;
+  position:relative
+}
+.logo-btn{
+  display:block;
+  width:96px;height:96px;
+  border-radius:50%;
+  margin:0 auto 14px;
+  overflow:hidden;
+  border:4px solid var(--surface);
+  background:linear-gradient(135deg,var(--blue2),var(--blue));
+  box-shadow:0 8px 24px rgba(15,77,130,.25),0 2px 6px rgba(15,77,130,.15);
+  cursor:pointer;
+  transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s;
+  position:relative
+}
+.logo-btn::after{
+  content:'';position:absolute;inset:-8px;
+  border:1.5px dashed var(--blue3);border-radius:50%;
+  opacity:0;transition:opacity .25s
+}
+.logo-btn:hover{
+  transform:scale(1.06) rotate(-3deg);
+  box-shadow:0 14px 36px rgba(15,77,130,.35),0 4px 12px rgba(15,77,130,.2)
+}
+.logo-btn:hover::after{opacity:1}
+.logo-btn:active{transform:scale(1.02)}
+.logo-btn img{width:100%;height:100%;object-fit:cover;display:block}
+.logo-fallback{
+  display:none;
+  width:100%;height:100%;
+  align-items:center;justify-content:center;
+  color:#fff;font-family:var(--font);
+  font-size:30px;font-weight:900;
+  letter-spacing:-1px;
+  text-shadow:0 2px 4px rgba(0,0,0,.2)
+}
+.logo-btn img[hidden] + .logo-fallback{display:flex}
+
+.brand-title h1{font-size:24px;color:var(--blue2);font-weight:900;letter-spacing:-.4px;line-height:1.2}
+.brand-title p{font-size:13px;color:var(--text2);margin-top:5px;font-weight:500}
+.logo-hint{
+  display:block;font-size:10.5px;color:var(--text3);
+  margin-top:8px;letter-spacing:.4px;
+  font-weight:700;text-transform:uppercase
+}
+
+.lang-bar{position:absolute;top:24px;inset-inline-end:16px}
+.lang-pill{
+  display:flex;gap:2px;background:var(--surface);
+  padding:3px;border-radius:100px;
+  border:1px solid var(--border);box-shadow:var(--shadow-sm)
+}
+.lang-pill button{
+  padding:6px 12px;font-size:11px;font-weight:800;
+  color:var(--text3);border-radius:100px;
+  letter-spacing:.5px;transition:.2s;font-family:var(--font)
+}
+.lang-pill button.active{background:var(--blue);color:#fff}
+.lang-pill button:hover:not(.active){color:var(--text)}
+
+.container{max-width:980px;margin:0 auto;padding:0 16px 50px}
+
+/* ════════════════════════════════════════════════════════════
+   LOGIN MODAL
+   ════════════════════════════════════════════════════════════ */
+.adm-modal-bg{
+  position:fixed;inset:0;
+  background:rgba(15,77,130,.55);backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;padding:16px;animation:fadeIn .25s
+}
+@keyframes fadeIn{from{opacity:0}}
+.adm-modal-card{
+  background:var(--surface);
+  border-radius:20px;max-width:420px;width:100%;
+  overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.35);
+  animation:slideUp .35s cubic-bezier(.2,.7,.2,1)
+}
+@keyframes slideUp{from{transform:translateY(24px);opacity:0}}
+.adm-modal-header{
+  background:linear-gradient(120deg,var(--blue2),var(--blue));
+  color:#fff;padding:26px 24px 22px;text-align:center;
+  position:relative;overflow:hidden
+}
+.adm-modal-header::before{
+  content:'';position:absolute;top:-50%;inset-inline-end:-30%;
+  width:260px;height:260px;
+  background:radial-gradient(circle,rgba(255,255,255,.15) 0,transparent 60%);
+  pointer-events:none
+}
+.adm-modal-header::after{
+  content:'';position:absolute;bottom:-40%;inset-inline-start:-25%;
+  width:200px;height:200px;
+  background:radial-gradient(circle,rgba(255,215,0,.18) 0,transparent 60%);
+  pointer-events:none
+}
+.adm-modal-header h3{font-size:20px;font-weight:900;position:relative;z-index:1;letter-spacing:-.3px;margin-bottom:5px}
+.adm-modal-header .sub{font-size:12.5px;opacity:.9;position:relative;z-index:1}
+.adm-modal-body{padding:26px 26px 22px}
 .form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
-.form-group input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;transition:all .2s}
-.form-group input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,77,130,.1)}
-.btn-login{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:6px}
-.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,77,130,.3)}
-.btn-login:disabled{background:#cbd5e0;cursor:not-allowed;transform:none;box-shadow:none}
-.error-msg{background:#fde8e8;color:#9b2c2c;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px}
-.toast-container{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.toast{background:var(--surface);padding:12px 20px;border-radius:10px;box-shadow:var(--shadow-lg);font-size:14px;font-weight:500;min-width:280px;max-width:400px;animation:slideDown .3s ease-out;border-inline-start:4px solid var(--primary)}
-.toast.success{border-color:var(--success)}.toast.error{border-color:var(--danger)}.toast.warning{border-color:var(--warning)}
-@keyframes slideDown{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
-.spinner{display:inline-block;width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+.form-group label{display:block;font-size:13px;color:var(--text2);margin-bottom:7px;font-weight:700}
+.fi{
+  width:100%;padding:13px 15px;
+  border:1.5px solid var(--border2);border-radius:12px;
+  font-size:15px;font-family:inherit;color:var(--text);
+  transition:.2s;background:#fff
+}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue3)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;padding:12px 20px;border-radius:12px;
+  font-family:var(--font);font-size:14px;font-weight:800;
+  transition:.2s;cursor:pointer;line-height:1;
+  border:1.5px solid transparent
+}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-block{width:100%;padding:14px}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue2);border-color:var(--blue2)}
+.btn-ghost{background:var(--surface);color:var(--text2);border-color:var(--border)}
+.btn-ghost:hover{background:var(--blue4);border-color:var(--blue);color:var(--blue)}
+.btn-danger{background:var(--red);color:#fff;border-color:var(--red)}
+
+.adm-error{
+  background:var(--red3);color:var(--red2);
+  padding:11px 14px;border-radius:11px;
+  font-size:13px;margin-bottom:12px;
+  border:1px solid rgba(220,53,69,.2);font-weight:600
+}
+
+/* ════════════════════════════════════════════════════════════
+   HEADER STRIP (after login)
+   ════════════════════════════════════════════════════════════ */
+.adm-header-inner{
+  display:flex;justify-content:space-between;align-items:center;
+  background:linear-gradient(135deg,var(--blue4),var(--surface));
+  border:1.5px solid var(--blue3);
+  padding:14px 18px;border-radius:var(--r2);
+  margin-bottom:18px;flex-wrap:wrap;gap:8px
+}
+.adm-greeting{font-weight:800;color:var(--blue2);font-size:14.5px;display:flex;align-items:center;gap:7px}
+.adm-badge-super{
+  background:linear-gradient(135deg,#ffd700,#f5c842);
+  color:#5c4a00;padding:3px 11px;border-radius:8px;
+  font-size:11px;font-weight:900;
+  box-shadow:0 2px 6px rgba(245,200,66,.35)
+}
+.adm-btn-logout{
+  background:#fff;color:var(--red);border:1.5px solid var(--red3);
+  padding:8px 16px;border-radius:10px;
+  font-size:13px;font-weight:700;
+  display:inline-flex;align-items:center;gap:5px;transition:.15s
+}
+.adm-btn-logout:hover{background:var(--red3);border-color:var(--red)}
+
+/* ════════════════════════════════════════════════════════════
+   STAT CARDS
+   ════════════════════════════════════════════════════════════ */
+.seller-stats{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;margin-bottom:20px
+}
+@media(max-width:540px){.seller-stats{grid-template-columns:repeat(2,1fr)}}
+.stat-card{
+  padding:18px 14px;border-radius:var(--r2);text-align:start;
+  background:var(--surface);
+  border:1.5px solid transparent;
+  transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden
+}
+.stat-card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(15,77,130,.1)}
+.stat-card::before{
+  content:'';position:absolute;top:0;inset-inline-end:0;
+  width:48px;height:48px;
+  opacity:.1;border-radius:0 0 0 var(--r2)
+}
+.stat-card .stat-emoji{font-size:22px;line-height:1;margin-bottom:8px}
+.stat-card .stat-num{font-size:28px;font-weight:900;line-height:1;letter-spacing:-.4px}
+.stat-card .stat-lbl{font-size:11.5px;color:var(--text2);margin-top:5px;font-weight:700}
+.stat-total{border-color:var(--blue3)}
+.stat-total .stat-num{color:var(--blue2)}
+.stat-total::before{background:var(--blue)}
+.stat-pending{background:linear-gradient(135deg,var(--yellow3) 0%,#fffaef 100%);border-color:#f0d97c}
+.stat-pending .stat-num{color:var(--yellow2)}
+.stat-pending::before{background:var(--yellow)}
+.stat-approved{background:linear-gradient(135deg,var(--green3) 0%,#f0faf2 100%);border-color:#b0d7b8}
+.stat-approved .stat-num{color:var(--green2)}
+.stat-approved::before{background:var(--green)}
+.stat-suspended{background:linear-gradient(135deg,var(--red3) 0%,#fcf2f3 100%);border-color:#e8b1b8}
+.stat-suspended .stat-num{color:var(--red2)}
+.stat-suspended::before{background:var(--red)}
+
+/* ─── Toolbar ─── */
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1;min-width:220px;position:relative}
+.search input{
+  width:100%;padding:12px 14px 12px 40px;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;font-size:14px;font-family:inherit
+}
+html[dir="rtl"] .search input{padding:12px 40px 12px 14px}
+.search input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue3)}
+.search svg{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--text3)}
+
+.filter-pills{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pill{
+  padding:9px 16px;border-radius:100px;
+  background:var(--surface);border:1.5px solid var(--border);
+  cursor:pointer;font-size:13px;color:var(--text2);
+  font-weight:700;transition:.15s;font-family:inherit;
+  display:inline-flex;align-items:center;gap:5px
+}
+.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 4px 10px rgba(26,110,181,.25)}
+.pill .count{
+  background:rgba(0,0,0,.08);padding:1px 7px;
+  border-radius:99px;font-size:10.5px;font-family:monospace;font-weight:800
+}
+.pill.active .count{background:rgba(255,255,255,.25)}
+
+/* ════════════════════════════════════════════════════════════
+   SELLER CARDS — clickable
+   ════════════════════════════════════════════════════════════ */
+.seller-card{
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:var(--r2);
+  padding:16px;margin-bottom:11px;
+  transition:.18s;cursor:pointer
+}
+.seller-card:hover{
+  border-color:var(--blue);
+  box-shadow:0 8px 22px rgba(15,77,130,.1);
+  transform:translateY(-1px)
+}
+.seller-card-row{
+  display:flex;align-items:center;gap:14px;
+  justify-content:space-between
+}
+.seller-left{display:flex;gap:13px;align-items:center;flex:1;min-width:0}
+.seller-avatar{
+  width:50px;height:50px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue2),var(--blue));
+  color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:17px;
+  flex-shrink:0;box-shadow:0 4px 10px rgba(15,77,130,.18);
+  letter-spacing:-.5px
+}
+.seller-info{flex:1;min-width:0}
+.seller-name{
+  font-weight:900;font-size:16px;color:var(--text);
+  margin-bottom:3px;letter-spacing:-.2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.seller-meta{color:var(--text2);font-size:12.5px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seller-meta .username{font-family:monospace;background:var(--blue4);padding:2px 8px;border-radius:6px;color:var(--blue2);font-size:11.5px;font-weight:800}
+.seller-meta .dot{color:var(--text4)}
+.seller-row-stats{
+  display:flex;gap:14px;margin-top:7px;
+  font-size:12px;color:var(--text2);
+  font-weight:600;flex-wrap:wrap
+}
+.seller-row-stats span{display:inline-flex;align-items:center;gap:4px}
+.seller-row-stats strong{color:var(--blue2);font-weight:900;font-family:monospace}
+
+.seller-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+.seller-status{
+  font-size:11px;padding:5px 11px;border-radius:8px;
+  white-space:nowrap;font-weight:900;letter-spacing:.02em;
+  display:inline-flex;align-items:center;gap:5px
+}
+.seller-status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.seller-status.pending{background:var(--yellow3);color:var(--yellow2)}
+.seller-status.approved{background:var(--green3);color:var(--green2)}
+.seller-status.suspended{background:var(--red3);color:var(--red2)}
+.chevron-hint{font-size:11px;color:var(--text3);font-weight:600}
+
+.empty-list{
+  padding:60px 24px;text-align:center;
+  color:var(--text3);
+  background:var(--surface);border-radius:var(--r2);
+  border:1.5px dashed var(--border)
+}
+.empty-list .ico{font-size:44px;margin-bottom:10px;display:block}
+.empty-list h3{font-size:17px;color:var(--text2);margin-bottom:5px;font-weight:800}
+.empty-list .small{font-size:12px;color:var(--text3);margin-top:8px;font-family:monospace;word-break:break-word}
+.spinner{
+  width:28px;height:28px;
+  border:3px solid var(--border);border-top-color:var(--blue);
+  border-radius:50%;animation:spin .7s linear infinite;
+  display:inline-block
+}
 @keyframes spin{to{transform:rotate(360deg)}}
-.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-start;justify-content:center;z-index:9998;padding:20px;overflow-y:auto}
-.detail-modal{background:var(--surface);border-radius:16px;width:100%;max-width:800px;overflow:hidden;box-shadow:var(--shadow-lg);margin:auto}
-.detail-header{background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;padding:24px 28px;position:relative}
-.detail-header .close-btn{position:absolute;top:16px;inset-inline-end:16px;background:rgba(255,255,255,.2);color:#fff;border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px}
-.detail-header h2{font-size:22px;font-weight:800;margin-bottom:6px}
-.detail-header .meta{font-size:13px;opacity:.9;display:flex;gap:14px;flex-wrap:wrap}
-.detail-tabs{display:flex;background:#f0f4f8;border-bottom:1px solid var(--border);overflow-x:auto}
-.tab-btn{background:transparent;border:none;padding:14px 24px;font-size:14px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap}
-.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--surface)}
-.tab-content{padding:24px 28px;max-height:60vh;overflow-y:auto}
-.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
-.info-item{background:#f8fafc;padding:12px 14px;border-radius:10px}
-.info-item .lbl{font-size:11px;color:var(--text-muted);font-weight:500;margin-bottom:4px}
-.info-item .val{font-size:14px;font-weight:700;color:var(--text);word-wrap:break-word}
-.stat-mini{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f8fafc;border-radius:8px;margin-bottom:6px}
-.stat-mini .lbl{font-size:13px;color:var(--text-muted)}
-.stat-mini .val{font-size:14px;font-weight:700}
-.product-item,.order-item{background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border)}
-.product-item .name,.order-item .name{font-weight:700;font-size:14px;margin-bottom:4px}
-.product-item .meta,.order-item .meta{font-size:12px;color:var(--text-muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
-.status-chip{font-size:10px;padding:3px 8px;border-radius:8px;font-weight:600;display:inline-block}
-.status-chip.pending{background:#fef5e7;color:#975a16}
-.status-chip.confirmed{background:#bee3f8;color:#2c5282}
-.status-chip.out_for_delivery{background:#fed7aa;color:#9c4221}
-.status-chip.delivered{background:#d4f4dd;color:#1f7a3a}
-.status-chip.cancelled{background:#fde8e8;color:#9b2c2c}
-.status-chip.active{background:#d4f4dd;color:#1f7a3a}
-.status-chip.paused{background:#fef5e7;color:#975a16}
-.detail-actions{padding:18px 28px;background:#f8fafc;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.detail-actions button{padding:9px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .15s}
-.detail-actions button:hover{transform:translateY(-1px)}
-.btn-approve{background:var(--success);color:#fff}
-.btn-suspend{background:var(--warning);color:#fff}
-.btn-pwd{background:var(--info);color:#fff}
-.btn-delete{background:var(--danger);color:#fff}
+.loading-state{padding:50px;text-align:center;color:var(--text3)}
+
+/* ════════════════════════════════════════════════════════════
+   DETAIL MODAL
+   ════════════════════════════════════════════════════════════ */
+.detail-overlay{
+  position:fixed;inset:0;
+  background:rgba(15,77,130,.5);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;
+  z-index:1000;padding:16px;animation:fadeIn .25s
+}
+.detail-overlay.show{display:flex}
+.detail-modal{
+  background:var(--surface);
+  border-radius:22px;
+  width:100%;max-width:780px;max-height:92vh;
+  overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:var(--shadow-lg);
+  animation:slideUp .3s cubic-bezier(.2,.7,.2,1)
+}
+
+.detail-head{
+  background:linear-gradient(135deg,var(--blue2),var(--blue));
+  color:#fff;padding:22px 24px 18px;
+  position:relative;overflow:hidden
+}
+.detail-head::before{
+  content:'';position:absolute;top:-50%;inset-inline-start:-30%;
+  width:300px;height:300px;
+  background:radial-gradient(circle,rgba(255,255,255,.15) 0,transparent 60%);
+  pointer-events:none
+}
+.detail-head::after{
+  content:'';position:absolute;bottom:-40%;inset-inline-end:-25%;
+  width:240px;height:240px;
+  background:radial-gradient(circle,rgba(255,215,0,.2) 0,transparent 60%);
+  pointer-events:none
+}
+.detail-head-row{display:flex;align-items:center;gap:16px;position:relative;z-index:1}
+.detail-avatar{
+  width:62px;height:62px;border-radius:50%;
+  background:rgba(255,255,255,.25);
+  border:2.5px solid rgba(255,255,255,.4);
+  backdrop-filter:blur(8px);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:21px;flex-shrink:0;
+  letter-spacing:-.5px;text-shadow:0 1px 2px rgba(0,0,0,.2)
+}
+.detail-name{font-size:22px;font-weight:900;letter-spacing:-.3px;line-height:1.2;margin-bottom:5px;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.detail-meta{font-size:13px;opacity:.92;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.detail-meta .username{background:rgba(255,255,255,.2);padding:2px 9px;border-radius:6px;font-family:monospace;font-weight:800;font-size:11.5px}
+.detail-meta .status-pill{padding:3px 11px;border-radius:8px;font-size:11px;font-weight:900;background:rgba(255,255,255,.95);letter-spacing:.02em}
+.detail-meta .status-pill.pending{color:var(--yellow2)}
+.detail-meta .status-pill.approved{color:var(--green2)}
+.detail-meta .status-pill.suspended{color:var(--red2)}
+.detail-close{
+  position:absolute;top:18px;inset-inline-end:18px;
+  width:36px;height:36px;
+  background:rgba(255,255,255,.15);border-radius:50%;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  z-index:2;transition:.15s
+}
+.detail-close:hover{background:rgba(255,255,255,.28)}
+
+.detail-quick{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;padding:0 24px;margin-top:14px;
+  position:relative;z-index:1
+}
+.detail-quick-card{
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:12px;padding:11px 12px;
+  color:#fff;text-align:center
+}
+.detail-quick-card .qv{font-size:18px;font-weight:900;line-height:1;margin-bottom:3px;font-family:monospace;letter-spacing:-.3px}
+.detail-quick-card .ql{font-size:10.5px;opacity:.85;font-weight:700;letter-spacing:.02em}
+
+.detail-tabs{
+  display:flex;padding:0 24px;margin-top:18px;
+  border-bottom:1.5px solid var(--border);
+  background:var(--surface);gap:4px
+}
+.detail-tab{
+  padding:14px 4px;margin-inline-end:24px;
+  font-weight:800;color:var(--text3);
+  border-bottom:2.5px solid transparent;margin-bottom:-1.5px;
+  font-size:13px;font-family:var(--font);
+  display:flex;align-items:center;gap:6px;transition:.15s
+}
+.detail-tab:hover{color:var(--text2)}
+.detail-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.detail-tab-count{
+  background:var(--bg);color:var(--text2);
+  padding:1px 8px;border-radius:99px;
+  font-size:11px;font-weight:800;font-family:monospace
+}
+.detail-tab.active .detail-tab-count{background:var(--blue3);color:var(--blue)}
+
+.detail-body{flex:1;overflow-y:auto;padding:20px 24px;background:var(--bg)}
+.tab-pane{display:none}
+.tab-pane.active{display:block;animation:fadeIn .2s}
+
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.info-row{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:13px 15px;transition:.15s
+}
+.info-row:hover{border-color:var(--blue3)}
+.info-row .k{
+  font-size:10.5px;color:var(--text3);
+  margin-bottom:4px;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:5px
+}
+.info-row .v{font-size:14px;color:var(--text);word-break:break-word;font-weight:700}
+.info-row .v.muted{color:var(--text3);font-style:italic;font-weight:500}
+.info-row.span-2{grid-column:span 2}
+.info-row.highlighted{background:var(--blue4);border-color:var(--blue3)}
+.info-row.highlighted .v{color:var(--blue2)}
+
+.quick-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.qa-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 14px;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:99px;
+  font-size:12.5px;font-weight:700;color:var(--text);
+  transition:.15s;cursor:pointer
+}
+.qa-chip:hover{border-color:var(--blue);background:var(--blue4);color:var(--blue)}
+.qa-chip.wa:hover{border-color:#25D366;background:#e8f8ec;color:#0f8a44}
+
+.item-list{display:flex;flex-direction:column;gap:9px}
+.item{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:13px 15px;
+  display:grid;grid-template-columns:1fr auto;gap:12px;
+  align-items:center;transition:.15s
+}
+.item:hover{border-color:var(--blue);box-shadow:0 4px 12px rgba(15,77,130,.07)}
+.item-title{font-weight:800;color:var(--text);font-size:14px;margin-bottom:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.item-meta{font-size:12px;color:var(--text3);display:flex;gap:12px;flex-wrap:wrap}
+.item-meta strong{color:var(--text2);font-weight:700}
+.item-right{text-align:end;font-family:monospace;font-weight:900;color:var(--blue2);font-size:14px;white-space:nowrap}
+.item-right .small{font-family:var(--font);font-weight:600;color:var(--text3);font-size:11px;display:block;margin-top:2px}
+.ref{
+  font-family:monospace;font-size:11px;
+  color:var(--text2);background:var(--blue4);
+  padding:2px 7px;border-radius:5px;border:1px solid var(--blue3)
+}
+.mini-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:900;
+  padding:2px 8px;border-radius:6px;letter-spacing:.02em
+}
+.mini-badge.pending{background:var(--yellow3);color:var(--yellow2)}
+.mini-badge.approved,.mini-badge.delivered,.mini-badge.completed{background:var(--green3);color:var(--green2)}
+.mini-badge.confirmed,.mini-badge.processing{background:var(--blue3);color:var(--blue2)}
+.mini-badge.cancelled,.mini-badge.suspended{background:var(--red3);color:var(--red2)}
+
+.tab-note{
+  background:var(--yellow3);color:var(--yellow2);
+  padding:12px 14px;border-radius:12px;
+  border:1px solid #f0d97c;
+  font-size:12.5px;line-height:1.6;margin-bottom:12px
+}
+.tab-note code{background:rgba(0,0,0,.08);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px}
+
+.detail-foot{
+  padding:16px 24px;background:var(--surface);
+  border-top:1.5px solid var(--border);
+  display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+  justify-content:flex-end
+}
+.detail-foot .spacer{flex:1}
+.act-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 16px;border-radius:10px;
+  font-size:13px;font-weight:800;color:#fff;
+  border:none;cursor:pointer;font-family:inherit;transition:.15s
+}
+.act-btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.15)}
+.act-approve,.act-reactivate{background:var(--green)}
+.act-suspend{background:var(--yellow);color:#000}
+.act-pwd{background:var(--cyan)}
+.act-delete{background:var(--red)}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:#1a1a2e;color:#fff;
+  padding:12px 24px;border-radius:12px;
+  font-size:13.5px;font-weight:700;
+  box-shadow:0 12px 30px rgba(0,0,0,.3);
+  z-index:99999;opacity:0;transition:all .25s;pointer-events:none;
+  max-width:90vw
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red)}
+.toast.ok{background:var(--green)}
+
+/* Prompt modal */
+.prompt-bg{
+  position:fixed;inset:0;background:rgba(15,77,130,.55);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;z-index:10000;padding:16px;
+  animation:fadeIn .2s
+}
+.prompt-bg.show{display:flex}
+.prompt-card{
+  background:#fff;border-radius:18px;max-width:420px;width:100%;
+  overflow:hidden;box-shadow:var(--shadow-lg);
+  animation:slideUp .3s cubic-bezier(.2,.7,.2,1)
+}
+.prompt-head{padding:18px 22px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff}
+.prompt-head h4{font-size:16px;font-weight:900;margin-bottom:3px}
+.prompt-head .sub{font-size:12px;opacity:.88}
+.prompt-body{padding:20px 22px}
+.prompt-foot{padding:0 22px 18px;display:flex;gap:8px;justify-content:flex-end}
+
+@media(max-width:640px){
+  .container{padding:0 12px 32px}
+  .brand-block{padding:24px 12px 14px}
+  .brand-title h1{font-size:20px}
+  .logo-btn{width:80px;height:80px}
+  .lang-bar{position:static;display:flex;justify-content:center;margin-bottom:6px;margin-top:12px}
+  .detail-quick{gap:7px;padding:0 16px}
+  .detail-quick-card{padding:9px 6px}
+  .detail-quick-card .qv{font-size:15px}
+  .detail-head,.detail-tabs,.detail-body,.detail-foot{padding-inline:16px}
+  .info-grid{grid-template-columns:1fr}
+  .info-row.span-2{grid-column:auto}
+  .seller-card{padding:14px}
+  .seller-avatar{width:44px;height:44px;font-size:15px}
+  .seller-name{font-size:15px}
+  .chevron-hint{display:none}
+}
 </style>
 </head>
 <body>
 
-<div id="login-screen" class="login-overlay" hidden>
-<div class="login-card">
-<div class="login-header">
-<div class="logo-large">🏛️</div>
-<h2 data-i18n="adminPanel">Admin Panel</h2>
-<p data-i18n="brand">Wadi El Sit · Coop</p>
-</div>
-<div class="login-body">
-<div class="lang-switch-login">
-<button data-lang="ar">🇱🇧 عربي</button>
-<button data-lang="en">🇬🇧 English</button>
-<button data-lang="fr">🇫🇷 Français</button>
-</div>
-<div id="login-error" class="error-msg" hidden></div>
-<div class="form-group"><label data-i18n="username">Username</label><input type="text" id="username" autocomplete="username"></div>
-<div class="form-group"><label data-i18n="password">Password</label><input type="password" id="password" autocomplete="current-password" placeholder="••••••••"></div>
-<button class="btn-login" id="login-btn" onclick="doLogin()" data-i18n="login">Login</button>
-</div>
-</div>
+<div class="lang-bar">
+  <div class="lang-pill">
+    <button class="active" data-lang="ar" onclick="setLang('ar')">AR</button>
+    <button data-lang="en" onclick="setLang('en')">EN</button>
+    <button data-lang="fr" onclick="setLang('fr')">FR</button>
+  </div>
 </div>
 
-<div id="app" hidden>
-<header class="app-header">
-<div class="brand">
-<div class="logo">🏛️</div>
-<div><h1 data-i18n="adminPanel">Admin Panel</h1><div class="subtitle" data-i18n="brand">Wadi El Sit · Coop</div></div>
+<!-- Round logo button = back to main portal -->
+<div class="brand-block">
+  <a href="index.html" class="logo-btn" title="العودة للبوابة الرئيسية" aria-label="Back to main portal">
+    <img src="icons/icon-192.png" alt="بلدية وادي الست" onerror="this.hidden=true">
+    <div class="logo-fallback">و·س</div>
+  </a>
+  <div class="brand-title">
+    <h1 data-i18n="brand.title">لوحة إدارة التعاونيّة</h1>
+    <p data-i18n="brand.sub">بلدية وادي الست · قضاء الشوف</p>
+    <span class="logo-hint" data-i18n="brand.hint">⬆ اضغط الشعار للعودة للرئيسية</span>
+  </div>
 </div>
-<div class="toolbar">
-<div class="lang-switch">
-<button class="lang-btn" data-lang="ar">AR</button>
-<button class="lang-btn" data-lang="en">EN</button>
-<button class="lang-btn" data-lang="fr">FR</button>
-</div>
-<a href="coop.html" class="hdr-link" target="_blank" data-i18n="coopPage">🛒 Coop</a>
-<div class="user-badge"><span>👤 <span id="user-name">—</span></span><span class="super-badge" id="super-badge" hidden>⭐ Super</span></div>
-<button class="btn-logout" onclick="doLogout()" data-i18n="logout">Logout</button>
-</div>
-</header>
 
 <div class="container">
-<div class="welcome">
-<h2><span data-i18n="welcome">Welcome</span>, <span id="welcome-name">—</span> 👋</h2>
-<p><span data-i18n="sellerMgmt">Seller management</span> · <span id="current-date"></span></p>
+
+  <!-- LOGIN -->
+  <div id="adm-login-modal" class="adm-modal-bg" hidden>
+    <div class="adm-modal-card">
+      <div class="adm-modal-header">
+        <h3 data-i18n="login.title">🔐 دخول الإدارة</h3>
+        <div class="sub" data-i18n="login.sub">صلاحيات إدارة التعاونيّة</div>
+      </div>
+      <div class="adm-modal-body">
+        <div class="form-group">
+          <label for="adm-username" data-i18n="login.username">اسم المستخدم</label>
+          <input type="text" class="fi" id="adm-username" autocomplete="username" placeholder="imad" style="direction:ltr">
+        </div>
+        <div class="form-group">
+          <label for="adm-password" data-i18n="login.password">كلمة المرور</label>
+          <input type="password" class="fi" id="adm-password" autocomplete="current-password" placeholder="••••••••" style="direction:ltr">
+        </div>
+        <div id="adm-login-error" class="adm-error" hidden></div>
+        <button class="btn btn-primary btn-block" id="adm-login-btn" onclick="coopAdminLogin()">
+          🚀 <span data-i18n="login.signin">دخول</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="adm-header" hidden>
+    <div class="adm-header-inner">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+        <span class="adm-greeting">👤 <span id="adm-greeting-name">—</span></span>
+        <span class="adm-badge-super" id="adm-super-badge" hidden>⭐ Super</span>
+      </div>
+      <button class="adm-btn-logout" onclick="coopAdminLogout()">
+        🚪 <span data-i18n="logout">خروج</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="adm-sellers-tab" hidden>
+    <div class="seller-stats">
+      <div class="stat-card stat-total"><div class="stat-emoji">👥</div><div class="stat-num" id="stat-total">0</div><div class="stat-lbl" data-i18n="stat.total">إجمالي البائعين</div></div>
+      <div class="stat-card stat-pending"><div class="stat-emoji">⏳</div><div class="stat-num" id="stat-pending">0</div><div class="stat-lbl" data-i18n="stat.pending">بانتظار الموافقة</div></div>
+      <div class="stat-card stat-approved"><div class="stat-emoji">✅</div><div class="stat-num" id="stat-approved">0</div><div class="stat-lbl" data-i18n="stat.approved">معتمدون</div></div>
+      <div class="stat-card stat-suspended"><div class="stat-emoji">⛔</div><div class="stat-num" id="stat-suspended">0</div><div class="stat-lbl" data-i18n="stat.suspended">موقوفون</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="ابحث بالاسم أو المستخدم أو الهاتف..." data-i18n-attr="placeholder|search.ph" oninput="renderSellersList()">
+      </div>
+      <button class="btn btn-ghost" onclick="loadAll()">🔄 <span data-i18n="btn.refresh">تحديث</span></button>
+    </div>
+
+    <div class="filter-pills" id="seller-filter-pills">
+      <button class="pill active" data-filter="all"><span data-i18n="filter.all">الكل</span> <span class="count" id="cnt-all">0</span></button>
+      <button class="pill" data-filter="pending"><span data-i18n="filter.pending">⏳ بانتظار</span> <span class="count" id="cnt-pending">0</span></button>
+      <button class="pill" data-filter="approved"><span data-i18n="filter.approved">✅ معتمد</span> <span class="count" id="cnt-approved">0</span></button>
+      <button class="pill" data-filter="suspended"><span data-i18n="filter.suspended">⛔ موقوف</span> <span class="count" id="cnt-suspended">0</span></button>
+    </div>
+
+    <div id="sellers-list">
+      <div class="loading-state"><span class="spinner"></span></div>
+    </div>
+  </div>
+
 </div>
 
-<div class="stats-grid">
-<div class="stat-card total" data-filter="all"><div class="stat-icon">📊</div><div class="stat-label" data-i18n="total">Total</div><div class="stat-value" id="stat-total">0</div></div>
-<div class="stat-card pending" data-filter="pending"><div class="stat-icon">⏳</div><div class="stat-label" data-i18n="pending">Pending</div><div class="stat-value" id="stat-pending">0</div></div>
-<div class="stat-card approved" data-filter="approved"><div class="stat-icon">✅</div><div class="stat-label" data-i18n="approved">Approved</div><div class="stat-value" id="stat-approved">0</div></div>
-<div class="stat-card suspended" data-filter="suspended"><div class="stat-icon">⛔</div><div class="stat-label" data-i18n="suspended">Suspended</div><div class="stat-value" id="stat-suspended">0</div></div>
+<!-- DETAIL MODAL -->
+<div class="detail-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-modal">
+    <button class="detail-close" onclick="closeDetail()" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="detail-head">
+      <div class="detail-head-row">
+        <div class="detail-avatar" id="dm-avatar">—</div>
+        <div style="min-width:0;flex:1">
+          <div class="detail-name" id="dm-name">—</div>
+          <div class="detail-meta" id="dm-meta"></div>
+        </div>
+      </div>
+      <div class="detail-quick">
+        <div class="detail-quick-card"><div class="qv" id="dm-q-products">0</div><div class="ql" data-i18n="card.products">منتج</div></div>
+        <div class="detail-quick-card"><div class="qv" id="dm-q-orders">0</div><div class="ql" data-i18n="card.orders">طلب نشط</div></div>
+        <div class="detail-quick-card"><div class="qv" id="dm-q-balance">0</div><div class="ql" data-i18n="card.balance">الرصيد (ل.ل.)</div></div>
+      </div>
+    </div>
+
+    <div class="detail-tabs">
+      <button class="detail-tab active" data-tab="info" onclick="switchTab('info')" data-i18n="tab.info">📋 البيانات</button>
+      <button class="detail-tab" data-tab="products" onclick="switchTab('products')"><span data-i18n="tab.products">📦 المنتجات</span> <span class="detail-tab-count" id="cntTabProducts">0</span></button>
+      <button class="detail-tab" data-tab="orders" onclick="switchTab('orders')"><span data-i18n="tab.orders">📋 الطلبات</span> <span class="detail-tab-count" id="cntTabOrders">0</span></button>
+    </div>
+
+    <div class="detail-body">
+      <div class="tab-pane active" id="pane-info"></div>
+      <div class="tab-pane" id="pane-products"></div>
+      <div class="tab-pane" id="pane-orders"></div>
+    </div>
+
+    <div class="detail-foot" id="dm-foot"></div>
+  </div>
 </div>
 
-<div class="toolbar-row">
-<div class="section-title" data-i18n="sellersList">Sellers List</div>
-<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-<div class="search-box"><input type="text" id="search-box" placeholder="🔎"></div>
-<button class="btn-refresh" onclick="loadSellers()" data-i18n="refresh">🔄 Refresh</button>
-</div>
-</div>
-
-<div class="filter-pills" id="filter-pills">
-<button class="pill active" data-filter="all" data-i18n="all">All</button>
-<button class="pill" data-filter="pending" data-i18n="pending">⏳ Pending</button>
-<button class="pill" data-filter="approved" data-i18n="approved">✅ Approved</button>
-<button class="pill" data-filter="suspended" data-i18n="suspended">⛔ Suspended</button>
-</div>
-
-<div class="sellers-grid" id="sellers-list"></div>
-</div>
+<!-- Prompt modal -->
+<div class="prompt-bg" id="promptBg">
+  <div class="prompt-card">
+    <div class="prompt-head">
+      <h4 id="promptTitle">—</h4>
+      <div class="sub" id="promptSub">—</div>
+    </div>
+    <div class="prompt-body">
+      <input type="text" class="fi" id="promptInput">
+    </div>
+    <div class="prompt-foot">
+      <button class="btn btn-ghost" onclick="closePrompt(null)" data-i18n="prompt.cancel">إلغاء</button>
+      <button class="btn btn-primary" onclick="closePrompt(true)" data-i18n="prompt.ok">تأكيد</button>
+    </div>
+  </div>
 </div>
 
-<div id="detail-modal" class="detail-overlay" hidden onclick="if(event.target===this)closeDetail()">
-<div class="detail-modal" onclick="event.stopPropagation()">
-<div class="detail-header">
-<button class="close-btn" onclick="closeDetail()">✕</button>
-<h2 id="dm-name">—</h2>
-<div class="meta"><span id="dm-username"></span><span id="dm-status-chip"></span></div>
-</div>
-<div class="detail-tabs">
-<button class="tab-btn active" data-tab="overview" data-i18n="overview">Overview</button>
-<button class="tab-btn" data-tab="products" data-i18n="products">Products</button>
-<button class="tab-btn" data-tab="orders" data-i18n="orders">Orders</button>
-</div>
-<div class="tab-content" id="dm-content"></div>
-<div class="detail-actions" id="dm-actions"></div>
-</div>
-</div>
+<div class="toast" id="toast"></div>
 
-<div class="toast-container" id="toasts"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 <script>
-const I18N={ar:{adminPanel:"لوحة الإدارة",brand:"بلدية وادي الست · التعاونية",coopPage:"🛒 التعاونية",logout:"خروج",login:"دخول",username:"اسم المستخدم",password:"كلمة المرور",welcome:"أهلاً",sellerMgmt:"إدارة البائعين",total:"الإجمالي",pending:"قيد الانتظار",approved:"معتمدون",suspended:"موقوفون",all:"الكل",refresh:"تحديث",sellersList:"قائمة البائعين",noSellers:"لا يوجد بائعين",clickToView:"انقر للتفاصيل",overview:"نظرة عامة",products:"المنتجات",orders:"الطلبات",approve:"اعتماد",suspend:"إيقاف",reactivate:"إعادة تفعيل",changePwd:"تغيير كلمة المرور",delete:"حذف",phone:"الهاتف",whatsapp:"واتساب",email:"البريد",area:"المنطقة",joined:"تاريخ الانضمام",bio:"نبذة",totalRevenue:"إجمالي المبيعات",totalOrders:"إجمالي الطلبات",avgOrder:"متوسط الطلب",rating:"التقييم",balance:"الرصيد",lastOrder:"آخر طلب",confirmed:"مؤكد",outForDelivery:"قيد التوصيل",delivered:"تم التسليم",cancelled:"ملغي",active:"نشط",paused:"متوقف",noProducts:"لا يوجد منتجات",noOrders:"لا يوجد طلبات",confirmApprove:"تأكيد الاعتماد؟",confirmSuspend:"سبب الإيقاف؟",confirmDelete:"⚠️ حذف نهائي؟",confirmLogout:"تسجيل الخروج؟",newPwd:"كلمة المرور الجديدة:",confirmPwd:"تأكيد التغيير؟",pwdTooShort:"قصيرة جداً",invalidCreds:"بيانات غير صحيحة",enterCreds:"الرجاء إدخال البيانات",sessionExpired:"انتهت الجلسة",superRequired:"تتطلب Super Admin",operationDone:"تم بنجاح",operationFailed:"فشلت",welcomeBack:"مرحباً",items:"عناصر",currency:"ل.ل.",usdCurrency:"$"},en:{adminPanel:"Admin Panel",brand:"Wadi El Sit · Coop",coopPage:"🛒 Coop",logout:"Logout",login:"Login",username:"Username",password:"Password",welcome:"Welcome",sellerMgmt:"Manage sellers",total:"Total",pending:"Pending",approved:"Approved",suspended:"Suspended",all:"All",refresh:"Refresh",sellersList:"Sellers List",noSellers:"No sellers",clickToView:"Click for details",overview:"Overview",products:"Products",orders:"Orders",approve:"Approve",suspend:"Suspend",reactivate:"Reactivate",changePwd:"Change Password",delete:"Delete",phone:"Phone",whatsapp:"WhatsApp",email:"Email",area:"Area",joined:"Joined",bio:"Bio",totalRevenue:"Total Revenue",totalOrders:"Total Orders",avgOrder:"Avg Order",rating:"Rating",balance:"Balance",lastOrder:"Last Order",confirmed:"Confirmed",outForDelivery:"Out for Delivery",delivered:"Delivered",cancelled:"Cancelled",active:"Active",paused:"Paused",noProducts:"No products",noOrders:"No orders",confirmApprove:"Confirm approval?",confirmSuspend:"Suspension reason?",confirmDelete:"⚠️ Delete permanently?",confirmLogout:"Logout?",newPwd:"New password:",confirmPwd:"Confirm change?",pwdTooShort:"Too short",invalidCreds:"Invalid credentials",enterCreds:"Enter credentials",sessionExpired:"Session expired",superRequired:"Super Admin required",operationDone:"Done",operationFailed:"Failed",welcomeBack:"Welcome",items:"items",currency:"LBP",usdCurrency:"$"},fr:{adminPanel:"Administration",brand:"Wadi El Sit · Coop",coopPage:"🛒 Coop",logout:"Déconnexion",login:"Connexion",username:"Utilisateur",password:"Mot de passe",welcome:"Bienvenue",sellerMgmt:"Gérer les vendeurs",total:"Total",pending:"En attente",approved:"Approuvés",suspended:"Suspendus",all:"Tous",refresh:"Actualiser",sellersList:"Liste des vendeurs",noSellers:"Aucun vendeur",clickToView:"Cliquer pour détails",overview:"Aperçu",products:"Produits",orders:"Commandes",approve:"Approuver",suspend:"Suspendre",reactivate:"Réactiver",changePwd:"Changer mot de passe",delete:"Supprimer",phone:"Téléphone",whatsapp:"WhatsApp",email:"Email",area:"Région",joined:"Adhésion",bio:"Bio",totalRevenue:"Revenu total",totalOrders:"Total commandes",avgOrder:"Moy. commande",rating:"Note",balance:"Solde",lastOrder:"Dernière commande",confirmed:"Confirmée",outForDelivery:"En livraison",delivered:"Livrée",cancelled:"Annulée",active:"Actif",paused:"En pause",noProducts:"Aucun produit",noOrders:"Aucune commande",confirmApprove:"Confirmer?",confirmSuspend:"Raison?",confirmDelete:"⚠️ Supprimer?",confirmLogout:"Déconnexion?",newPwd:"Nouveau mot de passe:",confirmPwd:"Confirmer?",pwdTooShort:"Trop court",invalidCreds:"Identifiants invalides",enterCreds:"Entrez les identifiants",sessionExpired:"Session expirée",superRequired:"Super Admin requis",operationDone:"Effectué",operationFailed:"Échec",welcomeBack:"Bienvenue",items:"articles",currency:"LBP",usdCurrency:"$"}};
-let lang=localStorage.getItem("admin_lang")||"ar";
-function t(k){return(I18N[lang]&&I18N[lang][k])||k}
-function applyLang(){document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";document.body.dir=lang==="ar"?"rtl":"ltr";document.querySelectorAll("[data-i18n]").forEach(e=>{e.textContent=t(e.getAttribute("data-i18n"))});const p=document.getElementById("search-box");if(p)p.placeholder="🔍 "+({ar:"بحث...",en:"Search...",fr:"Rechercher..."}[lang]);document.querySelectorAll(".lang-btn,[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang));updateDate();if(currentSellerDetails)showSellerDetails(currentSellerDetails);if(sellers.length)renderSellers()}
-function setLang(l){lang=l;localStorage.setItem("admin_lang",l);applyLang()}
-function updateDate(){const e=document.getElementById("current-date");if(!e)return;const l={ar:"ar-LB",en:"en-US",fr:"fr-FR"}[lang];e.textContent=new Date().toLocaleDateString(l,{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
-function fmtDate(i){if(!i)return"—";return new Date(i).toLocaleString({ar:"ar-LB",en:"en-US",fr:"fr-FR"}[lang],{dateStyle:"short",timeStyle:"short"})}
-function fmtMoney(n,c){const v=Number(n||0).toLocaleString({ar:"ar-LB",en:"en-US",fr:"fr-FR"}[lang]);return v+" "+(c==="USD"?t("usdCurrency"):t("currency"))}
-const SB_URL="https://onjbwhkmmtqnymhjnplw.supabase.co";
-const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
-let client,sellers=[],filter="all",searchQ="",currentSellerDetails=null,activeTab="overview";
-async function initSupabase(){if(typeof supabase==="undefined")await new Promise((r,j)=>{const s=document.createElement("script");s.src="https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js";s.onload=r;s.onerror=j;document.head.appendChild(s)});client=supabase.createClient(SB_URL,SB_KEY)}
-function toast(m,tp="info"){const e=document.createElement("div");e.className="toast "+tp;e.textContent=(tp==="success"?"✅ ":tp==="error"?"❌ ":tp==="warning"?"⚠️ ":"ℹ️ ")+m;document.getElementById("toasts").appendChild(e);setTimeout(()=>{e.style.opacity="0";setTimeout(()=>e.remove(),300)},3000)}
-async function sha256(x){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(x));return Array.from(new Uint8Array(b)).map(y=>y.toString(16).padStart(2,"0")).join("")}
-const tokenGet=()=>localStorage.getItem("admin_token");
-const tokenSet=(t,i)=>{localStorage.setItem("admin_token",t);localStorage.setItem("admin_info",JSON.stringify(i))};
-const tokenClear=()=>{localStorage.removeItem("admin_token");localStorage.removeItem("admin_info")};
-const getInfo=()=>{try{return JSON.parse(localStorage.getItem("admin_info")||"null")}catch{return null}};
-function showLogin(){document.getElementById("login-screen").hidden=false;document.getElementById("app").hidden=true;setTimeout(()=>document.getElementById("username")?.focus(),100)}
-function showApp(){document.getElementById("login-screen").hidden=true;document.getElementById("app").hidden=false;const i=getInfo();if(i){document.getElementById("user-name").textContent=i.display_name||i.username;document.getElementById("welcome-name").textContent=i.display_name||i.username;document.getElementById("super-badge").hidden=!i.is_super}updateDate()}
-function handleError(e){const m=e?.message||String(e);if(m.includes("invalid_or_expired_token")||m.includes("admin_token_required")||m.includes("admin_account_disabled")){tokenClear();toast(t("sessionExpired"),"warning");showLogin();return true}if(m.includes("super_admin_required")){toast(t("superRequired"),"error");return true}return false}
-async function doLogin(){const u=document.getElementById("username").value.trim();const p=document.getElementById("password").value;const e=document.getElementById("login-error");const b=document.getElementById("login-btn");e.hidden=true;if(!u||p.length<4){e.textContent=t("enterCreds");e.hidden=false;return}b.disabled=true;b.innerHTML='<span class="spinner"></span>';try{const h=await sha256(p);const{data,error}=await client.rpc("coop_admin_login",{p_username:u,p_password_hash:h,p_user_agent:navigator.userAgent.slice(0,200)});if(error)throw error;if(!data?.token)throw new Error("No token");tokenSet(data.token,data.admin);document.getElementById("password").value="";showApp();await loadSellers();toast(t("welcomeBack")+" "+(data.admin.display_name||data.admin.username),"success")}catch(r){const m=r?.message||String(r);e.textContent=m.includes("invalid_credentials")?t("invalidCreds"):"Error: "+m;e.hidden=false}finally{b.disabled=false;b.textContent=t("login")}}
-async function doLogout(){if(!confirm(t("confirmLogout")))return;const k=tokenGet();if(k){try{await client.rpc("coop_admin_logout",{p_token:k})}catch{}}tokenClear();showLogin()}
-async function bootApp(){const k=tokenGet();if(!k)return showLogin();try{const{data,error}=await client.rpc("coop_admin_whoami",{p_token:k});if(error||!data?.admin)throw error||new Error("Invalid");tokenSet(k,data.admin);showApp();await loadSellers()}catch{tokenClear();showLogin()}}
-async function loadSellers(){const k=tokenGet();if(!k)return showLogin();try{const{data:st,error:e1}=await client.rpc("coop_admin_seller_stats",{p_admin_token:k});if(e1)throw e1;if(st){document.getElementById("stat-total").textContent=st.total||0;document.getElementById("stat-pending").textContent=st.pending||0;document.getElementById("stat-approved").textContent=st.approved||0;document.getElementById("stat-suspended").textContent=st.suspended||0}const{data,error:e2}=await client.rpc("coop_admin_list_sellers",{p_admin_token:k});if(e2)throw e2;sellers=data||[];renderSellers()}catch(r){if(!handleError(r))toast(t("operationFailed")+": "+(r?.message||r),"error")}}
-function renderSellers(){const l=document.getElementById("sellers-list");l.innerHTML="";let f=filter==="all"?sellers:sellers.filter(s=>s.status===filter);if(searchQ){const q=searchQ.toLowerCase();f=f.filter(s=>(s.display_name||"").toLowerCase().includes(q)||s.username.toLowerCase().includes(q)||(s.phone||"").includes(q))}if(f.length===0){l.innerHTML='<div class="empty-state">📦 '+t("noSellers")+"</div>";return}f.forEach(s=>{const c=document.createElement("div");c.className="seller-card";c.onclick=()=>openSellerDetails(s.id);c.innerHTML='<div class="seller-row"><div class="seller-info"><div class="seller-name">'+(s.display_name||s.username)+'</div><div class="seller-meta"><span>👤 '+s.username+"</span><span>📞 "+(s.phone||"—")+"</span>"+(s.area?'<span>📍 '+s.area+"</span>":"")+'</div><div class="seller-numbers"><span>📦 <span class="num">'+s.product_count+"</span> "+t("products")+'</span><span>📋 <span class="num">'+s.pending_orders+"</span> "+t("pending")+'</span><span>💰 <span class="num">'+fmtMoney(s.balance,"LBP")+'</span></span></div><div class="view-hint">👉 '+t("clickToView")+'</div></div><span class="seller-status '+s.status+'">'+localStatusLabel(s.status)+"</span></div>";l.appendChild(c)})}
-function localStatusLabel(s){return{pending:"⏳ "+t("pending"),approved:"✅ "+t("approved"),suspended:"⛔ "+t("suspended")}[s]||s}
-async function openSellerDetails(id){const k=tokenGet();if(!k)return showLogin();try{const{data,error}=await client.rpc("coop_admin_get_seller_details",{p_admin_token:k,p_seller_id:id});if(error)throw error;currentSellerDetails=data;showSellerDetails(data);document.getElementById("detail-modal").hidden=false}catch(r){if(!handleError(r))toast(t("operationFailed"),"error")}}
-function closeDetail(){document.getElementById("detail-modal").hidden=true;currentSellerDetails=null}
-function showSellerDetails(d){const p=d.profile;document.getElementById("dm-name").textContent=p.display_name||p.username;document.getElementById("dm-username").textContent="👤 "+p.username+" · 📞 "+(p.phone||"—");const c=document.getElementById("dm-status-chip");c.className="status-chip "+p.status;c.textContent=localStatusLabel(p.status);renderTab(activeTab,d);document.querySelectorAll(".tab-btn").forEach(b=>{b.classList.toggle("active",b.dataset.tab===activeTab);b.onclick=()=>{activeTab=b.dataset.tab;document.querySelectorAll(".tab-btn").forEach(x=>x.classList.toggle("active",x.dataset.tab===activeTab));renderTab(activeTab,d)}});const i=getInfo();const su=i?.is_super===true;const a=document.getElementById("dm-actions");a.innerHTML="";const mk=(c,x,f)=>{const b=document.createElement("button");b.className=c;b.textContent=x;b.onclick=f;return b};if(p.status==="pending")a.appendChild(mk("btn-approve","✅ "+t("approve"),()=>doApprove(p.id,p.display_name||p.username)));if(p.status==="approved")a.appendChild(mk("btn-suspend","⛔ "+t("suspend"),()=>doSuspend(p.id,p.display_name||p.username)));if(p.status==="suspended")a.appendChild(mk("btn-approve","✅ "+t("reactivate"),()=>doApprove(p.id,p.display_name||p.username)));if(su){a.appendChild(mk("btn-pwd","🔑 "+t("changePwd"),()=>doChangePwd(p.id,p.username)));a.appendChild(mk("btn-delete","🗑️ "+t("delete"),()=>doDelete(p.id,p.display_name||p.username)))}}
-function renderTab(n,d){const c=document.getElementById("dm-content");const p=d.profile,s=d.stats;if(n==="overview"){c.innerHTML='<div class="info-grid"><div class="info-item"><div class="lbl">'+t("phone")+'</div><div class="val">'+(p.phone||"—")+'</div></div><div class="info-item"><div class="lbl">'+t("whatsapp")+'</div><div class="val">'+(p.whatsapp||"—")+'</div></div><div class="info-item"><div class="lbl">'+t("email")+'</div><div class="val">'+(p.email||"—")+'</div></div><div class="info-item"><div class="lbl">'+t("area")+'</div><div class="val">'+(p.area||"—")+'</div></div><div class="info-item"><div class="lbl">'+t("joined")+'</div><div class="val">'+fmtDate(p.created_at)+'</div></div><div class="info-item"><div class="lbl">'+t("rating")+'</div><div class="val">⭐ '+(p.rating||0)+"</div></div></div>"+(p.bio?'<div class="info-item" style="margin-bottom:14px"><div class="lbl">'+t("bio")+'</div><div class="val">'+p.bio+"</div></div>":"")+'<h3 style="margin:18px 0 10px;font-size:14px;color:#4a5568">📊 '+t("totalOrders")+'</h3><div class="stat-mini"><span class="lbl">'+t("totalOrders")+'</span><span class="val">'+s.total_orders+'</span></div><div class="stat-mini"><span class="lbl">⏳ '+t("pending")+'</span><span class="val" style="color:var(--warning)">'+s.pending+'</span></div><div class="stat-mini"><span class="lbl">✅ '+t("delivered")+'</span><span class="val" style="color:var(--success)">'+s.delivered+'</span></div><div class="stat-mini"><span class="lbl">❌ '+t("cancelled")+'</span><span class="val" style="color:var(--danger)">'+s.cancelled+'</span></div><div class="stat-mini"><span class="lbl">💰 '+t("totalRevenue")+'</span><span class="val">'+fmtMoney(s.total_revenue,"LBP")+'</span></div><div class="stat-mini"><span class="lbl">📊 '+t("avgOrder")+'</span><span class="val">'+fmtMoney(s.avg_order_value,"LBP")+'</span></div><div class="stat-mini"><span class="lbl">💼 '+t("balance")+'</span><span class="val">'+fmtMoney(p.balance,"LBP")+'</span></div><div class="stat-mini"><span class="lbl">🕐 '+t("lastOrder")+'</span><span class="val">'+fmtDate(s.last_order_at)+"</span></div>"}else if(n==="products"){if(!d.products||d.products.length===0){c.innerHTML='<div class="empty-state">📦 '+t("noProducts")+"</div>";return}c.innerHTML=d.products.map(pr=>'<div class="product-item"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div style="flex:1"><div class="name">'+pr.name+"</div>"+(pr.description?'<div style="font-size:12px;color:#718096;margin:4px 0">'+pr.description+"</div>":"")+'<div class="meta"><span>💰 '+fmtMoney(pr.price,pr.currency||"LBP")+"</span><span>📦 "+pr.stock+" "+(pr.unit||t("items"))+"</span>"+(pr.category_id?"<span>🏷️ "+pr.category_id+"</span>":"")+'</div></div><span class="status-chip '+pr.status+'">'+(pr.status==="active"?t("active"):pr.status==="paused"?t("paused"):pr.status)+"</span></div></div>").join("")}else if(n==="orders"){if(!d.orders||d.orders.length===0){c.innerHTML='<div class="empty-state">📋 '+t("noOrders")+"</div>";return}c.innerHTML=d.orders.map(o=>'<div class="order-item"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px"><div style="flex:1"><div class="name">👤 '+(o.buyer_name||"—")+'</div><div class="meta"><span>📞 '+(o.buyer_phone||"—")+"</span>"+(o.address?"<span>📍 "+o.address.slice(0,40)+(o.address.length>40?"…":"")+"</span>":"")+'</div></div><span class="status-chip '+o.status+'">'+localOrderStatus(o.status)+'</span></div><div class="meta" style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px"><span>💰 '+fmtMoney(o.total,o.currency)+"</span>"+(o.delivery_method?"<span>🚚 "+o.delivery_method+"</span>":"")+"<span>📅 "+fmtDate(o.created_at)+"</span></div>"+(o.notes?'<div style="font-size:11px;color:#718096;margin-top:6px;padding:6px 8px;background:#fff;border-radius:6px">📝 '+o.notes+"</div>":"")+"</div>").join("")}}
-function localOrderStatus(s){return{pending:"⏳ "+t("pending"),confirmed:"✓ "+t("confirmed"),out_for_delivery:"🚚 "+t("outForDelivery"),delivered:"✅ "+t("delivered"),cancelled:"❌ "+t("cancelled")}[s]||s}
-async function doApprove(id,n){if(!confirm(t("confirmApprove")+'\n"'+n+'"'))return;try{const{error}=await client.rpc("coop_admin_approve_seller",{p_admin_token:tokenGet(),p_seller_id:id});if(error)throw error;toast(t("operationDone"),"success");closeDetail();loadSellers()}catch(e){if(!handleError(e))toast(t("operationFailed")+": "+(e?.message||e),"error")}}
-async function doSuspend(id,n){const r=prompt(t("confirmSuspend")+'\n"'+n+'"');if(r===null)return;try{const{error}=await client.rpc("coop_admin_suspend_seller",{p_admin_token:tokenGet(),p_seller_id:id,p_reason:r||null});if(error)throw error;toast(t("operationDone"),"success");closeDetail();loadSellers()}catch(e){if(!handleError(e))toast(t("operationFailed")+": "+(e?.message||e),"error")}}
-async function doChangePwd(id,u){const n=prompt(t("newPwd")+'\n"'+u+'"');if(!n)return;if(n.length<4)return toast(t("pwdTooShort"),"error");if(!confirm(t("confirmPwd")))return;try{const h=await sha256(n);const{error}=await client.rpc("coop_admin_change_seller_password",{p_admin_token:tokenGet(),p_seller_id:id,p_new_password_hash:h});if(error)throw error;toast(t("operationDone"),"success")}catch(e){if(!handleError(e))toast(t("operationFailed")+": "+(e?.message||e),"error")}}
-async function doDelete(id,n){if(!confirm(t("confirmDelete")+'\n"'+n+'"'))return;let f=false;for(let i=0;i<2;i++){try{const{error}=await client.rpc("coop_admin_delete_seller",{p_admin_token:tokenGet(),p_seller_id:id,p_force:f});if(error)throw error;toast(t("operationDone"),"success");closeDetail();loadSellers();return}catch(e){const m=e?.message||String(e);if(m.includes("seller_has_orders")&&i===0){if(confirm({ar:"عنده طلبات. حذف رغماً؟",en:"Has orders. Delete anyway?",fr:"A des commandes. Supprimer?"}[lang])){f=true;continue}return}if(!handleError(e))toast(t("operationFailed")+": "+m,"error");return}}}
-document.addEventListener("click",e=>{if(e.target.matches(".lang-btn")||e.target.matches(".lang-switch-login button")){setLang(e.target.dataset.lang);return}if(e.target.matches("#filter-pills .pill")){document.querySelectorAll("#filter-pills .pill").forEach(p=>p.classList.remove("active"));e.target.classList.add("active");filter=e.target.dataset.filter;renderSellers();return}const c=e.target.closest(".stat-card");if(c){filter=c.dataset.filter;document.querySelectorAll("#filter-pills .pill").forEach(p=>p.classList.toggle("active",p.dataset.filter===filter));renderSellers()}});
-document.addEventListener("input",e=>{if(e.target.id==="search-box"){searchQ=e.target.value;renderSellers()}});
-document.addEventListener("keydown",e=>{if(e.key==="Enter"&&document.activeElement?.closest("#login-screen"))doLogin();if(e.key==="Escape"&&!document.getElementById("detail-modal").hidden)closeDetail()});
-(async()=>{try{await initSupabase();applyLang();bootApp()}catch(e){document.body.innerHTML='<div style="padding:40px;text-align:center"><h2>⚠️ Connection Error</h2></div>'}})();
+/* CONFIG — same Supabase project; anon key is public (RLS protects data). */
+const SB_URL = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+
+/* ─── i18n ─── */
+const I18N = {
+  ar:{
+    'brand.title':'لوحة إدارة التعاونيّة','brand.sub':'بلدية وادي الست · قضاء الشوف','brand.hint':'⬆ اضغط الشعار للعودة للرئيسية',
+    'login.title':'🔐 دخول الإدارة','login.sub':'صلاحيات إدارة التعاونيّة',
+    'login.username':'اسم المستخدم','login.password':'كلمة المرور','login.signin':'دخول',
+    'login.signing':'⏳ جاري الدخول…',
+    'login.errEmpty':'الرجاء إدخال البيانات (4 أحرف على الأقل لكلمة المرور)',
+    'login.errBad':'❌ المستخدم أو كلمة المرور خاطئة','login.errGen':'❌ خطأ: ',
+    'logout':'خروج','logoutConfirm':'تسجيل الخروج؟',
+    'stat.total':'إجمالي البائعين','stat.pending':'بانتظار الموافقة','stat.approved':'معتمدون','stat.suspended':'موقوفون',
+    'search.ph':'ابحث بالاسم أو المستخدم أو الهاتف…','btn.refresh':'تحديث',
+    'filter.all':'الكل','filter.pending':'⏳ بانتظار','filter.approved':'✅ معتمد','filter.suspended':'⛔ موقوف',
+    'empty.none':'لا يوجد بائعون','empty.filter':'لا توجد نتائج','empty.body':'جرّب تعديل البحث أو الفلاتر',
+    'status.pending':'بانتظار الموافقة','status.approved':'معتمد','status.suspended':'موقوف',
+    'card.products':'منتج','card.orders':'طلب نشط','card.balance':'الرصيد (ل.ل.)',
+    'card.openDetails':'عرض التفاصيل ←',
+    'tab.info':'📋 البيانات','tab.products':'📦 المنتجات','tab.orders':'📋 الطلبات',
+    'info.displayName':'الاسم المعروض','info.username':'اسم المستخدم','info.phone':'الهاتف','info.area':'المنطقة',
+    'info.status':'الحالة','info.statusLabel':'تفاصيل الحالة','info.id':'معرّف البائع',
+    'info.products':'عدد المنتجات','info.orders':'الطلبات النشطة','info.balance':'الرصيد المستحق',
+    'qa.call':'📞 اتصال','qa.wa':'💬 واتساب','qa.notSet':'غير محدّد',
+    'tab.note':'هذه الصفحة تتطلّب RPC إضافيّاً في Supabase باسم',
+    'tab.fallback':'بعد إضافته، سيتمّ تحميل البيانات الكاملة. حاليّاً تظهر الإحصاءات المختصرة فقط في القائمة.',
+    'empty.products':'لا توجد منتجات','empty.orders':'لا توجد طلبات',
+    'act.approve':'✅ اعتماد','act.suspend':'⛔ إيقاف','act.reactivate':'✅ إعادة تفعيل',
+    'act.pwd':'🔑 كلمة المرور','act.delete':'🗑️ حذف',
+    'confirm.approve':'اعتماد هذا البائع؟','confirm.delete':'حذف هذا البائع نهائياً؟',
+    'confirm.deleteForce':'لدى البائع طلبات. حذف رغماً عن ذلك؟',
+    'confirm.pwd':'تأكيد تغيير كلمة المرور؟',
+    'prompt.suspendTitle':'⛔ إيقاف البائع','prompt.suspendSub':'سبب الإيقاف (اختياري)',
+    'prompt.pwdTitle':'🔑 كلمة مرور جديدة','prompt.pwdSub':'4 أحرف على الأقل',
+    'prompt.ok':'تأكيد','prompt.cancel':'إلغاء',
+    'toast.approved':'✅ تم اعتماد البائع','toast.suspended':'⛔ تم إيقاف البائع',
+    'toast.pwdChanged':'🔑 تم تغيير كلمة المرور','toast.deleted':'🗑️ تم الحذف',
+    'toast.loaded':'✅ تم تحميل البيانات','toast.sessionEnd':'انتهت الجلسة',
+    'toast.errSuper':'⛔ تتطلب صلاحية Super Admin','toast.errLoad':'⚠️ تعذّر تحميل البيانات',
+    'toast.errOp':'⚠️ فشلت العمليّة',
+  },
+  en:{
+    'brand.title':'Cooperative Admin','brand.sub':'Wadi El Sit Municipality · Chouf District','brand.hint':'⬆ tap logo for main portal',
+    'login.title':'🔐 Admin sign-in','login.sub':'Cooperative management access',
+    'login.username':'Username','login.password':'Password','login.signin':'Sign in',
+    'login.signing':'⏳ Signing in…',
+    'login.errEmpty':'Please enter credentials (password ≥ 4 chars)',
+    'login.errBad':'❌ Wrong username or password','login.errGen':'❌ Error: ',
+    'logout':'Sign out','logoutConfirm':'Sign out?',
+    'stat.total':'Total sellers','stat.pending':'Pending review','stat.approved':'Approved','stat.suspended':'Suspended',
+    'search.ph':'Search by name, username or phone…','btn.refresh':'Refresh',
+    'filter.all':'All','filter.pending':'⏳ Pending','filter.approved':'✅ Approved','filter.suspended':'⛔ Suspended',
+    'empty.none':'No sellers','empty.filter':'No results','empty.body':'Try adjusting search or filters',
+    'status.pending':'Pending review','status.approved':'Approved','status.suspended':'Suspended',
+    'card.products':'products','card.orders':'open orders','card.balance':'Balance (LBP)',
+    'card.openDetails':'View details →',
+    'tab.info':'📋 Profile','tab.products':'📦 Products','tab.orders':'📋 Orders',
+    'info.displayName':'Display name','info.username':'Username','info.phone':'Phone','info.area':'Area',
+    'info.status':'Status','info.statusLabel':'Status detail','info.id':'Seller ID',
+    'info.products':'Product count','info.orders':'Open orders','info.balance':'Outstanding balance',
+    'qa.call':'📞 Call','qa.wa':'💬 WhatsApp','qa.notSet':'not set',
+    'tab.note':'This tab needs a Supabase RPC named',
+    'tab.fallback':'Once added, it will load full data. For now, the list shows summary counts only.',
+    'empty.products':'No products','empty.orders':'No orders',
+    'act.approve':'✅ Approve','act.suspend':'⛔ Suspend','act.reactivate':'✅ Reactivate',
+    'act.pwd':'🔑 Password','act.delete':'🗑️ Delete',
+    'confirm.approve':'Approve this seller?','confirm.delete':'Permanently delete this seller?',
+    'confirm.deleteForce':'Seller has orders. Force delete anyway?',
+    'confirm.pwd':'Confirm password change?',
+    'prompt.suspendTitle':'⛔ Suspend seller','prompt.suspendSub':'Reason (optional)',
+    'prompt.pwdTitle':'🔑 New password','prompt.pwdSub':'At least 4 characters',
+    'prompt.ok':'Confirm','prompt.cancel':'Cancel',
+    'toast.approved':'✅ Seller approved','toast.suspended':'⛔ Seller suspended',
+    'toast.pwdChanged':'🔑 Password changed','toast.deleted':'🗑️ Deleted',
+    'toast.loaded':'✅ Data loaded','toast.sessionEnd':'Session expired',
+    'toast.errSuper':'⛔ Requires Super Admin','toast.errLoad':'⚠️ Could not load data',
+    'toast.errOp':'⚠️ Operation failed',
+  },
+  fr:{
+    'brand.title':'Admin Coopérative','brand.sub':'Municipalité de Wadi El Sit · Caza du Chouf','brand.hint':'⬆ cliquer le logo pour le portail',
+    'login.title':'🔐 Connexion admin','login.sub':'Accès à la gestion de la coopérative',
+    'login.username':'Nom d\'utilisateur','login.password':'Mot de passe','login.signin':'Connexion',
+    'login.signing':'⏳ Connexion…',
+    'login.errEmpty':'Identifiants requis (mot de passe ≥ 4 caractères)',
+    'login.errBad':'❌ Identifiants invalides','login.errGen':'❌ Erreur : ',
+    'logout':'Déconnexion','logoutConfirm':'Se déconnecter ?',
+    'stat.total':'Total vendeurs','stat.pending':'En attente','stat.approved':'Approuvés','stat.suspended':'Suspendus',
+    'search.ph':'Rechercher par nom, utilisateur ou téléphone…','btn.refresh':'Actualiser',
+    'filter.all':'Tous','filter.pending':'⏳ En attente','filter.approved':'✅ Approuvés','filter.suspended':'⛔ Suspendus',
+    'empty.none':'Aucun vendeur','empty.filter':'Aucun résultat','empty.body':'Ajustez la recherche ou les filtres',
+    'status.pending':'En attente','status.approved':'Approuvé','status.suspended':'Suspendu',
+    'card.products':'produits','card.orders':'commandes en cours','card.balance':'Solde (LBP)',
+    'card.openDetails':'Voir les détails →',
+    'tab.info':'📋 Profil','tab.products':'📦 Produits','tab.orders':'📋 Commandes',
+    'info.displayName':'Nom affiché','info.username':'Utilisateur','info.phone':'Téléphone','info.area':'Zone',
+    'info.status':'Statut','info.statusLabel':'Détail du statut','info.id':'ID vendeur',
+    'info.products':'Nombre de produits','info.orders':'Commandes ouvertes','info.balance':'Solde dû',
+    'qa.call':'📞 Appeler','qa.wa':'💬 WhatsApp','qa.notSet':'non défini',
+    'tab.note':'Cet onglet nécessite un RPC Supabase nommé',
+    'tab.fallback':'Une fois ajouté, l\'onglet chargera les données complètes.',
+    'empty.products':'Aucun produit','empty.orders':'Aucune commande',
+    'act.approve':'✅ Approuver','act.suspend':'⛔ Suspendre','act.reactivate':'✅ Réactiver',
+    'act.pwd':'🔑 Mot de passe','act.delete':'🗑️ Supprimer',
+    'confirm.approve':'Approuver ce vendeur ?','confirm.delete':'Supprimer définitivement ce vendeur ?',
+    'confirm.deleteForce':'Le vendeur a des commandes. Forcer la suppression ?',
+    'confirm.pwd':'Confirmer le changement de mot de passe ?',
+    'prompt.suspendTitle':'⛔ Suspendre le vendeur','prompt.suspendSub':'Raison (facultatif)',
+    'prompt.pwdTitle':'🔑 Nouveau mot de passe','prompt.pwdSub':'Au moins 4 caractères',
+    'prompt.ok':'Confirmer','prompt.cancel':'Annuler',
+    'toast.approved':'✅ Vendeur approuvé','toast.suspended':'⛔ Vendeur suspendu',
+    'toast.pwdChanged':'🔑 Mot de passe changé','toast.deleted':'🗑️ Supprimé',
+    'toast.loaded':'✅ Données chargées','toast.sessionEnd':'Session expirée',
+    'toast.errSuper':'⛔ Réservé aux Super Admins','toast.errLoad':'⚠️ Erreur de chargement',
+    'toast.errOp':'⚠️ Échec de l\'opération',
+  }
+};
+
+let LANG='ar';
+function t(k){return (I18N[LANG]&&I18N[LANG][k])||I18N.en[k]||k}
+function setLang(lang){
+  LANG=lang;
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  document.documentElement.lang=lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.getAttribute('data-i18n'))});
+  document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+    const [a,k]=el.getAttribute('data-i18n-attr').split('|');
+    el.setAttribute(a,t(k));
+  });
+  document.querySelectorAll('.lang-pill button').forEach(b=>b.classList.toggle('active',b.getAttribute('data-lang')===lang));
+  if(_sellersCache.length){renderSellersList();if(CURRENT_SELLER)renderDetailModal(CURRENT_SELLER)}
+}
+
+/* SUPABASE CLIENT + EXACT RPC PARITY WITH admin-panel.html */
+const client = supabase.createClient(SB_URL, SB_KEY, {realtime:{enabled:false}});
+
+const COOP_ADMIN_TOKEN_KEY = 'coop_admin_token_v3';
+const COOP_ADMIN_INFO_KEY  = 'coop_admin_info_v3';
+let _sellersCache = [];
+let _sellerFilter = 'all';
+let CURRENT_SELLER = null;
+
+const tokGet   = () => localStorage.getItem(COOP_ADMIN_TOKEN_KEY);
+const tokSet   = (tok, info) => { localStorage.setItem(COOP_ADMIN_TOKEN_KEY, tok); localStorage.setItem(COOP_ADMIN_INFO_KEY, JSON.stringify(info)); };
+const tokClear = () => { localStorage.removeItem(COOP_ADMIN_TOKEN_KEY); localStorage.removeItem(COOP_ADMIN_INFO_KEY); };
+const infoGet  = () => { try { return JSON.parse(localStorage.getItem(COOP_ADMIN_INFO_KEY) || 'null'); } catch { return null; } };
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showLogin() {
+  document.getElementById('adm-login-modal').hidden = false;
+  document.getElementById('adm-header').hidden = true;
+  document.getElementById('adm-sellers-tab').hidden = true;
+  setTimeout(()=>document.getElementById('adm-username')?.focus(), 100);
+}
+function showDashboard() {
+  document.getElementById('adm-login-modal').hidden = true;
+  document.getElementById('adm-header').hidden = false;
+  document.getElementById('adm-sellers-tab').hidden = false;
+  const info = infoGet();
+  if (info) {
+    document.getElementById('adm-greeting-name').textContent = info.display_name || info.username;
+    document.getElementById('adm-super-badge').hidden = !info.is_super;
+  }
+}
+function handleRpcError(err) {
+  const msg = err?.message || String(err);
+  if (msg.includes('invalid_or_expired_token') || msg.includes('admin_token_required') || msg.includes('admin_account_disabled')) {
+    tokClear(); toast(t('toast.sessionEnd'),'err'); showLogin(); return true;
+  }
+  if (msg.includes('super_admin_required')) { toast(t('toast.errSuper'),'err'); return true; }
+  return false;
+}
+
+async function coopAdminLogin() {
+  const username = document.getElementById('adm-username').value.trim();
+  const password = document.getElementById('adm-password').value;
+  const errEl = document.getElementById('adm-login-error');
+  const btn   = document.getElementById('adm-login-btn');
+  errEl.hidden = true;
+  if (!username || password.length < 4) {
+    errEl.textContent = t('login.errEmpty'); errEl.hidden = false; return;
+  }
+  btn.disabled = true; btn.innerHTML = '⏳ <span>'+t('login.signing')+'</span>';
+  try {
+    const hash = await sha256Hex(password);
+    const { data, error } = await client.rpc('coop_admin_login', {
+      p_username: username, p_password_hash: hash, p_user_agent: navigator.userAgent.slice(0,200)
+    });
+    if (error) throw error;
+    if (!data?.token) throw new Error('No token returned');
+    tokSet(data.token, data.admin);
+    document.getElementById('adm-password').value = '';
+    showDashboard();
+    await loadAll();
+  } catch (e) {
+    const msg = e?.message || String(e);
+    errEl.textContent = msg.includes('invalid_credentials') ? t('login.errBad') : t('login.errGen') + msg;
+    errEl.hidden = false;
+  } finally {
+    btn.disabled = false; btn.innerHTML = '🚀 <span>'+t('login.signin')+'</span>';
+  }
+}
+
+async function coopAdminLogout() {
+  if (!confirm(t('logoutConfirm'))) return;
+  const token = tokGet();
+  if (token) { try { await client.rpc('coop_admin_logout', { p_token: token }); } catch {} }
+  tokClear(); showLogin();
+}
+
+async function bootSession() {
+  const token = tokGet();
+  if (!token) return showLogin();
+  try {
+    const { data, error } = await client.rpc('coop_admin_whoami', { p_token: token });
+    if (error || !data?.admin) throw error || new Error('No admin');
+    tokSet(token, data.admin);
+    showDashboard();
+    await loadAll();
+  } catch { tokClear(); showLogin(); }
+}
+
+async function loadAll() {
+  const token = tokGet();
+  if (!token) return showLogin();
+  document.getElementById('sellers-list').innerHTML = '<div class="loading-state"><span class="spinner"></span></div>';
+  try {
+    const { data: stats, error: e1 } = await client.rpc('coop_admin_seller_stats', { p_admin_token: token });
+    if (e1) throw e1;
+    if (stats) {
+      document.getElementById('stat-total').textContent = stats.total || 0;
+      document.getElementById('stat-pending').textContent = stats.pending || 0;
+      document.getElementById('stat-approved').textContent = stats.approved || 0;
+      document.getElementById('stat-suspended').textContent = stats.suspended || 0;
+      document.getElementById('cnt-all').textContent = stats.total || 0;
+      document.getElementById('cnt-pending').textContent = stats.pending || 0;
+      document.getElementById('cnt-approved').textContent = stats.approved || 0;
+      document.getElementById('cnt-suspended').textContent = stats.suspended || 0;
+    }
+    const { data: sellers, error: e2 } = await client.rpc('coop_admin_list_sellers', { p_admin_token: token });
+    if (e2) throw e2;
+    _sellersCache = sellers || [];
+    renderSellersList();
+    toast(t('toast.loaded'),'ok');
+  } catch (e) {
+    if (!handleRpcError(e)) {
+      document.getElementById('sellers-list').innerHTML = '<div class="empty-list"><span class="ico">⚠️</span><h3>'+t('toast.errLoad')+'</h3><div class="small">'+(e?.message||e)+'</div></div>';
+    }
+  }
+}
+
+function getInitials(s) {
+  const name = (s.display_name || s.username || '').trim();
+  return name.split(/\s+/).map(p => p[0] || '').slice(0, 2).join('').toUpperCase() || '?';
+}
+
+function renderSellersList() {
+  const q = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+  const list = document.getElementById('sellers-list');
+  list.innerHTML = '';
+  let filtered = _sellerFilter === 'all' ? _sellersCache.slice() : _sellersCache.filter(s => s.status === _sellerFilter);
+  if (q) filtered = filtered.filter(s =>
+    (s.display_name||'').toLowerCase().includes(q) ||
+    (s.username||'').toLowerCase().includes(q) ||
+    (s.phone||'').toLowerCase().includes(q)
+  );
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-list"><span class="ico">🔍</span><h3>'+(q||_sellerFilter!=='all' ? t('empty.filter') : t('empty.none'))+'</h3><div style="font-size:13px;margin-top:4px">'+t('empty.body')+'</div></div>';
+    return;
+  }
+  filtered.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'seller-card';
+    card.onclick = () => openDetail(s);
+    card.innerHTML = `
+      <div class="seller-card-row">
+        <div class="seller-left">
+          <div class="seller-avatar">${escapeHtml(getInitials(s))}</div>
+          <div class="seller-info">
+            <div class="seller-name">${escapeHtml(s.display_name || s.username || '—')}</div>
+            <div class="seller-meta">
+              <span class="username">@${escapeHtml(s.username||'?')}</span>
+              ${s.phone ? `<span class="dot">·</span><span>📞 ${escapeHtml(s.phone)}</span>` : ''}
+              ${s.area ? `<span class="dot">·</span><span>📍 ${escapeHtml(s.area)}</span>` : ''}
+            </div>
+            <div class="seller-row-stats">
+              <span>📦 <strong>${s.product_count||0}</strong> ${t('card.products')}</span>
+              <span>📋 <strong>${s.pending_orders||0}</strong> ${t('card.orders')}</span>
+              <span>💰 <strong>${fmtNum(s.balance||0)}</strong> ل.ل.</span>
+            </div>
+          </div>
+        </div>
+        <div class="seller-right">
+          <span class="seller-status ${s.status}">${t('status.'+s.status)||s.status_label}</span>
+          <span class="chevron-hint">${t('card.openDetails')}</span>
+        </div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+/* ─── Detail modal ─── */
+async function openDetail(seller) {
+  CURRENT_SELLER = seller;
+  document.getElementById('detailModal').classList.add('show');
+  renderDetailModal(seller);
+  switchTab('info');
+  tryLoadProducts(seller.id);
+  tryLoadOrders(seller.id);
+}
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('show');
+  CURRENT_SELLER = null;
+}
+
+function renderDetailModal(s) {
+  document.getElementById('dm-avatar').textContent = getInitials(s);
+  document.getElementById('dm-name').textContent = s.display_name || s.username || '—';
+  document.getElementById('dm-meta').innerHTML = `
+    <span class="username">@${escapeHtml(s.username||'?')}</span>
+    <span class="status-pill ${s.status}">${t('status.'+s.status)||s.status_label}</span>
+  `;
+  document.getElementById('dm-q-products').textContent = s.product_count || 0;
+  document.getElementById('dm-q-orders').textContent = s.pending_orders || 0;
+  document.getElementById('dm-q-balance').textContent = fmtNum(s.balance || 0);
+  document.getElementById('cntTabProducts').textContent = s.product_count || 0;
+  document.getElementById('cntTabOrders').textContent = s.pending_orders || 0;
+
+  // Info tab
+  const phoneHtml = s.phone
+    ? `<a class="qa-chip" href="tel:${escapeAttr(s.phone)}">${t('qa.call')} ${escapeHtml(s.phone)}</a>
+       <a class="qa-chip wa" href="https://wa.me/${s.phone.replace(/[^\d]/g,'')}" target="_blank" rel="noopener">${t('qa.wa')}</a>`
+    : '';
+  const rows = [
+    [t('info.displayName'), s.display_name, '🏷️'],
+    [t('info.username'), s.username ? '@'+s.username : null, '👤'],
+    [t('info.phone'), s.phone, '📞'],
+    [t('info.area'), s.area, '📍'],
+    [t('info.products'), (s.product_count!=null) ? String(s.product_count) : null, '📦', true],
+    [t('info.orders'), (s.pending_orders!=null) ? String(s.pending_orders) : null, '📋', true],
+    [t('info.balance'), (s.balance!=null) ? fmtNum(s.balance)+' ل.ل.' : null, '💰', true],
+    [t('info.status'), t('status.'+s.status), '🎯'],
+    [t('info.statusLabel'), s.status_label, '📝'],
+    [t('info.id'), s.id, '🆔', false, true],
+  ];
+  document.getElementById('pane-info').innerHTML = `
+    <div class="info-grid">
+      ${rows.map(([k,v,icon,hl,mono]) => `
+        <div class="info-row${hl?' highlighted':''}">
+          <div class="k">${icon||''} ${escapeHtml(k)}</div>
+          <div class="v ${!v?'muted':''}" ${mono?'style="font-family:monospace;font-size:12px"':''}>${v ? escapeHtml(String(v)) : t('qa.notSet')}</div>
+        </div>
+      `).join('')}
+    </div>
+    ${phoneHtml ? `<div class="quick-actions">${phoneHtml}</div>` : ''}
+  `;
+
+  // Footer actions
+  const info = infoGet();
+  const isSuper = info?.is_super === true;
+  const parts = [];
+  if (s.status === 'pending')   parts.push(`<button class="act-btn act-approve" onclick="actApprove('${escapeAttr(s.id)}')">${t('act.approve')}</button>`);
+  if (s.status === 'approved')  parts.push(`<button class="act-btn act-suspend" onclick="actSuspend('${escapeAttr(s.id)}','${escapeAttr(s.display_name||s.username)}')">${t('act.suspend')}</button>`);
+  if (s.status === 'suspended') parts.push(`<button class="act-btn act-reactivate" onclick="actApprove('${escapeAttr(s.id)}')">${t('act.reactivate')}</button>`);
+  if (isSuper) {
+    parts.push(`<button class="act-btn act-pwd" onclick="actChangePassword('${escapeAttr(s.id)}','${escapeAttr(s.username)}')">${t('act.pwd')}</button>`);
+    parts.push(`<button class="act-btn act-delete" onclick="actDelete('${escapeAttr(s.id)}','${escapeAttr(s.display_name||s.username)}')">${t('act.delete')}</button>`);
+  }
+  document.getElementById('dm-foot').innerHTML = `<div class="spacer"></div>${parts.join('')}`;
+}
+
+async function tryLoadProducts(sellerId) {
+  const pane = document.getElementById('pane-products');
+  pane.innerHTML = `<div class="loading-state"><span class="spinner"></span></div>`;
+  const token = tokGet();
+  const candidates = [
+    ['coop_admin_seller_products',{p_admin_token:token,p_seller_id:sellerId}],
+    ['coop_admin_list_seller_products',{p_admin_token:token,p_seller_id:sellerId}],
+    ['coop_admin_get_seller_products',{p_admin_token:token,p_seller_id:sellerId}],
+  ];
+  for (const [name, args] of candidates) {
+    try {
+      const { data, error } = await client.rpc(name, args);
+      if (error) continue;
+      const products = Array.isArray(data) ? data : (data?.products || []);
+      renderProducts(pane, products);
+      return;
+    } catch {}
+  }
+  pane.innerHTML = `
+    <div class="tab-note">
+      <strong>ℹ️ ${t('tab.note')}</strong> <code>coop_admin_seller_products(p_admin_token, p_seller_id)</code><br>
+      ${t('tab.fallback')}
+    </div>
+    <div class="empty-list"><span class="ico">📦</span><h3>${t('empty.products')}</h3></div>
+  `;
+}
+
+async function tryLoadOrders(sellerId) {
+  const pane = document.getElementById('pane-orders');
+  pane.innerHTML = `<div class="loading-state"><span class="spinner"></span></div>`;
+  const token = tokGet();
+  const candidates = [
+    ['coop_admin_seller_orders',{p_admin_token:token,p_seller_id:sellerId}],
+    ['coop_admin_list_seller_orders',{p_admin_token:token,p_seller_id:sellerId}],
+    ['coop_admin_get_seller_orders',{p_admin_token:token,p_seller_id:sellerId}],
+  ];
+  for (const [name, args] of candidates) {
+    try {
+      const { data, error } = await client.rpc(name, args);
+      if (error) continue;
+      const orders = Array.isArray(data) ? data : (data?.orders || []);
+      renderOrders(pane, orders);
+      return;
+    } catch {}
+  }
+  pane.innerHTML = `
+    <div class="tab-note">
+      <strong>ℹ️ ${t('tab.note')}</strong> <code>coop_admin_seller_orders(p_admin_token, p_seller_id)</code><br>
+      ${t('tab.fallback')}
+    </div>
+    <div class="empty-list"><span class="ico">📋</span><h3>${t('empty.orders')}</h3></div>
+  `;
+}
+
+function renderProducts(pane, products) {
+  if (!products.length) {
+    pane.innerHTML = `<div class="empty-list"><span class="ico">📦</span><h3>${t('empty.products')}</h3></div>`;
+    return;
+  }
+  document.getElementById('cntTabProducts').textContent = products.length;
+  pane.innerHTML = `<div class="item-list">${products.map(p => `
+    <div class="item">
+      <div>
+        <div class="item-title">${escapeHtml(p.name || p.title || '—')}
+          ${p.sku ? `<span class="ref">${escapeHtml(p.sku)}</span>` : ''}
+          ${p.status ? `<span class="mini-badge ${(p.status||'').toLowerCase()}">${escapeHtml(p.status)}</span>` : ''}
+        </div>
+        <div class="item-meta">
+          <span>📦 <strong>${p.stock ?? p.quantity ?? 0}</strong></span>
+          ${p.category ? `<span>${escapeHtml(p.category)}</span>` : ''}
+          ${p.created_at ? `<span>${fmtDate(p.created_at)}</span>` : ''}
+        </div>
+      </div>
+      <div class="item-right">${fmtNum(p.price ?? 0)} ل.ل.</div>
+    </div>`).join('')}</div>`;
+}
+
+function renderOrders(pane, orders) {
+  if (!orders.length) {
+    pane.innerHTML = `<div class="empty-list"><span class="ico">📋</span><h3>${t('empty.orders')}</h3></div>`;
+    return;
+  }
+  document.getElementById('cntTabOrders').textContent = orders.length;
+  pane.innerHTML = `<div class="item-list">${orders.map(o => {
+    const st = (o.status||'pending').toLowerCase();
+    return `<div class="item">
+      <div>
+        <div class="item-title">
+          <span class="ref">#${escapeHtml(String(o.order_number||o.id||'—'))}</span>
+          <span class="mini-badge ${st}">${t('status.'+st)||escapeHtml(o.status||'')}</span>
+        </div>
+        <div class="item-meta">
+          ${o.customer_name ? `<span><strong>${escapeHtml(o.customer_name)}</strong></span>` : ''}
+          <span>${o.item_count ?? o.items?.length ?? 0} عنصر</span>
+          ${o.created_at ? `<span>${fmtDate(o.created_at)}</span>` : ''}
+        </div>
+      </div>
+      <div class="item-right">${fmtNum(o.total||o.total_amount||0)} ل.ل.</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === name));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+}
+
+/* ─── Actions (exact RPC parity) ─── */
+async function actApprove(id) {
+  if (!confirm(t('confirm.approve'))) return;
+  try {
+    const { error } = await client.rpc('coop_admin_approve_seller', { p_admin_token: tokGet(), p_seller_id: id });
+    if (error) throw error;
+    toast(t('toast.approved'),'ok');
+    closeDetail(); loadAll();
+  } catch (e) { if (!handleRpcError(e)) toast(t('toast.errOp')+': '+(e?.message||e),'err'); }
+}
+
+async function actSuspend(id, name) {
+  const reason = await openPrompt(t('prompt.suspendTitle'), t('prompt.suspendSub') + (name ? ' — '+name : ''));
+  if (reason === null) return;
+  try {
+    const { error } = await client.rpc('coop_admin_suspend_seller', { p_admin_token: tokGet(), p_seller_id: id, p_reason: reason || null });
+    if (error) throw error;
+    toast(t('toast.suspended'),'ok');
+    closeDetail(); loadAll();
+  } catch (e) { if (!handleRpcError(e)) toast(t('toast.errOp')+': '+(e?.message||e),'err'); }
+}
+
+async function actChangePassword(id, username) {
+  const pwd = await openPrompt(t('prompt.pwdTitle'), t('prompt.pwdSub') + ' — @'+username, 'password');
+  if (!pwd || pwd.length < 4) return;
+  if (!confirm(t('confirm.pwd'))) return;
+  try {
+    const hash = await sha256Hex(pwd);
+    const { error } = await client.rpc('coop_admin_change_seller_password', { p_admin_token: tokGet(), p_seller_id: id, p_new_password_hash: hash });
+    if (error) throw error;
+    toast(t('toast.pwdChanged'),'ok');
+  } catch (e) { if (!handleRpcError(e)) toast(t('toast.errOp')+': '+(e?.message||e),'err'); }
+}
+
+async function actDelete(id, name) {
+  if (!confirm(t('confirm.delete') + (name ? '\n— '+name : ''))) return;
+  let force = false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const { error } = await client.rpc('coop_admin_delete_seller', { p_admin_token: tokGet(), p_seller_id: id, p_force: force });
+      if (error) throw error;
+      toast(t('toast.deleted'),'ok');
+      closeDetail(); loadAll();
+      return;
+    } catch (e) {
+      const msg = e?.message || String(e);
+      if (msg.includes('seller_has_orders') && attempt === 0) {
+        if (confirm(t('confirm.deleteForce'))) { force = true; continue; }
+        return;
+      }
+      if (!handleRpcError(e)) toast(t('toast.errOp')+': '+msg,'err');
+      return;
+    }
+  }
+}
+
+/* Filter pills */
+document.addEventListener('click', (e) => {
+  const pill = e.target.closest('#seller-filter-pills .pill');
+  if (pill) {
+    document.querySelectorAll('#seller-filter-pills .pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    _sellerFilter = pill.dataset.filter;
+    renderSellersList();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.activeElement?.closest('#adm-login-modal')) coopAdminLogin();
+  if (e.key === 'Escape') {
+    const pb = document.getElementById('promptBg');
+    if (pb.classList.contains('show')) { closePrompt(null); return; }
+    if (document.getElementById('detailModal').classList.contains('show')) closeDetail();
+  }
+});
+
+/* Custom prompt */
+let _promptResolve = null;
+function openPrompt(title, sub, type) {
+  document.getElementById('promptTitle').textContent = title;
+  document.getElementById('promptSub').textContent = sub || '';
+  const inp = document.getElementById('promptInput');
+  inp.type = type === 'password' ? 'password' : 'text';
+  inp.value = '';
+  document.getElementById('promptBg').classList.add('show');
+  setTimeout(()=>inp.focus(), 50);
+  return new Promise(res => { _promptResolve = res; });
+}
+function closePrompt(ok) {
+  const val = ok ? document.getElementById('promptInput').value : null;
+  document.getElementById('promptBg').classList.remove('show');
+  if (_promptResolve) { _promptResolve(val); _promptResolve = null; }
+}
+document.getElementById('promptInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') closePrompt(true);
+});
+
+/* Utilities */
+function fmtNum(n) {
+  if (n == null || isNaN(n)) return '0';
+  const loc = LANG === 'en' ? 'en-US' : (LANG === 'fr' ? 'fr-FR' : 'ar-LB');
+  return new Intl.NumberFormat(loc, { maximumFractionDigits: 0 }).format(Number(n));
+}
+function fmtDate(s) {
+  if (!s) return '—';
+  try {
+    const loc = LANG === 'ar' ? 'ar-LB' : (LANG === 'fr' ? 'fr-FR' : 'en-US');
+    return new Date(s).toLocaleDateString(loc, { year:'numeric', month:'short', day:'numeric' });
+  } catch { return s; }
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, '&#96;'); }
+
+let toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('err','ok');
+  if (type === 'err') el.classList.add('err');
+  else if (type === 'ok') el.classList.add('ok');
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+setLang('ar');
+bootSession();
 </script>
 </body>
 </html>
