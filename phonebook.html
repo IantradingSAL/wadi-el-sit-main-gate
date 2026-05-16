@@ -247,6 +247,131 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
   for(var lng in _x){ for(var k in _x[lng]){ window.__WADI_STRINGS__[lng][k] = _x[lng][k]; } }
   if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_x); }catch(e){} }
 })();</script>
+
+<script>(function(){
+  var _i = {"ar": {"_installApp": "📲 تثبيت التطبيق", "_installAppShort": "تثبيت", "_addToHome": "إضافة للشاشة الرئيسية", "_installNow": "ثبّت الآن", "_installBanner": "💡 ثبّت التطبيق على هاتفك للوصول السريع", "_installLater": "لاحقاً", "_installDismiss": "إغلاق", "_iosInstallHint": "لتثبيت التطبيق على iPhone: اضغط زر المشاركة 📤 ثم «أضف إلى الشاشة الرئيسية»"}, "en": {"_installApp": "📲 Install app", "_installAppShort": "Install", "_addToHome": "Add to home screen", "_installNow": "Install now", "_installBanner": "💡 Install the app on your phone for quick access", "_installLater": "Later", "_installDismiss": "Close", "_iosInstallHint": "To install on iPhone: tap the Share button 📤 then \"Add to Home Screen\""}, "fr": {"_installApp": "📲 Installer l'application", "_installAppShort": "Installer", "_addToHome": "Ajouter à l'écran d'accueil", "_installNow": "Installer maintenant", "_installBanner": "💡 Installez l'application sur votre téléphone pour un accès rapide", "_installLater": "Plus tard", "_installDismiss": "Fermer", "_iosInstallHint": "Pour installer sur iPhone : appuyez sur le bouton Partager 📤 puis « Ajouter à l'écran d'accueil »"}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _i){ for(var k in _i[lng]){ window.__WADI_STRINGS__[lng][k] = _i[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_i); }catch(e){} }
+})();</script>
+<script>
+/* ═══ PWA Install Button Auto-Translator ═══
+   pwa.js (external) creates the install button dynamically with Arabic text.
+   This translator detects those buttons by text content and translates them.
+*/
+(function(){
+  /* Map: Arabic text patterns → translation keys */
+  var INSTALL_PATTERNS = [
+    {match:/^\s*📲?\s*تثبيت التطبيق\s*$/,  key:'_installApp'},
+    {match:/^\s*ثبّت التطبيق\s*$/,           key:'_installApp'},
+    {match:/^\s*تثبيت\s*$/,                  key:'_installAppShort'},
+    {match:/^\s*ثبّت\s*$/,                   key:'_installAppShort'},
+    {match:/^\s*إضافة للشاشة الرئيسية\s*$/, key:'_addToHome'},
+    {match:/^\s*أضف للشاشة الرئيسية\s*$/,  key:'_addToHome'},
+    {match:/^\s*ثبّت الآن\s*$/,              key:'_installNow'},
+    {match:/^\s*ثبّت التطبيق على هاتفك للوصول السريع\s*$/, key:'_installBanner'},
+    {match:/ثبّت التطبيق على هاتفك/,           key:'_installBanner'},
+    {match:/^\s*لاحقاً\s*$/,                 key:'_installLater'},
+    {match:/iPhone.*المشاركة|الشاشة الرئيسية.*iPhone/, key:'_iosInstallHint'},
+  ];
+
+  function translateInstallText(el){
+    if(!el || el.nodeType !== 1) return;
+    /* Skip elements we already touched */
+    if(el.dataset && el.dataset._installTranslated === '1'){
+      /* Re-apply with current language using stored key */
+      var k = el.dataset._installKey;
+      if(k && window.__wadi_t){
+        var val = window.__wadi_t(k);
+        if(val) el.textContent = val;
+      }
+      return;
+    }
+    /* Only look at "leaf" elements (no element children, just text) */
+    if(el.children && el.children.length > 0) return;
+    var txt = (el.textContent || '').trim();
+    if(!txt) return;
+    for(var i = 0; i < INSTALL_PATTERNS.length; i++){
+      var p = INSTALL_PATTERNS[i];
+      if(p.match.test(txt)){
+        var translated = (window.__wadi_t && window.__wadi_t(p.key));
+        if(translated){
+          el.dataset._installTranslated = '1';
+          el.dataset._installKey = p.key;
+          el.textContent = translated;
+        }
+        return;
+      }
+    }
+  }
+
+  function scanAndTranslateInstall(){
+    try{
+      /* Scan buttons, anchors, spans, divs — common install button containers */
+      var els = document.querySelectorAll('button, a, span, div, p');
+      for(var i = 0; i < els.length; i++){
+        translateInstallText(els[i]);
+      }
+    }catch(e){}
+  }
+
+  /* Run on init + retries (matches the main UNIFIED_JS retry schedule) */
+  function runOnLoad(){
+    scanAndTranslateInstall();
+    setTimeout(scanAndTranslateInstall, 200);
+    setTimeout(scanAndTranslateInstall, 800);
+    setTimeout(scanAndTranslateInstall, 2000);
+    setTimeout(scanAndTranslateInstall, 4000);   /* in case install prompt appears late */
+    setTimeout(scanAndTranslateInstall, 8000);
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', runOnLoad);
+  } else {
+    runOnLoad();
+  }
+
+  /* Watch for any new install button injected later by pwa.js */
+  if(window.MutationObserver){
+    var obs = new MutationObserver(function(muts){
+      for(var i = 0; i < muts.length; i++){
+        var m = muts[i];
+        if(m.addedNodes && m.addedNodes.length){
+          for(var j = 0; j < m.addedNodes.length; j++){
+            var n = m.addedNodes[j];
+            if(n.nodeType === 1){
+              translateInstallText(n);
+              /* Also check descendants */
+              if(n.querySelectorAll){
+                var sub = n.querySelectorAll('button, a, span, div, p');
+                for(var k = 0; k < sub.length; k++) translateInstallText(sub[k]);
+              }
+            }
+          }
+        }
+      }
+    });
+    if(document.body) obs.observe(document.body, {childList:true, subtree:true});
+    else document.addEventListener('DOMContentLoaded', function(){
+      obs.observe(document.body, {childList:true, subtree:true});
+    });
+  }
+
+  /* Re-apply on language change */
+  document.addEventListener('wadi:langchange', function(e){
+    var lang = e && e.detail && e.detail.lang;
+    /* Re-translate all elements we've marked */
+    var marked = document.querySelectorAll('[data-_install-translated="1"]');
+    for(var i = 0; i < marked.length; i++){
+      var el = marked[i];
+      var key = el.dataset._installKey;
+      var val = window.__wadi_t && window.__wadi_t(key, lang);
+      if(val) el.textContent = val;
+    }
+    /* Also scan for new install buttons */
+    setTimeout(scanAndTranslateInstall, 50);
+  });
+})();
+</script>
 <script src="pwa.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
