@@ -3,314 +3,180 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>لوحة إدارة التعاونية — v3 (debug)</title>
+<title>لوحة الإدارة | بلدية وادي الست</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; }
-body { font-family: Tahoma, Arial, sans-serif; margin: 0; background: #f0f2f7; min-height: 100vh; }
-.container { max-width: 900px; margin: 0 auto; padding: 20px; }
-.brand { text-align: center; margin-bottom: 16px; }
-.brand h1 { font-size: 22px; color: #0f4d82; margin: 0; }
-.brand p { font-size: 13px; color: #666; margin: 4px 0 0; }
-.diag { background: #fff; border: 2px solid #1a6eb5; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-family: monospace; font-size: 12px; }
-.diag h4 { margin: 0 0 8px; color: #0f4d82; font-family: Tahoma, Arial, sans-serif; }
-.diag-line { padding: 3px 0; }
-.diag-line.ok { color: #155724; }
-.diag-line.fail { color: #721c24; font-weight: bold; }
-.diag-line.info { color: #856404; }
-.adm-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 16px; }
-.adm-modal-card { background: #fff; border-radius: 16px; max-width: 380px; width: 100%; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
-.adm-modal-header { background: linear-gradient(120deg,#0f4d82,#1a6eb5); color: #fff; padding: 18px 24px; text-align: center; }
-.adm-modal-header h3 { margin: 0; font-size: 18px; font-weight: 700; }
-.adm-modal-body { padding: 22px 24px; }
-.adm-modal-body .form-group { margin-bottom: 14px; }
-.adm-modal-body label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 600; }
-.adm-modal-body input { width: 100%; padding: 11px 14px; border: 1px solid #d0d4dc; border-radius: 10px; font-size: 15px; font-family: inherit; }
-.adm-modal-body input:focus { outline: none; border-color: #1a6eb5; box-shadow: 0 0 0 3px rgba(26,110,181,.15); }
-.adm-btn-primary { width: 100%; padding: 12px; background: #1a6eb5; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
-.adm-btn-primary:hover { background: #155389; }
-.adm-btn-primary:disabled { background: #9aa5b5; cursor: not-allowed; }
-.adm-error { background: #fdecea; color: #a93226; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; word-wrap: break-word; }
-.adm-header-inner { display: flex; justify-content: space-between; align-items: center; background: #f0f5fa; padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
-.adm-greeting { font-weight: 700; color: #0f4d82; }
-.adm-badge-super { background: #ffd700; color: #333; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; margin: 0 8px; }
-.adm-btn-logout { background: #dc3545; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; }
-.adm-btn-secondary { background: #6c757d; color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; margin-bottom: 12px; }
-.seller-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
-.stat-card { padding: 14px 10px; border-radius: 12px; text-align: center; background: #fff; }
-.stat-card .stat-num { font-size: 26px; font-weight: 800; line-height: 1; }
-.stat-card .stat-lbl { font-size: 11px; color: #555; margin-top: 5px; }
-.stat-total .stat-num { color: #0f4d82; }
-.stat-pending { background: #fff3cd; } .stat-pending .stat-num { color: #856404; }
-.stat-approved { background: #d4edda; } .stat-approved .stat-num { color: #155724; }
-.stat-suspended { background: #f8d7da; } .stat-suspended .stat-num { color: #721c24; }
-@media (max-width: 540px) { .seller-stats { grid-template-columns: repeat(2,1fr); } }
-.filter-pills { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.pill { padding: 7px 14px; border-radius: 20px; background: #e8eaef; border: none; cursor: pointer; font-size: 13px; color: #444; }
-.pill.active { background: #1a6eb5; color: #fff; font-weight: 700; }
-.seller-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-.seller-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; margin-bottom: 8px; }
-.seller-info { flex: 1; min-width: 0; }
-.seller-name { font-weight: 800; font-size: 16px; color: #222; }
-.seller-meta { color: #666; font-size: 13px; margin-top: 3px; }
-.seller-row-stats { font-size: 12px; color: #888; margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; }
-.seller-status { font-size: 12px; padding: 4px 10px; border-radius: 6px; white-space: nowrap; font-weight: 600; }
-.seller-status.pending { background: #fff3cd; color: #856404; }
-.seller-status.approved { background: #d4edda; color: #155724; }
-.seller-status.suspended { background: #f8d7da; color: #721c24; }
-.seller-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
-.seller-actions button { padding: 6px 12px; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
-.btn-act-approve { background: #28a745; }
-.btn-act-suspend { background: #ffc107; color: #000 !important; }
-.btn-act-reactivate { background: #28a745; }
-.btn-act-pwd { background: #17a2b8; }
-.btn-act-delete { background: #dc3545; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+:root{--primary:#0f4d82;--primary-light:#1a6eb5;--primary-dark:#0a3a64;--bg:#f5f7fa;--surface:#fff;--text:#1a202c;--text-muted:#718096;--border:#e2e8f0;--success:#38a169;--warning:#d69e2e;--danger:#e53e3e;--info:#3182ce;--shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow:0 4px 12px rgba(0,0,0,.08);--shadow-lg:0 10px 30px rgba(0,0,0,.15);--radius:12px}
+body{font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+.app-header{background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;padding:16px 24px;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.app-header .brand{display:flex;align-items:center;gap:12px}
+.app-header .logo{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
+.app-header h1{font-size:18px;font-weight:800}
+.app-header .subtitle{font-size:12px;opacity:.85;margin-top:2px}
+.app-header .user-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.user-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);padding:8px 14px;border-radius:24px;font-size:14px;font-weight:500}
+.super-badge{background:#ffd700;color:#1a4480;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.btn-logout{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-logout:hover{background:rgba(255,255,255,.25)}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.welcome{background:var(--surface);border-radius:var(--radius);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow-sm);border-right:4px solid var(--primary)}
+.welcome h2{font-size:20px;font-weight:700;color:var(--primary);margin-bottom:4px}
+.welcome p{color:var(--text-muted);font-size:14px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:all .2s}
+.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.stat-card .stat-label{font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:6px}
+.stat-card .stat-value{font-size:32px;font-weight:800;line-height:1}
+.stat-card .stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;font-size:18px}
+.stat-card.total .stat-icon{background:#ebf4ff}.stat-card.total .stat-value{color:var(--primary)}
+.stat-card.pending .stat-icon{background:#fef5e7}.stat-card.pending .stat-value{color:var(--warning)}
+.stat-card.approved .stat-icon{background:#d4f4dd}.stat-card.approved .stat-value{color:var(--success)}
+.stat-card.suspended .stat-icon{background:#fde8e8}.stat-card.suspended .stat-value{color:var(--danger)}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.section-title{font-size:18px;font-weight:700}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.pill{padding:8px 16px;border-radius:24px;background:var(--surface);border:1px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;color:var(--text-muted);transition:all .2s;font-family:inherit}
+.pill:hover{background:#f0f4f8}
+.pill.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(15,77,130,.25)}
+.btn-refresh{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:all .2s}
+.btn-refresh:hover{border-color:var(--primary);color:var(--primary)}
+.sellers-grid{display:grid;gap:12px}
+.seller-card{background:var(--surface);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow-sm);border:1px solid var(--border);transition:all .2s}
+.seller-card:hover{box-shadow:var(--shadow);border-color:#cbd5e0}
+.seller-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.seller-info{flex:1;min-width:200px}
+.seller-name{font-size:17px;font-weight:700;margin-bottom:4px}
+.seller-meta{color:var(--text-muted);font-size:13px;display:flex;gap:14px;flex-wrap:wrap}
+.seller-numbers{margin-top:10px;display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--text-muted)}
+.seller-numbers .num{font-weight:700;color:var(--text)}
+.seller-status{font-size:12px;padding:5px 12px;border-radius:12px;font-weight:600;white-space:nowrap}
+.seller-status.pending{background:#fef5e7;color:#975a16}
+.seller-status.approved{background:#d4f4dd;color:#1f7a3a}
+.seller-status.suspended{background:#fde8e8;color:#9b2c2c}
+.seller-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.seller-actions button{padding:7px 14px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s;font-family:inherit}
+.seller-actions button:hover{transform:translateY(-1px)}
+.btn-approve{background:var(--success);color:#fff}
+.btn-suspend{background:var(--warning);color:#fff}
+.btn-pwd{background:var(--info);color:#fff}
+.btn-delete{background:var(--danger);color:#fff}
+.empty-state{background:var(--surface);border-radius:var(--radius);padding:48px 20px;text-align:center;color:var(--text-muted);border:1px dashed var(--border)}
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.login-card{background:var(--surface);border-radius:20px;width:100%;max-width:400px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.login-header{padding:32px 28px 20px;text-align:center}
+.logo-large{width:64px;height:64px;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:30px;color:#fff;margin-bottom:14px;box-shadow:0 6px 16px rgba(15,77,130,.3)}
+.login-header h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.login-header p{font-size:13px;color:var(--text-muted)}
+.login-body{padding:0 28px 28px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.form-group input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;transition:all .2s}
+.form-group input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,77,130,.1)}
+.btn-login{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary-dark),var(--primary-light));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:6px}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(15,77,130,.3)}
+.btn-login:disabled{background:#cbd5e0;cursor:not-allowed;transform:none;box-shadow:none}
+.error-msg{background:#fde8e8;color:#9b2c2c;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:12px;border-right:3px solid var(--danger)}
+.toast-container{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--surface);padding:12px 20px;border-radius:10px;box-shadow:var(--shadow-lg);font-size:14px;font-weight:500;min-width:280px;max-width:400px;animation:slideDown .3s ease-out;border-right:4px solid var(--primary)}
+.toast.success{border-color:var(--success)}.toast.error{border-color:var(--danger)}.toast.warning{border-color:var(--warning)}
+@keyframes slideDown{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="brand"><h1>🏢 لوحة إدارة التعاونية</h1><p>بلدية وادي الست · v3 (debug build)</p></div>
-  
-  <div class="diag">
-    <h4>🔍 فحص تلقائي</h4>
-    <div id="diag-log"><div class="diag-line info">⏳ جارٍ الفحص...</div></div>
-  </div>
-  
-  <div id="adm-login-modal" class="adm-modal-bg" hidden>
-    <div class="adm-modal-card">
-      <div class="adm-modal-header"><h3>🔐 دخول الإدارة</h3></div>
-      <div class="adm-modal-body">
-        <div class="form-group"><label for="adm-username">اسم المستخدم</label><input type="text" id="adm-username" autocomplete="username" placeholder="imad"></div>
-        <div class="form-group"><label for="adm-password">كلمة المرور</label><input type="password" id="adm-password" autocomplete="current-password" placeholder="••••••••"></div>
-        <div id="adm-login-error" class="adm-error" hidden></div>
-        <button class="adm-btn-primary" id="adm-login-btn" onclick="coopAdminLogin()">دخول</button>
-      </div>
+
+<div id="login-screen" class="login-overlay" hidden>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-large">🏛️</div>
+      <h2>لوحة الإدارة</h2>
+      <p>بلدية وادي الست · التعاونية</p>
     </div>
-  </div>
-  
-  <div id="adm-header" hidden>
-    <div class="adm-header-inner">
-      <div><span class="adm-greeting">👤 <span id="adm-greeting-name">—</span></span><span class="adm-badge-super" id="adm-super-badge" hidden>⭐ Super</span></div>
-      <button class="adm-btn-logout" onclick="coopAdminLogout()">🚪 خروج</button>
+    <div class="login-body">
+      <div id="login-error" class="error-msg" hidden></div>
+      <div class="form-group"><label for="username">اسم المستخدم</label><input type="text" id="username" autocomplete="username" placeholder="ادخل اسم المستخدم"></div>
+      <div class="form-group"><label for="password">كلمة المرور</label><input type="password" id="password" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="btn-login" id="login-btn" onclick="doLogin()">دخول</button>
     </div>
-  </div>
-  
-  <div id="adm-sellers-tab" hidden>
-    <div class="seller-stats">
-      <div class="stat-card stat-total"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">الإجمالي</div></div>
-      <div class="stat-card stat-pending"><div class="stat-num" id="stat-pending">0</div><div class="stat-lbl">⏳ ينتظر</div></div>
-      <div class="stat-card stat-approved"><div class="stat-num" id="stat-approved">0</div><div class="stat-lbl">✅ معتمد</div></div>
-      <div class="stat-card stat-suspended"><div class="stat-num" id="stat-suspended">0</div><div class="stat-lbl">⛔ موقوف</div></div>
-    </div>
-    <div class="filter-pills" id="seller-filter-pills">
-      <button class="pill active" data-filter="all">الكل</button>
-      <button class="pill" data-filter="pending">⏳ ينتظر</button>
-      <button class="pill" data-filter="approved">✅ معتمد</button>
-      <button class="pill" data-filter="suspended">⛔ موقوف</button>
-    </div>
-    <button class="adm-btn-secondary" onclick="coopAdminLoadSellers()">🔄 تحديث القائمة</button>
-    <div id="sellers-list"></div>
   </div>
 </div>
 
+<div id="app" hidden>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo">🏛️</div>
+      <div><h1>لوحة الإدارة</h1><div class="subtitle">بلدية وادي الست · التعاونية</div></div>
+    </div>
+    <div class="user-info">
+      <div class="user-badge"><span>👤 <span id="user-name">—</span></span><span class="super-badge" id="super-badge" hidden>⭐ Super</span></div>
+      <button class="btn-logout" onclick="doLogout()">خروج</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="welcome">
+      <h2>أهلاً، <span id="welcome-name">—</span> 👋</h2>
+      <p>إدارة بائعي التعاونية · <span id="current-date"></span></p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card total"><div class="stat-icon">📊</div><div class="stat-label">الإجمالي</div><div class="stat-value" id="stat-total">0</div></div>
+      <div class="stat-card pending"><div class="stat-icon">⏳</div><div class="stat-label">قيد الانتظار</div><div class="stat-value" id="stat-pending">0</div></div>
+      <div class="stat-card approved"><div class="stat-icon">✅</div><div class="stat-label">معتمدون</div><div class="stat-value" id="stat-approved">0</div></div>
+      <div class="stat-card suspended"><div class="stat-icon">⛔</div><div class="stat-label">موقوفون</div><div class="stat-value" id="stat-suspended">0</div></div>
+    </div>
+
+    <div class="toolbar">
+      <div class="section-title">قائمة البائعين</div>
+      <button class="btn-refresh" onclick="loadSellers()">🔄 تحديث</button>
+    </div>
+
+    <div class="filter-pills" id="filter-pills">
+      <button class="pill active" data-filter="all">الكل</button>
+      <button class="pill" data-filter="pending">⏳ قيد الانتظار</button>
+      <button class="pill" data-filter="approved">✅ معتمدون</button>
+      <button class="pill" data-filter="suspended">⛔ موقوفون</button>
+    </div>
+
+    <div class="sellers-grid" id="sellers-list"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 <script>
-function diag(msg, cls) {
-  const el = document.getElementById('diag-log');
-  if (!el) return;
-  const line = document.createElement('div');
-  line.className = 'diag-line ' + (cls || 'info');
-  line.textContent = msg;
-  el.appendChild(line);
-  console.log('[diag]', msg);
-}
-diag('✅ 1. JavaScript يعمل', 'ok');
-diag('🌐 جارٍ تحميل مكتبة Supabase من CDN...', 'info');
-
-async function loadSupabaseJS() {
-  const cdns = [
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js',
-    'https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js',
-    'https://esm.sh/@supabase/supabase-js@2.39.7'
-  ];
-  for (const url of cdns) {
-    try {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = url;
-        s.onload = resolve;
-        s.onerror = () => reject(new Error('failed'));
-        document.head.appendChild(s);
-      });
-      if (typeof supabase !== 'undefined') {
-        diag('✅ 2. Supabase JS تحمّلت من: ' + new URL(url).hostname, 'ok');
-        return true;
-      }
-    } catch (e) {
-      diag('⚠️ فشل CDN: ' + new URL(url).hostname, 'info');
-    }
-  }
-  return false;
-}
-
-(async () => {
-  const loaded = await loadSupabaseJS();
-  if (!loaded) {
-    diag('❌ فشلت كل CDNs — الإنترنت أو الفايروول يحجب', 'fail');
-    return;
-  }
-  initAdminPanel();
-})();
-
-function initAdminPanel() {
-  window.client = supabase.createClient("https://onjbwhkmmtqnymhjnplw.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4");
-  diag('✅ 3. Supabase client تم إنشاؤه', 'ok');
-  fetch("https://onjbwhkmmtqnymhjnplw.supabase.co/rest/v1/", { headers: { 'apikey': "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4" } })
-    .then(r => diag('✅ 4. اتصال بـ Supabase: HTTP ' + r.status, r.ok ? 'ok' : 'fail'))
-    .catch(e => diag('❌ 4. فشل الاتصال: ' + e.message, 'fail'));
-  diag('✅ 5. اللوحة جاهزة — اضغط دخول', 'ok');
-  coopAdminBoot();
-}
-
-const COOP_ADMIN_TOKEN_KEY = 'coop_admin_token_v3';
-const COOP_ADMIN_INFO_KEY  = 'coop_admin_info_v3';
-let _sellersCache = [];
-let _sellerFilter = 'all';
-const coopTokenGet   = () => localStorage.getItem(COOP_ADMIN_TOKEN_KEY);
-const coopTokenSet   = (t, info) => { localStorage.setItem(COOP_ADMIN_TOKEN_KEY, t); localStorage.setItem(COOP_ADMIN_INFO_KEY, JSON.stringify(info)); };
-const coopTokenClear = () => { localStorage.removeItem(COOP_ADMIN_TOKEN_KEY); localStorage.removeItem(COOP_ADMIN_INFO_KEY); };
-const coopInfoGet    = () => { try { return JSON.parse(localStorage.getItem(COOP_ADMIN_INFO_KEY) || 'null'); } catch { return null; } };
-async function sha256Hex(text) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-function coopAdminShowLogin() {
-  document.getElementById('adm-login-modal').hidden = false;
-  document.getElementById('adm-header').hidden = true;
-  document.getElementById('adm-sellers-tab').hidden = true;
-  setTimeout(()=>document.getElementById('adm-username')?.focus(), 100);
-}
-function coopAdminShowDashboard() {
-  document.getElementById('adm-login-modal').hidden = true;
-  document.getElementById('adm-header').hidden = false;
-  document.getElementById('adm-sellers-tab').hidden = false;
-  const info = coopInfoGet();
-  if (info) {
-    document.getElementById('adm-greeting-name').textContent = info.display_name || info.username;
-    document.getElementById('adm-super-badge').hidden = !info.is_super;
-  }
-}
-function coopAdminHandleRpcError(err) {
-  const msg = err?.message || String(err);
-  if (msg.includes('invalid_or_expired_token') || msg.includes('admin_token_required') || msg.includes('admin_account_disabled')) {
-    coopTokenClear(); alert('انتهت الجلسة'); coopAdminShowLogin(); return true;
-  }
-  if (msg.includes('super_admin_required')) { alert('⛔ تتطلب Super Admin'); return true; }
-  return false;
-}
-async function coopAdminLogin() {
-  diag('👆 تم الضغط على دخول', 'info');
-  const username = document.getElementById('adm-username').value.trim();
-  const password = document.getElementById('adm-password').value;
-  const errEl = document.getElementById('adm-login-error');
-  const btn = document.getElementById('adm-login-btn');
-  errEl.hidden = true;
-  if (!username || password.length < 4) {
-    errEl.textContent = 'الرجاء إدخال البيانات أولاً (4 أحرف+)';
-    errEl.hidden = false;
-    diag('⚠️ إدخال فارغ أو قصير', 'info');
-    return;
-  }
-  btn.disabled = true; btn.textContent = '⏳ جارٍ الدخول...';
-  diag('🔐 إرسال لـ Supabase...', 'info');
-  try {
-    const hash = await sha256Hex(password);
-    const { data, error } = await client.rpc('coop_admin_login', { p_username: username, p_password_hash: hash, p_user_agent: navigator.userAgent.slice(0,200) });
-    if (error) throw error;
-    if (!data?.token) throw new Error('No token');
-    coopTokenSet(data.token, data.admin);
-    document.getElementById('adm-password').value = '';
-    diag('✅ دخول ناجح!', 'ok');
-    coopAdminShowDashboard();
-    await coopAdminLoadSellers();
-  } catch (e) {
-    const msg = e?.message || String(e);
-    errEl.textContent = msg.includes('invalid_credentials') ? '❌ المستخدم أو كلمة المرور خاطئة' : '❌ خطأ: ' + msg;
-    errEl.hidden = false;
-    diag('❌ فشل الدخول: ' + msg, 'fail');
-  } finally { btn.disabled = false; btn.textContent = 'دخول'; }
-}
-async function coopAdminLogout() {
-  if (!confirm('تسجيل الخروج؟')) return;
-  const token = coopTokenGet();
-  if (token) { try { await client.rpc('coop_admin_logout', { p_token: token }); } catch {} }
-  coopTokenClear(); coopAdminShowLogin();
-}
-async function coopAdminBoot() {
-  const token = coopTokenGet();
-  if (!token) return coopAdminShowLogin();
-  try {
-    const { data, error } = await client.rpc('coop_admin_whoami', { p_token: token });
-    if (error || !data?.admin) throw error || new Error('No admin');
-    coopTokenSet(token, data.admin);
-    coopAdminShowDashboard();
-    await coopAdminLoadSellers();
-  } catch { coopTokenClear(); coopAdminShowLogin(); }
-}
-async function coopAdminLoadSellers() {
-  const token = coopTokenGet();
-  if (!token) return coopAdminShowLogin();
-  try {
-    const { data: stats, error: e1 } = await client.rpc('coop_admin_seller_stats', { p_admin_token: token });
-    if (e1) throw e1;
-    if (stats) {
-      document.getElementById('stat-total').textContent = stats.total || 0;
-      document.getElementById('stat-pending').textContent = stats.pending || 0;
-      document.getElementById('stat-approved').textContent = stats.approved || 0;
-      document.getElementById('stat-suspended').textContent = stats.suspended || 0;
-    }
-    const { data: sellers, error: e2 } = await client.rpc('coop_admin_list_sellers', { p_admin_token: token });
-    if (e2) throw e2;
-    _sellersCache = sellers || []; coopAdminRenderSellers();
-  } catch (e) { if (!coopAdminHandleRpcError(e)) alert('فشل: ' + (e?.message || e)); }
-}
-function coopAdminRenderSellers() {
-  const list = document.getElementById('sellers-list'); list.innerHTML = '';
-  const filtered = _sellerFilter === 'all' ? _sellersCache : _sellersCache.filter(s => s.status === _sellerFilter);
-  if (filtered.length === 0) { list.innerHTML = '<div style="padding:40px;text-align:center;color:#999;background:#fff;border-radius:12px">لا يوجد بائعين</div>'; return; }
-  const info = coopInfoGet(); const isSuper = info?.is_super === true;
-  filtered.forEach(s => {
-    const card = document.createElement('div'); card.className = 'seller-card';
-    const head = document.createElement('div'); head.className = 'seller-head';
-    const inf = document.createElement('div'); inf.className = 'seller-info';
-    const nm = document.createElement('div'); nm.className = 'seller-name'; nm.textContent = s.display_name || s.username;
-    const mt = document.createElement('div'); mt.className = 'seller-meta'; mt.textContent = '👤 ' + s.username + ' · 📞 ' + (s.phone || '—') + (s.area ? ' · 📍 ' + s.area : '');
-    const st = document.createElement('div'); st.className = 'seller-row-stats';
-    st.innerHTML = '<span>📦 ' + s.product_count + ' منتج</span><span>📋 ' + s.pending_orders + ' طلب</span><span>💰 ' + s.balance + ' ل.ل.</span>';
-    inf.append(nm, mt, st);
-    const stat = document.createElement('span'); stat.className = 'seller-status ' + s.status; stat.textContent = s.status_label;
-    head.append(inf, stat); card.appendChild(head);
-    const acts = document.createElement('div'); acts.className = 'seller-actions';
-    const mkBtn = (cls, text, fn) => { const b = document.createElement('button'); b.className = cls; b.textContent = text; b.onclick = fn; return b; };
-    if (s.status === 'pending') acts.appendChild(mkBtn('btn-act-approve', '✅ اعتماد', () => coopAdminApproveSeller(s.id)));
-    if (s.status === 'approved') acts.appendChild(mkBtn('btn-act-suspend', '⛔ إيقاف', () => coopAdminSuspendSeller(s.id, s.display_name || s.username)));
-    if (s.status === 'suspended') acts.appendChild(mkBtn('btn-act-reactivate', '✅ إعادة تفعيل', () => coopAdminApproveSeller(s.id)));
-    if (isSuper) {
-      acts.appendChild(mkBtn('btn-act-pwd', '🔑 كلمة مرور', () => coopAdminChangePassword(s.id, s.username)));
-      acts.appendChild(mkBtn('btn-act-delete', '🗑️ حذف', () => coopAdminDeleteSeller(s.id, s.display_name || s.username)));
-    }
-    card.appendChild(acts); list.appendChild(card);
-  });
-}
-async function coopAdminApproveSeller(id) { if (!confirm('تأكيد؟')) return; try { const {error} = await client.rpc('coop_admin_approve_seller', {p_admin_token:coopTokenGet(),p_seller_id:id}); if(error)throw error; alert('✅ تم'); coopAdminLoadSellers(); } catch(e){ if(!coopAdminHandleRpcError(e))alert('فشل: '+(e?.message||e)); } }
-async function coopAdminSuspendSeller(id, name) { const r = prompt('سبب الإيقاف؟'); if(r===null)return; try { const {error}=await client.rpc('coop_admin_suspend_seller',{p_admin_token:coopTokenGet(),p_seller_id:id,p_reason:r||null}); if(error)throw error; alert('⛔ تم'); coopAdminLoadSellers(); } catch(e){ if(!coopAdminHandleRpcError(e))alert('فشل: '+(e?.message||e)); } }
-async function coopAdminChangePassword(id, u) { const n = prompt('كلمة المرور الجديدة؟'); if(!n||n.length<4)return; if(!confirm('تأكيد؟'))return; try { const h=await sha256Hex(n); const {error}=await client.rpc('coop_admin_change_seller_password',{p_admin_token:coopTokenGet(),p_seller_id:id,p_new_password_hash:h}); if(error)throw error; alert('🔑 تم'); } catch(e){ if(!coopAdminHandleRpcError(e))alert('فشل: '+(e?.message||e)); } }
-async function coopAdminDeleteSeller(id, name) { if(!confirm('حذف نهائي؟'))return; let f=false; for(let i=0;i<2;i++){ try { const {error}=await client.rpc('coop_admin_delete_seller',{p_admin_token:coopTokenGet(),p_seller_id:id,p_force:f}); if(error)throw error; alert('🗑️ تم'); coopAdminLoadSellers(); return; } catch(e){ const m=e?.message||String(e); if(m.includes('seller_has_orders')&&i===0){if(confirm('عنده طلبات. حذف رغماً؟')){f=true;continue;}return;} if(!coopAdminHandleRpcError(e))alert('فشل: '+m); return; } } }
-document.addEventListener('click', (e) => {
-  if (e.target.matches('#seller-filter-pills .pill')) {
-    document.querySelectorAll('#seller-filter-pills .pill').forEach(p => p.classList.remove('active'));
-    e.target.classList.add('active'); _sellerFilter = e.target.dataset.filter; coopAdminRenderSellers();
-  }
-});
-document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && document.activeElement?.closest('#adm-login-modal')) coopAdminLogin(); });
+const SB_URL="https://onjbwhkmmtqnymhjnplw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
+let client,sellers=[],filter='all';
+async function initSupabase(){if(typeof supabase==='undefined')await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://unpkg.com/@supabase/supabase-js@2.39.7/dist/umd/supabase.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});client=supabase.createClient(SB_URL,SB_KEY);}
+function toast(msg,type='info',duration=3000){const el=document.createElement('div');el.className='toast '+type;el.textContent=(type==='success'?'✅ ':type==='error'?'❌ ':type==='warning'?'⚠️ ':'ℹ️ ')+msg;document.getElementById('toasts').appendChild(el);setTimeout(()=>{el.style.opacity='0';setTimeout(()=>el.remove(),300);},duration);}
+async function sha256(text){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+const tokenGet=()=>localStorage.getItem('admin_token');
+const tokenSet=(t,info)=>{localStorage.setItem('admin_token',t);localStorage.setItem('admin_info',JSON.stringify(info));};
+const tokenClear=()=>{localStorage.removeItem('admin_token');localStorage.removeItem('admin_info');};
+const getInfo=()=>{try{return JSON.parse(localStorage.getItem('admin_info')||'null');}catch{return null;}};
+function showLogin(){document.getElementById('login-screen').hidden=false;document.getElementById('app').hidden=true;setTimeout(()=>document.getElementById('username')?.focus(),100);}
+function showApp(){document.getElementById('login-screen').hidden=true;document.getElementById('app').hidden=false;const info=getInfo();if(info){document.getElementById('user-name').textContent=info.display_name||info.username;document.getElementById('welcome-name').textContent=info.display_name||info.username;document.getElementById('super-badge').hidden=!info.is_super;}const now=new Date();document.getElementById('current-date').textContent=now.toLocaleDateString('ar-LB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
+function handleError(err){const msg=err?.message||String(err);if(msg.includes('invalid_or_expired_token')||msg.includes('admin_token_required')||msg.includes('admin_account_disabled')){tokenClear();toast('انتهت الجلسة','warning');showLogin();return true;}if(msg.includes('super_admin_required')){toast('تتطلب Super Admin','error');return true;}return false;}
+async function doLogin(){const u=document.getElementById('username').value.trim();const p=document.getElementById('password').value;const e=document.getElementById('login-error');const b=document.getElementById('login-btn');e.hidden=true;if(!u||p.length<4){e.textContent='الرجاء إدخال البيانات';e.hidden=false;return;}b.disabled=true;b.innerHTML='<span class="spinner"></span>';try{const h=await sha256(p);const {data,error}=await client.rpc('coop_admin_login',{p_username:u,p_password_hash:h,p_user_agent:navigator.userAgent.slice(0,200)});if(error)throw error;if(!data?.token)throw new Error('No token');tokenSet(data.token,data.admin);document.getElementById('password').value='';showApp();await loadSellers();toast('مرحباً '+(data.admin.display_name||data.admin.username),'success');}catch(err){const m=err?.message||String(err);e.textContent=m.includes('invalid_credentials')?'البيانات غير صحيحة':'خطأ: '+m;e.hidden=false;}finally{b.disabled=false;b.textContent='دخول';}}
+async function doLogout(){if(!confirm('تسجيل الخروج؟'))return;const t=tokenGet();if(t){try{await client.rpc('coop_admin_logout',{p_token:t});}catch{}}tokenClear();toast('تم تسجيل الخروج','info');showLogin();}
+async function bootApp(){const t=tokenGet();if(!t)return showLogin();try{const {data,error}=await client.rpc('coop_admin_whoami',{p_token:t});if(error||!data?.admin)throw error||new Error('Invalid');tokenSet(t,data.admin);showApp();await loadSellers();}catch{tokenClear();showLogin();}}
+async function loadSellers(){const t=tokenGet();if(!t)return showLogin();try{const {data:stats,error:e1}=await client.rpc('coop_admin_seller_stats',{p_admin_token:t});if(e1)throw e1;if(stats){document.getElementById('stat-total').textContent=stats.total||0;document.getElementById('stat-pending').textContent=stats.pending||0;document.getElementById('stat-approved').textContent=stats.approved||0;document.getElementById('stat-suspended').textContent=stats.suspended||0;}const {data,error:e2}=await client.rpc('coop_admin_list_sellers',{p_admin_token:t});if(e2)throw e2;sellers=data||[];renderSellers();}catch(e){if(!handleError(e))toast('فشل: '+(e?.message||e),'error');}}
+function renderSellers(){const list=document.getElementById('sellers-list');list.innerHTML='';const filtered=filter==='all'?sellers:sellers.filter(s=>s.status===filter);if(filtered.length===0){list.innerHTML='<div class="empty-state">📭 لا يوجد بائعين</div>';return;}const info=getInfo();const isSuper=info?.is_super===true;filtered.forEach(s=>{const card=document.createElement('div');card.className='seller-card';const row=document.createElement('div');row.className='seller-row';const inf=document.createElement('div');inf.className='seller-info';inf.innerHTML='<div class="seller-name">'+(s.display_name||s.username)+'</div><div class="seller-meta"><span>👤 '+s.username+'</span><span>📞 '+(s.phone||'—')+'</span>'+(s.area?'<span>📍 '+s.area+'</span>':'')+'</div><div class="seller-numbers"><span>📦 <span class="num">'+s.product_count+'</span> منتج</span><span>📋 <span class="num">'+s.pending_orders+'</span> طلب فعّال</span><span>💰 <span class="num">'+s.balance+'</span> ل.ل.</span></div>';const status=document.createElement('span');status.className='seller-status '+s.status;status.textContent=s.status_label;row.append(inf,status);card.appendChild(row);const acts=document.createElement('div');acts.className='seller-actions';const mk=(c,t,f)=>{const b=document.createElement('button');b.className=c;b.textContent=t;b.onclick=f;return b;};if(s.status==='pending')acts.appendChild(mk('btn-approve','✅ اعتماد',()=>approveSeller(s.id,s.display_name||s.username)));if(s.status==='approved')acts.appendChild(mk('btn-suspend','⛔ إيقاف',()=>suspendSeller(s.id,s.display_name||s.username)));if(s.status==='suspended')acts.appendChild(mk('btn-approve','✅ إعادة تفعيل',()=>approveSeller(s.id,s.display_name||s.username)));if(isSuper){acts.appendChild(mk('btn-pwd','🔑 كلمة المرور',()=>changePassword(s.id,s.username)));acts.appendChild(mk('btn-delete','🗑️ حذف',()=>deleteSeller(s.id,s.display_name||s.username)));}card.appendChild(acts);list.appendChild(card);});}
+async function approveSeller(id,name){if(!confirm('تأكيد اعتماد "'+name+'"؟'))return;try{const {error}=await client.rpc('coop_admin_approve_seller',{p_admin_token:tokenGet(),p_seller_id:id});if(error)throw error;toast('تم الاعتماد','success');loadSellers();}catch(e){if(!handleError(e))toast('فشل: '+(e?.message||e),'error');}}
+async function suspendSeller(id,name){const r=prompt('سبب إيقاف "'+name+'"؟');if(r===null)return;try{const {error}=await client.rpc('coop_admin_suspend_seller',{p_admin_token:tokenGet(),p_seller_id:id,p_reason:r||null});if(error)throw error;toast('تم الإيقاف','success');loadSellers();}catch(e){if(!handleError(e))toast('فشل: '+(e?.message||e),'error');}}
+async function changePassword(id,u){const n=prompt('كلمة المرور الجديدة لـ "'+u+'":');if(!n)return;if(n.length<4)return toast('قصيرة جداً','error');if(!confirm('تأكيد التغيير؟'))return;try{const h=await sha256(n);const {error}=await client.rpc('coop_admin_change_seller_password',{p_admin_token:tokenGet(),p_seller_id:id,p_new_password_hash:h});if(error)throw error;toast('تم التغيير','success');}catch(e){if(!handleError(e))toast('فشل: '+(e?.message||e),'error');}}
+async function deleteSeller(id,name){if(!confirm('⚠️ حذف نهائي لـ "'+name+'"؟'))return;let f=false;for(let i=0;i<2;i++){try{const {error}=await client.rpc('coop_admin_delete_seller',{p_admin_token:tokenGet(),p_seller_id:id,p_force:f});if(error)throw error;toast('تم الحذف','success');loadSellers();return;}catch(e){const m=e?.message||String(e);if(m.includes('seller_has_orders')&&i===0){if(confirm('عنده طلبات. حذف رغماً؟')){f=true;continue;}return;}if(!handleError(e))toast('فشل: '+m,'error');return;}}}
+document.addEventListener('click',(e)=>{if(e.target.matches('#filter-pills .pill')){document.querySelectorAll('#filter-pills .pill').forEach(p=>p.classList.remove('active'));e.target.classList.add('active');filter=e.target.dataset.filter;renderSellers();}});
+document.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&document.activeElement?.closest('#login-screen'))doLogin();});
+(async()=>{try{await initSupabase();bootApp();}catch(e){document.body.innerHTML='<div style="padding:40px;text-align:center;font-family:sans-serif"><h2>⚠️ خطأ في الاتصال</h2><p>تعذّر تحميل المكتبة. تحقق من الاتصال.</p></div>';}})();
 </script>
 </body>
 </html>
