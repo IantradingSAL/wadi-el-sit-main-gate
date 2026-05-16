@@ -593,6 +593,13 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
   for(var lng in _co){ for(var k in _co[lng]){ window.__WADI_STRINGS__[lng][k] = _co[lng][k]; } }
   if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_co); }catch(e){} }
 })();</script>
+
+<script>(function(){
+  var _s = {"ar": {"sellerLoginSubtitle": "أدخل بياناتك لعرض لوحة البائع", "sellerLoginUsernameLabel": "اسم المستخدم", "sellerSignupUsernameLabel": "اسم المستخدم *", "sellerLoginBtn": "دخول ←", "sellerNoAccount": "ليس لديك حساب؟", "sellerSignNow": "سجّل الآن", "sellerBack": "← رجوع", "sellerDataRequired": "البيانات مطلوبة", "sellerWelcomeBack": "مرحباً", "sellerSubInfo": "سجّل دخول إذا كان لديك حساب بائع، أو اطلب الانضمام إذا كنت جديداً.", "sellerSignupNote": "سيتمّ مراجعة حسابك من قبل البلدية"}, "en": {"sellerLoginSubtitle": "Enter your credentials to access the seller panel", "sellerLoginUsernameLabel": "Username", "sellerSignupUsernameLabel": "Username *", "sellerLoginBtn": "Sign in →", "sellerNoAccount": "Don't have an account?", "sellerSignNow": "Sign up now", "sellerBack": "← Back", "sellerDataRequired": "Credentials required", "sellerWelcomeBack": "Welcome", "sellerSubInfo": "Sign in if you have a seller account, or request to join if you are new.", "sellerSignupNote": "Your account will be reviewed by the municipality"}, "fr": {"sellerLoginSubtitle": "Entrez vos identifiants pour accéder au panneau vendeur", "sellerLoginUsernameLabel": "Nom d'utilisateur", "sellerSignupUsernameLabel": "Nom d'utilisateur *", "sellerLoginBtn": "Connexion →", "sellerNoAccount": "Pas de compte ?", "sellerSignNow": "Inscrivez-vous", "sellerBack": "← Retour", "sellerDataRequired": "Identifiants requis", "sellerWelcomeBack": "Bienvenue", "sellerSubInfo": "Connectez-vous si vous avez un compte vendeur, ou demandez à rejoindre.", "sellerSignupNote": "Votre compte sera examiné par la municipalité"}};
+  window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
+  for(var lng in _s){ for(var k in _s[lng]){ window.__WADI_STRINGS__[lng][k] = _s[lng][k]; } }
+  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){ try{ I18N.extend(_s); }catch(e){} }
+})();</script>
 <script src="pwa.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -2614,14 +2621,41 @@ async function submitDeliveryAgent(){
 }
 
 /* ═══════ SELL PAGE ═══════ */
+async function refreshSellerStatus(){
+  /* Re-fetch seller status from DB so admin approval shows immediately */
+  if(!currentSeller || !currentSeller.id || !sb) return;
+  try{
+    const res = await sb.from('coop_sellers').select('*').eq('id', currentSeller.id).maybeSingle();
+    if(res.data){
+      const oldStatus = currentSeller.status;
+      currentSeller = res.data;
+      try{ localStorage.setItem('coop_seller', JSON.stringify(currentSeller)); }catch(e){}
+      if(oldStatus === 'pending' && currentSeller.status === 'approved'){
+        try{ toast((window.__wadi_t && window.__wadi_t('sellerWelcomeBack') ? window.__wadi_t('sellerWelcomeBack') : '✅') + ' — '+currentSeller.display_name, 'ok'); }catch(e){}
+      }
+    }
+  }catch(e){ console.warn('refreshSellerStatus failed:', e); }
+}
+
 function renderSellPage(){
   const c=document.getElementById('sell-content');
+  /* Auto-refresh from DB so the seller sees their approval status without re-login */
+  if(currentSeller && currentSeller.id){
+    refreshSellerStatus().then(function(){
+      /* After refresh, re-render with potentially updated status */
+      if(currentSeller && currentSeller.id){ _renderSellPageInner(c); }
+    });
+  }
+  _renderSellPageInner(c);
+}
+
+function _renderSellPageInner(c){
   if(!currentSeller){
     c.innerHTML=`
       <div style="padding:30px 20px;text-align:center">
         <div style="width:90px;height:90px;border-radius:50%;background:var(--primary4);margin:20px auto 16px;display:flex;align-items:center;justify-content:center;font-size:42px">🏪</div>
         <h2 data-i18n="beSellerTitle" style="font-size:20px;font-weight:900;margin-bottom:8px">كن بائعاً في التعاونية</h2>
-        <p style="color:var(--text3);font-size:14px;line-height:1.6;margin-bottom:24px">سجّل دخول إذا كان لديك حساب بائع، أو اطلب الانضمام إذا كنت جديداً.</p>
+        <p style="color:var(--text3);font-size:14px;line-height:1.6;margin-bottom:24px" data-i18n="sellerSubInfo">سجّل دخول إذا كان لديك حساب بائع، أو اطلب الانضمام إذا كنت جديداً.</p>
         <button class="btn btn-primary btn-block mb-2" onclick="showSellerLogin()" data-i18n="sellerLogin">دخول البائع</button>
         <button class="btn btn-outline btn-block" onclick="showSellerRegister()" data-i18n="createNewAcc">إنشاء حساب جديد</button>
       </div>
@@ -2637,15 +2671,15 @@ function showSellerLogin(){
   c.innerHTML=`
     <div style="padding:24px 20px">
       <h2 data-i18n="sellerLogin" style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">دخول البائع</h2>
-      <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px">أدخل بياناتك لعرض لوحة البائع</p>
-      <div class="field"><label class="field-label">اسم المستخدم</label><input class="field-input" id="sl-user" style="direction:ltr;text-align:right"></div>
+      <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px" data-i18n="sellerLoginSubtitle">أدخل بياناتك لعرض لوحة البائع</p>
+      <div class="field"><label class="field-label" data-i18n="sellerLoginUsernameLabel">اسم المستخدم</label><input class="field-input" id="sl-user" style="direction:ltr;text-align:right"></div>
       <div class="field"><label class="field-label" data-i18n="pwdField">كلمة المرور</label><input class="field-input" id="sl-pw" type="password" style="direction:ltr;text-align:right" onkeydown="if(event.key==='Enter')doSellerLogin()"></div>
       <div id="sl-err" style="color:var(--red);font-size:12px;text-align:center;display:none;margin-bottom:10px"></div>
-      <button class="btn btn-primary btn-block" onclick="doSellerLogin()">دخول ←</button>
+      <button class="btn btn-primary btn-block" onclick="doSellerLogin()" data-i18n="sellerLoginBtn">دخول ←</button>
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
-        ليس لديك حساب؟ <a onclick="showSellerRegister()" style="color:var(--primary);font-weight:700;cursor:pointer">سجّل الآن</a>
+        <span data-i18n="sellerNoAccount">ليس لديك حساب؟</span> <a onclick="showSellerRegister()" style="color:var(--primary);font-weight:700;cursor:pointer" data-i18n="sellerSignNow">سجّل الآن</a>
       </div>
-      <div style="text-align:center;margin-top:8px"><a onclick="renderSellPage()" style="color:var(--text3);font-size:12px;cursor:pointer">← رجوع</a></div>
+      <div style="text-align:center;margin-top:8px"><a onclick="renderSellPage()" style="color:var(--text3);font-size:12px;cursor:pointer" data-i18n="sellerBack">← رجوع</a></div>
     </div>
   `;
 }
@@ -2657,7 +2691,7 @@ function showSellerRegister(){
   c.innerHTML=`
     <div style="padding:24px 20px">
       <h2 data-i18n="sellerSignup" style="font-size:20px;font-weight:900;margin-bottom:8px;text-align:center">إنشاء حساب بائع</h2>
-      <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px">سيتمّ مراجعة حسابك من قبل البلدية</p>
+      <p style="color:var(--text3);font-size:13px;text-align:center;margin-bottom:20px" data-i18n="sellerSignupNote">سيتمّ مراجعة حسابك من قبل البلدية</p>
       <div class="row-2">
         <div class="field"><label class="field-label">الاسم الأوّل *</label><input class="field-input" id="sr-fname" value="${escapeAttr((u.name||'').split(/\s+/)[0]||'')}"></div>
         <div class="field"><label class="field-label">العائلة *</label><input class="field-input" id="sr-lname" value="${escapeAttr((u.name||'').split(/\s+/).slice(1).join(' '))}"></div>
@@ -2666,7 +2700,7 @@ function showSellerRegister(){
       <div class="field"><label class="field-label">المنطقة</label><input class="field-input" id="sr-area" placeholder="وادي الست"></div>
       <div class="field"><label class="field-label">وصف نشاطك (اختياري)</label><textarea class="field-textarea" id="sr-bio" placeholder="مثلاً: ألبان وأجبان منزليّة"></textarea></div>
       <div class="row-2">
-        <div class="field"><label class="field-label">اسم المستخدم *</label><input class="field-input" id="sr-user" placeholder="username" style="direction:ltr;text-align:right"></div>
+        <div class="field"><label class="field-label" data-i18n="sellerSignupUsernameLabel">اسم المستخدم *</label><input class="field-input" id="sr-user" placeholder="username" style="direction:ltr;text-align:right"></div>
         <div class="field"><label class="field-label" data-i18n="pwdFieldReq">كلمة المرور *</label><input class="field-input" id="sr-pw" type="password" style="direction:ltr;text-align:right"></div>
       </div>
       <div class="field-hint mb-2">📌 اختر اسم مستخدم بأحرف إنجليزيّة فقط، بدون مسافات</div>
@@ -2675,7 +2709,7 @@ function showSellerRegister(){
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         لديك حساب؟ <a onclick="showSellerLogin()" style="color:var(--primary);font-weight:700;cursor:pointer">سجّل دخول</a>
       </div>
-      <div style="text-align:center;margin-top:8px"><a onclick="renderSellPage()" style="color:var(--text3);font-size:12px;cursor:pointer">← رجوع</a></div>
+      <div style="text-align:center;margin-top:8px"><a onclick="renderSellPage()" style="color:var(--text3);font-size:12px;cursor:pointer" data-i18n="sellerBack">← رجوع</a></div>
     </div>
   `;
 }
@@ -2685,7 +2719,7 @@ async function doSellerLogin(){
   const pw=document.getElementById('sl-pw').value;
   const err=document.getElementById('sl-err');
   err.style.display='none';
-  if(!u||!pw){err.textContent='البيانات مطلوبة';err.style.display='block';return;}
+  if(!u||!pw){err.textContent=(window.__wadi_t&&window.__wadi_t('sellerDataRequired'))||'البيانات مطلوبة';err.style.display='block';return;}
   try{
     const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
     const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -2695,7 +2729,7 @@ async function doSellerLogin(){
     }
     currentSeller=res.data;
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
-    toast('✅ مرحباً '+(currentSeller.display_name||''),'ok');
+    toast('✅ '+((window.__wadi_t&&window.__wadi_t('sellerWelcomeBack'))||'مرحباً')+' '+(currentSeller.display_name||''),'ok');
     renderSellPage();
   }catch(e){console.error(e);err.textContent='خطأ في الاتصال';err.style.display='block';}
 }
@@ -3019,7 +3053,7 @@ function addSellerProduct(){
   CATEGORIES.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
-    opt.textContent = c.icon + ' ' + c.name;
+    opt.textContent = c.icon + ' ' + (typeof c.name === 'object' ? pickLang(c.name) : c.name);
     sel.appendChild(opt);
   });
   document.getElementById('modal-product').classList.add('on');
@@ -3049,7 +3083,7 @@ function editSellerProduct(productId){
   CATEGORIES.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c.id;
-    opt.textContent = c.icon + ' ' + c.name;
+    opt.textContent = c.icon + ' ' + (typeof c.name === 'object' ? pickLang(c.name) : c.name);
     if(c.id === prod.category_id) opt.selected = true;
     sel.appendChild(opt);
   });
@@ -3682,7 +3716,14 @@ function shadeColor(c,p){
 (function(){
   'use strict';
   function getSavedLang(){
-    try{ var s = localStorage.getItem('wadi_lang'); if(s==='en'||s==='fr'||s==='ar') return s; }catch(e){}
+    /* Check multiple possible keys (different i18n libs use different keys) */
+    var keys = ['wadi_lang','lang','i18n_lang','i18nLang','language'];
+    for(var i = 0; i < keys.length; i++){
+      try{
+        var s = localStorage.getItem(keys[i]);
+        if(s==='en'||s==='fr'||s==='ar') return s;
+      }catch(e){}
+    }
     return null;
   }
   function getCurrentLang(){
@@ -3741,7 +3782,13 @@ function shadeColor(c,p){
   
   window.wadiSetLang = function(lang){
     if(!lang || (lang!=='ar' && lang!=='en' && lang!=='fr')) return;
-    try{ localStorage.setItem('wadi_lang', lang); }catch(e){}
+    try{
+      localStorage.setItem('wadi_lang', lang);
+      localStorage.setItem('lang', lang);
+      localStorage.setItem('i18n_lang', lang);
+      localStorage.setItem('i18nLang', lang);
+      localStorage.setItem('language', lang);
+    }catch(e){}
     document.documentElement.lang = lang;
     document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
     if(typeof window.I18N !== 'undefined' && I18N){
@@ -3763,25 +3810,40 @@ function shadeColor(c,p){
   window.wadiOpenHelp = function(){ var ov=document.getElementById('WADI_HELP_OV'); if(ov){ov.classList.add('open');document.body.style.overflow='hidden';} };
   window.wadiCloseHelp = function(){ var ov=document.getElementById('WADI_HELP_OV'); if(ov){ov.classList.remove('open');document.body.style.overflow='';} };
   
-  function init(){
-    var cur = getCurrentLang();
+  function applyLangFully(cur){
+    /* Force-apply language: update html attrs, tell i18n.js, run manualApply, highlight pill */
     document.documentElement.lang = cur;
     document.documentElement.dir = (cur==='ar') ? 'rtl' : 'ltr';
     var btns = document.querySelectorAll('.wadi-lang-btn');
     for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].getAttribute('data-lang')===cur);
-    /* If saved lang differs from i18n's current, tell i18n */
     if(typeof window.I18N !== 'undefined' && I18N){
-      var i18nLang = (typeof I18N.getLang === 'function') ? (function(){try{return I18N.getLang();}catch(e){return null;}})() : null;
-      if(i18nLang && i18nLang !== cur){
-        try{
-          if(typeof I18N.setLang === 'function') I18N.setLang(cur);
-          else if(typeof I18N.apply === 'function') I18N.apply(cur);
-          else if(typeof I18N.use === 'function') I18N.use(cur);
-          else if(typeof I18N.set === 'function') I18N.set(cur);
-        }catch(e){}
-      }
+      try{
+        if(typeof I18N.setLang === 'function') I18N.setLang(cur);
+        else if(typeof I18N.apply === 'function') I18N.apply(cur);
+        else if(typeof I18N.use === 'function') I18N.use(cur);
+        else if(typeof I18N.set === 'function') I18N.set(cur);
+        else if(typeof I18N.change === 'function') I18N.change(cur);
+      }catch(e){}
     }
     manualApply(cur);
+  }
+  function init(){
+    var cur = getCurrentLang();
+    /* Save to ALL possible localStorage keys so any i18n lib finds it */
+    try{
+      localStorage.setItem('wadi_lang', cur);
+      localStorage.setItem('lang', cur);
+      localStorage.setItem('i18n_lang', cur);
+      localStorage.setItem('i18nLang', cur);
+      localStorage.setItem('language', cur);
+    }catch(e){}
+    /* Apply NOW + at staggered intervals to override any late i18n.js auto-render */
+    applyLangFully(cur);
+    setTimeout(function(){ applyLangFully(cur); }, 100);
+    setTimeout(function(){ applyLangFully(cur); }, 500);
+    setTimeout(function(){ applyLangFully(cur); }, 1500);
+    setTimeout(function(){ applyLangFully(cur); }, 3000);
+    /* Hook into i18n.js's onApply for future language changes */
     if(typeof window.I18N !== 'undefined' && I18N && typeof I18N.onApply === 'function'){
       try{
         I18N.onApply(function(lang){
