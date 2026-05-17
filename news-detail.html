@@ -22,6 +22,544 @@ I18N.extend({
     pageTitle: '📰 خبر — وادي الست',
     backHome: '🏛️ البوابة',
     allNews: '📰 كل الأخبار',
+    detailTitle: '📰 خبر',
+    detailSub: 'تفاصيل الخبر',
+    loading: 'جاري التحميل...',
+    invalidLink: 'رابط غير صحيح',
+    backToNews: '← العودة لقائمة الأخبار',
+    articleNotFound: 'الخبر غير موجود',
+    errLoadingArticle: 'تعذّر تحميل الخبر',
+    eventDateLabel: 'موعد الفعّالية',
+    views: 'مشاهدة',
+    shareWA: 'واتساب',
+    shareFB: 'فيسبوك',
+    shareTG: 'تليجرام',
+    copyLink: '📋 نسخ الرابط',
+    share: '🔗 مشاركة',
+    relatedNews: '📰 أخبار أخرى',
+    noOtherNews: 'لا توجد أخبار أخرى',
+    readMore: 'اقرأ المزيد',
+    linkCopied: '✅ تم نسخ الرابط',
+    copyManually: 'انسخ يدوياً:',
+    timeJustNow: 'الآن',
+    timeMinShort: 'د',
+    timeAgo: 'منذ',
+    timeHrShort: 'س',
+    timeDayShort: 'يوم',
+  },
+  en: {
+    pageTitle: '📰 News — Wadi El Sit',
+    backHome: '🏛️ Gate',
+    allNews: '📰 All News',
+    detailTitle: '📰 News',
+    detailSub: 'Article details',
+    loading: 'Loading...',
+    invalidLink: 'Invalid link',
+    backToNews: '← Back to news list',
+    articleNotFound: 'Article not found',
+    errLoadingArticle: 'Could not load article',
+    eventDateLabel: 'Event date',
+    views: 'views',
+    shareWA: 'WhatsApp',
+    shareFB: 'Facebook',
+    shareTG: 'Telegram',
+    copyLink: '📋 Copy link',
+    share: '🔗 Share',
+    relatedNews: '📰 Related news',
+    noOtherNews: 'No other news',
+    readMore: 'Read more',
+    linkCopied: '✅ Link copied',
+    copyManually: 'Copy manually:',
+    timeJustNow: 'just now',
+    timeMinShort: 'min',
+    timeAgo: '',
+    timeHrShort: 'hr ago',
+    timeDayShort: 'd ago',
+  },
+  fr: {
+    pageTitle: '📰 Actualité — Wadi El Sit',
+    backHome: '🏛️ Portail',
+    allNews: '📰 Toutes les actualités',
+    detailTitle: '📰 Actualité',
+    detailSub: "Détails de l'article",
+    loading: 'Chargement...',
+    invalidLink: 'Lien invalide',
+    backToNews: '← Retour à la liste des actualités',
+    articleNotFound: 'Article introuvable',
+    errLoadingArticle: "Impossible de charger l'article",
+    eventDateLabel: "Date de l'événement",
+    views: 'vues',
+    shareWA: 'WhatsApp',
+    shareFB: 'Facebook',
+    shareTG: 'Telegram',
+    copyLink: '📋 Copier le lien',
+    share: '🔗 Partager',
+    relatedNews: '📰 Actualités liées',
+    noOtherNews: "Pas d'autres actualités",
+    readMore: 'Lire la suite',
+    linkCopied: '✅ Lien copié',
+    copyManually: 'Copier manuellement :',
+    timeJustNow: "à l'instant",
+    timeMinShort: 'min',
+    timeAgo: 'il y a',
+    timeHrShort: 'h',
+    timeDayShort: 'j',
+  }
+});
+
+/* Re-render article + related when language changes */
+I18N.onApply(function(lang){
+  if (typeof currentArticle !== 'undefined' && currentArticle && typeof renderArticle === 'function'){
+    try {
+      renderArticle(currentArticle);
+      loadRelated(currentArticle);
+    } catch(e){}
+  }
+});
+</script>
+
+<script src="pwa.js" defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0}
+html,body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.65}
+
+/* HEADER — matches news.html */
+.app-hdr{background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 100%);color:#fff;padding:18px 16px 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 16px rgba(15,77,130,.18)}
+.hdr-row{display:flex;align-items:center;gap:12px;max-width:1200px;margin:0 auto}
+.hdr-ttl{flex:1;min-width:0}
+.hdr-ttl h1{font-size:18px;font-weight:900;letter-spacing:-.3px;line-height:1.2}
+.hdr-ttl p{font-size:11.5px;opacity:.78;margin-top:2px}
+.hdr-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.hdr-btn{background:rgba(255,255,255,.16);color:#fff;border:none;padding:7px 11px;border-radius:14px;font-size:11.5px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.hdr-btn:hover{background:rgba(255,255,255,.26)}
+
+/* WADI shared header — copied from news.html so the design is identical */
+.wadi-logo-link{display:inline-flex;align-items:center;text-decoration:none;color:inherit;flex-shrink:0;border-radius:50%;transition:transform .15s;cursor:pointer;}
+.wadi-logo-link:hover,.wadi-logo-link:active{transform:scale(1.06);}
+.wadi-lang-pill{display:inline-flex;align-items:center;gap:1px;background:rgba(255,255,255,.18);border-radius:999px;padding:2px;flex-shrink:0;font-family:'Tajawal',sans-serif;}
+.wadi-lang-btn{background:none;border:none;color:#fff;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;letter-spacing:.5px;opacity:.65;transition:all .15s;line-height:1;min-width:28px;}
+.wadi-lang-btn.on{background:#fff;color:#0f4d82;opacity:1;box-shadow:0 1px 3px rgba(0,0,0,.18);}
+.wadi-lang-btn:hover{opacity:1;}
+.wadi-help-trigger{background:rgba(255,255,255,.18);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0;transition:all .15s;font-weight:800;}
+.wadi-help-trigger:hover,.wadi-help-trigger:active{background:rgba(255,255,255,.32);}
+
+/* Suppress i18n.js auto-injected duplicate language pill */
+header > .lang-switch{display:none!important;}
+
+/* CONTENT */
+.container{max-width:780px;margin:0 auto;padding:0 0 50px}
+
+.cover{aspect-ratio:21/9;background:linear-gradient(135deg,var(--blue4),#dbeafe);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+.cover-fallback{font-size:80px;opacity:.5}
+.cover-cat{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.95);backdrop-filter:blur(6px);padding:7px 14px;border-radius:14px;font-size:12.5px;font-weight:800;color:var(--blue2)}
+
+.article{background:#fff;padding:24px 22px;margin:-30px 14px 0;border-radius:18px 18px 0 0;position:relative;z-index:2;box-shadow:0 -8px 30px rgba(0,0,0,.05);min-height:60vh}
+
+.title-bar{margin-bottom:18px}
+.title{font-size:24px;font-weight:900;line-height:1.35;color:var(--text);margin-bottom:10px;letter-spacing:-.3px}
+.meta{display:flex;align-items:center;gap:11px;font-size:11.5px;color:var(--text3);flex-wrap:wrap}
+.meta span{display:inline-flex;align-items:center;gap:4px}
+.meta-dot{width:3px;height:3px;background:var(--text3);border-radius:50%}
+
+.summary{background:var(--blue4);border-right:4px solid var(--blue);padding:14px 16px;border-radius:8px;margin-bottom:20px;font-size:14.5px;font-weight:600;color:var(--blue2);line-height:1.7}
+
+.content{font-size:15px;color:var(--text);line-height:1.85;white-space:pre-wrap;margin-bottom:24px}
+
+.event-box{background:linear-gradient(135deg,#fff8eb,#fef3c7);border:1px solid #fbbf24;border-radius:13px;padding:14px 16px;margin-bottom:20px;display:flex;gap:14px;align-items:center}
+.event-box-i{font-size:32px;flex-shrink:0}
+.event-box-text{flex:1}
+.event-box-l{font-size:11px;color:#7a5500;font-weight:800;margin-bottom:2px}
+.event-box-d{font-size:14px;font-weight:800;color:#854d0e;margin-bottom:1px}
+.event-box-loc{font-size:12px;color:#92400e}
+
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:20px}
+@media(min-width:540px){.gallery{grid-template-columns:repeat(3,1fr)}}
+.gallery-item{aspect-ratio:1/1;background:var(--bg2);border-radius:9px;overflow:hidden;cursor:pointer;transition:.15s}
+.gallery-item:hover{transform:scale(1.03);box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.gallery-item img{width:100%;height:100%;object-fit:cover}
+
+/* SHARE */
+.share-bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:18px}
+.share-btn{flex:1;min-width:90px;padding:11px;border:1.5px solid var(--border);border-radius:11px;background:#fff;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--text);transition:.15s}
+.share-btn:hover{border-color:var(--blue3);background:var(--blue4)}
+.share-btn.wa{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border-color:transparent}
+.share-btn.wa:hover{filter:brightness(1.05)}
+.share-btn.fb{background:linear-gradient(135deg,#1877F2,#0E5FBF);color:#fff;border-color:transparent}
+.share-btn.fb:hover{filter:brightness(1.08)}
+.share-btn.tw{background:linear-gradient(135deg,#1DA1F2,#0d8ddc);color:#fff;border-color:transparent}
+.share-btn.tw:hover{filter:brightness(1.05)}
+.share-btn.tg{background:linear-gradient(135deg,#0088cc,#006699);color:#fff;border-color:transparent}
+.share-btn.tg:hover{filter:brightness(1.05)}
+
+/* RELATED */
+.related-h{font-size:14.5px;font-weight:800;color:var(--blue2);margin:26px 0 12px}
+.related-grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:540px){.related-grid{grid-template-columns:1fr 1fr}}
+.related-card{display:flex;gap:11px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:11px;cursor:pointer;transition:.15s;text-decoration:none;color:inherit}
+.related-card:hover{border-color:var(--blue3);transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,.06)}
+.related-img{width:70px;height:70px;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;overflow:hidden}
+.related-img img{width:100%;height:100%;object-fit:cover}
+.related-text{flex:1;min-width:0}
+.related-cat{font-size:10.5px;color:var(--blue);font-weight:700;margin-bottom:2px}
+.related-title{font-size:12.5px;font-weight:800;line-height:1.4;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.related-meta{font-size:10.5px;color:var(--text3);margin-top:4px}
+
+/* LOADING / EMPTY */
+.center{text-align:center;padding:60px 20px;color:var(--text3)}
+.center-i{font-size:48px;margin-bottom:12px;opacity:.5}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.1);border-top-color:var(--blue);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* IMAGE LIGHTBOX */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;cursor:pointer}
+.lightbox.on{display:flex;animation:fadeIn .25s}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.lightbox-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.18);color:#fff;border:none;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+
+<header class="app-hdr">
+  <div class="hdr-row">
+    <a href="index.html" class="wadi-logo-link" aria-label="Main gate" title="البوابة الرئيسية">
+      <img src="data:image/png;base64,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" alt="شعار بلدية وادي الست" style="height:42px;width:42px;border-radius:50%;background:#fff;padding:3px;box-shadow:0 3px 10px rgba(0,0,0,.16);">
+    </a>
+    <div class="hdr-ttl">
+      <h1 data-i18n="detailTitle">📰 خبر</h1>
+      <p data-i18n="detailSub">تفاصيل الخبر</p>
+    </div>
+    <div class="hdr-actions">
+      <div class="wadi-lang-pill" role="group" aria-label="Language">
+        <button type="button" class="wadi-lang-btn" data-lang="ar" onclick="wadiSetLang('ar')">AR</button>
+        <button type="button" class="wadi-lang-btn" data-lang="en" onclick="wadiSetLang('en')">EN</button>
+        <button type="button" class="wadi-lang-btn" data-lang="fr" onclick="wadiSetLang('fr')">FR</button>
+      </div>
+      <a href="news.html" class="hdr-btn" title="كل الأخبار" aria-label="All news" data-i18n-title="allNews">📰</a>
+    </div>
+  </div>
+</header>
+<!-- Hidden marker: tells i18n.js a switcher already exists, so it skips injecting a duplicate -->
+<span class="lang-switch" hidden aria-hidden="true"></span>
+
+<div class="container" id="ARTICLE">
+  <div class="center"><span class="spin"></span> <span data-i18n="loading">جاري التحميل...</span></div>
+</div>
+
+<div class="lightbox" id="LIGHTBOX" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="LIGHTBOX_IMG" src="" alt="">
+</div>
+
+<script>
+const SUPABASE_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+const MUN_ID='00000000-0000-0000-0000-000000000001';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+const CAT_INFO = {
+  general:      {label:{ar:'📢 عام',en:'📢 General',fr:'📢 Général'},          color:'#1a6eb5'},
+  announcement: {label:{ar:'📢 إعلان رسمي',en:'📢 Official',fr:'📢 Annonce officielle'},    color:'#0f4d82'},
+  event:        {label:{ar:'🎉 فعّالية',en:'🎉 Event',fr:'🎉 Événement'},       color:'#7c3aed'},
+  alert:        {label:{ar:'⚠️ تنبيه',en:'⚠️ Alert',fr:'⚠️ Alerte'},          color:'#d97706'},
+  urgent:       {label:{ar:'🚨 طارئ',en:'🚨 Urgent',fr:'🚨 Urgent'},           color:'#bf2424'},
+  water:        {label:{ar:'💧 ماء/ري',en:'💧 Water/Irrigation',fr:'💧 Eau/Irrigation'},         color:'#0891b2'},
+  tender:       {label:{ar:'📋 مناقصة',en:'📋 Tender',fr:'📋 Appel d\'offres'},          color:'#15803d'}
+};
+const CAT_ICONS = {general:'📢', announcement:'📢', event:'🎉', alert:'⚠️', urgent:'🚨', water:'💧', tender:'📋'};
+
+let currentArticle = null;
+
+async function loadArticle(){
+  const id = new URLSearchParams(window.location.search).get('id');
+  const wrap = document.getElementById('ARTICLE');
+  if (!id || !/^\d+$/.test(id)) {
+    wrap.innerHTML = '<div class="center"><div class="center-i">⚠️</div><div>' + L().invalidLink + '</div><div style="margin-top:14px"><a href="news.html" style="color:var(--blue);font-weight:700">' + L().backToNews + '</a></div></div>';
+    return;
+  }
+  try {
+    const {data, error} = await sb.from('news_articles').select('*').eq('id', id).eq('is_published', true).single();
+    if (error) throw error;
+    if (!data) throw new Error(L().articleNotFound);
+    currentArticle = data;
+    renderArticle(data);
+    // Increment view count (fire and forget)
+    sb.rpc('increment_news_view', {article_id: parseInt(id)}).then().catch(() => {});
+    // Load related
+    loadRelated(data);
+  } catch(ex) {
+    wrap.innerHTML = `<div class="center"><div class="center-i">⚠️</div><div style="font-weight:700;font-size:14px">${L().errLoadingArticle}</div><div style="font-size:12.5px;margin-top:6px">${esc(ex.message)}</div><div style="margin-top:14px"><a href="news.html" style="color:var(--blue);font-weight:700">${L().backToNews}</a></div></div>`;
+  }
+}
+
+function renderArticle(a){
+  const cat = CAT_INFO[a.category] || CAT_INFO.general;
+  const icon = CAT_ICONS[a.category] || '📰';
+  document.title = a.title + ' — ' + (document.documentElement.lang==='ar'?'وادي الست':'Wadi El Sit');
+
+  // Update Open Graph tags for rich previews on Facebook/WhatsApp/Telegram
+  const ogTitle = document.getElementById('og-title');
+  const ogDesc = document.getElementById('og-description');
+  const ogImg = document.getElementById('og-image');
+  const ogUrl = document.getElementById('og-url');
+  if (ogTitle) ogTitle.setAttribute('content', a.title);
+  if (ogDesc) ogDesc.setAttribute('content', a.summary || (a.content||'').slice(0,160));
+  if (ogImg && a.cover_image) ogImg.setAttribute('content', a.cover_image);
+  if (ogUrl) ogUrl.setAttribute('content', window.location.href);
+
+  const cover = a.cover_image
+    ? `<img src="${esc(a.cover_image)}" alt="${esc(a.title)}">`
+    : `<span class="cover-fallback">${icon}</span>`;
+
+  const dateStr = formatFullDate(a.created_at);
+
+  const eventBox = a.event_date ? `
+    <div class="event-box">
+      <div class="event-box-i">📅</div>
+      <div class="event-box-text">
+        <div class="event-box-l">${L().eventDateLabel}</div>
+        <div class="event-box-d">${formatFullDate(a.event_date)}</div>
+        ${a.event_location ? `<div class="event-box-loc">📍 ${esc(a.event_location)}</div>` : ''}
+      </div>
+    </div>
+  ` : '';
+
+  const gallery = (a.gallery && a.gallery.length) ? `
+    <div class="gallery">
+      ${a.gallery.map(url => `<div class="gallery-item" onclick="openLightbox('${esc(url)}')"><img src="${esc(url)}" alt="" loading="lazy"></div>`).join('')}
+    </div>
+  ` : '';
+
+  const html = `
+    <div class="cover">
+      ${cover}
+      <div class="cover-cat" style="color:${cat.color}">${pickLang(cat.label)}</div>
+    </div>
+    <article class="article">
+      <div class="title-bar">
+        <h1 class="title">${esc(a.title)}</h1>
+        <div class="meta">
+          ${a.author_name ? `<span>✍️ ${esc(a.author_name)}</span><span class="meta-dot"></span>` : ''}
+          <span>📅 ${dateStr}</span>
+          ${a.view_count ? `<span class="meta-dot"></span><span>👁️ ${a.view_count} ${L().views}</span>` : ''}
+        </div>
+      </div>
+
+      ${a.summary ? `<div class="summary">${esc(a.summary)}</div>` : ''}
+
+      ${eventBox}
+
+      <div class="content">${esc(a.content)}</div>
+
+      ${gallery}
+
+      <div class="share-bar">
+        <button class="share-btn wa" onclick="shareWhatsApp()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0 0 20.464 3.488"/></svg>
+          ${L().shareWA}
+        </button>
+        <button class="share-btn fb" onclick="shareFacebook()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          ${L().shareFB}
+        </button>
+        <button class="share-btn tg" onclick="shareTelegram()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+          ${L().shareTG}
+        </button>
+        <button class="share-btn" onclick="copyLink()">${L().copyLink}</button>
+        <button class="share-btn" onclick="shareNative()">${L().share}</button>
+      </div>
+
+      <h2 class="related-h">${L().relatedNews}</h2>
+      <div id="RELATED" class="related-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:14px;color:var(--text3);font-size:12.5px"><span class="spin"></span> ${L().loading}</div>
+      </div>
+    </article>
+  `;
+  document.getElementById('ARTICLE').innerHTML = html;
+}
+
+async function loadRelated(article){
+  try {
+    let q = sb.from('news_articles').select('id,title,category,cover_image,created_at')
+      .eq('mun_id', MUN_ID).eq('is_published', true)
+      .neq('id', article.id);
+    // Try same category first
+    if (article.category && article.category !== 'general') {
+      q = q.eq('category', article.category);
+    }
+    q = q.order('created_at', {ascending:false}).limit(4);
+    const {data} = await q;
+    let items = data || [];
+    if (items.length < 2) {
+      // Fallback: any recent news
+      const r2 = await sb.from('news_articles').select('id,title,category,cover_image,created_at')
+        .eq('mun_id', MUN_ID).eq('is_published', true)
+        .neq('id', article.id)
+        .order('created_at', {ascending:false}).limit(4);
+      items = r2.data || [];
+    }
+    const wrap = document.getElementById('RELATED');
+    if (!items.length) {
+      wrap.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:14px;color:var(--text3);font-size:12.5px">' + L().noOtherNews + '</div>';
+      return;
+    }
+    wrap.innerHTML = items.map(n => {
+      const ci = CAT_INFO[n.category] || CAT_INFO.general;
+      const ic = CAT_ICONS[n.category] || '📰';
+      const cover = n.cover_image ? `<img src="${esc(n.cover_image)}" alt="" loading="lazy">` : `<span style="font-size:24px;opacity:.6">${ic}</span>`;
+      return `<a class="related-card" href="news-detail.html?id=${n.id}">
+        <div class="related-img">${cover}</div>
+        <div class="related-text">
+          <div class="related-cat" style="color:${ci.color}">${pickLang(ci.label)}</div>
+          <div class="related-title">${esc(n.title)}</div>
+          <div class="related-meta">📅 ${formatRelativeDate(n.created_at)}</div>
+        </div>
+      </a>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('RELATED').innerHTML = '';
+  }
+}
+
+// Wadi-style language switcher (matches news.html)
+window.wadiSetLang = function(lang){
+  if(!lang || (lang!=='ar' && lang!=='en' && lang!=='fr')) return;
+  try { localStorage.setItem('wadi_lang', lang); } catch(e){}
+  if (typeof I18N !== 'undefined' && I18N && typeof I18N.setLang === 'function') {
+    try { I18N.setLang(lang); } catch(e){}
+  }
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
+  document.querySelectorAll('.wadi-lang-btn').forEach(b => b.classList.toggle('on', b.getAttribute('data-lang')===lang));
+};
+function highlightLangPill(){
+  const cur = document.documentElement.lang || 'ar';
+  document.querySelectorAll('.wadi-lang-btn').forEach(b => b.classList.toggle('on', b.getAttribute('data-lang')===cur));
+}
+if (typeof I18N !== 'undefined' && I18N && typeof I18N.onApply === 'function') {
+  try { I18N.onApply(function(){ highlightLangPill(); }); } catch(e){}
+}
+document.addEventListener('DOMContentLoaded', highlightLangPill);
+
+// SHARING
+function shareWhatsApp(){
+  if (!currentArticle) return;
+  const url = window.location.href;
+  const text = currentArticle.title + '\n\n' + (currentArticle.summary || (currentArticle.content||'').slice(0,200)) + '\n\n📖 ' + L().readMore + ': ' + url;
+  window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+}
+
+function shareFacebook(){
+  if (!currentArticle) return;
+  const url = window.location.href;
+  const fbUrl = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '&quote=' + encodeURIComponent(currentArticle.title);
+  window.open(fbUrl, '_blank', 'width=600,height=600');
+}
+
+function shareTelegram(){
+  if (!currentArticle) return;
+  const url = window.location.href;
+  const text = currentArticle.title + '\n\n' + (currentArticle.summary || '');
+  const tgUrl = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text);
+  window.open(tgUrl, '_blank');
+}
+function copyLink(){
+  const url = window.location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      alert(L().linkCopied);
+    }).catch(() => fallbackCopy(url));
+  } else fallbackCopy(url);
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); alert(L().linkCopied); } catch(e) { alert(L().copyManually + ' ' + text); }
+  document.body.removeChild(ta);
+}
+async function shareNative(){
+  if (!currentArticle) return;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: currentArticle.title,
+        text: currentArticle.summary || '',
+        url: window.location.href
+      });
+    } catch(e) {}
+  } else {
+    copyLink();
+  }
+}
+
+// LIGHTBOX
+function openLightbox(src){
+  document.getElementById('LIGHTBOX_IMG').src = src;
+  document.getElementById('LIGHTBOX').classList.add('on');
+}
+function closeLightbox(){
+  document.getElementById('LIGHTBOX').classList.remove('on');
+}
+
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function formatFullDate(iso){
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    const lang = document.documentElement.lang || 'ar';
+    const locale = lang === 'ar' ? 'ar-LB' : lang === 'fr' ? 'fr-FR' : 'en-GB';
+    return d.toLocaleDateString(locale, {weekday:'long', day:'2-digit', month:'long', year:'numeric'}) + ' • ' + d.toLocaleTimeString(locale, {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { return iso; }
+}
+function formatRelativeDate(iso){
+  if (!iso) return '—';
+  const d = new Date(iso); const now = new Date();
+  const diff = (now - d) / 1000;
+  const lang = document.documentElement.lang || 'ar';
+  const locale = lang === 'ar' ? 'ar-LB' : lang === 'fr' ? 'fr-FR' : 'en-GB';
+  const t = L();
+  if (diff < 60) return t.timeJustNow;
+  if (diff < 3600) return Math.floor(diff/60) + ' ' + t.timeMinShort;
+  if (diff < 86400) return t.timeAgo + ' ' + Math.floor(diff/3600) + ' ' + t.timeHrShort;
+  if (diff < 604800) return t.timeAgo + ' ' + Math.floor(diff/86400) + ' ' + t.timeDayShort;
+  return d.toLocaleDateString(locale, {day:'2-digit', month:'short'});
+}
+
+// Init
+loadArticle();
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4d82">
+<title data-i18n="pageTitle">📰 خبر — وادي الست</title>
+<!-- Open Graph (filled dynamically by JS) -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="بلدية وادي الست">
+<meta id="og-title" property="og:title" content="أخبار البلدية">
+<meta id="og-description" property="og:description" content="أخبار وإعلانات بلدية وادي الست">
+<meta id="og-image" property="og:image" content="">
+<meta id="og-url" property="og:url" content="">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script src="i18n.js"></script>
+<script>
+I18N.extend({
+  ar: {
+    pageTitle: '📰 خبر — وادي الست',
+    backHome: '🏛️ البوابة',
+    allNews: '📰 كل الأخبار',
     loading: 'جاري التحميل...',
     invalidLink: 'رابط غير صحيح',
     backToNews: '← العودة لقائمة الأخبار',
