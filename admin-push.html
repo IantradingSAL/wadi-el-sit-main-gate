@@ -449,6 +449,20 @@ function resetForm(){
   toggleNewsFields();
 }
 
+// ★ Pre-flight: count how many ACTIVE subscribers will actually receive this push
+async function countTargetRecipients(aud, topics){
+  let q = sb.from('push_subscriptions').select('id',{count:'exact',head:true})
+    .eq('mun_id',MUN_ID).eq('is_active',true);
+  if(aud === 'all'){
+    if(topics && topics.length) q = q.overlaps('topics', topics);
+  } else {
+    q = q.eq('user_role', aud);
+  }
+  const {count, error} = await q;
+  if(error) throw error;
+  return count || 0;
+}
+
 async function sendNotification(){
   const title=document.getElementById('N_TITLE').value.trim();
   const body=document.getElementById('N_BODY').value.trim();
@@ -456,7 +470,33 @@ async function sendNotification(){
   const result=document.getElementById('SEND_RESULT'); result.innerHTML='';
   if(!title||!body){result.innerHTML='<div class="alert err">⚠️ العنوان والنصّ مطلوبان</div>';return;}
   const audLabel={all:'الجميع',citizen:'المواطنين',staff:'الموظفين',water_owner:'أصحاب حقوق الري'}[currentAud];
-  if(!confirm(`إرسال إلى ${audLabel}؟\n\n"${title}"`))return;
+
+  // ★ STEP 1: Show a quick "counting…" indicator while we check the audience size
+  const btn=document.getElementById('SEND_BTN');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> فحص الجمهور…';
+  let recipientCount = -1;
+  try {
+    recipientCount = await countTargetRecipients(currentAud, currentTopics);
+  } catch(e){
+    console.warn('Recipient count failed, proceeding with old confirm:', e);
+  }
+  btn.disabled=false; btn.innerHTML='📤 إرسال';
+
+  // ★ STEP 2: Block / warn if 0 recipients
+  if (recipientCount === 0) {
+    const targetingInfo = currentAud === 'all'
+      ? `الفئات المحدّدة: ${currentTopics.join(', ') || '(لا شيء)'}\nلا يوجد أيّ مشترك مسجَّل في هذه الفئات.`
+      : `الدور المحدّد: ${audLabel}\nلا يوجد أيّ مشترك بهذا الدور.`;
+    result.innerHTML = `<div class="alert err">⚠️ <strong>0 مستلمين!</strong><br>${esc(targetingInfo).replace(/\n/g,'<br>')}<br><br>💡 جرّب تغيير الجمهور إلى <strong>الجميع</strong> أو اختر فئة فيها مشتركون مثل <strong>📢 عام</strong> أو <strong>📰 أخبار</strong>.</div>`;
+    if(!confirm(`⚠️ تحذير: لا يوجد مستلمون!\n\n${targetingInfo}\n\nالإشعار لن يصل لأحد. هل تريد المتابعة على أيّ حال؟`)) return;
+  } else if (recipientCount === -1) {
+    // Count failed, fall back to old confirm without count
+    if(!confirm(`إرسال إلى ${audLabel}؟\n\n"${title}"`)) return;
+  } else {
+    // Normal: show the actual count in the confirm
+    if(!confirm(`📤 إرسال إلى ${recipientCount} مستلم (${audLabel})؟\n\n"${title}"`)) return;
+  }
+
   await doSend({title,body,url,target:'audience'});
 }
 
