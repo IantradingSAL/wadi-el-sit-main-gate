@@ -1083,6 +1083,24 @@ function extractArea(addr){
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
 const AR_FIRST_LETTERS = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي'];
+const EN_FIRST_LETTERS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+
+function currentLang(){
+  try {
+    const l = localStorage.getItem('wadi_lang') || localStorage.getItem('lang') || document.documentElement.lang || 'ar';
+    return (l === 'en' || l === 'fr') ? l : 'ar';
+  } catch(e){ return 'ar'; }
+}
+
+function firstLetterLang(name, lang){
+  if(!name) return '';
+  if(lang === 'en' || lang === 'fr'){
+    const lat = arToLat(name, lang === 'fr' ? 'fr' : 'en');
+    const ch = lat.charAt(0).toUpperCase();
+    return /[A-Z]/.test(ch) ? ch : '';
+  }
+  return normAr(name).charAt(0) || '';
+};
 
 function normAr(s){
   return (s||'').toString().replace(/[إأآا]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[\u064B-\u0652]/g,'').toLowerCase().trim();
