@@ -4,12 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Super Admin — نظام البلديات</title>
-
-<!-- 1) Supabase SDK (must come BEFORE admin-auth.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- 2) Unified admin auth library -->
-<script src="admin-auth.js"></script>
-
 <style>
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--green2:#1e5429;--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;--bg:#f5f7fa;--bg2:#f0f2f7;--danger:#e74c3c;--font:'Tahoma',Arial,sans-serif;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -30,15 +25,39 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 .color-swatch{width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
 .tab{padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);}
 .tab.on{background:var(--blue);color:#fff;border-color:var(--blue);}
-.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
-.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
-.back-to-gate-i{font-size:16px;line-height:1}
-.back-to-gate-l{white-space:nowrap}
-@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:7px 11px;font-size:11.5px}.back-to-gate-i{font-size:14px}}
-@media print{.back-to-gate{display:none}}
-</style>
 
-<!-- PWA & Mobile Meta -->
+/* ROUND BALADIEH LOGO — floating top-left (replaces old back-to-gate button) */
+.wadi-logo-float{
+  position:fixed;top:12px;left:12px;z-index:99990;
+  display:flex;align-items:center;justify-content:center;
+  width:54px;height:54px;border-radius:50%;
+  background:#fff;
+  box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);
+  border:2px solid rgba(255,255,255,.9);
+  text-decoration:none;cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease;
+  overflow:hidden;
+}
+.wadi-logo-float:hover,.wadi-logo-float:active{
+  transform:translateY(-2px) scale(1.06);
+  box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)
+}
+.wadi-logo-float img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.wadi-logo-float .fallback{font-size:28px;color:#0f4d82}
+@media(max-width:540px){.wadi-logo-float{top:8px;left:8px;width:46px;height:46px}.wadi-logo-float .fallback{font-size:24px}}
+@media print{.wadi-logo-float{display:none}}
+
+/* Loading + Login screen */
+.fullscreen-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef5fc,#f5f7fa);z-index:100;padding:20px;}
+.spinner{width:36px;height:36px;border:3px solid #daeaf8;border-top-color:#0f4d82;border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.login-card{background:#fff;padding:30px 26px;border-radius:18px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(15,77,130,.18);text-align:center}
+.login-card .lg-logo{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#1a6eb5,#0f4d82);margin:0 auto 14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px}
+.login-card h2{font-size:20px;font-weight:900;margin:0 0 4px;color:#0f4d82}
+.login-card .sub{font-size:13px;color:#8a95a3;margin-bottom:22px}
+.login-card .err{color:#bf2424;font-size:12.5px;min-height:18px;margin:8px 0 6px;background:transparent;}
+.login-card .err.has{background:#fee2e2;padding:9px 12px;border-radius:9px;border-right:4px solid #bf2424;text-align:right;line-height:1.5}
+</style>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a6eb5">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -47,17 +66,24 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<script src="pwa.js" defer></script>
 </head>
 <body>
 
-<!-- Floating back-to-gate button (always visible, even before login) -->
-<a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
-  <span class="back-to-gate-i">🏛️</span>
-  <span class="back-to-gate-l">البوابة الرئيسية</span>
+<!-- ROUND BALADIEH LOGO (floating, always visible, click → main gate) -->
+<a href="index.html" class="wadi-logo-float" title="البوابة الرئيسية">
+  <img src="icons/apple-touch-icon.png" alt="شعار بلدية وادي الست"
+       onerror="this.style.display='none';var f=document.createElement('span');f.className='fallback';f.textContent='🏛';this.parentNode.appendChild(f);">
 </a>
 
-<!-- MAIN APP — hidden until adminAuth.requireRole(['super_admin']) resolves -->
+<!-- INITIAL LOADING / LOGIN / ERROR overlay -->
+<div id="OVERLAY" class="fullscreen-overlay">
+  <div style="text-align:center">
+    <div class="spinner"></div>
+    <div style="font-size:14px;color:#0f4d82;font-weight:700">جاري التحميل…</div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until authorized) -->
 <div id="MAIN" style="display:none">
 
   <div class="header">
@@ -66,7 +92,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <div style="font-size:16px;font-weight:800;">لوحة تحكم Super Admin</div>
       <div style="font-size:11px;opacity:.7;">Municipal Management System</div>
     </div>
-    <button onclick="if(confirm('تسجيل خروج؟'))adminAuth.signOut()" class="btn" style="margin-right:auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:6px 14px;">خروج</button>
+    <button onclick="doLogout()" class="btn" style="margin-right:auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:6px 14px;">خروج</button>
   </div>
 
   <div class="main">
@@ -76,7 +102,6 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <div class="tab" id="tab-admins-btn" onclick="showTab('tab-admins')">👤 Super Admins</div>
     </div>
 
-    <!-- MUNICIPALITIES -->
     <div id="tab-mun">
       <div class="card">
         <div class="card-title">🏛 البلديات المسجلة</div>
@@ -126,7 +151,6 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       </div>
     </div>
 
-    <!-- NEW MUNICIPALITY -->
     <div id="tab-new" style="display:none;">
       <div class="card">
         <div class="card-title">➕ إضافة بلدية جديدة</div>
@@ -150,7 +174,6 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       </div>
     </div>
 
-    <!-- ADMINS -->
     <div id="tab-admins" style="display:none;">
       <div class="card">
         <div class="card-title">👤 Super Admins</div>
@@ -169,7 +192,6 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
         </div>
       </div>
 
-      <!-- NEW: current logged-in user info -->
       <div class="card">
         <div class="card-title">🔐 جلستك الحالية</div>
         <div>البريد: <strong id="cur-user-email" style="direction:ltr">—</strong></div>
@@ -178,23 +200,24 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       </div>
     </div>
   </div>
-
 </div>
 
 <div id="toast-c" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
 <script>
 // ============================================================
-// AUTH gate — admin-auth.js renders the login screen, verifies
-// the 'super_admin' role, and only resolves once authorized.
-// super_admin role grants access to EVERYTHING by design.
+// SELF-CONTAINED Supabase auth — no admin-auth.js dependency
 // ============================================================
-const ALLOWED_ROLES = ['super_admin'];
+var SUPABASE_URL = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
+var ALLOWED_ROLES = ['super_admin','admin','mayor'];
 
-let sb = null;           // points to adminAuth.sb after auth
-let currentMunId = null;
-let editLogoB64 = null;
-let newLogoB64 = null;
+var sb = null;
+var currentUser = null;
+var currentUserRoles = [];
+var currentMunId = null;
+var editLogoB64 = null;
+var newLogoB64 = null;
 
 function toast(msg, type) {
   var c = document.getElementById('toast-c');
@@ -204,26 +227,119 @@ function toast(msg, type) {
   setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);}, 3000);
 }
 
-(async function init(){
-  const user = await adminAuth.requireRole(ALLOWED_ROLES, {
-    title:    '🔐 Super Admin',
-    subtitle: 'صلاحيات كاملة على جميع البلديات'
-  });
+// ===== AUTH BOOTSTRAP =====
+if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+  showOverlayError('⚠️ مكتبة Supabase لم تُحمَّل', 'تحقق من اتصال الإنترنت ثم أعد تحميل الصفحة');
+} else {
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {realtime:{enabled:false}});
+    bootstrap();
+  } catch(e) {
+    showOverlayError('⚠️ خطأ في إنشاء عميل Supabase', e.message);
+  }
+}
 
-  // Authorized — reveal main UI
-  sb = adminAuth.sb;
+async function bootstrap() {
+  try {
+    var s = await sb.auth.getSession();
+    var session = s && s.data ? s.data.session : null;
+    if (session && session.user) {
+      var r = await sb.from('user_roles').select('role').eq('user_id', session.user.id);
+      currentUserRoles = (r.data || []).map(function(x){return x.role;});
+      var allowed = ALLOWED_ROLES.some(function(role){ return currentUserRoles.indexOf(role) >= 0; });
+      if (allowed) {
+        currentUser = session.user;
+        enterDashboard();
+        return;
+      }
+      // Logged in but not authorized
+      await sb.auth.signOut();
+      showLoginScreen('⛔ ليس لديك صلاحية Super Admin. سجّل دخول بحساب آخر.');
+      return;
+    }
+    showLoginScreen('');
+  } catch(e) {
+    showOverlayError('⚠️ خطأ', e.message);
+  }
+}
+
+function showLoginScreen(initialError) {
+  var ov = document.getElementById('OVERLAY');
+  ov.innerHTML = ''
+    + '<div class="login-card">'
+    + '  <div class="lg-logo">🔐</div>'
+    + '  <h2>Super Admin</h2>'
+    + '  <div class="sub">صلاحيات كاملة على جميع البلديات</div>'
+    + '  <div class="fg"><div class="fl" style="text-align:right">البريد الإلكتروني</div><input type="email" id="li-em" class="fi" autocomplete="email" style="direction:ltr"></div>'
+    + '  <div class="fg"><div class="fl" style="text-align:right">كلمة المرور</div><input type="password" id="li-pw" class="fi" autocomplete="current-password" style="direction:ltr"></div>'
+    + '  <div id="li-err" class="err' + (initialError ? ' has' : '') + '">' + (initialError || '') + '</div>'
+    + '  <button class="btn bg" style="width:100%;justify-content:center;margin-top:8px" id="li-btn">دخول</button>'
+    + '</div>';
+  ov.style.display = 'flex';
+  setTimeout(function(){
+    var btn = document.getElementById('li-btn');
+    var em = document.getElementById('li-em');
+    var pw = document.getElementById('li-pw');
+    btn.addEventListener('click', doLogin);
+    pw.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+    em.focus();
+  }, 50);
+}
+
+async function doLogin() {
+  var em = (document.getElementById('li-em').value || '').trim();
+  var pw = document.getElementById('li-pw').value;
+  var err = document.getElementById('li-err');
+  var btn = document.getElementById('li-btn');
+  if (!em || !pw) { err.className='err has'; err.textContent = '⚠️ أدخل البريد وكلمة المرور'; return; }
+  err.className='err'; err.textContent='⏳ جاري الدخول…';
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    var r = await sb.auth.signInWithPassword({email:em, password:pw});
+    if (r.error) {
+      err.className='err has'; err.textContent='⚠️ ' + r.error.message;
+      btn.disabled = false; btn.textContent = 'دخول';
+      return;
+    }
+    // Success — reload to re-run bootstrap with active session
+    location.reload();
+  } catch(e) {
+    err.className='err has'; err.textContent='⚠️ ' + e.message;
+    btn.disabled = false; btn.textContent = 'دخول';
+  }
+}
+
+async function doLogout() {
+  if (!confirm('تسجيل خروج؟')) return;
+  await sb.auth.signOut();
+  location.reload();
+}
+
+function showOverlayError(title, detail) {
+  var ov = document.getElementById('OVERLAY');
+  ov.innerHTML = '<div style="text-align:center;max-width:420px;padding:24px;background:#fff;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.1)">'
+    + '<div style="font-size:42px;margin-bottom:10px">⚠️</div>'
+    + '<div style="font-size:16px;color:#bf2424;font-weight:800;margin-bottom:8px">' + (title||'') + '</div>'
+    + '<div style="font-size:12.5px;color:#555;line-height:1.6">' + (detail||'') + '</div>'
+    + '<button class="btn bp" style="margin-top:14px" onclick="location.reload()">🔄 إعادة المحاولة</button>'
+    + '</div>';
+  ov.style.display = 'flex';
+}
+
+function enterDashboard() {
+  document.getElementById('OVERLAY').style.display = 'none';
   document.getElementById('MAIN').style.display = 'block';
 
-  // Show current user info in the admins tab
-  document.getElementById('cur-user-email').textContent = user.email || '—';
-  const roles = await adminAuth.getRoles();
-  document.getElementById('cur-user-roles').innerHTML =
-    roles.map(r => `<span style="display:inline-block;padding:3px 9px;background:#daeaf8;color:#0f4d82;border-radius:10px;font-size:11px;font-weight:700;margin:2px 3px">${r}</span>`).join('') || '<em>(لا توجد)</em>';
+  document.getElementById('cur-user-email').textContent = currentUser.email || '—';
+  document.getElementById('cur-user-roles').innerHTML = currentUserRoles.map(function(r){
+    return '<span style="display:inline-block;padding:3px 9px;background:#daeaf8;color:#0f4d82;border-radius:10px;font-size:11px;font-weight:700;margin:2px 3px">'+r+'</span>';
+  }).join('') || '<em>(لا توجد)</em>';
 
   loadMunicipalities();
   loadSuperAdmins();
-})();
+}
 
+// ===== TABS =====
 function showTab(id) {
   ['tab-mun','tab-new','tab-admins'].forEach(function(t){
     var el = document.getElementById(t); if(el) el.style.display = t===id ? 'block' : 'none';
@@ -231,9 +347,7 @@ function showTab(id) {
   });
 }
 
-// ============================================================
-// MUNICIPALITIES
-// ============================================================
+// ===== MUNICIPALITIES =====
 async function loadMunicipalities() {
   var el = document.getElementById('mun-list');
   try {
@@ -255,19 +369,13 @@ async function loadMunicipalities() {
     });
     el.innerHTML = html;
   } catch(e) {
-    el.innerHTML = '<div style="background:#fff9e6;border:1.5px solid #f5c842;border-radius:12px;padding:16px;text-align:center">'
-      + '<div style="font-size:24px;margin-bottom:8px">⚠️</div>'
-      + '<div style="font-weight:700;margin-bottom:8px">خطأ في تحميل البلديات</div>'
-      + '<div style="font-size:13px;color:var(--text3);margin-bottom:12px">' + e.message + '</div>'
-      + '<a href="https://supabase.com/dashboard/project/onjbwhkmmtqnymhjnplw/sql/new" target="_blank" class="btn bp" style="text-decoration:none;display:inline-flex">فتح SQL Editor</a>'
-      + '</div>';
+    el.innerHTML = '<div style="color:var(--danger);padding:10px">خطأ: ' + e.message + '</div>';
   }
 }
 
 document.addEventListener('click', function(e) {
   var rmBtn = e.target.closest ? e.target.closest('[data-rmadm-id]') : null;
   if (rmBtn) { removeSuperAdmin(rmBtn.getAttribute('data-rmadm-id'), rmBtn.getAttribute('data-rmadm-em')); return; }
-
   var card = e.target.closest ? e.target.closest('[data-munid]') : null;
   if (card) editMunicipality(card.getAttribute('data-munid'));
 });
@@ -361,21 +469,15 @@ async function createMunicipality() {
   };
   if (newLogoB64) mun.logo_base64 = newLogoB64;
   var r = await sb.from('municipalities').insert([mun]).select().single();
-  if (r.error) {
-    msg.style.color='var(--danger)';
-    msg.textContent = 'خطأ: '+r.error.message;
-    return;
-  }
-  msg.style.color='var(--green2)'; msg.textContent='✅ تم الإنشاء! ID: '+r.data.id;
+  if (r.error) { msg.style.color='var(--danger)'; msg.textContent='خطأ: '+r.error.message; return; }
+  msg.style.color='var(--green2)'; msg.textContent='✅ تم الإنشاء!';
   toast('✅ تم إنشاء البلدية: '+name);
   ['nm-name','nm-region','nm-website'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   newLogoB64=null; document.getElementById('nm-logo-prev').innerHTML='';
   loadMunicipalities();
 }
 
-// ============================================================
-// SUPER ADMINS
-// ============================================================
+// ===== SUPER ADMINS =====
 async function loadSuperAdmins() {
   var el = document.getElementById('admins-list'); if(!el) return;
   try {
@@ -388,11 +490,8 @@ async function loadSuperAdmins() {
       html += '<span style="font-size:18px">👤</span>';
       html += '<div style="flex:1"><div style="font-weight:700">'+(a.name||'—')+'</div>';
       html += '<div style="font-size:12px;color:var(--text3);direction:ltr">'+a.email+'</div>';
-      if (a.user_id) {
-        html += '<div style="font-size:10px;color:var(--green2);margin-top:2px">✅ مربوط بـ Supabase Auth</div>';
-      } else {
-        html += '<div style="font-size:10px;color:#e67e22;margin-top:2px">⚠️ غير مربوط — يحتاج user_id</div>';
-      }
+      if (a.user_id) html += '<div style="font-size:10px;color:var(--green2);margin-top:2px">✅ مربوط بـ Supabase Auth</div>';
+      else html += '<div style="font-size:10px;color:#e67e22;margin-top:2px">⚠️ غير مربوط — يحتاج user_id</div>';
       html += '</div>';
       if (a.email === 'imadaehn@gmail.com') {
         html += '<span style="font-size:11px;background:#daeaf8;color:var(--blue2);padding:2px 8px;border-radius:10px">مدير النظام</span>';
@@ -423,7 +522,7 @@ async function addSuperAdmin() {
 }
 
 async function removeSuperAdmin(id, email) {
-  if(!confirm('حذف '+email+' من جدول super_admins؟\n\n(دور super_admin في user_roles يبقى — احذفه يدوياً من SQL)'))return;
+  if(!confirm('حذف '+email+' من جدول super_admins؟'))return;
   var r = await sb.from('super_admins').delete().eq('id',id);
   if(r.error){toast('خطأ: '+r.error.message,'err');return;}
   loadSuperAdmins(); toast('🗑️ تم الحذف');
