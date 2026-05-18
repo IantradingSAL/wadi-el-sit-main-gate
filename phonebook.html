@@ -1370,7 +1370,7 @@ function hasPendingEditFor(c){
 function getFiltered(){
   const all = getAllPublic();
   return all.filter(c => {
-    if(letterF && firstLetter(c.first || c.name) !== letterF) return false;
+    if(letterF && firstLetterLang(c.first || c.name, currentLang()) !== letterF) return false;
     if(famF && c.family !== famF) return false;
     if(occF && !c.occupation) return false;
     if(imgF && !c.image) return false;
