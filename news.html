@@ -371,6 +371,12 @@ html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;
 @media(max-width:540px){.wadi-help-ov{padding:14px 10px;}.wadi-help-mh{padding:14px 16px;}.wadi-help-mh-t{font-size:15.5px;}.wadi-help-mb{padding:14px 16px 20px;}}
 @media print{.wadi-help-ov,.wadi-help-trigger,.wadi-lang-pill{display:none!important;}}
 
+<style>
+  /* Hide auto-injected wadi-coop-strip on news page — page has its own appbar */
+  #wadi-coop-strip,
+  .wadi-coop-strip,
+  [id*="wadi-strip"],
+  [class*="wadi-coop-strip"] { display: none !important; }
 </style>
 </head>
 <body>
