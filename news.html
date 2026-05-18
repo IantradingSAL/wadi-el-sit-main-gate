@@ -991,5 +991,57 @@ setTimeout(checkPushBanner, 1500);
 })();
 </script>
 
+<script>
+/* ═══ Hide duplicate AR/EN/FR language pill (auto-injected by helpers) ═══ */
+(function(){
+  function hideDuplicatePills(){
+    try {
+      var allBtns = document.querySelectorAll('button, a');
+      for(var i = 0; i < allBtns.length; i++){
+        var btn = allBtns[i];
+        var txt = (btn.textContent || '').trim();
+        if(txt === 'AR' || txt === 'EN' || txt === 'FR'){
+          /* Keep the wadi-lang-pill (the new unified one), hide everything else */
+          if(btn.closest('.wadi-lang-pill')) continue;
+          var container = btn.parentElement;
+          for(var k = 0; k < 4 && container; k++){
+            var btns = container.querySelectorAll ? container.querySelectorAll('button,a') : [];
+            var langs = { AR:false, EN:false, FR:false };
+            for(var j = 0; j < btns.length; j++){
+              var t = (btns[j].textContent || '').trim();
+              if(langs[t] !== undefined) langs[t] = true;
+            }
+            if(langs.AR && langs.EN && langs.FR){
+              container.style.display = 'none';
+              break;
+            }
+            container = container.parentElement;
+          }
+        }
+      }
+    } catch(e){}
+  }
+  /* Run multiple times to catch late-injected pills */
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      hideDuplicatePills();
+      setTimeout(hideDuplicatePills, 300);
+      setTimeout(hideDuplicatePills, 1000);
+      setTimeout(hideDuplicatePills, 2500);
+    });
+  } else {
+    hideDuplicatePills();
+    setTimeout(hideDuplicatePills, 300);
+    setTimeout(hideDuplicatePills, 1000);
+    setTimeout(hideDuplicatePills, 2500);
+  }
+  /* Watch for dynamic injections */
+  if(window.MutationObserver){
+    var obs = new MutationObserver(function(){ hideDuplicatePills(); });
+    if(document.body) obs.observe(document.body, {childList:true, subtree:true});
+    else document.addEventListener('DOMContentLoaded', function(){ obs.observe(document.body, {childList:true, subtree:true}); });
+  }
+})();
+</script>
 </body>
 </html>
