@@ -59,4 +59,520 @@ function _t(key, ar){
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
-    deferr
+    deferredPrompt = e;
+    if (shouldShowInstallBanner()) showInstallBanner();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    hideInstallBanner();
+    console.log('[PWA] App installed.');
+  });
+
+  function showInstallBanner() {
+    if (document.getElementById('pwa-install-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'pwa-install-banner';
+    banner.innerHTML = `
+      <style>
+        #pwa-install-banner{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);width:calc(100% - 32px);max-width:420px;background:linear-gradient(135deg,#1a6eb5,#0f4d82);color:#fff;border-radius:18px;padding:14px 16px;box-shadow:0 12px 32px rgba(15,77,130,.4),0 4px 10px rgba(0,0,0,.12);z-index:99998;display:flex;align-items:center;gap:11px;font-family:'Tajawal',sans-serif;direction:rtl;animation:pwaSlideUp .35s cubic-bezier(.16,1,.3,1)}
+        @keyframes pwaSlideUp{from{transform:translateX(-50%) translateY(120%);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+        #pwa-install-banner .pwa-i{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+        #pwa-install-banner .pwa-text{flex:1;min-width:0}
+        #pwa-install-banner .pwa-t{font-size:14px;font-weight:800;line-height:1.3;margin-bottom:2px}
+        #pwa-install-banner .pwa-s{font-size:11.5px;opacity:.85;line-height:1.4}
+        #pwa-install-banner .pwa-btns{display:flex;gap:6px;flex-shrink:0}
+        #pwa-install-banner .pwa-btn{background:#fff;color:#0f4d82;border:none;border-radius:10px;padding:8px 14px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+        #pwa-install-banner .pwa-btn:active{transform:scale(.96)}
+        #pwa-install-banner .pwa-x{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:10px;width:32px;height:32px;cursor:pointer;font-size:14px;font-weight:700}
+      </style>
+      <div class="pwa-i">📱</div>
+      <div class="pwa-text">
+        <div class="pwa-t">${_t("pwaInstallTitle","ثبّت تطبيق وادي الست")}</div>
+        <div class="pwa-s">${_t("pwaInstallSub","لوصول أسرع وعمل بدون إنترنت")}</div>
+      </div>
+      <div class="pwa-btns">
+        <button class="pwa-btn" id="pwa-install-yes">${_t("pwaInstallBtn","تثبيت")}</button>
+        <button class="pwa-x" id="pwa-install-no" aria-label="${_t('close','إغلاق')}">✕</button>
+      </div>
+    `;
+    document.body.appendChild(banner);
+    document.getElementById('pwa-install-yes').onclick = installApp;
+    document.getElementById('pwa-install-no').onclick = dismissInstall;
+  }
+
+  function hideInstallBanner() {
+    const b = document.getElementById('pwa-install-banner');
+    if (b) b.remove();
+  }
+
+  function installApp() {
+    if (!deferredPrompt) {
+      // iOS Safari path: show manual install instructions
+      showIosInstructions();
+      return;
+    }
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      hideInstallBanner();
+    });
+  }
+
+  function dismissInstall() {
+    localStorage.setItem(INSTALL_KEY, Date.now().toString());
+    hideInstallBanner();
+  }
+
+  function showIosInstructions() {
+    hideInstallBanner();
+    const m = document.createElement('div');
+    m.id = 'pwa-ios-modal';
+    m.innerHTML = `
+      <style>
+        #pwa-ios-modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:flex-end;justify-content:center;padding:0;direction:rtl;font-family:'Tajawal',sans-serif;animation:pwaFade .25s ease}
+        @keyframes pwaFade{from{opacity:0}to{opacity:1}}
+        #pwa-ios-modal .ios-card{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:18px 18px max(18px,env(safe-area-inset-bottom));animation:pwaSlideUp .35s cubic-bezier(.16,1,.3,1)}
+        #pwa-ios-modal h3{font-size:17px;font-weight:800;color:#0f4d82;margin-bottom:6px}
+        #pwa-ios-modal p{font-size:13px;color:#555;line-height:1.7;margin-bottom:13px}
+        #pwa-ios-modal ol{padding-right:22px;font-size:13.5px;line-height:2.1;color:#333}
+        #pwa-ios-modal ol li b{color:#0f4d82}
+        #pwa-ios-modal .close-btn{width:100%;margin-top:14px;background:#0f4d82;color:#fff;border:none;border-radius:12px;padding:13px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer}
+      </style>
+      <div class="ios-card">
+        <h3>${_t("iosInstallTitle","📱 ثبّت التطبيق على iPhone")}</h3>
+        <p>${_t("iosInstallDesc","على iOS، التثبيت يتمّ بـ ٣ خطوات بسيطة من Safari:")}</p>
+        <ol>
+          <li>${_t("iosStep1","اضغط زرّ <b>المشاركة</b> ⎯ <b>📤</b> في أسفل Safari")}</li>
+          <li>${_t("iosStep2","مرّر للأسفل واضغط <b>إضافة إلى الشاشة الرئيسية</b>")}</li>
+          <li>${_t("iosStep3","اضغط <b>إضافة</b> أعلى اليمين")}</li>
+        </ol>
+        <button class="close-btn" onclick="document.getElementById('pwa-ios-modal').remove()">${_t("iosGotIt","حسناً، فهمت")}</button>
+      </div>
+    `;
+    m.addEventListener('click', (e) => { if (e.target === m) m.remove(); });
+    document.body.appendChild(m);
+  }
+
+  // ─── 3. iOS detection: show banner manually since iOS doesn't fire beforeinstallprompt ───
+  const isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+  const isIosStandalone = window.navigator.standalone === true;
+  if (isIos && !isIosStandalone && shouldShowInstallBanner()) {
+    setTimeout(() => {
+      if (!document.getElementById('pwa-install-banner') && !deferredPrompt) {
+        showInstallBanner();
+      }
+    }, 4000);
+  }
+
+  // ─── 4. Push notification API (full Supabase integration) ─────────────
+  window.PWA = {
+    isInstalled: () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true,
+
+    canPush: () => 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window,
+
+    showInstallPrompt: () => {
+      if (deferredPrompt) installApp();
+      else if (isIos) showIosInstructions();
+      else alert(_t('pwaInstallFromMenu','يمكنك تثبيت التطبيق من قائمة المتصفّح (الثلاث نقاط).'));
+    },
+
+    // Returns the current subscription status: 'subscribed', 'denied', 'unsupported', 'pending'
+    pushStatus: async () => {
+      if (!window.PWA.canPush()) return 'unsupported';
+      if (Notification.permission === 'denied') return 'denied';
+      if (Notification.permission === 'default') return 'pending';
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        return sub ? 'subscribed' : 'pending';
+      } catch (e) { return 'pending'; }
+    },
+
+    // Enable push: ask permission, subscribe, save to Supabase
+    enablePush: async (topics = ['general'], opts = {}) => {
+      if (!window.PWA.canPush()) {
+        throw new Error(_t('pushNotSupported','متصفّحك لا يدعم الإشعارات. تأكّد من iOS 16.4+ أو Android Chrome حديث.'));
+      }
+
+      // Wait for service worker to be ready
+      const reg = await navigator.serviceWorker.ready;
+
+      // Request permission
+      const permission = await Notification.requestPermission();
+      if (permission === 'denied') {
+        throw new Error(_t('pushDenied','رفضتَ السماح بالإشعارات. لتفعيلها، اذهب إلى إعدادات المتصفّح/الموقع.'));
+      }
+      if (permission !== 'granted') {
+        throw new Error(_t('pushNoPermission','لم يتمّ منح الإذن.'));
+      }
+
+      // Subscribe to push
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+
+      // Save to Supabase
+      const subJson = sub.toJSON();
+      // Read user's chosen language from localStorage (set by i18n.js)
+      var __lang = 'ar';
+      try { var __l = localStorage.getItem('wadi_lang'); if(__l==='ar'||__l==='en'||__l==='fr') __lang = __l; } catch(e){}
+      // Read user identity (set by enablePush opts or by linkToUser)
+      var __userPhone = null, __userName = null, __userRole = null;
+      try {
+        var __wu = localStorage.getItem('wadi_user');
+        if(__wu){ var __u = JSON.parse(__wu); __userPhone = __u.phone || null; __userName = __u.name || null; __userRole = __u.role || null; }
+      } catch(e){}
+      // opts override (passed to enablePush): user_phone, user_name, role
+      if(opts && opts.userPhone) __userPhone = opts.userPhone;
+      if(opts && opts.userName)  __userName  = opts.userName;
+      if(opts && opts.role)      __userRole  = opts.role;
+      // Normalize phone: strip non-digits, drop leading +961 and leading 0
+      if(__userPhone){
+        __userPhone = String(__userPhone).replace(/[^0-9+]/g,'').replace(/^\+/,'').replace(/^961/,'').replace(/^0/,'');
+      }
+
+      const payload = {
+        mun_id: MUN_ID,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth,
+        user_agent: navigator.userAgent.slice(0, 200),
+        topics: topics,
+        is_active: true,
+        lang: __lang,
+        user_phone: __userPhone,
+        user_name: __userName,
+        role: __userRole
+      };
+
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!resp.ok && resp.status !== 201 && resp.status !== 204) {
+        const text = await resp.text();
+        console.error('Push save failed:', resp.status, text);
+        throw new Error(`تعذّر حفظ الاشتراك (${resp.status}): ${text.slice(0,100)}`);
+      }
+
+      return sub;
+    },
+
+    // Disable push: unsubscribe + remove from Supabase
+    disablePush: async () => {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) return false;
+
+      const endpoint = sub.endpoint;
+
+      // Unsubscribe locally
+      await sub.unsubscribe();
+
+      // Mark inactive in Supabase
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ is_active: false })
+        });
+      } catch (e) { console.warn('Failed to mark sub inactive:', e); }
+
+      return true;
+    },
+
+    getCurrentSubscription: async () => {
+      if (!('serviceWorker' in navigator)) return null;
+      const reg = await navigator.serviceWorker.ready;
+      return await reg.pushManager.getSubscription();
+    },
+
+    // Update topics for an existing subscription
+    updateTopics: async (topics) => {
+      const sub = await window.PWA.getCurrentSubscription();
+      if (!sub) throw new Error(_t('pushNotSubscribed','غير مشترك حالياً'));
+      await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ topics })
+      });
+    },
+
+    // Link the current subscription to a user identifier (phone number)
+    // Call this after enablePush() once we know who the user is
+    linkToUser: async (userPhone, userName, role) => {
+      const sub = await window.PWA.getCurrentSubscription();
+      if (!sub || !userPhone) return false;
+      const phoneNorm = (userPhone || '').toString().replace(/[^\d+]/g, '');
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            user_phone: phoneNorm,
+            user_name: userName || null,
+            user_role: role || 'citizen'
+          })
+        });
+        console.log('[PWA] Subscription linked to user:', userName, phoneNorm);
+        return true;
+      } catch (e) {
+        console.warn('linkToUser failed:', e);
+        return false;
+      }
+    },
+
+    // 🔄 AUTO-LINK: runs automatically on every page load
+    // If there's a push subscription AND wadi_user in localStorage,
+    // ensure the subscription is linked with the current name/phone.
+    // This catches cases where the user enabled push BEFORE entering name.
+    autoLink: async () => {
+      try {
+        const sub = await window.PWA.getCurrentSubscription();
+        if (!sub) return false; // no subscription, nothing to link
+        
+        const raw = localStorage.getItem('wadi_user');
+        if (!raw) return false;
+        
+        const u = JSON.parse(raw);
+        if (!u || !u.phone) return false; // need at least a phone
+        
+        // Check if linked already (avoid spam) — store last-linked phone
+        const lastLinked = localStorage.getItem('wadi_push_linked');
+        const currentSig = (u.phone || '') + '|' + (u.name || '');
+        if (lastLinked === currentSig) return false; // already linked
+        
+        const ok = await window.PWA.linkToUser(u.phone, u.name || '', u.role || 'citizen');
+        if (ok) {
+          localStorage.setItem('wadi_push_linked', currentSig);
+          console.log('[PWA] Auto-linked subscription on page load');
+        }
+        return ok;
+      } catch (e) {
+        console.warn('[PWA] autoLink error:', e);
+        return false;
+      }
+    },
+
+    // Send a push notification (calls the Edge Function)
+    // Used by admins/staff to notify someone or a topic
+    sendPush: async ({ title, body, url, topics, toUserPhone, toRole, sentBy }) => {
+      const payload = {
+        mun_id: MUN_ID,
+        title,
+        body,
+        url: url || '/',
+        sent_by: sentBy || 'system'
+      };
+      if (toUserPhone) payload.to_user_phone = (toUserPhone||'').toString().replace(/[^\d+]/g,'');
+      if (toRole) payload.to_role = toRole;
+      if (topics) payload.topics = topics;
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'apikey': SUPABASE_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(data.error || `فشل الإرسال (${resp.status})`);
+      return data;
+    },
+
+    // Convenience: render a push enable/disable button into a container
+    // Usage: PWA.renderToggle('my-container-id', { topics: ['general','water'], onSubscribed: (sub) => {} })
+    renderToggle: async (containerId, opts = {}) => {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      const topics = opts.topics || ['general'];
+      const onSubscribed = opts.onSubscribed || (() => {});
+
+      const status = await window.PWA.pushStatus();
+      if (status === 'unsupported') {
+        el.innerHTML = '<div style="padding:10px 14px;background:#fef3c7;color:#7a5500;border-radius:10px;font-size:12.5px;line-height:1.6">${_t("pushNotSupportedShort","⚠️ متصفّحك لا يدعم الإشعارات. للأيفون: iOS 16.4+ مع التطبيق المثبَّت على الشاشة الرئيسية.")}</div>';
+        return;
+      }
+      if (status === 'denied') {
+        el.innerHTML = '<div style="padding:10px 14px;background:#fee2e2;color:#bf2424;border-radius:10px;font-size:12.5px;line-height:1.6">${_t("pushBlocked","🔕 الإشعارات محظورة. غيّرها من إعدادات المتصفّح ثمّ أعد تحميل الصفحة.")}</div>';
+        return;
+      }
+      if (status === 'subscribed') {
+        el.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#d4f0dc;color:#1e5429;border-radius:10px;font-size:13px;font-weight:700;margin-bottom:8px">
+            <span>🔔</span><span>${_t("pushActiveOnDevice","الإشعارات مُفعَّلة على هذا الجهاز")}</span>
+          </div>
+          <button onclick="window.PWA._disableFromToggle('${containerId}',${JSON.stringify(opts).replace(/"/g,'&quot;')})" style="width:100%;background:#fff;color:#bf2424;border:1.5px solid #bf2424;padding:9px;border-radius:10px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🔕 ${_t("pushDisable","إيقاف الإشعارات")}</button>
+        `;
+        return;
+      }
+      // pending: show the enable button
+      el.innerHTML = `
+        <button onclick="window.PWA._enableFromToggle('${containerId}',${JSON.stringify(opts).replace(/"/g,'&quot;')})" style="width:100%;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;padding:11px;border-radius:11px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          🔔 ${_t("pushEnableNow","تفعيل الإشعارات الآن")}
+        </button>
+        <div style="font-size:11.5px;color:#8a95a3;text-align:center;margin-top:6px">${_t("pushOnlyImportant","سنُرسل لك تحديثات مهمّة فقط")}</div>
+      `;
+    },
+
+    _enableFromToggle: async (containerId, opts) => {
+      try {
+        const sub = await window.PWA.enablePush(opts.topics || ['general'], opts);
+        if (opts.userPhone) await window.PWA.linkToUser(opts.userPhone, opts.userName, opts.role);
+        if (opts.onSubscribed) opts.onSubscribed(sub);
+        window.PWA.renderToggle(containerId, opts);
+      } catch (e) {
+        const el = document.getElementById(containerId);
+        if (el) el.innerHTML = `<div style="padding:10px 14px;background:#fee2e2;color:#bf2424;border-radius:10px;font-size:12.5px">⚠️ ${(e.message||_t('error','خطأ')).slice(0,200)}</div>`;
+      }
+    },
+
+    _disableFromToggle: async (containerId, opts) => {
+      if (!confirm(_t('pushConfirmDisable','هل تريد فعلاً إيقاف الإشعارات؟ لن تستلم تحديثات البلدية.'))) return;
+      try {
+        await window.PWA.disablePush();
+        window.PWA.renderToggle(containerId, opts);
+      } catch (e) { console.error(e); }
+    }
+  };
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+})();
+
+/* ════════════════════════════════════════════════════════════════════════
+   PWA i18n keys — these get added to the I18N dict when i18n.js is loaded
+   on the same page. If i18n.js is not present, fallback Arabic is used.
+   ════════════════════════════════════════════════════════════════════════ */
+if (typeof window !== 'undefined' && window.I18N && typeof window.I18N.extend === 'function') {
+  window.I18N.extend({
+    ar: {
+      pwaInstallTitle: 'ثبّت تطبيق وادي الست',
+      pwaInstallSub: 'لوصول أسرع وعمل بدون إنترنت',
+      pwaInstallBtn: 'تثبيت',
+      pwaInstallFromMenu: 'يمكنك تثبيت التطبيق من قائمة المتصفّح (الثلاث نقاط).',
+      iosInstallTitle: '📱 ثبّت التطبيق على iPhone',
+      iosInstallDesc: 'على iOS، التثبيت يتمّ بـ ٣ خطوات بسيطة من Safari:',
+      iosStep1: 'اضغط زرّ <b>المشاركة</b> ⎯ <b>📤</b> في أسفل Safari',
+      iosStep2: 'مرّر للأسفل واضغط <b>"إضافة إلى الشاشة الرئيسية"</b>',
+      iosStep3: 'اضغط <b>"إضافة"</b> أعلى اليمين',
+      iosGotIt: 'حسناً، فهمت',
+      pushNotSupported: 'متصفّحك لا يدعم الإشعارات. تأكّد من iOS 16.4+ أو Android Chrome حديث.',
+      pushNotSupportedShort: '⚠️ متصفّحك لا يدعم الإشعارات. للأيفون: iOS 16.4+ مع التطبيق المثبَّت على الشاشة الرئيسية.',
+      pushDenied: 'رفضتَ السماح بالإشعارات. لتفعيلها، اذهب إلى إعدادات المتصفّح/الموقع.',
+      pushNoPermission: 'لم يتمّ منح الإذن.',
+      pushBlocked: '🔕 الإشعارات محظورة. غيّرها من إعدادات المتصفّح ثمّ أعد تحميل الصفحة.',
+      pushNotSubscribed: 'غير مشترك حالياً',
+      pushActiveOnDevice: 'الإشعارات مُفعَّلة على هذا الجهاز',
+      pushDisable: 'إيقاف الإشعارات',
+      pushEnableNow: 'تفعيل الإشعارات الآن',
+      pushOnlyImportant: 'سنُرسل لك تحديثات مهمّة فقط',
+      pushConfirmDisable: 'هل تريد فعلاً إيقاف الإشعارات؟ لن تستلم تحديثات البلدية.',
+    },
+    en: {
+      pwaInstallTitle: 'Install the Wadi El Sit app',
+      pwaInstallSub: 'For faster access and offline use',
+      pwaInstallBtn: 'Install',
+      pwaInstallFromMenu: 'You can install the app from your browser menu (the three dots).',
+      iosInstallTitle: '📱 Install the app on iPhone',
+      iosInstallDesc: 'On iOS, install in 3 simple steps from Safari:',
+      iosStep1: 'Tap the <b>Share</b> button ⎯ <b>📤</b> at the bottom of Safari',
+      iosStep2: 'Scroll down and tap <b>"Add to Home Screen"</b>',
+      iosStep3: 'Tap <b>"Add"</b> at the top right',
+      iosGotIt: 'Got it',
+      pushNotSupported: 'Your browser does not support notifications. Make sure you have iOS 16.4+ or a recent Android Chrome.',
+      pushNotSupportedShort: '⚠️ Your browser does not support notifications. iPhone: iOS 16.4+ with the app installed on the Home Screen.',
+      pushDenied: 'You denied notifications. To enable, go to your browser/site settings.',
+      pushNoPermission: 'Permission was not granted.',
+      pushBlocked: '🔕 Notifications are blocked. Change this in your browser settings, then reload the page.',
+      pushNotSubscribed: 'Not currently subscribed',
+      pushActiveOnDevice: 'Notifications are enabled on this device',
+      pushDisable: 'Disable notifications',
+      pushEnableNow: 'Enable notifications now',
+      pushOnlyImportant: "We'll only send you important updates",
+      pushConfirmDisable: 'Do you really want to disable notifications? You will no longer receive municipality updates.',
+    },
+    fr: {
+      pwaInstallTitle: "Installer l'app Wadi El Sit",
+      pwaInstallSub: 'Pour un accès plus rapide et hors ligne',
+      pwaInstallBtn: 'Installer',
+      pwaInstallFromMenu: "Vous pouvez installer l'app depuis le menu du navigateur (trois points).",
+      iosInstallTitle: "📱 Installer l'app sur iPhone",
+      iosInstallDesc: "Sur iOS, l'installation se fait en 3 étapes simples depuis Safari :",
+      iosStep1: 'Appuyez sur le bouton <b>Partager</b> ⎯ <b>📤</b> en bas de Safari',
+      iosStep2: 'Faites défiler et appuyez sur <b>« Sur l\'écran d\'accueil »</b>',
+      iosStep3: 'Appuyez sur <b>« Ajouter »</b> en haut à droite',
+      iosGotIt: 'Compris',
+      pushNotSupported: "Votre navigateur ne prend pas en charge les notifications. Vérifiez iOS 16.4+ ou un Chrome Android récent.",
+      pushNotSupportedShort: "⚠️ Votre navigateur ne prend pas en charge les notifications. iPhone : iOS 16.4+ avec l'app installée sur l'écran d'accueil.",
+      pushDenied: "Vous avez refusé les notifications. Pour les activer, allez dans les paramètres du navigateur.",
+      pushNoPermission: "L'autorisation n'a pas été accordée.",
+      pushBlocked: '🔕 Les notifications sont bloquées. Modifiez ce paramètre dans le navigateur, puis rechargez la page.',
+      pushNotSubscribed: 'Non abonné actuellement',
+      pushActiveOnDevice: 'Notifications activées sur cet appareil',
+      pushDisable: 'Désactiver les notifications',
+      pushEnableNow: 'Activer les notifications maintenant',
+      pushOnlyImportant: 'Nous vous enverrons uniquement des mises à jour importantes',
+      pushConfirmDisable: 'Voulez-vous vraiment désactiver les notifications ? Vous ne recevrez plus les mises à jour de la municipalité.',
+    }
+  });
+}
+
+/* When the user changes language while subscribed, update their push_subscription.lang
+   so future notifications arrive in the new language. */
+if (typeof window !== 'undefined' && window.I18N && typeof window.I18N.onApply === 'function') {
+  window.I18N.onApply(async function(lang){
+    try {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      var reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return;
+      var sub = await reg.pushManager.getSubscription();
+      if (!sub) return;
+      // Update the subscription's lang in Supabase
+      await fetch(SUPABASE_URL + '/rest/v1/push_subscriptions?endpoint=eq.' + encodeURIComponent(sub.endpoint), {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ lang: lang })
+      });
+    } catch(e) { /* silent */ }
+  });
+}
