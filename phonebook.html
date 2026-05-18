@@ -3849,6 +3849,12 @@ function markWhatsNewSeen(){
 
 // Keep openHelp available (defaults to "help" tab) but the header button goes to "whatsnew" first time
 init();
+
+// Re-render letter bar when language switches (so English mode shows A-Z)
+document.addEventListener('wadi:langchange', function(){
+  letterF = ''; pgN = 1;
+  try { renderLettersBar(); renderFiltersBar(); renderGrid(); renderStats(); } catch(e){}
+});
 </script>
 
 <!-- ═══ UNIFIED WADI HELP MODAL ═══ -->
