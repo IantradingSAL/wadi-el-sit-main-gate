@@ -1410,15 +1410,17 @@ function renderStats(){
 }
 
 function renderLettersBar(){
+  const lang = currentLang();
+  const letters = (lang === 'ar') ? AR_FIRST_LETTERS : EN_FIRST_LETTERS;
   const all = getAllPublic();
-  const present = new Set(all.map(c=>firstLetter(c.first||c.name)));
+  const present = new Set(all.map(c => firstLetterLang(c.first||c.name, lang)));
   // Desktop bar
   const dHtml = ['<button class="sb-letter '+(!letterF?'on':'')+'" onclick="setLetter(\'\')">'+L().all+'</button>'];
-  AR_FIRST_LETTERS.forEach(l => { if(present.has(l)) dHtml.push(`<button class="sb-letter ${letterF===l?'on':''}" onclick="setLetter('${l}')">${l}</button>`); });
+  letters.forEach(l => { if(present.has(l)) dHtml.push(`<button class="sb-letter ${letterF===l?'on':''}" onclick="setLetter('${l}')">${l}</button>`); });
   document.getElementById('LTR_D').innerHTML = dHtml.join('');
   // Drawer letters
   const drwHtml = ['<button class="drw-letter '+(!letterF?'on':'')+'" onclick="setLetter(\'\')">'+L().all+'</button>'];
-  AR_FIRST_LETTERS.forEach(l => { if(present.has(l)) drwHtml.push(`<button class="drw-letter ${letterF===l?'on':''}" onclick="setLetter('${l}')">${l}</button>`); });
+  letters.forEach(l => { if(present.has(l)) drwHtml.push(`<button class="drw-letter ${letterF===l?'on':''}" onclick="setLetter('${l}')">${l}</button>`); });
   document.getElementById('DRW_LTR').innerHTML = drwHtml.join('');
 }
 
