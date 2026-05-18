@@ -4,7 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Super Admin — نظام البلديات</title>
+
+<!-- 1) Supabase SDK (must come BEFORE admin-auth.js) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 2) Unified admin auth library -->
+<script src="admin-auth.js"></script>
+
 <style>
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--green2:#1e5429;--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;--bg:#f5f7fa;--bg2:#f0f2f7;--danger:#e74c3c;--font:'Tahoma',Arial,sans-serif;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -25,7 +30,14 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 .color-swatch{width:28px;height:28px;border-radius:6px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
 .tab{padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text2);}
 .tab.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
+.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
+.back-to-gate-i{font-size:16px;line-height:1}
+.back-to-gate-l{white-space:nowrap}
+@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:7px 11px;font-size:11.5px}.back-to-gate-i{font-size:14px}}
+@media print{.back-to-gate{display:none}}
 </style>
+
 <!-- PWA & Mobile Meta -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#1a6eb5">
@@ -38,46 +50,25 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 <script src="pwa.js" defer></script>
 </head>
 <body>
-<!-- Back to Main Gate (floating) -->
-<style>
-.back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
-.back-to-gate:hover,.back-to-gate:active{transform:translateY(-2px) scale(1.03);box-shadow:0 8px 22px rgba(15,77,130,.45),0 4px 10px rgba(0,0,0,.12)}
-.back-to-gate-i{font-size:16px;line-height:1}
-.back-to-gate-l{white-space:nowrap}
-@media(max-width:540px){.back-to-gate{top:8px;left:8px;padding:7px 11px;font-size:11.5px}.back-to-gate-i{font-size:14px}}
-@media print{.back-to-gate{display:none}}
-</style>
+
+<!-- Floating back-to-gate button (always visible, even before login) -->
 <a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية">
   <span class="back-to-gate-i">🏛️</span>
   <span class="back-to-gate-l">البوابة الرئيسية</span>
 </a>
 
+<!-- MAIN APP — hidden until adminAuth.requireRole(['super_admin']) resolves -->
+<div id="MAIN" style="display:none">
 
-<div class="header">
-  <span style="font-size:28px">🏛</span>
-  <div>
-    <div style="font-size:16px;font-weight:800;">لوحة تحكم Super Admin</div>
-    <div style="font-size:11px;opacity:.7;">Municipal Management System</div>
+  <div class="header">
+    <span style="font-size:28px">🏛</span>
+    <div>
+      <div style="font-size:16px;font-weight:800;">لوحة تحكم Super Admin</div>
+      <div style="font-size:11px;opacity:.7;">Municipal Management System</div>
+    </div>
+    <button onclick="if(confirm('تسجيل خروج؟'))adminAuth.signOut()" class="btn" style="margin-right:auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:6px 14px;">خروج</button>
   </div>
-  <button id="logout-btn" onclick="doLogout()" class="btn" style="margin-right:auto;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;font-size:12px;padding:6px 14px;display:none;">خروج</button>
-</div>
 
-<!-- Login -->
-<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:80vh;padding:20px;">
-  <div class="card" style="max-width:380px;width:100%;text-align:center;">
-    <div style="font-size:40px;margin-bottom:12px">🔐</div>
-    <div style="font-size:18px;font-weight:800;margin-bottom:4px">Super Admin</div>
-    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">صلاحيات كاملة على جميع البلديات</div>
-    <input type="email" class="fi" id="li-em" placeholder="البريد الإلكتروني" style="margin-bottom:10px;direction:ltr">
-    <input type="password" class="fi" id="li-pw" placeholder="كلمة المرور" style="margin-bottom:12px;direction:ltr" onkeydown="if(event.key==='Enter')doLogin()">
-    <div id="li-err" style="color:var(--danger);font-size:13px;margin-bottom:10px;min-height:18px;"></div>
-    <button class="btn bg" style="width:100%;justify-content:center;" onclick="doLogin()">🚀 دخول</button>
-    <a href="index.html" style="display:block;margin-top:14px;font-size:13px;color:var(--text3)">← العودة للرئيسية</a>
-  </div>
-</div>
-
-<!-- App -->
-<div id="app-screen" style="display:none;">
   <div class="main">
     <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
       <div class="tab on" id="tab-mun-btn" onclick="showTab('tab-mun')">🏛 البلديات</div>
@@ -166,6 +157,9 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
         <div id="admins-list">⏳</div>
         <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px;">
           <div class="fl">إضافة Super Admin</div>
+          <div style="font-size:11.5px;color:var(--text3);margin:6px 0 10px;line-height:1.55;background:#fff9e6;border-right:3px solid #f5c842;padding:8px 10px;border-radius:6px;">
+            ⚠️ المستخدم يجب أن يكون موجوداً مسبقاً في <strong>Supabase Auth Users</strong>. هذه الخطوة تضيفه إلى جدول <code>super_admins</code> فقط — لمنحه دور <code>super_admin</code> فعلياً يجب أيضاً تنفيذ <code>INSERT INTO user_roles</code> من Supabase SQL Editor.
+          </div>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
             <input type="email" class="fi" id="new-adm-em" placeholder="email@example.com" style="flex:1;min-width:160px;direction:ltr;">
             <input type="text" class="fi" id="new-adm-name" placeholder="الاسم" style="width:140px;">
@@ -174,20 +168,33 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
           <div id="adm-msg" style="margin-top:8px;font-size:13px;min-height:18px;"></div>
         </div>
       </div>
+
+      <!-- NEW: current logged-in user info -->
+      <div class="card">
+        <div class="card-title">🔐 جلستك الحالية</div>
+        <div>البريد: <strong id="cur-user-email" style="direction:ltr">—</strong></div>
+        <div style="margin-top:8px">صلاحياتك:</div>
+        <div id="cur-user-roles" style="margin-top:6px"></div>
+      </div>
     </div>
   </div>
+
 </div>
 
 <div id="toast-c" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;"></div>
 
 <script>
-var SB_URL = '__SUPABASE_URL__';
-var SB_KEY = '__SUPABASE_ANON_KEY__';
-var KNOWN_SUPER = ['imadaehn@gmail.com'];
-var sb = null;
-var currentMunId = null;
-var editLogoB64 = null;
-var newLogoB64 = null;
+// ============================================================
+// AUTH gate — admin-auth.js renders the login screen, verifies
+// the 'super_admin' role, and only resolves once authorized.
+// super_admin role grants access to EVERYTHING by design.
+// ============================================================
+const ALLOWED_ROLES = ['super_admin'];
+
+let sb = null;           // points to adminAuth.sb after auth
+let currentMunId = null;
+let editLogoB64 = null;
+let newLogoB64 = null;
 
 function toast(msg, type) {
   var c = document.getElementById('toast-c');
@@ -197,56 +204,25 @@ function toast(msg, type) {
   setTimeout(function(){if(t.parentNode)t.parentNode.removeChild(t);}, 3000);
 }
 
-window.addEventListener('DOMContentLoaded', function() {
-  try {
-    sb = window.supabase.createClient(SB_URL, SB_KEY, {realtime:{enabled:false}});
-  } catch(e) {
-    document.getElementById('li-err').textContent = 'خطأ في تحميل المكتبة: ' + e.message;
-    return;
-  }
-  document.getElementById('logout-btn').style.display = 'none';
-  sb.auth.getUser().then(function(r) {
-    if (r.data && r.data.user) checkSuperAdmin(r.data.user);
+(async function init(){
+  const user = await adminAuth.requireRole(ALLOWED_ROLES, {
+    title:    '🔐 Super Admin',
+    subtitle: 'صلاحيات كاملة على جميع البلديات'
   });
-});
 
-async function doLogin() {
-  var em = (document.getElementById('li-em').value || '').trim();
-  var pw = document.getElementById('li-pw').value || '';
-  var err = document.getElementById('li-err');
-  if (!em || !pw) { err.textContent = 'يرجى إدخال البريد وكلمة المرور'; return; }
-  err.textContent = '⏳ جاري الدخول…';
-  try {
-    if (!sb) sb = window.supabase.createClient(SB_URL, SB_KEY, {realtime:{enabled:false}});
-    var r = await sb.auth.signInWithPassword({email:em, password:pw});
-    if (r.error) { err.textContent = 'خطأ: ' + r.error.message; return; }
-    await checkSuperAdmin(r.data.user);
-  } catch(e) { err.textContent = 'خطأ: ' + e.message; }
-}
+  // Authorized — reveal main UI
+  sb = adminAuth.sb;
+  document.getElementById('MAIN').style.display = 'block';
 
-async function checkSuperAdmin(user) {
-  var meta = user.user_metadata || {};
-  var role = meta.role || '';
-  var email = user.email || '';
-  var ok = KNOWN_SUPER.indexOf(email) >= 0 || role === 'mayor' || role === 'admin';
-  if (!ok) {
-    try {
-      var r = await sb.from('super_admins').select('id').eq('email', email).single();
-      if (!r.error && r.data) ok = true;
-    } catch(e) {}
-  }
-  if (!ok) {
-    document.getElementById('li-err').textContent = '⚠️ ليس لديك صلاحية Super Admin';
-    await sb.auth.signOut(); return;
-  }
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app-screen').style.display = 'block';
-  document.getElementById('logout-btn').style.display = 'flex';
+  // Show current user info in the admins tab
+  document.getElementById('cur-user-email').textContent = user.email || '—';
+  const roles = await adminAuth.getRoles();
+  document.getElementById('cur-user-roles').innerHTML =
+    roles.map(r => `<span style="display:inline-block;padding:3px 9px;background:#daeaf8;color:#0f4d82;border-radius:10px;font-size:11px;font-weight:700;margin:2px 3px">${r}</span>`).join('') || '<em>(لا توجد)</em>';
+
   loadMunicipalities();
   loadSuperAdmins();
-}
-
-function doLogout() { sb.auth.signOut().then(function(){location.reload();}); }
+})();
 
 function showTab(id) {
   ['tab-mun','tab-new','tab-admins'].forEach(function(t){
@@ -255,7 +231,9 @@ function showTab(id) {
   });
 }
 
+// ============================================================
 // MUNICIPALITIES
+// ============================================================
 async function loadMunicipalities() {
   var el = document.getElementById('mun-list');
   try {
@@ -279,7 +257,7 @@ async function loadMunicipalities() {
   } catch(e) {
     el.innerHTML = '<div style="background:#fff9e6;border:1.5px solid #f5c842;border-radius:12px;padding:16px;text-align:center">'
       + '<div style="font-size:24px;margin-bottom:8px">⚠️</div>'
-      + '<div style="font-weight:700;margin-bottom:8px">جدول municipalities غير موجود بعد</div>'
+      + '<div style="font-weight:700;margin-bottom:8px">خطأ في تحميل البلديات</div>'
       + '<div style="font-size:13px;color:var(--text3);margin-bottom:12px">' + e.message + '</div>'
       + '<a href="https://supabase.com/dashboard/project/onjbwhkmmtqnymhjnplw/sql/new" target="_blank" class="btn bp" style="text-decoration:none;display:inline-flex">فتح SQL Editor</a>'
       + '</div>';
@@ -385,9 +363,7 @@ async function createMunicipality() {
   var r = await sb.from('municipalities').insert([mun]).select().single();
   if (r.error) {
     msg.style.color='var(--danger)';
-    msg.textContent = r.error.message.includes('does not exist')
-      ? '⚠️ جدول municipalities غير موجود — نفّذ migration_v1.sql أولاً'
-      : 'خطأ: '+r.error.message;
+    msg.textContent = 'خطأ: '+r.error.message;
     return;
   }
   msg.style.color='var(--green2)'; msg.textContent='✅ تم الإنشاء! ID: '+r.data.id;
@@ -397,6 +373,9 @@ async function createMunicipality() {
   loadMunicipalities();
 }
 
+// ============================================================
+// SUPER ADMINS
+// ============================================================
 async function loadSuperAdmins() {
   var el = document.getElementById('admins-list'); if(!el) return;
   try {
@@ -408,8 +387,14 @@ async function loadSuperAdmins() {
       html += '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:8px;margin-bottom:6px">';
       html += '<span style="font-size:18px">👤</span>';
       html += '<div style="flex:1"><div style="font-weight:700">'+(a.name||'—')+'</div>';
-      html += '<div style="font-size:12px;color:var(--text3);direction:ltr">'+a.email+'</div></div>';
-      if (KNOWN_SUPER.indexOf(a.email) >= 0) {
+      html += '<div style="font-size:12px;color:var(--text3);direction:ltr">'+a.email+'</div>';
+      if (a.user_id) {
+        html += '<div style="font-size:10px;color:var(--green2);margin-top:2px">✅ مربوط بـ Supabase Auth</div>';
+      } else {
+        html += '<div style="font-size:10px;color:#e67e22;margin-top:2px">⚠️ غير مربوط — يحتاج user_id</div>';
+      }
+      html += '</div>';
+      if (a.email === 'imadaehn@gmail.com') {
         html += '<span style="font-size:11px;background:#daeaf8;color:var(--blue2);padding:2px 8px;border-radius:10px">مدير النظام</span>';
       } else {
         html += '<button class="btn" data-rmadm-id="'+a.id+'" data-rmadm-em="'+a.email+'" style="color:var(--danger);padding:5px 10px;font-size:12px">🗑️</button>';
@@ -418,7 +403,7 @@ async function loadSuperAdmins() {
     });
     el.innerHTML = html || '<div style="color:var(--text3);padding:10px">لا يوجد Super Admins بعد</div>';
   } catch(e) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:13px">⚠️ جدول super_admins غير موجود بعد — نفّذ migration_v1.sql</div>';
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px">⚠️ خطأ: ' + e.message + '</div>';
   }
 }
 
@@ -427,17 +412,20 @@ async function addSuperAdmin() {
   var name=(document.getElementById('new-adm-name').value||'').trim();
   var msg=document.getElementById('adm-msg');
   if(!em){msg.style.color='var(--danger)';msg.textContent='يرجى إدخال البريد';return;}
+  msg.style.color='var(--text3)';msg.textContent='⏳ جاري الإضافة…';
   var r=await sb.from('super_admins').insert([{email:em,name:name||null}]);
   if(r.error){msg.style.color='var(--danger)';msg.textContent='خطأ: '+r.error.message;return;}
-  msg.style.color='var(--green2)';msg.textContent='✅ تمت الإضافة';
+  msg.style.color='var(--green2)';
+  msg.innerHTML='✅ تمت الإضافة في جدول super_admins.<br><strong style="color:#e67e22">⚠️ خطوة مطلوبة:</strong> أنشئ الحساب في Supabase Auth ونفّذ:<br><code style="font-size:10px;background:#f0f0f0;padding:2px 6px;border-radius:4px">INSERT INTO user_roles (user_id, role) SELECT id, \'super_admin\' FROM auth.users WHERE email=\''+em+'\';</code>';
   document.getElementById('new-adm-em').value='';
   document.getElementById('new-adm-name').value='';
   loadSuperAdmins();
 }
 
 async function removeSuperAdmin(id, email) {
-  if(!confirm('حذف '+email+'؟'))return;
-  await sb.from('super_admins').delete().eq('id',id);
+  if(!confirm('حذف '+email+' من جدول super_admins؟\n\n(دور super_admin في user_roles يبقى — احذفه يدوياً من SQL)'))return;
+  var r = await sb.from('super_admins').delete().eq('id',id);
+  if(r.error){toast('خطأ: '+r.error.message,'err');return;}
   loadSuperAdmins(); toast('🗑️ تم الحذف');
 }
 </script>
