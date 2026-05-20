@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
+<meta name="theme-color" content="#0f4d82">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="رحلة الباص">
+<title>سجّل في الرحلة — بلدية وادي الست</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="pwa.js" defer></script>
+<style>
+:root{
+  --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue-soft:#eef5fc;
+  --green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
+  --sun:#f5a623;--sun2:#d88e0a;--sun3:#fff4e0;
+  --bg:#f4f6fb;--surface:#fff;--surface2:#eef0f6;
+  --border:#dce0ea;--text:#191c24;--text2:#515668;--text3:#8d93a6;
+  --danger:#bf2424;--danger-bg:#fdeaea;
+  --shadow:0 4px 16px rgba(15,77,130,.08),0 2px 6px rgba(15,77,130,.05);
+  --shadow-lg:0 12px 40px rgba(15,77,130,.16);
+  --r:12px;--r-lg:16px;--r-xl:22px;--r-full:999px;
+  --font:'Tajawal',sans-serif;
+  --t2:cubic-bezier(.34,1.56,.64,1);
+  --safe-bot:env(safe-area-inset-bottom,0px);
+  --safe-top:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit;}
+input,textarea,select{font-family:inherit;color:inherit;font-size:inherit;}
+
+/* HEADER */
+.hd{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 60%,var(--green2) 100%);color:#fff;box-shadow:var(--shadow);padding-top:var(--safe-top);}
+.hd-inner{max-width:560px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;}
+.hd-logo{height:42px;width:42px;border-radius:50%;background:#fff;padding:4px;flex-shrink:0;}
+.hd-logo img{width:100%;height:100%;object-fit:contain;}
+.hd-title{flex:1;font-size:16px;font-weight:800;line-height:1.2;}
+.hd-back{background:rgba(255,255,255,.18);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;text-decoration:none;}
+
+/* HERO */
+.hero{position:relative;padding:36px 20px 90px;background:linear-gradient(135deg,#0f4d82 0%,#1a6eb5 50%,#2d7a3e 100%);color:#fff;text-align:center;overflow:hidden;}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(245,166,35,.25),transparent 50%),radial-gradient(circle at 70% 80%,rgba(45,122,62,.3),transparent 50%);pointer-events:none;}
+.hero-bus{font-size:72px;margin-bottom:8px;display:inline-block;animation:busDrive 3s ease-in-out infinite;filter:drop-shadow(0 8px 16px rgba(0,0,0,.25));}
+@keyframes busDrive{0%,100%{transform:translateX(0) rotate(-2deg);}50%{transform:translateX(8px) rotate(2deg);}}
+.hero h1{font-size:26px;font-weight:900;margin-bottom:6px;text-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hero p{font-size:15px;opacity:.92;max-width:480px;margin:0 auto;}
+.hero-confetti{display:inline-block;animation:pop 1.4s ease infinite;}
+@keyframes pop{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
+
+/* MAIN */
+.main{max-width:560px;margin:-66px auto 30px;padding:0 14px calc(var(--safe-bot) + 30px);position:relative;z-index:2;}
+
+/* TRIP CARD */
+.trip{background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:20px;margin-bottom:14px;border:1px solid var(--border);}
+.trip-loading{text-align:center;padding:30px;color:var(--text3);}
+.trip-head{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px dashed var(--border);margin-bottom:14px;}
+.trip-emoji{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--sun3),var(--sun));display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;box-shadow:0 4px 12px rgba(245,166,35,.3);}
+.trip-title{font-size:18px;font-weight:800;line-height:1.3;color:var(--blue2);margin-bottom:3px;}
+.trip-dest{font-size:13.5px;color:var(--text2);}
+.trip-desc{font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:14px;}
+.trip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.trip-cell{background:var(--surface2);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:9px;}
+.trip-cell-i{font-size:18px;flex-shrink:0;}
+.trip-cell-text{flex:1;min-width:0;}
+.trip-cell-l{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.trip-cell-v{font-size:13.5px;font-weight:700;color:var(--text);}
+.trip-price{margin-top:14px;background:linear-gradient(135deg,var(--green3),#c8ebd5);border-radius:var(--r);padding:13px 16px;display:flex;align-items:center;gap:10px;}
+.trip-price-i{font-size:24px;}
+.trip-price-text{flex:1;}
+.trip-price-l{font-size:11.5px;color:var(--green2);font-weight:700;}
+.trip-price-v{font-size:18px;font-weight:900;color:var(--green2);direction:ltr;text-align:right;}
+.trip-seats{margin-top:11px;display:flex;align-items:center;justify-content:space-between;background:var(--blue-soft);border-radius:var(--r);padding:11px 14px;}
+.trip-seats-l{font-size:12.5px;color:var(--blue2);font-weight:700;}
+.trip-seats-bar{flex:1;height:8px;background:#fff;border-radius:99px;margin:0 11px;overflow:hidden;}
+.trip-seats-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:99px;transition:width .5s var(--t2);}
+.trip-seats-v{font-size:13px;font-weight:800;color:var(--blue2);direction:ltr;}
+
+/* SIGNUP FORM */
+.signup{background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow);padding:20px;border:1px solid var(--border);}
+.signup-t{font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.signup-s{font-size:13px;color:var(--text2);margin-bottom:16px;}
+.fm-grp{margin-bottom:13px;}
+.fm-l{font-size:12.5px;color:var(--text2);font-weight:700;margin-bottom:5px;display:block;}
+.fm-l .req{color:var(--danger);margin-right:2px;}
+.fm-i{padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-size:15px;background:#fafbfd;outline:none;transition:all .15s;width:100%;font-family:var(--font);}
+.fm-i:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,110,181,.1);}
+.fm-i.ltr{direction:ltr;text-align:right;}
+.fm-row{display:grid;grid-template-columns:2fr 1fr;gap:9px;}
+.fm-i-seats{text-align:center;font-weight:800;font-size:18px;}
+textarea.fm-i{resize:vertical;min-height:60px;}
+.btn-submit{width:100%;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;padding:15px;border-radius:var(--r);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s;box-shadow:0 4px 14px rgba(37,211,102,.35);margin-top:6px;}
+.btn-submit:active{transform:scale(.98);}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;}
+.fm-err{padding:11px 13px;background:var(--danger-bg);color:var(--danger);border-radius:var(--r);font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:11px;}
+.fm-help{font-size:11.5px;color:var(--text3);margin-top:4px;}
+.privacy{margin-top:14px;padding:11px 13px;background:var(--blue-soft);border-radius:var(--r);font-size:12px;color:var(--blue2);line-height:1.6;text-align:center;}
+
+/* SUCCESS STATE */
+.success{background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:30px 20px;text-align:center;animation:successPop .5s var(--t2);}
+@keyframes successPop{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.success-i{font-size:80px;margin-bottom:10px;display:inline-block;animation:checkPop .6s var(--t2);}
+@keyframes checkPop{0%{transform:scale(0) rotate(-180deg);}60%{transform:scale(1.2) rotate(15deg);}100%{transform:scale(1) rotate(0);}}
+.success-t{font-size:22px;font-weight:900;color:var(--green2);margin-bottom:6px;}
+.success-s{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.7;}
+.success-summary{background:var(--green3);border-radius:var(--r);padding:14px;margin-bottom:18px;text-align:right;}
+.success-row{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13.5px;}
+.success-row b{color:var(--green2);font-weight:800;}
+.btn-push{width:100%;background:linear-gradient(135deg,#f5a623,#d88e0a);color:#3a2502;border:none;padding:14px;border-radius:var(--r);font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(245,166,35,.4);margin-bottom:9px;}
+.btn-push:active{transform:scale(.98);}
+.btn-secondary{width:100%;background:transparent;color:var(--text2);border:1.5px solid var(--border);padding:12px;border-radius:var(--r);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;}
+.btn-secondary:active{background:var(--surface2);}
+
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(min-width:680px){
+  .hd-inner{padding:14px 20px;}
+  .main{padding:0 20px 40px;}
+  .hero h1{font-size:32px;}
+}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <div class="hd-inner">
+    <a href="index.html" class="hd-logo">
+      <img src="icons/apple-touch-icon.png" alt="logo">
+    </a>
+    <div class="hd-title">رحلة بالباص</div>
+    <a href="index.html" class="hd-back" aria-label="رجوع">←</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-bus">🚌</div>
+  <h1>سجّل الآن <span class="hero-confetti">🎉</span></h1>
+  <p>رحلة جماعية لأهالي وادي الست — احجز مقعدك قبل نفاد الأماكن</p>
+</section>
+
+<main class="main">
+
+  <!-- Trip card (loaded from DB) -->
+  <div class="trip" id="TRIP">
+    <div class="trip-loading">⏳ جاري تحميل تفاصيل الرحلة…</div>
+  </div>
+
+  <!-- Signup form -->
+  <div class="signup" id="FORM_CARD">
+    <div class="signup-t">📝 احجز مقعدك</div>
+    <div class="signup-s">املأ النموذج، وسنرسل لك التأكيد والتذكيرات تلقائياً.</div>
+
+    <div id="FM_ERR"></div>
+
+    <form id="FM" onsubmit="submitSignup(event)">
+      <div class="fm-grp">
+        <label class="fm-l"><span class="req">*</span> اسمك الكامل</label>
+        <input class="fm-i" id="NM" required autocomplete="name" placeholder="مثال: عماد بطرس أبي الحسن">
+      </div>
+
+      <div class="fm-row">
+        <div class="fm-grp">
+          <label class="fm-l"><span class="req">*</span> رقم الهاتف</label>
+          <input class="fm-i ltr" type="tel" id="PH" required inputmode="tel" autocomplete="tel" placeholder="+961 76 ...">
+          <div class="fm-help">سنرسل لك التذكيرات على هذا الرقم</div>
+        </div>
+        <div class="fm-grp">
+          <label class="fm-l"><span class="req">*</span> المقاعد</label>
+          <input class="fm-i fm-i-seats" type="number" id="SC" min="1" max="10" value="1" required>
+        </div>
+      </div>
+
+      <div class="fm-grp">
+        <label class="fm-l">ملاحظات (اختياري)</label>
+        <textarea class="fm-i" id="NT" placeholder="مثال: أحتاج مقعداً قرب النافذة"></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="SUB">
+        ✅ سجّل الآن
+      </button>
+
+      <div class="privacy">🔒 معلوماتك تُستخدم فقط للتواصل بشأن الرحلة. لن نشاركها مع أيّ جهة أخرى.</div>
+    </form>
+  </div>
+
+  <!-- Success card (hidden initially) -->
+  <div class="success" id="SUCCESS" hidden>
+    <div class="success-i">✅</div>
+    <div class="success-t">تم التسجيل!</div>
+    <div class="success-s">حجزك مؤكَّد. سنتواصل معك قريباً بكلّ التفاصيل.</div>
+
+    <div class="success-summary" id="SUMMARY"></div>
+
+    <button class="btn-push" id="PUSH_BTN" onclick="enablePushNotifications()">
+      🔔 فعّل الإشعارات لاستلام التذكيرات
+    </button>
+    <button class="btn-secondary" onclick="location.href='index.html'">
+      العودة للبوابة الرئيسية
+    </button>
+  </div>
+
+</main>
+
+<script>
+const SB_URL = "https://onjbwhkmmtqnymhjnplw.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
+const MUN_ID = "00000000-0000-0000-0000-000000000001";
+
+let sb = null;
+let CURRENT_TRIP = null;
+try { sb = supabase.createClient(SB_URL, SB_KEY); } catch(e){ console.warn('SB init failed', e); }
+
+// Prefill from wadi_user identity if available
+try {
+  const wu = localStorage.getItem('wadi_user');
+  if (wu) {
+    const u = JSON.parse(wu);
+    if (u.name) document.getElementById('NM').value = u.name;
+    if (u.phone) document.getElementById('PH').value = u.phone;
+  }
+} catch(e){}
+
+function escHtml(s){ return (s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function fmtDateAr(d){
+  if(!d) return '';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('ar-LB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+function fmtTime(t){ if(!t) return ''; return t.slice(0,5); }
+function fmtMoney(lbp, usd){
+  const parts = [];
+  if(lbp) parts.push(lbp.toLocaleString('en-US') + ' ل.ل');
+  if(usd) parts.push('$' + usd);
+  return parts.join(' / ');
+}
+
+async function loadTrip(){
+  const card = document.getElementById('TRIP');
+  if(!sb){ card.innerHTML = '<div class="trip-loading" style="color:var(--danger)">⚠️ تعذّر الاتصال بالخادم</div>'; return; }
+  try {
+    const { data: trips, error } = await sb.from('bus_trips')
+      .select('*').eq('mun_id', MUN_ID).eq('is_active', true)
+      .order('trip_date', { ascending: true }).limit(1);
+    if(error) throw error;
+    if(!trips || trips.length === 0){
+      card.innerHTML = '<div class="trip-loading">📭 لا توجد رحلات متاحة حالياً.<br>تابعنا قريباً!</div>';
+      document.getElementById('FORM_CARD').style.display = 'none';
+      return;
+    }
+    const t = trips[0]; CURRENT_TRIP = t;
+
+    // Count current signups
+    const { count } = await sb.from('bus_trip_signups')
+      .select('*', { count:'exact', head:true })
+      .eq('trip_id', t.id).eq('status','confirmed');
+    const taken = count || 0;
+    const remaining = Math.max(0, (t.max_seats || 50) - taken);
+    const pct = Math.max(5, Math.min(100, (taken / (t.max_seats||50)) * 100));
+
+    card.innerHTML = `
+      <div class="trip-head">
+        <div class="trip-emoji">${escHtml(t.destination_emoji || '🚌')}</div>
+        <div>
+          <div class="trip-title">${escHtml(t.title)}</div>
+          ${t.destination ? `<div class="trip-dest">📍 ${escHtml(t.destination)}</div>` : ''}
+        </div>
+      </div>
+      ${t.description ? `<div class="trip-desc">${escHtml(t.description)}</div>` : ''}
+      <div class="trip-grid">
+        ${t.trip_date ? `<div class="trip-cell"><div class="trip-cell-i">📅</div><div class="trip-cell-text"><div class="trip-cell-l">التاريخ</div><div class="trip-cell-v">${escHtml(fmtDateAr(t.trip_date))}</div></div></div>` : ''}
+        ${t.pickup_time ? `<div class="trip-cell"><div class="trip-cell-i">🕐</div><div class="trip-cell-text"><div class="trip-cell-l">التجمّع</div><div class="trip-cell-v" style="direction:ltr;text-align:right">${escHtml(fmtTime(t.pickup_time))}</div></div></div>` : ''}
+        ${t.pickup_location ? `<div class="trip-cell" style="grid-column:1/-1"><div class="trip-cell-i">📌</div><div class="trip-cell-text"><div class="trip-cell-l">نقطة الانطلاق</div><div class="trip-cell-v">${escHtml(t.pickup_location)}</div></div></div>` : ''}
+        ${t.return_time ? `<div class="trip-cell" style="grid-column:1/-1"><div class="trip-cell-i">🔄</div><div class="trip-cell-text"><div class="trip-cell-l">العودة المتوقّعة</div><div class="trip-cell-v" style="direction:ltr;text-align:right">${escHtml(fmtTime(t.return_time))}</div></div></div>` : ''}
+      </div>
+      ${(t.price_lbp || t.price_usd) ? `<div class="trip-price">
+        <div class="trip-price-i">💰</div>
+        <div class="trip-price-text">
+          <div class="trip-price-l">السعر للشخص</div>
+          <div class="trip-price-v">${escHtml(fmtMoney(t.price_lbp, t.price_usd))}</div>
+        </div>
+      </div>` : ''}
+      <div class="trip-seats">
+        <div class="trip-seats-l">🎟️ المقاعد</div>
+        <div class="trip-seats-bar"><div class="trip-seats-fill" style="width:${pct}%"></div></div>
+        <div class="trip-seats-v">${remaining}/${t.max_seats || 50}</div>
+      </div>
+    `;
+    if(remaining === 0){
+      document.getElementById('SUB').disabled = true;
+      document.getElementById('SUB').innerHTML = '😔 لا توجد مقاعد متاحة';
+    }
+  } catch(e){
+    console.error(e);
+    card.innerHTML = `<div class="trip-loading" style="color:var(--danger)">⚠️ تعذّر تحميل الرحلة</div>`;
+  }
+}
+
+async function submitSignup(e){
+  e.preventDefault();
+  const btn = document.getElementById('SUB');
+  const err = document.getElementById('FM_ERR'); err.innerHTML = '';
+  const name = document.getElementById('NM').value.trim();
+  const phone = document.getElementById('PH').value.trim();
+  const seats = parseInt(document.getElementById('SC').value) || 1;
+  const notes = document.getElementById('NT').value.trim();
+
+  if(!name || !phone || !CURRENT_TRIP){ err.innerHTML = '<div class="fm-err">⚠️ يرجى تعبئة جميع الحقول المطلوبة</div>'; return; }
+  if(seats < 1 || seats > 10){ err.innerHTML = '<div class="fm-err">⚠️ عدد المقاعد بين 1 و 10</div>'; return; }
+
+  // Persist identity (so other wadi pages know who this is)
+  try {
+    localStorage.setItem('wadi_user', JSON.stringify({ name, phone, role:'citizen' }));
+  } catch(e){}
+
+  const deviceId = localStorage.getItem('wadi_device_id') || null;
+
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الحفظ…';
+  try {
+    const { data, error } = await sb.from('bus_trip_signups').insert({
+      trip_id: CURRENT_TRIP.id,
+      mun_id: MUN_ID,
+      participant_name: name,
+      participant_phone: phone,
+      seats_count: seats,
+      notes: notes || null,
+      device_id: deviceId,
+      status: 'confirmed'
+    }).select().single();
+    if(error) throw error;
+    showSuccess(data);
+  } catch(ex){
+    console.error('signup error', ex);
+    err.innerHTML = `<div class="fm-err">⚠️ تعذّر التسجيل: ${escHtml((ex.message||'خطأ').slice(0,80))}</div>`;
+    btn.disabled = false; btn.innerHTML = '✅ سجّل الآن';
+  }
+}
+
+function showSuccess(signup){
+  document.getElementById('FORM_CARD').style.display = 'none';
+  const s = document.getElementById('SUCCESS');
+  const t = CURRENT_TRIP;
+  document.getElementById('SUMMARY').innerHTML = `
+    <div class="success-row">👤 <span>الاسم: <b>${escHtml(signup.participant_name)}</b></span></div>
+    <div class="success-row">📞 <span>الهاتف: <b style="direction:ltr">${escHtml(signup.participant_phone)}</b></span></div>
+    <div class="success-row">🎟️ <span>عدد المقاعد: <b>${signup.seats_count}</b></span></div>
+    ${t && t.trip_date ? `<div class="success-row">📅 <span>${escHtml(fmtDateAr(t.trip_date))}</span></div>` : ''}
+    ${t && t.destination ? `<div class="success-row">📍 <span>${escHtml(t.destination)}</span></div>` : ''}
+  `;
+  s.hidden = false;
+  s.scrollIntoView({ behavior:'smooth', block:'start' });
+
+  // If push already enabled, hide the push button
+  checkPushStatus(signup.id);
+}
+
+async function checkPushStatus(signupId){
+  if(!window.PWA || !window.PWA.canPush || !window.PWA.canPush()){
+    const btn = document.getElementById('PUSH_BTN');
+    btn.style.display = 'none';
+    return;
+  }
+  try {
+    const status = await window.PWA.pushStatus();
+    if(status === 'subscribed'){
+      const btn = document.getElementById('PUSH_BTN');
+      btn.innerHTML = '✅ الإشعارات مُفعَّلة — ستصلك التذكيرات';
+      btn.style.background = 'linear-gradient(135deg,var(--green),var(--green2))';
+      btn.style.color = '#fff';
+      btn.disabled = true;
+      btn.style.cursor = 'default';
+      // Mark notifications_enabled=true on the signup
+      if(signupId){
+        try { await sb.from('bus_trip_signups').update({ notifications_enabled:true }).eq('id', signupId); } catch(e){}
+      }
+    }
+  } catch(e){}
+}
+
+async function enablePushNotifications(){
+  const btn = document.getElementById('PUSH_BTN');
+  if(!window.PWA || !window.PWA.enablePush){
+    btn.innerHTML = '⚠️ ميزة الإشعارات غير متوفّرة في متصفّحك';
+    return;
+  }
+  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري التفعيل…';
+  try {
+    const name = document.querySelector('#SUMMARY')?.textContent || '';
+    await window.PWA.enablePush(['bus_trip','general'], {
+      userPhone: document.getElementById('PH').value.trim() || null,
+      userName: document.getElementById('NM').value.trim() || null,
+      role: 'citizen'
+    });
+    btn.innerHTML = '✅ تمّ التفعيل بنجاح!';
+    btn.style.background = 'linear-gradient(135deg,var(--green),var(--green2))';
+    btn.style.color = '#fff';
+  } catch(e){
+    console.error('push enable failed', e);
+    btn.disabled = false;
+    btn.innerHTML = `⚠️ ${escHtml((e.message||'تعذّر التفعيل').slice(0,60))}`;
+  }
+}
+
+loadTrip();
+</script>
+</body>
+</html>
