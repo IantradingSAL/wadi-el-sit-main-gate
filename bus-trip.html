@@ -1,509 +1,109 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,viewport-fit=cover">
-<meta name="theme-color" content="#0f4d82">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="From Heart to Heart">
-<title>From Heart to Heart — بلدية وادي الست</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Great+Vibes&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="pwa.js" defer></script>
+<!-- ═══ ADMIN LOGIN — gold "🔐 إدارة" button at top-right ═══ -->
 <style>
-:root{--blue:#1a6eb5;--blue2:#0f4d82;--blue-soft:#eef5fc;--green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;--gold:#d4a017;--gold2:#a07a0b;--gold3:#fff5d6;--bg:#f4f6fb;--surface2:#eef0f6;--border:#dce0ea;--text:#191c24;--text2:#515668;--text3:#8d93a6;--danger:#bf2424;--danger-bg:#fdeaea;--shadow:0 4px 16px rgba(15,77,130,.08),0 2px 6px rgba(15,77,130,.05);--shadow-lg:0 12px 40px rgba(15,77,130,.16);--r:12px;--r-xl:22px;--font:'Tajawal',sans-serif;--t2:cubic-bezier(.34,1.56,.64,1);--safe-bot:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
-button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;font-size:inherit;}
-input,textarea{font-family:inherit;color:inherit;font-size:inherit;}
-.hd{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 60%,var(--green2) 100%);color:#fff;box-shadow:var(--shadow);padding-top:var(--safe-top);}
-.hd-inner{max-width:560px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;}
-.hd-logo{height:42px;width:42px;border-radius:50%;background:#fff;padding:4px;flex-shrink:0;}
-.hd-logo img{width:100%;height:100%;object-fit:contain;}
-.hd-title{flex:1;font-size:15px;font-weight:800;line-height:1.2;}
-.hd-back{background:rgba(255,255,255,.18);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;text-decoration:none;}
-.hero{position:relative;padding:36px 20px 90px;background:linear-gradient(135deg,#0f4d82 0%,#1a6eb5 35%,#a07a0b 100%);color:#fff;text-align:center;overflow:hidden;}
-.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 20%,rgba(245,200,80,.3),transparent 50%),radial-gradient(circle at 70% 80%,rgba(45,122,62,.25),transparent 50%);pointer-events:none;}
-.hero-script{font-family:'Great Vibes',cursive;font-size:38px;font-weight:400;color:#fff8dc;text-shadow:0 2px 12px rgba(212,160,23,.5),0 0 30px rgba(255,200,100,.3);line-height:1;margin-bottom:6px;}
-.hero-script span{color:#ffd76b;}
-.hero-torch{font-size:64px;margin:6px 0 8px;display:inline-block;animation:flicker 1.8s ease-in-out infinite;filter:drop-shadow(0 8px 24px rgba(255,180,40,.6));}
-@keyframes flicker{0%,100%{transform:scale(1) rotate(-2deg);}25%{transform:scale(1.06) rotate(2deg);}50%{transform:scale(.96) rotate(1deg);}75%{transform:scale(1.03) rotate(-1deg);}}
-.hero h1{font-size:22px;font-weight:900;margin-bottom:8px;text-shadow:0 2px 8px rgba(0,0,0,.2);}
-.hero p{font-size:14px;opacity:.95;max-width:480px;margin:0 auto;line-height:1.7;}
-.main{max-width:560px;margin:-66px auto 30px;padding:0 14px calc(var(--safe-bot) + 30px);position:relative;z-index:2;}
-.notify-banner{display:flex;align-items:center;gap:11px;background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f5a623;border-radius:var(--r);padding:13px 14px;margin-bottom:13px;box-shadow:0 4px 14px rgba(245,166,35,.25);}
-.notify-banner.subscribed{background:linear-gradient(135deg,#d4edda,#a8e0b4);border-color:var(--green);}
-.notify-banner.subscribed .notify-banner-t{color:var(--green2);}
-.notify-banner.subscribed .notify-banner-s{color:var(--green2);opacity:.9;}
-.notify-banner-i{font-size:28px;flex-shrink:0;animation:bellShake 2.5s ease-in-out infinite;}
-.notify-banner.subscribed .notify-banner-i{animation:none;}
-@keyframes bellShake{0%,100%{transform:rotate(0);}8%{transform:rotate(-13deg);}16%{transform:rotate(11deg);}24%{transform:rotate(-9deg);}32%{transform:rotate(6deg);}40%{transform:rotate(-3deg);}}
-.notify-banner-body{flex:1;min-width:0;}
-.notify-banner-t{font-size:14px;font-weight:800;color:#7c5803;line-height:1.2;}
-.notify-banner-s{font-size:11.5px;color:#9c6a0a;margin-top:2px;line-height:1.4;}
-.notify-banner-btn{background:linear-gradient(135deg,#f5a623,#d88e0a);color:#fff;border:none;padding:9px 16px;border-radius:99px;font-weight:800;font-size:13px;flex-shrink:0;box-shadow:0 2px 8px rgba(245,166,35,.3);}
-.notify-banner-btn:active{transform:scale(.96);}
-.notify-banner-btn:disabled{opacity:.7;}
-.trip{background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:20px;margin-bottom:14px;border:1px solid var(--border);position:relative;}
-.trip-loading{text-align:center;padding:30px;color:var(--text3);}
-.free-ribbon{position:absolute;top:-8px;left:14px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:900;font-size:12px;padding:6px 14px;border-radius:99px;box-shadow:0 4px 12px rgba(22,163,74,.4);display:flex;align-items:center;gap:5px;}
-.trip-head{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px dashed var(--border);margin-bottom:14px;margin-top:8px;}
-.trip-emoji{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--gold3),var(--gold));display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;box-shadow:0 4px 12px rgba(212,160,23,.3);}
-.trip-title{font-size:17px;font-weight:800;line-height:1.3;color:var(--blue2);margin-bottom:3px;}
-.trip-dest{font-size:13px;color:var(--text2);}
-.trip-desc{font-size:13.5px;color:var(--text2);line-height:1.8;margin-bottom:14px;}
-.trip-grid-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
-.trip-cell{background:var(--surface2);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:9px;}
-.trip-cell-i{font-size:18px;flex-shrink:0;}
-.trip-cell-text{flex:1;min-width:0;}
-.trip-cell-l{font-size:10.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
-.trip-cell-v{font-size:13.5px;font-weight:700;color:var(--text);}
-.trip-route{margin-top:6px;background:linear-gradient(135deg,#eef5fc,#f6efde);border:1px solid var(--gold);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:6px;}
-.trip-route-h{font-size:11.5px;color:var(--gold2);font-weight:800;text-transform:uppercase;letter-spacing:.05em;text-align:center;margin-bottom:4px;}
-.route-step{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;font-weight:600;color:var(--blue2);}
-.route-step b{font-weight:800;}
-.route-step-i{font-size:18px;flex-shrink:0;}
-.route-arrow{text-align:center;color:var(--gold2);font-size:14px;line-height:1;}
-.buses{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
-.bus-card{background:linear-gradient(135deg,var(--blue-soft),#f0f6fc);border:1.5px solid #b4d4ed;border-radius:var(--r);padding:11px 13px;}
-.bus-card.bus-full{background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:var(--gold);opacity:.9;}
-.bus-card-head{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.bus-card-icon{font-size:18px;}
-.bus-card-name{font-size:14px;font-weight:800;color:var(--blue2);flex:1;}
-.bus-card.bus-full .bus-card-name{color:var(--gold2);}
-.bus-status{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:99px;}
-.bus-status-open{background:var(--green);color:#fff;}
-.bus-status-full{background:var(--gold2);color:#fff;}
-.bus-card-bar{height:7px;background:#fff;border-radius:99px;overflow:hidden;border:1px solid var(--border);}
-.bus-card-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:99px;transition:width .5s var(--t2);}
-.bus-card.bus-full .bus-card-fill{background:linear-gradient(90deg,var(--gold),var(--gold2));}
-.bus-card-meta{font-size:11.5px;color:var(--text2);margin-top:5px;text-align:center;direction:ltr;font-weight:600;}
-.bus-num-badge{background:linear-gradient(135deg,#1a6eb5,#0f4d82);color:#fff;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:99px;margin-inline-start:6px;display:inline-block;vertical-align:middle;}
-.signup{background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow);padding:20px;border:1px solid var(--border);}
-.signup-t{font-size:18px;font-weight:800;color:var(--blue2);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
-.signup-s{font-size:13px;color:var(--text2);margin-bottom:16px;}
-.fm-grp{margin-bottom:13px;}
-.fm-l{font-size:12.5px;color:var(--text2);font-weight:700;margin-bottom:5px;display:block;}
-.fm-l .req{color:var(--danger);margin-right:2px;}
-.fm-i{padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--r);font-size:15px;background:#fafbfd;outline:none;transition:all .15s;width:100%;font-family:var(--font);}
-.fm-i:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,110,181,.1);}
-.fm-i.ltr{direction:ltr;text-align:right;}
-.fm-row{display:grid;grid-template-columns:2fr 1fr;gap:9px;}
-.fm-i-seats{text-align:center;font-weight:800;font-size:18px;}
-textarea.fm-i{resize:vertical;min-height:60px;}
-.btn-submit{width:100%;background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;border:none;padding:15px;border-radius:var(--r);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s;box-shadow:0 4px 14px rgba(212,160,23,.4);margin-top:6px;}
-.btn-submit:active{transform:scale(.98);}
-.btn-submit:disabled{opacity:.6;cursor:not-allowed;}
-.fm-err{padding:11px 13px;background:var(--danger-bg);color:var(--danger);border-radius:var(--r);font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:11px;}
-.fm-help{font-size:11.5px;color:var(--text3);margin-top:4px;}
-.privacy{margin-top:14px;padding:11px 13px;background:var(--blue-soft);border-radius:var(--r);font-size:12px;color:var(--blue2);line-height:1.6;text-align:center;}
-.success{background:#fff;border-radius:var(--r-xl);box-shadow:var(--shadow-lg);padding:30px 20px;text-align:center;animation:successPop .5s var(--t2);}
-@keyframes successPop{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
-.success-i{font-size:80px;margin-bottom:10px;display:inline-block;animation:checkPop .6s var(--t2);}
-@keyframes checkPop{0%{transform:scale(0) rotate(-180deg);}60%{transform:scale(1.2) rotate(15deg);}100%{transform:scale(1) rotate(0);}}
-.success-t{font-size:22px;font-weight:900;color:var(--green2);margin-bottom:6px;}
-.success-s{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.7;}
-.success-summary{background:var(--green3);border-radius:var(--r);padding:14px;margin-bottom:18px;text-align:right;}
-.success-row{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13.5px;}
-.success-row b{color:var(--green2);font-weight:800;}
-.btn-push{width:100%;background:linear-gradient(135deg,#f5a623,#d88e0a);color:#3a2502;border:none;padding:14px;border-radius:var(--r);font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(245,166,35,.4);margin-bottom:9px;}
-.btn-push:active{transform:scale(.98);}
-.btn-secondary{width:100%;background:transparent;color:var(--text2);border:1.5px solid var(--border);padding:12px;border-radius:var(--r);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;}
-.btn-secondary:active{background:var(--surface2);}
-.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
-@keyframes spin{to{transform:rotate(360deg);}}
-.adm-fab{position:fixed;bottom:calc(var(--safe-bot) + 18px);left:18px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;font-size:26px;box-shadow:0 8px 24px rgba(15,77,130,.4);display:none;align-items:center;justify-content:center;z-index:100;border:3px solid #fff;cursor:pointer;}
-.adm-fab.show{display:flex;animation:fabPop .5s var(--t2);}
-@keyframes fabPop{from{transform:scale(0) rotate(-180deg);}to{transform:scale(1) rotate(0);}}
-.adm-fab:active{transform:scale(.92);}
-.adm-fab-badge{position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:11px;font-weight:900;min-width:20px;height:20px;border-radius:99px;padding:0 5px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
-.adm-modal{position:fixed;inset:0;background:rgba(15,28,46,.55);display:none;align-items:flex-end;z-index:200;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);}
-.adm-modal.open{display:flex;}
-.adm-modal-content{background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:560px;margin:0 auto;max-height:92vh;display:flex;flex-direction:column;animation:slideUp .3s var(--t2);}
-@keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
-.adm-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-.adm-title{flex:1;font-size:17px;font-weight:800;color:var(--blue2);}
-.adm-close{width:34px;height:34px;border-radius:50%;background:var(--surface2);font-size:16px;color:var(--text2);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;}
-.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:14px 18px;background:var(--blue-soft);}
-.adm-stat{background:#fff;border-radius:12px;padding:10px 6px;text-align:center;}
-.adm-stat-v{font-size:22px;font-weight:900;color:var(--blue2);line-height:1;direction:ltr;}
-.adm-stat-l{font-size:10.5px;color:var(--text2);font-weight:700;margin-top:5px;}
-.adm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 18px 0;}
-.adm-action-btn{padding:11px 8px;border-radius:10px;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;cursor:pointer;border:none;}
-.adm-action-push{background:linear-gradient(135deg,#f5a623,#d88e0a);color:#fff;box-shadow:0 2px 8px rgba(245,166,35,.3);}
-.adm-action-csv{background:var(--surface2);color:var(--blue2);border:1.5px solid var(--border);}
-.adm-search-wrap{padding:12px 18px;}
-.adm-search{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;outline:none;background:#fafbfd;}
-.adm-search:focus{border-color:var(--blue);background:#fff;}
-.adm-list{flex:1;overflow-y:auto;padding:0 14px 20px;-webkit-overflow-scrolling:touch;}
-.adm-loading,.adm-empty,.adm-error{text-align:center;padding:30px 20px;color:var(--text3);font-size:13.5px;}
-.adm-error{color:var(--danger);}
-.adm-row{display:flex;gap:10px;background:#fafbfd;border:1px solid var(--border);border-radius:12px;padding:11px;margin-bottom:7px;align-items:center;}
-.adm-row-num{width:26px;height:26px;border-radius:50%;background:var(--blue2);color:#fff;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;direction:ltr;}
-.adm-row-body{flex:1;min-width:0;}
-.adm-row-name{font-size:14.5px;font-weight:800;color:var(--text);margin-bottom:3px;}
-.adm-row-meta{display:flex;gap:10px;font-size:12px;color:var(--text2);flex-wrap:wrap;}
-.adm-phone{direction:ltr;}
-.adm-seats{color:var(--green2);font-weight:700;}
-.adm-row-notes{font-size:11.5px;color:var(--text3);margin-top:5px;font-style:italic;padding:5px 8px;background:#fff;border-radius:6px;border-right:3px solid var(--gold);}
-.adm-row-time{font-size:10.5px;color:var(--text3);margin-top:3px;direction:ltr;text-align:right;}
-.adm-row-actions{display:flex;gap:4px;flex-shrink:0;}
-.adm-act{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;text-decoration:none;border:none;cursor:pointer;}
-.adm-act-call{background:#d4edda;color:var(--green2);}
-.adm-act-wa{background:#d4f7d4;color:#128c7e;}
-.adm-act-del{background:#fdeaea;color:var(--danger);}
-.adm-act:active{transform:scale(.9);}
-@media(min-width:680px){.hd-inner{padding:14px 20px;}.main{padding:0 20px 40px;}.hero h1{font-size:26px;}.hero-script{font-size:46px;}}
+.login-fab{position:fixed;top:calc(var(--safe-top) + 78px);right:14px;height:42px;padding:0 18px;border-radius:99px;background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px;z-index:60;border:2px solid #fff;cursor:pointer;box-shadow:0 6px 20px rgba(212,160,23,.55);font-family:'Tajawal',sans-serif;}
+.login-fab.logged-in{background:linear-gradient(135deg,var(--green),var(--green2));}
+.login-fab:active{transform:scale(.92);}
+.login-modal{position:fixed;inset:0;background:rgba(15,28,46,.65);display:none;align-items:center;justify-content:center;z-index:300;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:20px;}
+.login-modal.open{display:flex;}
+.login-box{background:#fff;border-radius:20px;width:100%;max-width:380px;padding:24px 22px;box-shadow:var(--shadow-lg);animation:loginPop .3s var(--t2);}
+@keyframes loginPop{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+.login-title{font-size:18px;font-weight:800;color:var(--blue2);text-align:center;margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:18px;}
+.login-grp{margin-bottom:11px;}
+.login-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:14.5px;background:#fafbfd;outline:none;}
+.login-input:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,110,181,.1);}
+.login-input.ltr{direction:ltr;text-align:right;}
+.login-err{padding:9px 12px;background:var(--danger-bg);color:var(--danger);border-radius:8px;font-size:12.5px;font-weight:600;margin-bottom:10px;text-align:center;}
+.login-btn{width:100%;background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;padding:13px;border:none;border-radius:10px;font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+.login-btn:active{transform:scale(.98);}
+.login-btn:disabled{opacity:.6;cursor:not-allowed;}
+.login-cancel{width:100%;background:transparent;color:var(--text2);padding:10px;border:none;font-family:inherit;font-size:13px;cursor:pointer;margin-top:6px;}
+.login-logged-email{font-size:14px;color:var(--blue2);font-weight:800;margin-bottom:14px;direction:ltr;}
 </style>
-</head>
-<body>
-<header class="hd">
-  <div class="hd-inner">
-    <a href="index.html" class="hd-logo"><img src="icons/apple-touch-icon.png" alt="logo"></a>
-    <div class="hd-title">مسيرة حمل مشعل الإيمان</div>
-    <a href="index.html" class="hd-back" aria-label="رجوع">←</a>
-  </div>
-</header>
-<section class="hero">
-  <div class="hero-script">From <span>Heart</span> to <span>Heart</span></div>
-  <div class="hero-torch">🕯️</div>
-  <h1>سجّل مشاركتك 🙏</h1>
-  <p>باص مجاني من أمام كنيسة مار متى<br>إلى كنيسة قلب يسوع – البيرة الشوف</p>
-</section>
-<main class="main">
-  <div class="notify-banner" id="NOTIFY_BANNER">
-    <div class="notify-banner-i">🔔</div>
-    <div class="notify-banner-body">
-      <div class="notify-banner-t" id="NOTIFY_T">فعّل الإشعارات</div>
-      <div class="notify-banner-s" id="NOTIFY_S">لتصلك التذكيرات والتفاصيل قبل المسيرة</div>
-    </div>
-    <button class="notify-banner-btn" id="NOTIFY_BTN" onclick="enablePushFromBanner()">فعّل</button>
-  </div>
-  <div class="trip" id="TRIP"><div class="trip-loading">⏳ جاري تحميل تفاصيل المناسبة…</div></div>
-  <div class="signup" id="FORM_CARD">
-    <div class="signup-t">📝 سجّل مشاركتك</div>
-    <div class="signup-s">احجز مقعدك في الباص المجاني — سنرسل لك التذكيرات تلقائياً.</div>
-    <div id="FM_ERR"></div>
-    <form id="FM" onsubmit="submitSignup(event)">
-      <div class="fm-grp">
-        <label class="fm-l"><span class="req">*</span> اسمك الكامل</label>
-        <input class="fm-i" id="NM" required autocomplete="name" placeholder="مثال: عماد بطرس">
-      </div>
-      <div class="fm-row">
-        <div class="fm-grp">
-          <label class="fm-l"><span class="req">*</span> رقم الهاتف</label>
-          <input class="fm-i ltr" type="tel" id="PH" required inputmode="tel" autocomplete="tel" placeholder="+961 76 ...">
-          <div class="fm-help">سنتواصل معك على هذا الرقم</div>
-        </div>
-        <div class="fm-grp">
-          <label class="fm-l"><span class="req">*</span> عدد الأشخاص</label>
-          <input class="fm-i fm-i-seats" type="number" id="SC" min="1" max="10" value="1" required>
-        </div>
-      </div>
-      <div class="fm-grp">
-        <label class="fm-l">ملاحظات (اختياري)</label>
-        <textarea class="fm-i" id="NT" placeholder="مثال: أحضر مع العائلة، احتاج معلومات إضافية…"></textarea>
-      </div>
-      <button type="submit" class="btn-submit" id="SUB">🕯️ سجّل الآن — مجاناً</button>
-      <div class="privacy">🔒 معلوماتك تُستخدم فقط للتواصل بشأن المناسبة. لن نشاركها مع أيّ جهة أخرى.</div>
-    </form>
-  </div>
-  <div class="success" id="SUCCESS" hidden>
-    <div class="success-i">✅</div>
-    <div class="success-t">تمّ التسجيل! 🙏</div>
-    <div class="success-s">شكراً لمشاركتك. سنتواصل معك قريباً بكلّ التفاصيل.</div>
-    <div class="success-summary" id="SUMMARY"></div>
-    <button class="btn-push" id="PUSH_BTN" onclick="enablePushNotifications()">🔔 فعّل الإشعارات لاستلام التذكيرات</button>
-    <button class="btn-secondary" onclick="location.href='index.html'">العودة للبوابة الرئيسية</button>
-  </div>
-</main>
 
-<button id="ADMIN_FAB" class="adm-fab" onclick="openAdmin()" title="إدارة">
-  🛡️<span class="adm-fab-badge" id="ADM_FAB_BADGE">0</span>
-</button>
+<button class="login-fab" id="LOGIN_FAB" onclick="openLoginModal()" title="تسجيل دخول الإدارة">🔐 <span>إدارة</span></button>
 
-<div id="ADMIN_MODAL" class="adm-modal" onclick="if(event.target===this)closeAdmin()">
-  <div class="adm-modal-content">
-    <div class="adm-head">
-      <div class="adm-title">🛡️ المسجَّلون في الرحلة</div>
-      <button class="adm-close" onclick="closeAdmin()">✕</button>
+<div class="login-modal" id="LOGIN_MODAL" onclick="if(event.target===this)closeLoginModal()">
+  <div class="login-box">
+    <div class="login-title">🛡️ دخول الإدارة</div>
+    <div class="login-sub">لإدارة المسجَّلين وإرسال الإشعارات</div>
+    <div id="LOGIN_ERR"></div>
+    <div id="LOGIN_FORM">
+      <div class="login-grp">
+        <input type="email" class="login-input ltr" id="LOGIN_EMAIL" placeholder="email@example.com" autocomplete="email" inputmode="email">
+      </div>
+      <div class="login-grp">
+        <input type="password" class="login-input ltr" id="LOGIN_PASS" placeholder="كلمة المرور" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="LOGIN_SUBMIT" onclick="doLogin()">🔓 تسجيل الدخول</button>
+      <button class="login-cancel" onclick="closeLoginModal()">إلغاء</button>
     </div>
-    <div class="adm-stats">
-      <div class="adm-stat"><div class="adm-stat-v" id="ADM_STAT_PEOPLE">0</div><div class="adm-stat-l">شخصاً</div></div>
-      <div class="adm-stat"><div class="adm-stat-v" id="ADM_STAT_SEATS">0</div><div class="adm-stat-l">مقعداً</div></div>
-      <div class="adm-stat"><div class="adm-stat-v" id="ADM_STAT_BUSES">1</div><div class="adm-stat-l">باص(ات)</div></div>
+    <div id="LOGIN_LOGGED" style="display:none;text-align:center;padding:10px 0;">
+      <div style="font-size:50px;margin-bottom:10px;">✅</div>
+      <div class="login-logged-email" id="LOGIN_USER_EMAIL"></div>
+      <button class="login-btn" onclick="doLogout()" style="background:linear-gradient(135deg,var(--danger),#8a1c1c);">🚪 تسجيل خروج</button>
+      <button class="login-cancel" onclick="closeLoginModal()">إغلاق</button>
     </div>
-    <div class="adm-actions">
-      <button class="adm-action-btn adm-action-push" onclick="sendReminderToAll()">🔔 إرسال تذكير</button>
-      <button class="adm-action-btn adm-action-csv" onclick="exportCSV()">📥 تصدير Excel</button>
-    </div>
-    <div class="adm-search-wrap">
-      <input type="search" id="ADM_SEARCH" class="adm-search" placeholder="🔍 ابحث بالاسم أو الرقم…" oninput="renderSignups()">
-    </div>
-    <div class="adm-list" id="ADM_LIST"><div class="adm-loading">⏳</div></div>
   </div>
 </div>
 
 <script>
-const SB_URL="https://onjbwhkmmtqnymhjnplw.supabase.co";
-const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
-const MUN_ID="00000000-0000-0000-0000-000000000001";
-const BUS_NAMES_AR=['الأول','الثاني','الثالث','الرابع','الخامس','السادس','السابع','الثامن','التاسع','العاشر'];
-function busName(n){return BUS_NAMES_AR[n-1]||`#${n}`;}
-let sb=null,CURRENT_TRIP=null,ADMIN_SIGNUPS=[],IS_ADMIN=false;
-try{sb=supabase.createClient(SB_URL,SB_KEY);}catch(e){console.warn('SB init failed',e);}
-try{const wu=localStorage.getItem('wadi_user');if(wu){const u=JSON.parse(wu);if(u.name)document.getElementById('NM').value=u.name;if(u.phone)document.getElementById('PH').value=u.phone;}}catch(e){}
-function escHtml(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function fmtDateAr(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('ar-LB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
-
-async function loadTrip(){
-  const card=document.getElementById('TRIP');
-  if(!sb){card.innerHTML='<div class="trip-loading" style="color:var(--danger)">⚠️ تعذّر الاتصال بالخادم</div>';return;}
-  try{
-    const{data:trips,error}=await sb.from('bus_trips').select('*').eq('mun_id',MUN_ID).eq('is_active',true).order('trip_date',{ascending:true}).limit(1);
-    if(error)throw error;
-    if(!trips||trips.length===0){card.innerHTML='<div class="trip-loading">📭 لا توجد مناسبات متاحة حالياً.<br>تابعنا قريباً!</div>';document.getElementById('FORM_CARD').style.display='none';return;}
-    const t=trips[0];CURRENT_TRIP=t;
-    const{data:signups}=await sb.from('bus_trip_signups').select('seats_count').eq('trip_id',t.id).eq('status','confirmed');
-    const totalTaken=(signups||[]).reduce((s,r)=>s+(r.seats_count||1),0);
-    const SEATS_PER_BUS=t.max_seats||30;
-    const busesToShow=Math.floor(totalTaken/SEATS_PER_BUS)+1;
-    const isFree=!t.price_lbp&&!t.price_usd;
-    let busesHtml=`<div class="trip-route-h" style="margin-top:13px;margin-bottom:6px;">🎟️ الباصات — كلّ باص ${SEATS_PER_BUS} شخص</div><div class="buses">`;
-    for(let i=0;i<busesToShow;i++){
-      const occupied=Math.min(SEATS_PER_BUS,Math.max(0,totalTaken-i*SEATS_PER_BUS));
-      const remaining=SEATS_PER_BUS-occupied;
-      const pct=Math.max(3,(occupied/SEATS_PER_BUS)*100);
-      const isFull=occupied>=SEATS_PER_BUS;
-      busesHtml+=`<div class="bus-card ${isFull?'bus-full':'bus-open'}">
-        <div class="bus-card-head">
-          <span class="bus-card-icon">🚌</span>
-          <span class="bus-card-name">الباص ${busName(i+1)}</span>
-          ${isFull?'<span class="bus-status bus-status-full">ممتلئ ✓</span>':'<span class="bus-status bus-status-open">'+remaining+' متبقّي</span>'}
-        </div>
-        <div class="bus-card-bar"><div class="bus-card-fill" style="width:${pct}%"></div></div>
-        <div class="bus-card-meta">${occupied}/${SEATS_PER_BUS}</div>
-      </div>`;
-    }
-    busesHtml+='</div>';
-    card.innerHTML=`
-      ${isFree?`<div class="free-ribbon">🎁 مجاناً — FREE</div>`:''}
-      <div class="trip-head">
-        <div class="trip-emoji">${escHtml(t.destination_emoji||'⛪')}</div>
-        <div><div class="trip-title">${escHtml(t.title)}</div>${t.destination?`<div class="trip-dest">📍 ${escHtml(t.destination)}</div>`:''}</div>
-      </div>
-      ${t.description?`<div class="trip-desc">${escHtml(t.description)}</div>`:''}
-      <div class="trip-grid-two">
-        ${t.trip_date?`<div class="trip-cell"><div class="trip-cell-i">📅</div><div class="trip-cell-text"><div class="trip-cell-l">التاريخ</div><div class="trip-cell-v">${escHtml(fmtDateAr(t.trip_date))}</div></div></div>`:''}
-        ${t.pickup_time?`<div class="trip-cell"><div class="trip-cell-i">🕐</div><div class="trip-cell-text"><div class="trip-cell-l">الانطلاق</div><div class="trip-cell-v" style="direction:ltr;text-align:right">${escHtml(t.pickup_time.slice(0,5))}</div></div></div>`:''}
-      </div>
-      <div class="trip-route">
-        <div class="trip-route-h">🚶 مسار الموكب</div>
-        ${t.pickup_location?`<div class="route-step"><div class="route-step-i">🚩</div><div><b>الانطلاق:</b> ${escHtml(t.pickup_location)}</div></div>`:''}
-        ${t.intermediate_stop?`<div class="route-arrow">↓</div><div class="route-step"><div class="route-step-i">🛑</div><div><b>محطّة:</b> ${escHtml(t.intermediate_stop)}${t.intermediate_stop_note?` <span style="color:var(--text3);font-size:11.5px">(${escHtml(t.intermediate_stop_note)})</span>`:''}</div></div>`:''}
-        ${t.destination?`<div class="route-arrow">↓</div><div class="route-step"><div class="route-step-i">🏁</div><div><b>الوصول:</b> ${escHtml(t.destination)}</div></div>`:''}
-      </div>
-      ${busesHtml}`;
-  }catch(e){console.error(e);card.innerHTML=`<div class="trip-loading" style="color:var(--danger)">⚠️ تعذّر تحميل المناسبة</div>`;}
+function openLoginModal(){
+  document.getElementById('LOGIN_MODAL').classList.add('open');
+  refreshLoginState();
 }
-
-async function submitSignup(e){
-  e.preventDefault();
-  const btn=document.getElementById('SUB'),err=document.getElementById('FM_ERR');err.innerHTML='';
-  const name=document.getElementById('NM').value.trim(),phone=document.getElementById('PH').value.trim(),seats=parseInt(document.getElementById('SC').value)||1,notes=document.getElementById('NT').value.trim();
-  if(!name||!phone||!CURRENT_TRIP){err.innerHTML='<div class="fm-err">⚠️ يرجى تعبئة جميع الحقول المطلوبة</div>';return;}
-  if(seats<1||seats>10){err.innerHTML='<div class="fm-err">⚠️ عدد الأشخاص بين 1 و 10</div>';return;}
-  try{localStorage.setItem('wadi_user',JSON.stringify({name,phone,role:'citizen'}));}catch(e){}
-  const deviceId=localStorage.getItem('wadi_device_id')||null;
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري الحفظ…';
-  try{
-    const{data,error}=await sb.from('bus_trip_signups').insert({trip_id:CURRENT_TRIP.id,mun_id:MUN_ID,participant_name:name,participant_phone:phone,seats_count:seats,notes:notes||null,device_id:deviceId,status:'confirmed'}).select().single();
-    if(error)throw error;
-    try{
-      const{data:all}=await sb.from('bus_trip_signups').select('id,seats_count,created_at').eq('trip_id',CURRENT_TRIP.id).eq('status','confirmed').order('created_at',{ascending:true});
-      const SPB=CURRENT_TRIP.max_seats||30;let run=0,myBus=1;
-      for(const r of(all||[])){if(r.id===data.id){myBus=Math.floor(run/SPB)+1;break;}run+=(r.seats_count||1);}
-      data.busNumber=myBus;
-    }catch(e){console.warn('bus# calc failed',e);}
-    showSuccess(data);
-  }catch(ex){console.error('signup error',ex);err.innerHTML=`<div class="fm-err">⚠️ تعذّر التسجيل: ${escHtml((ex.message||'خطأ').slice(0,80))}</div>`;btn.disabled=false;btn.innerHTML='🕯️ سجّل الآن — مجاناً';}
+function closeLoginModal(){
+  document.getElementById('LOGIN_MODAL').classList.remove('open');
 }
-
-function showSuccess(signup){
-  document.getElementById('FORM_CARD').style.display='none';
-  const s=document.getElementById('SUCCESS'),t=CURRENT_TRIP,bn=signup.busNumber||1;
-  document.getElementById('SUMMARY').innerHTML=`
-    <div class="success-row" style="font-size:15px;padding:8px 0;border-bottom:1px solid #b4e0c0;margin-bottom:8px;">🚌 <span>أنت على: <b style="font-size:16px">الباص ${busName(bn)}</b></span></div>
-    <div class="success-row">👤 <span>الاسم: <b>${escHtml(signup.participant_name)}</b></span></div>
-    <div class="success-row">📞 <span>الهاتف: <b style="direction:ltr">${escHtml(signup.participant_phone)}</b></span></div>
-    <div class="success-row">👥 <span>عدد الأشخاص: <b>${signup.seats_count}</b></span></div>
-    ${t&&t.trip_date?`<div class="success-row">📅 <span>${escHtml(fmtDateAr(t.trip_date))}</span></div>`:''}
-    ${t&&t.pickup_time?`<div class="success-row">🕐 <span>الانطلاق: <b style="direction:ltr">${escHtml(t.pickup_time.slice(0,5))}</b></span></div>`:''}
-    ${t&&t.pickup_location?`<div class="success-row">🚩 <span>${escHtml(t.pickup_location)}</span></div>`:''}`;
-  s.hidden=false;s.scrollIntoView({behavior:'smooth',block:'start'});
-  checkPushStatus(signup.id);
-}
-
-async function checkPushStatus(signupId){
-  if(!window.PWA||!window.PWA.canPush||!window.PWA.canPush()){document.getElementById('PUSH_BTN').style.display='none';return;}
-  try{const status=await window.PWA.pushStatus();
-    if(status==='subscribed'){const btn=document.getElementById('PUSH_BTN');btn.innerHTML='✅ الإشعارات مُفعَّلة — ستصلك التذكيرات';btn.style.background='linear-gradient(135deg,var(--green),var(--green2))';btn.style.color='#fff';btn.disabled=true;btn.style.cursor='default';
-      if(signupId){try{await sb.from('bus_trip_signups').update({notifications_enabled:true}).eq('id',signupId);}catch(e){}}
-    }
-  }catch(e){}
-}
-
-async function enablePushNotifications(){
-  const btn=document.getElementById('PUSH_BTN');
-  if(!window.PWA||!window.PWA.enablePush){btn.innerHTML='⚠️ ميزة الإشعارات غير متوفّرة';return;}
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري التفعيل…';
-  try{
-    await window.PWA.enablePush(['events','general'],{userPhone:document.getElementById('PH').value.trim()||null,userName:document.getElementById('NM').value.trim()||null,role:'citizen'});
-    btn.innerHTML='✅ تمّ التفعيل بنجاح!';btn.style.background='linear-gradient(135deg,var(--green),var(--green2))';btn.style.color='#fff';
-    markBannerSubscribed();
-  }catch(e){btn.disabled=false;btn.innerHTML=`⚠️ ${escHtml((e.message||'تعذّر التفعيل').slice(0,60))}`;}
-}
-
-function markBannerSubscribed(){
-  const b=document.getElementById('NOTIFY_BANNER');if(!b)return;
-  b.classList.add('subscribed');
-  document.getElementById('NOTIFY_T').textContent='✅ الإشعارات مُفعَّلة';
-  document.getElementById('NOTIFY_S').textContent='ستصلك التذكيرات قبل المسيرة';
-  const btn=document.getElementById('NOTIFY_BTN');if(btn)btn.style.display='none';
-}
-async function checkBannerStatus(){
-  if(!window.PWA||!window.PWA.canPush||!window.PWA.canPush()){document.getElementById('NOTIFY_BANNER').style.display='none';return;}
-  try{const s=await window.PWA.pushStatus();if(s==='subscribed')markBannerSubscribed();}catch(e){}
-}
-async function enablePushFromBanner(){
-  const btn=document.getElementById('NOTIFY_BTN');
-  if(!window.PWA||!window.PWA.enablePush){document.getElementById('NOTIFY_S').textContent='⚠️ غير متوفّر في متصفّحك';return;}
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
-  try{
-    const name=document.getElementById('NM').value.trim()||null;
-    const phone=document.getElementById('PH').value.trim()||null;
-    await window.PWA.enablePush(['events','general'],{userPhone:phone,userName:name,role:'citizen'});
-    markBannerSubscribed();
-  }catch(e){btn.disabled=false;btn.innerHTML='فعّل';document.getElementById('NOTIFY_S').textContent='⚠️ '+(e.message||'تعذّر التفعيل').slice(0,40);}
-}
-
-async function checkAdmin(){
+async function refreshLoginState(){
   if(!sb)return;
   try{
     const{data:{session}}=await sb.auth.getSession();
-    if(!session)return;
-    const{data:roles}=await sb.from('user_roles').select('role').eq('user_id',session.user.id);
-    if(!roles||roles.length===0)return;
-    const ADMIN=['mayor','admin','officer','super_admin','baladieh'];
-    IS_ADMIN=roles.some(r=>ADMIN.includes(r.role));
-    if(IS_ADMIN){document.getElementById('ADMIN_FAB').classList.add('show');loadSignupsCount();}
-  }catch(e){console.warn('Admin check failed:',e);}
-}
-async function loadSignupsCount(){
-  try{
-    const{count}=await sb.from('bus_trip_signups').select('*',{count:'exact',head:true}).eq('mun_id',MUN_ID).eq('status','confirmed');
-    const badge=document.getElementById('ADM_FAB_BADGE');
-    if(count>0){badge.textContent=count;badge.style.display='flex';}else{badge.style.display='none';}
+    const fab=document.getElementById('LOGIN_FAB');
+    if(session){
+      document.getElementById('LOGIN_FORM').style.display='none';
+      document.getElementById('LOGIN_LOGGED').style.display='block';
+      document.getElementById('LOGIN_USER_EMAIL').textContent=session.user.email;
+      fab.classList.add('logged-in');
+      fab.innerHTML='👤 <span>'+escHtml(session.user.email.split('@')[0])+'</span>';
+    }else{
+      document.getElementById('LOGIN_FORM').style.display='block';
+      document.getElementById('LOGIN_LOGGED').style.display='none';
+      fab.classList.remove('logged-in');
+      fab.innerHTML='🔐 <span>إدارة</span>';
+    }
   }catch(e){}
 }
-async function openAdmin(){if(!IS_ADMIN)return;document.getElementById('ADMIN_MODAL').classList.add('open');await loadSignups();}
-function closeAdmin(){document.getElementById('ADMIN_MODAL').classList.remove('open');}
-async function loadSignups(){
-  const el=document.getElementById('ADM_LIST');
-  el.innerHTML='<div class="adm-loading">⏳ جاري التحميل…</div>';
+async function doLogin(){
+  const email=document.getElementById('LOGIN_EMAIL').value.trim();
+  const pass=document.getElementById('LOGIN_PASS').value;
+  const err=document.getElementById('LOGIN_ERR');err.innerHTML='';
+  if(!email||!pass){err.innerHTML='<div class="login-err">⚠️ يرجى إدخال البريد وكلمة المرور</div>';return;}
+  const btn=document.getElementById('LOGIN_SUBMIT');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري الدخول…';
   try{
-    const{data,error}=await sb.from('bus_trip_signups').select('*').eq('mun_id',MUN_ID).eq('status','confirmed').order('created_at',{ascending:false});
+    const{error}=await sb.auth.signInWithPassword({email,password:pass});
     if(error)throw error;
-    ADMIN_SIGNUPS=data||[];
-    renderSignups();updateStats();
-  }catch(e){el.innerHTML=`<div class="adm-error">⚠️ ${escHtml(e.message||'تعذّر التحميل')}</div>`;}
+    btn.innerHTML='✅ نجح الدخول!';
+    setTimeout(async()=>{
+      closeLoginModal();
+      await checkAdmin();
+      await refreshLoginState();
+      if(IS_ADMIN){alert('✅ مرحباً! اضغط على الزرّ 🛡️ في الأسفل لعرض المسجَّلين');}
+      else{alert('ℹ️ تمّ تسجيل الدخول، لكن حسابك لا يحتوي على صلاحيات إدارية');}
+    },600);
+  }catch(e){
+    err.innerHTML=`<div class="login-err">⚠️ ${escHtml(e.message||'فشل تسجيل الدخول')}</div>`;
+    btn.disabled=false;btn.innerHTML='🔓 تسجيل الدخول';
+  }
 }
-function updateStats(){
-  const ppl=ADMIN_SIGNUPS.length;
-  const seats=ADMIN_SIGNUPS.reduce((s,r)=>s+(r.seats_count||1),0);
-  const SPB=(CURRENT_TRIP&&CURRENT_TRIP.max_seats)||30;
-  const buses=Math.max(1,Math.ceil(seats/SPB));
-  document.getElementById('ADM_STAT_PEOPLE').textContent=ppl;
-  document.getElementById('ADM_STAT_SEATS').textContent=seats;
-  document.getElementById('ADM_STAT_BUSES').textContent=buses;
-  const badge=document.getElementById('ADM_FAB_BADGE');
-  if(ppl>0){badge.textContent=ppl;badge.style.display='flex';}else{badge.style.display='none';}
+async function doLogout(){
+  if(!confirm('تسجيل الخروج؟'))return;
+  await sb.auth.signOut();
+  const af=document.getElementById('ADMIN_FAB');if(af)af.classList.remove('show');
+  IS_ADMIN=false;
+  await refreshLoginState();
+  closeLoginModal();
 }
-function renderSignups(){
-  const el=document.getElementById('ADM_LIST');
-  const q=(document.getElementById('ADM_SEARCH').value||'').trim().toLowerCase();
-  const SPB=(CURRENT_TRIP&&CURRENT_TRIP.max_seats)||30;
-  const sorted=[...ADMIN_SIGNUPS].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  const busOf={};let run=0;
-  for(const s of sorted){busOf[s.id]=Math.floor(run/SPB)+1;run+=(s.seats_count||1);}
-  let filtered=ADMIN_SIGNUPS;
-  if(q)filtered=ADMIN_SIGNUPS.filter(s=>(s.participant_name||'').toLowerCase().includes(q)||(s.participant_phone||'').includes(q));
-  if(filtered.length===0){el.innerHTML=`<div class="adm-empty">${q?'🔍 لا توجد نتائج':'📭 لا أحد مسجَّل بعد'}</div>`;return;}
-  el.innerHTML=filtered.map((s,i)=>{
-    const phoneClean=(s.participant_phone||'').replace(/[^0-9+]/g,'');
-    const waPhone=phoneClean.replace(/^\+/,'');
-    const dt=new Date(s.created_at).toLocaleString('ar-LB',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    const bn=busOf[s.id]||1;
-    return `<div class="adm-row">
-      <div class="adm-row-num">${i+1}</div>
-      <div class="adm-row-body">
-        <div class="adm-row-name">${escHtml(s.participant_name)}<span class="bus-num-badge">🚌 ${busName(bn)}</span></div>
-        <div class="adm-row-meta">
-          <span class="adm-phone">📞 ${escHtml(s.participant_phone)}</span>
-          <span class="adm-seats">🎟️ ${s.seats_count}</span>
-        </div>
-        ${s.notes?`<div class="adm-row-notes">📝 ${escHtml(s.notes)}</div>`:''}
-        <div class="adm-row-time">${dt}</div>
-      </div>
-      <div class="adm-row-actions">
-        <a href="tel:${phoneClean}" class="adm-act adm-act-call" title="اتصال">📞</a>
-        <a href="https://wa.me/${waPhone}" target="_blank" rel="noopener" class="adm-act adm-act-wa" title="واتساب">💬</a>
-        <button onclick="deleteSignup('${s.id}')" class="adm-act adm-act-del" title="حذف">🗑️</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-async function deleteSignup(id){
-  if(!confirm('حذف هذا التسجيل؟'))return;
-  try{const{error}=await sb.from('bus_trip_signups').delete().eq('id',id);if(error)throw error;await loadSignups();}catch(e){alert('فشل الحذف: '+(e.message||''));}
-}
-function exportCSV(){
-  if(ADMIN_SIGNUPS.length===0){alert('لا توجد بيانات للتصدير');return;}
-  const SPB=(CURRENT_TRIP&&CURRENT_TRIP.max_seats)||30;
-  const sorted=[...ADMIN_SIGNUPS].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  const busOf={};let run=0;
-  for(const s of sorted){busOf[s.id]=Math.floor(run/SPB)+1;run+=(s.seats_count||1);}
-  const headers=['#','الباص','الاسم','الهاتف','المقاعد','الملاحظات','التاريخ'];
-  const rows=sorted.map((s,i)=>[i+1,'الباص '+busName(busOf[s.id]||1),s.participant_name||'',s.participant_phone||'',s.seats_count||1,s.notes||'',new Date(s.created_at).toLocaleString('ar-LB')]);
-  const csv='\ufeff'+[headers,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`bus-trip-${new Date().toISOString().slice(0,10)}.csv`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-async function sendReminderToAll(){
-  const title=prompt('عنوان الإشعار:','🕯️ تذكير: مسيرة حمل مشعل الإيمان');
-  if(!title)return;
-  const body=prompt('نصّ الإشعار:','الباص ينطلق غداً من أمام كنيسة مار متى. لا تنسوا 🙏');
-  if(!body)return;
-  if(!confirm(`إرسال "${title}" إلى المسجَّلين عبر الإشعارات؟`))return;
-  const{data:{session}}=await sb.auth.getSession();
-  if(!session){alert('الجلسة منتهية، يرجى تسجيل الدخول');return;}
-  try{
-    const res=await fetch(`${SB_URL}/functions/v1/send-push`,{method:'POST',headers:{'Authorization':`Bearer ${session.access_token}`,'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({topic:'events',title,body,url:'/bus-trip.html'})});
-    const r=await res.json();
-    if(res.ok)alert(`✅ تمّ الإرسال — ${r.success_count||r.recipients_count||0} شخص`);
-    else alert('فشل: '+(r.error||res.status));
-  }catch(e){alert('فشل: '+(e.message||''));}
-}
-
-loadTrip();
-setTimeout(checkBannerStatus,1500);
-setTimeout(checkAdmin,2200);
+setTimeout(refreshLoginState,500);
 </script>
-</body>
-</html>
