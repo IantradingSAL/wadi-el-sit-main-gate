@@ -69,13 +69,31 @@ input,textarea,select{font-family:inherit;color:inherit;font-size:inherit;}
 /* DESCRIPTION — smart renderer */
 .trip-desc{font-size:13.5px;color:var(--text2);line-height:1.8;margin-bottom:14px;}
 .trip-desc .td-p{margin:0 0 9px 0;}
-.trip-desc .td-section{font-size:14.5px;font-weight:800;color:var(--blue2);margin:14px 0 6px 0;}
-.trip-desc .td-bullet{position:relative;padding-right:22px;margin:9px 0 2px 0;font-weight:700;color:var(--text);font-size:14px;line-height:1.45;}
+.trip-desc .td-section{font-size:14.5px;font-weight:800;color:var(--blue2);margin:14px 0 8px 0;padding-bottom:5px;border-bottom:2px solid var(--blue-soft);}
+
+/* Bullet with diamond marker (◆ in source) */
+.trip-desc .td-bullet{position:relative;padding-right:22px;margin:10px 0 3px 0;font-weight:700;color:var(--text);font-size:14px;line-height:1.45;}
 .trip-desc .td-bullet::before{content:"";position:absolute;right:4px;top:9px;width:8px;height:8px;background:linear-gradient(135deg,var(--sun),var(--sun2));border-radius:2px;transform:rotate(45deg);box-shadow:0 1px 3px rgba(245,166,35,.4);}
+
+/* Bullet led by an emoji — no diamond, emoji stays inline */
+.trip-desc .td-emoji-bullet{margin:12px 0 3px 0;font-weight:800;color:var(--text);font-size:14.5px;line-height:1.5;display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:linear-gradient(135deg,var(--blue-soft),#fff);border-right:3px solid var(--blue);border-radius:8px;}
+.trip-desc .td-emoji-bullet .td-emoji-icon{font-size:20px;flex-shrink:0;line-height:1;}
+.trip-desc .td-emoji-bullet .td-emoji-text{flex:1;}
+
+/* Sub-text under bullet */
 .trip-desc .td-sub{padding-right:22px;margin:0 0 4px 0;color:var(--text2);font-size:13px;line-height:1.7;}
+.trip-desc .td-emoji-bullet + .td-sub{padding-right:14px;margin-top:-1px;padding-top:4px;}
+
 .trip-desc .td-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:14px 0;}
-.trip-desc .td-note-label{display:inline-block;background:var(--sun3);color:var(--sun2);padding:3px 10px;border-radius:99px;font-size:11.5px;font-weight:800;margin-bottom:6px;}
-.trip-desc .td-phone{display:inline-block;direction:ltr;unicode-bidi:isolate;background:var(--blue-soft);color:var(--blue2);padding:2px 9px;border-radius:6px;font-weight:800;font-family:'Tajawal',sans-serif;letter-spacing:.5px;margin:0 3px;}
+
+/* Note label */
+.trip-desc .td-note-box{background:linear-gradient(135deg,var(--sun3),#fffaf0);border-right:3px solid var(--sun);border-radius:10px;padding:10px 14px;margin-top:8px;}
+.trip-desc .td-note-label{display:inline-flex;align-items:center;gap:6px;color:var(--sun2);font-size:13px;font-weight:800;margin-bottom:5px;}
+.trip-desc .td-note-box .td-sub,
+.trip-desc .td-note-box .td-p{padding-right:0;color:var(--text);font-size:13px;line-height:1.7;margin-bottom:4px;}
+
+/* Phone numbers — always LTR, pill style */
+.trip-desc .td-phone{display:inline-block;direction:ltr;unicode-bidi:isolate;background:#fff;color:var(--blue2);padding:2px 9px;border-radius:6px;font-weight:800;letter-spacing:.5px;margin:0 3px;border:1px solid var(--blue-soft);}
 
 .trip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .trip-cell{background:var(--surface2);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:9px;}
@@ -241,57 +259,107 @@ try {
 
 function escHtml(s){ return (s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
+// Detect whether a line starts with an emoji character (incl. compound emoji w/ ZWJ).
+function startsWithEmoji(line){
+  try {
+    return /^(\p{Extended_Pictographic}([\u200D\uFE0F]\p{Extended_Pictographic})*)/u.test(line);
+  } catch(e){
+    // Fallback for older browsers
+    return /^[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]/.test(line);
+  }
+}
+
+// Extract leading emoji (incl. compound) and the rest of the line.
+function splitEmojiLead(line){
+  let m;
+  try {
+    m = line.match(/^(\p{Extended_Pictographic}([\u200D\uFE0F]\p{Extended_Pictographic})*)\s*(.*)$/u);
+  } catch(e){
+    m = line.match(/^([\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+)\s*(.*)$/);
+  }
+  if(!m) return { emoji:'', rest: line };
+  return { emoji: m[1], rest: (m[3] !== undefined ? m[3] : m[2]) || '' };
+}
+
 // SMART DESCRIPTION RENDERER
-// Handles: ◆ bullets, section headers (lines ending with ":"), dividers, 
-// LTR-isolated phone numbers, and proper line/paragraph breaks.
 function renderDescription(text){
   if(!text) return '';
   const lines = text.split(/\r?\n/);
   const out = [];
   let lastBullet = false;
+  let inNoteBox = false;
+
+  function closeNote(){
+    if(inNoteBox){ out.push('</div>'); inNoteBox = false; }
+  }
+
   for(let raw of lines){
     let line = raw.trim();
     if(line === ''){ lastBullet = false; continue; }
-    // Divider (rows of dashes/underscores/Arabic tatweel)
+
+    // Divider line
     if(/^[ـ_\-=]{3,}$/.test(line)){
+      closeNote();
       out.push('<div class="td-divider"></div>');
       lastBullet = false;
       continue;
     }
-    // Bullet line: starts with ◆ or •
+
+    // Note label — "📌 ملاحظة:" or just "ملاحظة:"
+    if(/^(📌\s*)?ملاحظة\s*[:：]?\s*$/.test(line)){
+      closeNote();
+      out.push('<div class="td-note-box"><div class="td-note-label">📌 ملاحظة</div>');
+      inNoteBox = true;
+      lastBullet = false;
+      continue;
+    }
+
+    // Emoji-led bullet (e.g. "🚗 انطلاق المسيرة بالسيارات")
+    if(startsWithEmoji(line) && line.length > 3){
+      closeNote();
+      const { emoji, rest } = splitEmojiLead(line);
+      out.push(
+        '<div class="td-emoji-bullet">'
+        + '<span class="td-emoji-icon">' + escHtml(emoji) + '</span>'
+        + '<span class="td-emoji-text">' + wrapPhones(escHtml(rest)) + '</span>'
+        + '</div>'
+      );
+      lastBullet = true;
+      continue;
+    }
+
+    // ◆ bullet
     if(/^[◆•▪◇]\s+/.test(line)){
+      closeNote();
       const txt = line.replace(/^[◆•▪◇]\s+/, '');
       out.push('<div class="td-bullet">' + wrapPhones(escHtml(txt)) + '</div>');
       lastBullet = true;
       continue;
     }
-    // "ملاحظة:" or similar note label (short line ending with :)
-    if(/^ملاحظة\s*[:：]?\s*$/.test(line)){
-      out.push('<div class="td-note-label">📌 ملاحظة</div>');
-      lastBullet = false;
-      continue;
-    }
-    // Section header: short line ending with ":" (Arabic or Latin colon)
+
+    // Section header — short line ending with ":"
     if(line.length < 40 && /[:：]\s*$/.test(line)){
+      closeNote();
       out.push('<div class="td-section">' + escHtml(line.replace(/[:：]\s*$/, '')) + '</div>');
       lastBullet = false;
       continue;
     }
-    // Line that follows a bullet → sub-text under it
+
+    // Sub-line under a bullet
     if(lastBullet){
       out.push('<div class="td-sub">' + wrapPhones(escHtml(line)) + '</div>');
       continue;
     }
-    // Regular paragraph
+
+    // Normal paragraph
     out.push('<div class="td-p">' + wrapPhones(escHtml(line)) + '</div>');
   }
+  closeNote();
   return out.join('');
 }
 
-// Wraps phone-number-like patterns in an LTR-isolated span so the hyphen renders correctly in RTL.
+// Wrap phone-number-like patterns in an LTR-isolated span so they render correctly in RTL.
 function wrapPhones(safeHtml){
-  // Match Lebanese-style numbers: 2-3 digits, optional separator, 6-8 digits.
-  // Operates on already-escaped HTML so it's safe.
   return safeHtml.replace(/(\d{2,3}[\s\-\/\.]?\d{6,8})/g,
     '<span class="td-phone">$1</span>');
 }
@@ -324,7 +392,6 @@ async function loadTrip(){
     }
     const t = trips[0]; CURRENT_TRIP = t;
 
-    // Count current signups
     const { count } = await sb.from('bus_trip_signups')
       .select('*', { count:'exact', head:true })
       .eq('trip_id', t.id).eq('status','confirmed');
@@ -382,24 +449,16 @@ async function submitSignup(e){
   if(!name || !phone || !CURRENT_TRIP){ err.innerHTML = '<div class="fm-err">⚠️ يرجى تعبئة جميع الحقول المطلوبة</div>'; return; }
   if(seats < 1 || seats > 10){ err.innerHTML = '<div class="fm-err">⚠️ عدد المقاعد بين 1 و 10</div>'; return; }
 
-  // Persist identity (so other wadi pages know who this is)
-  try {
-    localStorage.setItem('wadi_user', JSON.stringify({ name, phone, role:'citizen' }));
-  } catch(e){}
-
+  try { localStorage.setItem('wadi_user', JSON.stringify({ name, phone, role:'citizen' })); } catch(e){}
   const deviceId = localStorage.getItem('wadi_device_id') || null;
 
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الحفظ…';
   try {
     const { data, error } = await sb.from('bus_trip_signups').insert({
-      trip_id: CURRENT_TRIP.id,
-      mun_id: MUN_ID,
-      participant_name: name,
-      participant_phone: phone,
-      seats_count: seats,
-      notes: notes || null,
-      device_id: deviceId,
-      status: 'confirmed'
+      trip_id: CURRENT_TRIP.id, mun_id: MUN_ID,
+      participant_name: name, participant_phone: phone,
+      seats_count: seats, notes: notes || null,
+      device_id: deviceId, status: 'confirmed'
     }).select().single();
     if(error) throw error;
     showSuccess(data);
@@ -423,8 +482,6 @@ function showSuccess(signup){
   `;
   s.hidden = false;
   s.scrollIntoView({ behavior:'smooth', block:'start' });
-
-  // If push already enabled, hide the push button
   checkPushStatus(signup.id);
 }
 
@@ -441,9 +498,7 @@ async function checkPushStatus(signupId){
       btn.innerHTML = '✅ الإشعارات مُفعَّلة — ستصلك التذكيرات';
       btn.style.background = 'linear-gradient(135deg,var(--green),var(--green2))';
       btn.style.color = '#fff';
-      btn.disabled = true;
-      btn.style.cursor = 'default';
-      // Mark notifications_enabled=true on the signup
+      btn.disabled = true; btn.style.cursor = 'default';
       if(signupId){
         try { await sb.from('bus_trip_signups').update({ notifications_enabled:true }).eq('id', signupId); } catch(e){}
       }
