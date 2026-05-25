@@ -65,7 +65,7 @@ input,textarea,select{font-family:inherit;color:inherit;font-size:inherit;}
 .trip-emoji{width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,var(--sun3),var(--sun));display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;box-shadow:0 4px 12px rgba(245,166,35,.3);}
 .trip-title{font-size:18px;font-weight:800;line-height:1.3;color:var(--blue2);margin-bottom:3px;}
 .trip-dest{font-size:13.5px;color:var(--text2);}
-.trip-desc{font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:14px;}
+.trip-desc{font-size:13.5px;color:var(--text2);line-height:1.85;margin-bottom:14px;white-space:pre-line;}
 .trip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .trip-cell{background:var(--surface2);border-radius:var(--r);padding:10px 12px;display:flex;align-items:center;gap:9px;}
 .trip-cell-i{font-size:18px;flex-shrink:0;}
