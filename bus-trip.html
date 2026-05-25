@@ -47,6 +47,16 @@ input,textarea{font-family:inherit;font-size:inherit;color:inherit}
 .trip-title{font-size:17px;font-weight:800;color:#0f4d82;margin-bottom:3px}
 .trip-dest{font-size:13px;color:#515668}
 .trip-desc{font-size:13.5px;color:#515668;line-height:1.8;margin-bottom:14px}
+.trip-desc .td-p{margin:0 0 9px 0}
+.trip-desc .td-section{font-size:14.5px;font-weight:800;color:#0f4d82;margin:14px 0 8px 0;padding-bottom:5px;border-bottom:2px solid #eef5fc}
+.trip-desc .td-bullet{display:flex;align-items:flex-start;gap:8px;margin:10px 0 3px 0;padding:9px 12px;background:linear-gradient(135deg,#eef5fc,#fff);border-right:3px solid #1a6eb5;border-radius:8px;font-weight:800;color:#191c24;font-size:14px;line-height:1.5}
+.trip-desc .td-bullet-i{font-size:20px;flex-shrink:0;line-height:1.2}
+.trip-desc .td-bullet-t{flex:1}
+.trip-desc .td-sub{padding-right:14px;margin:4px 0 8px 0;color:#515668;font-size:13px;line-height:1.7}
+.trip-desc .td-note{background:linear-gradient(135deg,#fff4e0,#fffaf0);border-right:3px solid #d4a017;border-radius:10px;padding:11px 14px;margin-top:10px}
+.trip-desc .td-note-h{color:#a07a0b;font-size:13px;font-weight:800;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.trip-desc .td-note .td-p,.trip-desc .td-note .td-sub{color:#191c24;margin:0 0 4px 0;padding-right:0}
+.trip-desc .td-phone{display:inline-block;direction:ltr;unicode-bidi:isolate;background:#fff;color:#0f4d82;padding:1px 9px;border-radius:6px;font-weight:800;letter-spacing:.4px;margin:0 3px;border:1px solid #daeaf8}
 .trip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .trip-cell{background:#eef0f6;border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:9px}
 .trip-cell-l{font-size:10.5px;color:#8d93a6;font-weight:700}
@@ -256,6 +266,43 @@ const BN=['الأول','الثاني','الثالث','الرابع','الخام�
 function bn(n){return BN[n-1]||'#'+n}
 function $(id){return document.getElementById(id)}
 function esc(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function _wrapPhones(safe){return safe.replace(/(\d{2,3}[\s\-\/\.]?\d{6,8})/g,'<span class="td-phone">$1</span>')}
+function _startsEmoji(line){try{return /^(\p{Extended_Pictographic}([\u200D\uFE0F]\p{Extended_Pictographic})*)/u.test(line)}catch(e){return /^[\u2600-\u27BF\uD83C-\uDBFF]/.test(line)}}
+function _splitEmoji(line){let m;try{m=line.match(/^(\p{Extended_Pictographic}([\u200D\uFE0F]\p{Extended_Pictographic})*)\s*(.*)$/u)}catch(e){m=line.match(/^([\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+)\s*(.*)$/)}return m?{emoji:m[1],rest:(m[3]!==undefined?m[3]:m[2])||''}:{emoji:'',rest:line}}
+function renderDesc(text){
+  if(!text)return '';
+  const lines=text.split(/\r?\n/);const out=[];let lastBullet=false;let inNote=false;
+  const closeNote=()=>{if(inNote){out.push('</div>');inNote=false}};
+  for(let raw of lines){
+    let line=raw.trim();
+    if(line===''){lastBullet=false;continue}
+    if(/^[ـ_\-=]{3,}$/.test(line)){closeNote();out.push('<div style="height:1px;background:linear-gradient(90deg,transparent,#dce0ea,transparent);margin:14px 0"></div>');lastBullet=false;continue}
+    // Strip leading ":" if present after splitting emoji
+    if(_startsEmoji(line)&&line.length>3){
+      const {emoji,rest}=_splitEmoji(line);
+      const cleanRest=rest.replace(/[:：]\s*$/,'');
+      // Detect inline pattern "🎯 Title: detail" — split title from detail
+      const colonIdx=cleanRest.search(/[:：]/);
+      let titlePart=cleanRest,detailPart='';
+      if(colonIdx>0&&colonIdx<60){titlePart=cleanRest.slice(0,colonIdx).trim();detailPart=cleanRest.slice(colonIdx+1).trim()}
+      // ملاحظة note box
+      if(/ملاحظ/.test(titlePart)){
+        closeNote();
+        out.push('<div class="td-note"><div class="td-note-h">'+esc(emoji)+' '+esc(titlePart)+'</div>');
+        if(detailPart)out.push('<div class="td-p">'+_wrapPhones(esc(detailPart))+'</div>');
+        inNote=true;lastBullet=false;continue;
+      }
+      closeNote();
+      out.push('<div class="td-bullet"><span class="td-bullet-i">'+esc(emoji)+'</span><span class="td-bullet-t">'+_wrapPhones(esc(titlePart))+'</span></div>');
+      if(detailPart)out.push('<div class="td-sub">'+_wrapPhones(esc(detailPart))+'</div>');
+      lastBullet=true;continue;
+    }
+    if(line.length<40&&/[:：]\s*$/.test(line)){closeNote();out.push('<div class="td-section">'+esc(line.replace(/[:：]\s*$/,''))+'</div>');lastBullet=false;continue}
+    if(lastBullet){out.push('<div class="td-sub">'+_wrapPhones(esc(line))+'</div>');continue}
+    out.push('<div class="td-p">'+_wrapPhones(esc(line))+'</div>');
+  }
+  closeNote();return out.join('');
+}
 function fmtD(d){if(!d)return'';return new Date(d).toLocaleDateString('ar-LB',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
 
 let sb=null,TRIP=null,SIGNUPS=[],ADMIN=false;
@@ -283,7 +330,7 @@ async function loadTrip(){
     bh+='</div>';
     c.innerHTML=(free?'<div class="free-rib">🎁 مجاناً — FREE</div>':'')+
       '<div class="trip-head"><div class="trip-emoji">'+esc(t.destination_emoji||'🕯️')+'</div><div><div class="trip-title">'+esc(t.title)+'</div>'+(t.destination?'<div class="trip-dest">📍 '+esc(t.destination)+'</div>':'')+'</div></div>'+
-      (t.description?'<div class="trip-desc">'+esc(t.description)+'</div>':'')+
+      (t.description?'<div class="trip-desc">'+renderDesc(t.description)+'</div>':'')+
       '<div class="trip-grid">'+
         (t.trip_date?'<div class="trip-cell"><span style="font-size:18px">📅</span><div><div class="trip-cell-l">التاريخ</div><div class="trip-cell-v">'+esc(fmtD(t.trip_date))+'</div></div></div>':'')+
         (t.pickup_time?'<div class="trip-cell"><span style="font-size:18px">🕐</span><div><div class="trip-cell-l">الانطلاق</div><div class="trip-cell-v" style="direction:ltr;text-align:right">'+esc(t.pickup_time.slice(0,5))+'</div></div></div>':'')+
