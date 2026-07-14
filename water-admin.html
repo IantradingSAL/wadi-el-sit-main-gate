@@ -247,8 +247,15 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 const SB_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
 const MUN_ID='00000000-0000-0000-0000-000000000001';
-const BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
 let sb=null, dbR=false, UN='', userRole='water_admin';
+
+// ── EMAIL via Edge Function (Brevo key is server-side now) ──
+async function sendEmailViaEdge(payload){
+  var res=await sb.functions.invoke('send-email',{body:payload});
+  if(res.error) throw new Error(res.error.message||'edge function error');
+  if(res.data&&res.data.error) throw new Error(res.data.error);
+  return true;
+}
 
 window.addEventListener('DOMContentLoaded', async function(){
   sb=window.supabase.createClient(SB_URL,SB_KEY,{realtime:{enabled:false}});
@@ -815,17 +822,14 @@ async function irrNotifyAll(type) {
   var owners=getIrrOwners().filter(function(o){return o.email;});
   if(!owners.length){if(result){result.style.color='var(--danger)';result.textContent='لا يوجد بريد';}return;}
   if(result){result.style.color='var(--text3)';result.textContent='⏳ جاري الإرسال…';}
-  var BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
   var sent=0,failed=0;
   for(var i=0;i<owners.length;i++){
     var o=owners[i]; var sch=getOwnerSchedule(o,0);
     try {
-      var r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',
-        headers:{'api-key':BKEY,'Content-Type':'application/json'},
-        body:JSON.stringify({sender:{name:s.senderName,email:s.senderEmail},to:[{email:o.email,name:o.name}],
-          subject:fillIrrTemplate(notif.subject,o,sch),
-          htmlContent:buildIrrEmail(o,type,s,fillIrrTemplate(notif.body,o,sch),sch)})});
-      if(r.ok||r.status===201) sent++; else failed++;
+      await sendEmailViaEdge({sender:{name:s.senderName,email:s.senderEmail},to:[{email:o.email,name:o.name}],
+        subject:fillIrrTemplate(notif.subject,o,sch),
+        htmlContent:buildIrrEmail(o,type,s,fillIrrTemplate(notif.body,o,sch),sch)});
+      sent++;
     }catch(e){failed++;}
   }
   if(result){result.style.color=failed===0?'var(--green2)':'var(--warn)';result.textContent='✅ '+sent+' إشعار'+(failed?' · ❌ '+failed:'');}
@@ -870,14 +874,14 @@ async function sendIrrNN(id,type) {
   var s=getMergedIrrSettings(), notif=s.notifications[type], sch=getOwnerSchedule(o,0);
   var res=document.getElementById('irr-nn-res');
   if(res){res.style.color='var(--text3)';res.textContent='⏳ جاري…';}
-  var BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
   try {
-    var r=await fetch('https://api.brevo.com/v3/smtp/email',{method:'POST',
-      headers:{'api-key':BKEY,'Content-Type':'application/json'},
-      body:JSON.stringify({sender:{name:s.senderName,email:s.senderEmail},to:[{email:o.email,name:o.name}],
+    var ok=false;
+    try{
+      await sendEmailViaEdge({sender:{name:s.senderName,email:s.senderEmail},to:[{email:o.email,name:o.name}],
         subject:fillIrrTemplate(notif.subject,o,sch),
-        htmlContent:buildIrrEmail(o,type,s,fillIrrTemplate(notif.body,o,sch),sch)})});
-    var ok=r.ok||r.status===201;
+        htmlContent:buildIrrEmail(o,type,s,fillIrrTemplate(notif.body,o,sch),sch)});
+      ok=true;
+    }catch(_e){ok=false;}
     if(res){res.style.color=ok?'var(--green2)':'var(--danger)';res.textContent=ok?'✅ تم!':'❌ فشل';}
     if(ok){toast('✅ إشعار لـ '+o.name);setTimeout(function(){var v=document.getElementById('irr-nn-ov');if(v)v.remove();},1500);}
   }catch(e){if(res){res.style.color='var(--danger)';res.textContent='خطأ: '+e.message;}}
