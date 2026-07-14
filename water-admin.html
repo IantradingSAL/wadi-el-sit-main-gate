@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>إدارة الري — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
 --danger:#e74c3c;--warn:#e67e22;--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;
@@ -26,6 +27,38 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 .ov-close{background:none;border:none;font-size:20px;cursor:pointer;color:#999;margin-left:auto;}
 .ov-title{font-size:16px;font-weight:800;color:var(--blue2);}
 .ov-body{padding:16px 20px;}
+
+/* ═══ FINANCE (صندوق لجنة المياه) ═══ */
+.wf-wrap{max-width:1100px;margin:0 auto;width:100%;padding:0 16px 20px}
+.wf-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px}
+.wf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.wf-kpi{background:#fff;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.wf-kpi .v{font-size:24px;font-weight:800}
+.wf-kpi .l{font-size:12px;color:#888;font-weight:700;margin-top:2px}
+.wf-kpi.bal .v{color:#1a6eb5}.wf-kpi.inc .v{color:#2e7d32}.wf-kpi.exp .v{color:#c0392b}
+.wf-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.wf-tab{flex:1;min-width:110px;padding:10px 8px;border:none;border-radius:10px;background:#fff;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;color:#555;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.wf-tab.on{background:#2e7d32;color:#fff}
+.wf-tblwrap{overflow-x:auto}
+.wf-tblwrap table{width:100%;border-collapse:collapse;font-size:13px}
+.wf-tblwrap th{background:#e8f5e9;color:#1e5429;padding:8px 6px;font-weight:800;white-space:nowrap;text-align:right}
+.wf-tblwrap td{padding:7px 6px;border-bottom:1px solid #eef2ee;white-space:nowrap}
+.wf-tblwrap tr:hover td{background:#f8fbf8}
+.amt-neg{color:#c0392b;font-weight:700}.amt-pos{color:#2e7d32;font-weight:700}
+.bal-neg{color:#c0392b;font-weight:800}.bal-pos{color:#1a6eb5;font-weight:800}
+.wf-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
+.wf-badge.exp{background:#fdecea;color:#c0392b}
+.wf-badge.col{background:#e8f5e9;color:#2e7d32}
+.wf-badge.opn{background:#e3f0fb;color:#1a6eb5}
+.wf-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.wf-g2{grid-template-columns:1fr}}
+.wf-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+.wf-filters>div{flex:1;min-width:130px}
+.wf-fl{font-size:13px;font-weight:700;color:#555;margin-bottom:5px;display:block}
+.wf-err{color:#c0392b;font-size:13px;min-height:18px;margin-bottom:6px}
+.wf-sumtitle{font-size:15px;font-weight:800;color:#1e5429;margin-bottom:8px}
+#sec-fin .fi{margin-bottom:10px}
+.sec-nav{display:flex;gap:8px;justify-content:center;padding:14px 16px 0;flex-wrap:wrap}
 </style>
 <!-- PWA & Mobile Meta -->
 <link rel="manifest" href="manifest.json">
@@ -81,11 +114,121 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <button onclick="doLogout()" class="btn" style="padding:6px 14px;font-size:12px;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2);color:#fff;">خروج</button>
     </div>
   </div>
-  <div style="padding:16px;max-width:720px;margin:0 auto;width:100%;">
+  <div class="sec-nav">
+    <button class="btn bp" id="sec-btn-irr" onclick="showSection('irr')">📅 نظام الري</button>
+    <button class="btn" id="sec-btn-fin" onclick="showSection('fin')">💰 صندوق اللجنة</button>
+  </div>
+  <div id="sec-irr" style="padding:16px;max-width:720px;margin:0 auto;width:100%;">
     <div id="water-main-content">
       <div style="text-align:center;padding:40px;color:var(--text3);">⏳ جاري تحميل البيانات…</div>
     </div>
   </div>
+
+  <!-- ═══ FINANCE SECTION ═══ -->
+  <div id="sec-fin" class="wf-wrap" style="display:none;padding-top:16px">
+    <div class="wf-kpis">
+      <div class="wf-kpi bal"><div class="v" id="k-bal">—</div><div class="l">💰 الرصيد الحالي</div></div>
+      <div class="wf-kpi inc"><div class="v" id="k-inc">—</div><div class="l">⬇️ إجمالي المداخيل</div></div>
+      <div class="wf-kpi exp"><div class="v" id="k-exp">—</div><div class="l">⬆️ إجمالي المصاريف</div></div>
+      <div class="wf-kpi"><div class="v" id="k-cnt">—</div><div class="l">🧾 عدد الحركات</div></div>
+    </div>
+    <div class="wf-tabs">
+      <button class="wf-tab on" id="tab-ledger" onclick="showTab('ledger')">📒 السجل</button>
+      <button class="wf-tab" id="tab-expense" onclick="showTab('expense')">➖ إدخال مصروف</button>
+      <button class="wf-tab" id="tab-collect" onclick="showTab('collect')">➕ إدخال جباية</button>
+      <button class="wf-tab" id="tab-reports" onclick="showTab('reports')">📊 التقارير</button>
+    </div>
+
+    <div id="pane-ledger" class="wf-card">
+      <div class="wf-filters">
+        <div><label class="wf-fl">النوع</label>
+          <select class="fi" id="f-type" onchange="renderLedger()">
+            <option value="">الكل</option><option value="expense">مصاريف</option>
+            <option value="collection">جباية</option><option value="opening">رصيد افتتاحي</option>
+          </select></div>
+        <div><label class="wf-fl">المرحلة</label><select class="fi" id="f-phase" onchange="renderLedger()"><option value="">الكل</option></select></div>
+        <div><label class="wf-fl">الشخص</label><select class="fi" id="f-person" onchange="renderLedger()"><option value="">الكل</option></select></div>
+        <div><label class="wf-fl">من تاريخ</label><input class="fi" id="f-from" type="date" onchange="renderLedger()"></div>
+        <div><label class="wf-fl">إلى تاريخ</label><input class="fi" id="f-to" type="date" onchange="renderLedger()"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn bp" id="pdf-btn" onclick="exportPDF()">📄 تقرير PDF</button>
+        <button class="btn" onclick="exportCSV()">⬇️ تصدير CSV</button>
+        <button class="btn" onclick="wfChangePassword()">🔑 تغيير كلمة المرور</button>
+      </div>
+      <div class="wf-tblwrap">
+        <table>
+          <thead><tr><th>التاريخ</th><th>النوع</th><th>البيان</th><th>الشخص</th><th>المستلم</th><th>المرحلة</th><th>إيصال</th><th>المبلغ</th><th>الرصيد</th><th></th></tr></thead>
+          <tbody id="ledger-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="pane-expense" class="wf-card" style="display:none">
+      <div class="wf-sumtitle">➖ إدخال مصروف جديد</div>
+      <div class="wf-g2">
+        <div><label class="wf-fl">التاريخ *</label><input class="fi" id="e-date" type="date"></div>
+        <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" id="e-amount" type="number" step="0.01" min="0" placeholder="0"></div>
+      </div>
+      <label class="wf-fl">البيان / الوصف *</label>
+      <input class="fi" id="e-desc" placeholder="مثال: اجرة يوم عمل - ...">
+      <div class="wf-g2">
+        <div><label class="wf-fl">المدفوع له (العامل)</label><input class="fi" id="e-person" list="dl-workers" placeholder="اسم العامل"></div>
+        <div><label class="wf-fl">المستلم (من سلّم المبلغ)</label><input class="fi" id="e-handled" list="dl-handlers" placeholder="اسم المستلم"></div>
+      </div>
+      <div class="wf-g2">
+        <div><label class="wf-fl">المرحلة</label><input class="fi" id="e-phase" list="dl-phases" placeholder="مثال: المرحلة الثالثة"></div>
+        <div><label class="wf-fl">ملاحظات</label><input class="fi" id="e-notes"></div>
+      </div>
+      <div class="wf-err" id="e-err"></div>
+      <button class="btn bp" style="width:100%;justify-content:center;background:#c0392b;border-color:#c0392b" onclick="saveExpense()">💾 حفظ المصروف</button>
+    </div>
+
+    <div id="pane-collect" class="wf-card" style="display:none">
+      <div class="wf-sumtitle">➕ إدخال جباية (لكل منزل / مشترك)</div>
+      <div class="wf-g2">
+        <div><label class="wf-fl">التاريخ *</label><input class="fi" id="c-date" type="date"></div>
+        <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" id="c-amount" type="number" step="0.01" min="0" placeholder="0"></div>
+      </div>
+      <div class="wf-g2">
+        <div><label class="wf-fl">اسم الدافع / المنزل *</label><input class="fi" id="c-person" list="dl-payers" placeholder="اسم المشترك"></div>
+        <div><label class="wf-fl">رقم الإيصال</label><input class="fi" id="c-receipt" placeholder="رقم دفتر الفواتير"></div>
+      </div>
+      <label class="wf-fl">البيان</label>
+      <input class="fi" id="c-desc" placeholder="مثال: جباية 2026 - الدفعة الأولى" value="جباية 2026">
+      <label class="wf-fl">ملاحظات</label>
+      <input class="fi" id="c-notes">
+      <div class="wf-err" id="c-err"></div>
+      <button class="btn bp" style="width:100%;justify-content:center" onclick="saveCollection()">💾 حفظ الجباية</button>
+    </div>
+
+    <div id="pane-reports" style="display:none">
+      <div class="wf-card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div class="wf-sumtitle" style="margin:0">📊 التقارير الملخّصة</div>
+        <button class="btn bp" id="pdf-btn2" style="width:auto" onclick="exportPDF('summary')">📄 تصدير التقارير PDF</button>
+      </div>
+      <div class="wf-card">
+        <div class="wf-sumtitle">👷 المصاريف حسب العامل (المدفوع له)</div>
+        <div class="wf-tblwrap"><table><thead><tr><th>العامل</th><th>عدد الدفعات</th><th>المجموع ($)</th></tr></thead><tbody id="rep-workers"></tbody></table></div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-sumtitle">🤝 المصاريف حسب المستلم</div>
+        <div class="wf-tblwrap"><table><thead><tr><th>المستلم</th><th>عدد الحركات</th><th>المجموع ($)</th></tr></thead><tbody id="rep-handlers"></tbody></table></div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-sumtitle">🏗️ المصاريف حسب المرحلة</div>
+        <div class="wf-tblwrap"><table><thead><tr><th>المرحلة</th><th>عدد الحركات</th><th>المجموع ($)</th></tr></thead><tbody id="rep-phases"></tbody></table></div>
+      </div>
+      <div class="wf-card">
+        <div class="wf-sumtitle">🏠 الجباية حسب المشترك</div>
+        <div class="wf-tblwrap"><table><thead><tr><th>المشترك / المنزل</th><th>عدد الدفعات</th><th>المجموع ($)</th><th>آخر دفعة</th></tr></thead><tbody id="rep-payers"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+  <datalist id="dl-workers"></datalist>
+  <datalist id="dl-handlers"></datalist>
+  <datalist id="dl-phases"></datalist>
+  <datalist id="dl-payers"></datalist>
 </div>
 
 <!-- Modal -->
@@ -101,8 +244,8 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 <div id="toast-c" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;gap:8px;align-items:center;"></div>
 
 <script>
-const SB_URL='__SUPABASE_URL__';
-const SB_KEY='__SUPABASE_ANON_KEY__';
+const SB_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
 const MUN_ID='00000000-0000-0000-0000-000000000001';
 const BKEY='xsmtpsib-0421702005db0037488fcf8571d71affe52db33a95300e80847392294f871b55-fxFDF0zqQLSVMDAA';
 let sb=null, dbR=false, UN='', userRole='water_admin';
@@ -142,10 +285,12 @@ async function doLogin(){
 async function showWaterApp(user){
   var meta=user.user_metadata||{};
   UN=meta.name||user.email;
+  wfUser=user;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='flex';
   await loadWaterFromDB();
   openWaterSchedule();
+  if(location.hash==='#finance'){showSection('fin');}
 }
 
 function doLogout(){sb.auth.signOut().then(function(){location.reload();});}
@@ -1023,6 +1168,247 @@ openWaterSchedule = async function(){
 
 // Try alias
 var getCurrentCycleInfo = typeof getCurrentCycleInfo!=='undefined' ? getCurrentCycleInfo : function(){return {cycleNum:1,isDay:true,cycleStart:new Date(),cycleEnd:new Date(),totalMins:160*60}};
+
+
+// ═══════════ FINANCE MODULE (صندوق لجنة المياه) ═══════════
+let wfEntries=[], wfLoaded=false, wfUser=null;
+function wfFmt(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:2});}
+function wfToday(){return new Date().toISOString().slice(0,10);}
+function wfUniq(arr){return [...new Set(arr.filter(Boolean))].sort();}
+
+function showSection(s){
+  document.getElementById('sec-irr').style.display = s==='irr' ? '' : 'none';
+  document.getElementById('sec-fin').style.display = s==='fin' ? '' : 'none';
+  document.getElementById('sec-btn-irr').classList.toggle('bp', s==='irr');
+  document.getElementById('sec-btn-fin').classList.toggle('bp', s==='fin');
+  if(s==='fin' && !wfLoaded){ wfLoaded=true; loadFinance(); }
+}
+
+async function loadFinance(){
+  document.getElementById('e-date').value=wfToday();
+  document.getElementById('c-date').value=wfToday();
+  const{data,error}=await sb.from('water_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true});
+  if(error){toast('⚠️ خطأ في تحميل بيانات الصندوق: '+error.message,'err');return;}
+  wfEntries=data||[];
+  wfRefresh();
+}
+function wfRefresh(){renderKPIs();buildFilters();buildDatalists();renderLedger();renderReports();}
+function renderKPIs(){
+  let inc=0,exp=0;
+  wfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+  document.getElementById('k-bal').textContent='$'+wfFmt(inc-exp);
+  document.getElementById('k-inc').textContent='$'+wfFmt(inc);
+  document.getElementById('k-exp').textContent='$'+wfFmt(exp);
+  document.getElementById('k-cnt').textContent=wfEntries.length;
+}
+function buildFilters(){
+  const phases=wfUniq(wfEntries.map(e=>e.phase));
+  const persons=wfUniq(wfEntries.map(e=>e.person));
+  const fp=document.getElementById('f-phase'),fpe=document.getElementById('f-person');
+  const vp=fp.value,vpe=fpe.value;
+  fp.innerHTML='<option value="">الكل</option>'+phases.map(p=>'<option>'+p+'</option>').join('');
+  fpe.innerHTML='<option value="">الكل</option>'+persons.map(p=>'<option>'+p+'</option>').join('');
+  fp.value=vp;fpe.value=vpe;
+}
+function buildDatalists(){
+  const set=(id,list)=>document.getElementById(id).innerHTML=list.map(v=>'<option value="'+v+'">').join('');
+  set('dl-workers',wfUniq(wfEntries.filter(e=>e.entry_type==='expense').map(e=>e.person)));
+  set('dl-handlers',wfUniq(wfEntries.map(e=>e.handled_by)));
+  set('dl-phases',wfUniq(wfEntries.map(e=>e.phase)));
+  set('dl-payers',wfUniq(wfEntries.filter(e=>e.entry_type==='collection').map(e=>e.person)));
+}
+const WF_TYPE_LABEL={expense:'<span class="wf-badge exp">مصروف</span>',collection:'<span class="wf-badge col">جباية</span>',opening:'<span class="wf-badge opn">رصيد افتتاحي</span>'};
+function renderLedger(){
+  const ft=document.getElementById('f-type').value, fp=document.getElementById('f-phase').value,
+        fpe=document.getElementById('f-person').value, from=document.getElementById('f-from').value,
+        to=document.getElementById('f-to').value;
+  let bal=0, rows='';
+  wfEntries.forEach(e=>{
+    const signed=e.entry_type==='expense'?-e.amount:+e.amount;
+    bal+=signed;
+    if(ft&&e.entry_type!==ft)return; if(fp&&e.phase!==fp)return; if(fpe&&e.person!==fpe)return;
+    if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
+    rows+='<tr>'
+      +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
+      +'<td>'+(WF_TYPE_LABEL[e.entry_type]||e.entry_type)+'</td>'
+      +'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'
+      +'<td>'+(e.person||'')+'</td>'
+      +'<td>'+(e.handled_by||'')+'</td>'
+      +'<td style="font-size:11px">'+(e.phase||'')+'</td>'
+      +'<td>'+(e.receipt_no||'')+'</td>'
+      +'<td class="'+(signed<0?'amt-neg':'amt-pos')+'">'+(signed<0?'-':'+')+'$'+wfFmt(Math.abs(signed))+'</td>'
+      +'<td class="'+(bal<0?'bal-neg':'bal-pos')+'">$'+wfFmt(bal)+'</td>'
+      +'<td><button style="border:none;background:none;cursor:pointer" title="حذف" onclick="wfDel(\''+e.id+'\')">🗑️</button></td>'
+      +'</tr>';
+  });
+  document.getElementById('ledger-body').innerHTML=rows||'<tr><td colspan="10" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
+}
+async function wfDel(id){
+  if(!confirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
+  const{error}=await sb.from('water_finance').delete().eq('id',id);
+  if(error){toast('⚠️ فشل الحذف: '+error.message,'err');return;}
+  toast('✓ تم الحذف'); wfLoaded=true; await loadFinance();
+}
+async function saveExpense(){
+  const date=document.getElementById('e-date').value;
+  const amount=parseFloat(document.getElementById('e-amount').value);
+  const desc=document.getElementById('e-desc').value.trim();
+  const err=document.getElementById('e-err');err.textContent='';
+  if(!date||!desc||!(amount>0)){err.textContent='يرجى تعبئة التاريخ والبيان والمبلغ';return;}
+  const rec={entry_date:date,entry_type:'expense',description:desc,amount:amount,
+    person:document.getElementById('e-person').value.trim()||null,
+    handled_by:document.getElementById('e-handled').value.trim()||null,
+    phase:document.getElementById('e-phase').value.trim()||null,
+    notes:document.getElementById('e-notes').value.trim()||null,
+    created_by:wfUser?wfUser.email:null};
+  const{error}=await sb.from('water_finance').insert(rec);
+  if(error){err.textContent='⚠️ '+error.message;return;}
+  toast('✓ تم حفظ المصروف');
+  ['e-amount','e-desc','e-notes'].forEach(i=>document.getElementById(i).value='');
+  await loadFinance();
+}
+async function saveCollection(){
+  const date=document.getElementById('c-date').value;
+  const amount=parseFloat(document.getElementById('c-amount').value);
+  const person=document.getElementById('c-person').value.trim();
+  const err=document.getElementById('c-err');err.textContent='';
+  if(!date||!person||!(amount>0)){err.textContent='يرجى تعبئة التاريخ واسم الدافع والمبلغ';return;}
+  const rec={entry_date:date,entry_type:'collection',
+    description:document.getElementById('c-desc').value.trim()||('جباية - '+person),
+    amount:amount,person:person,
+    receipt_no:document.getElementById('c-receipt').value.trim()||null,
+    notes:document.getElementById('c-notes').value.trim()||null,
+    created_by:wfUser?wfUser.email:null};
+  const{error}=await sb.from('water_finance').insert(rec);
+  if(error){err.textContent='⚠️ '+error.message;return;}
+  toast('✓ تم حفظ الجباية');
+  ['c-amount','c-person','c-receipt','c-notes'].forEach(i=>document.getElementById(i).value='');
+  await loadFinance();
+}
+function groupSum(list,keyFn){
+  const m={};
+  list.forEach(e=>{const k=keyFn(e)||'—';if(!m[k])m[k]={n:0,sum:0,last:''};m[k].n++;m[k].sum+=+e.amount;if(e.entry_date>m[k].last)m[k].last=e.entry_date;});
+  return Object.entries(m).sort((a,b)=>b[1].sum-a[1].sum);
+}
+function renderReports(){
+  const exps=wfEntries.filter(e=>e.entry_type==='expense');
+  const cols=wfEntries.filter(e=>e.entry_type==='collection');
+  const row3=(k,v)=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="amt-neg">$'+wfFmt(v.sum)+'</td></tr>';
+  const empty=n=>'<tr><td colspan="'+n+'" style="color:#999;text-align:center">—</td></tr>';
+  document.getElementById('rep-workers').innerHTML=groupSum(exps,e=>e.person).map(([k,v])=>row3(k,v)).join('')||empty(3);
+  document.getElementById('rep-handlers').innerHTML=groupSum(exps,e=>e.handled_by).map(([k,v])=>row3(k,v)).join('')||empty(3);
+  document.getElementById('rep-phases').innerHTML=groupSum(exps,e=>e.phase).map(([k,v])=>row3(k,v)).join('')||empty(3);
+  document.getElementById('rep-payers').innerHTML=groupSum(cols,e=>e.person).map(([k,v])=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="amt-pos">$'+wfFmt(v.sum)+'</td><td>'+v.last.split('-').reverse().join('/')+'</td></tr>').join('')||empty(4);
+}
+function exportCSV(){
+  let bal=0;
+  const lines=['التاريخ,النوع,البيان,الشخص,المستلم,المرحلة,رقم الإيصال,المبلغ,الرصيد'];
+  wfEntries.forEach(e=>{
+    const signed=e.entry_type==='expense'?-e.amount:+e.amount;bal+=signed;
+    const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+    lines.push([e.entry_date,e.entry_type,q(e.description),q(e.person),q(e.handled_by),q(e.phase),q(e.receipt_no),signed,bal].join(','));
+  });
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='water_finance.csv';a.click();URL.revokeObjectURL(a.href);
+}
+function pdfTable(headers,rowsHtml){
+  return '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px">'
+    +'<thead><tr>'+headers.map(h=>'<th style="background:#e8f5e9;color:#1e5429;padding:5px 4px;border:1px solid #cfe0cf;text-align:right;font-weight:800">'+h+'</th>').join('')+'</tr></thead>'
+    +'<tbody>'+rowsHtml+'</tbody></table>';
+}
+function pdfTd(v,style){return '<td style="padding:4px;border:1px solid #e0e6e0;'+(style||'')+'">'+(v==null?'':v)+'</td>';}
+function getFilteredWithBalance(){
+  const ft=document.getElementById('f-type').value, fp=document.getElementById('f-phase').value,
+        fpe=document.getElementById('f-person').value, from=document.getElementById('f-from').value,
+        to=document.getElementById('f-to').value;
+  let bal=0; const out=[];
+  wfEntries.forEach(e=>{
+    const signed=e.entry_type==='expense'?-e.amount:+e.amount; bal+=signed;
+    if(ft&&e.entry_type!==ft)return; if(fp&&e.phase!==fp)return; if(fpe&&e.person!==fpe)return;
+    if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
+    out.push(Object.assign({},e,{signed:signed,bal:bal}));
+  });
+  return out;
+}
+async function exportPDF(mode){
+  const btn=document.getElementById(mode==='summary'?'pdf-btn2':'pdf-btn');
+  const btnLabel=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ جاري إنشاء PDF…';
+  try{
+    let inc=0,exp=0;
+    wfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+    const TYPE_AR={expense:'مصروف',collection:'جباية',opening:'رصيد افتتاحي'};
+    const dts=new Date().toLocaleDateString('ar-LB');
+    const rows=getFilteredWithBalance().map(e=>'<tr style="page-break-inside:avoid">'
+      +pdfTd(e.entry_date.split('-').reverse().join('/'))
+      +pdfTd(TYPE_AR[e.entry_type]||e.entry_type)
+      +pdfTd(e.description)+pdfTd(e.person)+pdfTd(e.handled_by)
+      +pdfTd(e.phase,'font-size:9px')+pdfTd(e.receipt_no)
+      +pdfTd((e.signed<0?'-':'+')+'$'+wfFmt(Math.abs(e.signed)),'font-weight:800;color:'+(e.signed<0?'#c0392b':'#2e7d32'))
+      +pdfTd('$'+wfFmt(e.bal),'font-weight:800;color:'+(e.bal<0?'#c0392b':'#1a6eb5'))
+      +'</tr>').join('');
+    const exps=wfEntries.filter(e=>e.entry_type==='expense');
+    const cols=wfEntries.filter(e=>e.entry_type==='collection');
+    const sumRows=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+pdfTd(k)+pdfTd(v.n)+pdfTd('$'+wfFmt(v.sum),'font-weight:800;color:'+color)+'</tr>').join('');
+    const payRows=groupSum(cols,e=>e.person).map(([k,v])=>'<tr style="page-break-inside:avoid">'+pdfTd(k)+pdfTd(v.n)+pdfTd('$'+wfFmt(v.sum),'font-weight:800;color:#2e7d32')+pdfTd(v.last.split('-').reverse().join('/'))+'</tr>').join('');
+    const secT=t=>'<div style="font-size:14px;font-weight:800;color:#1e5429;margin:14px 0 6px">'+t+'</div>';
+    const el=document.createElement('div');
+    el.setAttribute('dir','rtl');
+    el.style.cssText='width:760px;background:#fff;color:#191c24;font-family:Tajawal,sans-serif;padding:10px';
+    el.innerHTML=
+      '<div style="text-align:center;border-bottom:3px solid #1e5429;padding-bottom:10px;margin-bottom:12px">'
+      +'<div style="font-size:20px;font-weight:800;color:#1e5429">💧 صندوق لجنة المياه — بلدية وادي الست</div>'
+      +'<div style="font-size:12px;color:#555;margin-top:3px">'+(mode==='summary'?'التقارير الملخّصة':'تقرير المصاريف والجباية')+' — تاريخ التقرير: '+dts+'</div></div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:14px;text-align:center">'
+      +['<b style="color:#1a6eb5;font-size:16px">$'+wfFmt(inc-exp)+'</b><br>الرصيد الحالي',
+        '<b style="color:#2e7d32;font-size:16px">$'+wfFmt(inc)+'</b><br>إجمالي المداخيل',
+        '<b style="color:#c0392b;font-size:16px">$'+wfFmt(exp)+'</b><br>إجمالي المصاريف',
+        '<b style="font-size:16px">'+wfEntries.length+'</b><br>عدد الحركات'
+       ].map(x=>'<div style="flex:1;border:1px solid #e0e6e0;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
+      +'</div>'
+      +(mode==='summary'?'':secT('📒 سجل الحركات')
+        +pdfTable(['التاريخ','النوع','البيان','الشخص','المستلم','المرحلة','إيصال','المبلغ','الرصيد'],rows))
+      +secT('👷 المصاريف حسب العامل')
+      +pdfTable(['العامل','عدد الدفعات','المجموع'],sumRows(groupSum(exps,e=>e.person),'#c0392b'))
+      +secT('🤝 المصاريف حسب المستلم')
+      +pdfTable(['المستلم','عدد الحركات','المجموع'],sumRows(groupSum(exps,e=>e.handled_by),'#c0392b'))
+      +secT('🏗️ المصاريف حسب المرحلة')
+      +pdfTable(['المرحلة','عدد الحركات','المجموع'],sumRows(groupSum(exps,e=>e.phase),'#c0392b'))
+      +secT('🏠 الجباية حسب المشترك')
+      +pdfTable(['المشترك / المنزل','عدد الدفعات','المجموع','آخر دفعة'],payRows)
+      +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
+      +'<div>التوقيع: ________________</div><div>أُنشئ بواسطة: '+(wfUser?wfUser.email:'')+'</div></div>';
+    document.body.appendChild(el);
+    await html2pdf().set({
+      margin:[10,8,12,8],
+      filename:(mode==='summary'?'التقارير_الملخصة_صندوق_المياه_':'تقرير_صندوق_لجنة_المياه_')+wfToday()+'.pdf',
+      image:{type:'jpeg',quality:0.96},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    }).from(el).save();
+    el.remove();
+    toast('✓ تم إنشاء تقرير PDF');
+  }catch(e){ toast('⚠️ فشل إنشاء PDF: '+e.message,'err'); }
+  btn.disabled=false; btn.textContent=btnLabel;
+}
+function showTab(t){
+  ['ledger','expense','collect','reports'].forEach(x=>{
+    document.getElementById('pane-'+x).style.display = x===t ? '' : 'none';
+    document.getElementById('tab-'+x).classList.toggle('on',x===t);
+  });
+}
+async function wfChangePassword(){
+  const p1=prompt('كلمة المرور الجديدة (8 أحرف على الأقل):');
+  if(p1===null)return;
+  if(!p1||p1.length<8){alert('⚠️ كلمة المرور يجب أن تكون 8 أحرف على الأقل');return;}
+  const p2=prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
+  if(p2===null)return;
+  if(p1!==p2){alert('⚠️ كلمتا المرور غير متطابقتين');return;}
+  const{error}=await sb.auth.updateUser({password:p1});
+  if(error){alert('⚠️ فشل تغيير كلمة المرور: '+error.message);return;}
+  toast('✓ تم تغيير كلمة المرور بنجاح');
+}
 
 </script>
 </body>
