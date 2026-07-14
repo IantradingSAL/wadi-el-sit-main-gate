@@ -6,6 +6,7 @@
 <title>صندوق لجنة المياه — وادي الست</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{--green:#1e5429;--green2:#2e7d32;--green3:#e8f5e9;--red:#c0392b;--red2:#fdecea;--blue:#1a6eb5;--text:#191c24;--text2:#555;--text3:#888;--bg:#f4f7f4;--card:#fff;--border:#e0e6e0}
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Tajawal',sans-serif}
@@ -136,6 +137,7 @@ tr:hover td{background:#f8fbf8}
       <div style="display:flex;gap:8px;margin-bottom:10px" class="no-print">
         <button class="btn btn-gray btn-sm" onclick="window.print()">🖨️ طباعة</button>
         <button class="btn btn-gray btn-sm" onclick="exportCSV()">⬇️ تصدير CSV</button>
+        <button class="btn btn-green btn-sm" id="pdf-btn" onclick="exportPDF()">📄 تقرير PDF</button>
       </div>
       <div class="tbl-wrap">
         <table>
@@ -401,6 +403,93 @@ function exportCSV(){
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='water_finance.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── PDF REPORT ──────────────────────────────────────────────
+function pdfTable(headers,rowsHtml){
+  return '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px">'
+    +'<thead><tr>'+headers.map(h=>'<th style="background:#e8f5e9;color:#1e5429;padding:5px 4px;border:1px solid #cfe0cf;text-align:right;font-weight:800">'+h+'</th>').join('')+'</tr></thead>'
+    +'<tbody>'+rowsHtml+'</tbody></table>';
+}
+function pdfTd(v,style){return '<td style="padding:4px;border:1px solid #e0e6e0;'+(style||'')+'">'+(v==null?'':v)+'</td>';}
+function getFilteredWithBalance(){
+  const ft=document.getElementById('f-type').value, fp=document.getElementById('f-phase').value,
+        fpe=document.getElementById('f-person').value, from=document.getElementById('f-from').value,
+        to=document.getElementById('f-to').value;
+  let bal=0; const out=[];
+  entries.forEach(e=>{
+    const signed=e.entry_type==='expense'?-e.amount:+e.amount; bal+=signed;
+    if(ft&&e.entry_type!==ft)return; if(fp&&e.phase!==fp)return; if(fpe&&e.person!==fpe)return;
+    if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
+    out.push({...e,signed,bal});
+  });
+  return out;
+}
+async function exportPDF(){
+  const btn=document.getElementById('pdf-btn');
+  btn.disabled=true; btn.textContent='⏳ جاري إنشاء PDF…';
+  try{
+    let inc=0,exp=0;
+    entries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+    const TYPE_AR={expense:'مصروف',collection:'جباية',opening:'رصيد افتتاحي'};
+    const dts=new Date().toLocaleDateString('ar-LB');
+    const rows=getFilteredWithBalance().map(e=>'<tr style="page-break-inside:avoid">'
+      +pdfTd(e.entry_date.split('-').reverse().join('/'))
+      +pdfTd(TYPE_AR[e.entry_type]||e.entry_type)
+      +pdfTd(e.description)
+      +pdfTd(e.person)
+      +pdfTd(e.handled_by)
+      +pdfTd(e.phase,'font-size:9px')
+      +pdfTd(e.receipt_no)
+      +pdfTd((e.signed<0?'-':'+')+'$'+fmt(Math.abs(e.signed)),'font-weight:800;color:'+(e.signed<0?'#c0392b':'#2e7d32'))
+      +pdfTd('$'+fmt(e.bal),'font-weight:800;color:'+(e.bal<0?'#c0392b':'#1a6eb5'))
+      +'</tr>').join('');
+    const exps=entries.filter(e=>e.entry_type==='expense');
+    const cols=entries.filter(e=>e.entry_type==='collection');
+    const sumRows=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+pdfTd(k)+pdfTd(v.n)+pdfTd('$'+fmt(v.sum),'font-weight:800;color:'+color)+'</tr>').join('');
+    const payRows=groupSum(cols,e=>e.person).map(([k,v])=>'<tr style="page-break-inside:avoid">'+pdfTd(k)+pdfTd(v.n)+pdfTd('$'+fmt(v.sum),'font-weight:800;color:#2e7d32')+pdfTd(v.last.split('-').reverse().join('/'))+'</tr>').join('');
+    const secT=t=>'<div style="font-size:14px;font-weight:800;color:#1e5429;margin:14px 0 6px">'+t+'</div>';
+    const el=document.createElement('div');
+    el.setAttribute('dir','rtl');
+    el.style.cssText='width:760px;background:#fff;color:#191c24;font-family:Tajawal,sans-serif;padding:10px';
+    el.innerHTML=
+      '<div style="text-align:center;border-bottom:3px solid #1e5429;padding-bottom:10px;margin-bottom:12px">'
+      +'<div style="font-size:20px;font-weight:800;color:#1e5429">💧 صندوق لجنة المياه — بلدية وادي الست</div>'
+      +'<div style="font-size:12px;color:#555;margin-top:3px">تقرير المصاريف والجباية — تاريخ التقرير: '+dts+'</div></div>'
+      +'<div style="display:flex;gap:8px;margin-bottom:14px;text-align:center">'
+      +['<b style="color:#1a6eb5;font-size:16px">$'+fmt(inc-exp)+'</b><br>الرصيد الحالي',
+        '<b style="color:#2e7d32;font-size:16px">$'+fmt(inc)+'</b><br>إجمالي المداخيل',
+        '<b style="color:#c0392b;font-size:16px">$'+fmt(exp)+'</b><br>إجمالي المصاريف',
+        '<b style="font-size:16px">'+entries.length+'</b><br>عدد الحركات'
+       ].map(x=>'<div style="flex:1;border:1px solid #e0e6e0;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
+      +'</div>'
+      +secT('📒 سجل الحركات')
+      +pdfTable(['التاريخ','النوع','البيان','الشخص','المستلم','المرحلة','إيصال','المبلغ','الرصيد'],rows)
+      +secT('👷 المصاريف حسب العامل')
+      +pdfTable(['العامل','عدد الدفعات','المجموع'],sumRows(groupSum(exps,e=>e.person),'#c0392b'))
+      +secT('🤝 المصاريف حسب المستلم')
+      +pdfTable(['المستلم','عدد الحركات','المجموع'],sumRows(groupSum(exps,e=>e.handled_by),'#c0392b'))
+      +secT('🏗️ المصاريف حسب المرحلة')
+      +pdfTable(['المرحلة','عدد الحركات','المجموع'],sumRows(groupSum(exps,e=>e.phase),'#c0392b'))
+      +secT('🏠 الجباية حسب المشترك')
+      +pdfTable(['المشترك / المنزل','عدد الدفعات','المجموع','آخر دفعة'],payRows)
+      +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
+      +'<div>التوقيع: ________________</div><div>أُنشئ بواسطة: '+(currentUser?currentUser.email:'')+'</div></div>';
+    document.body.appendChild(el);
+    await html2pdf().set({
+      margin:[10,8,12,8],
+      filename:'تقرير_صندوق_لجنة_المياه_'+today()+'.pdf',
+      image:{type:'jpeg',quality:0.96},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    }).from(el).save();
+    el.remove();
+    toast('✓ تم إنشاء تقرير PDF');
+  }catch(e){
+    toast('⚠️ فشل إنشاء PDF: '+e.message);
+  }
+  btn.disabled=false; btn.textContent='📄 تقرير PDF';
 }
 
 // ── TABS ──────────────────────────────────────────────
