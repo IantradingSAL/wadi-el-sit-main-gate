@@ -6,10 +6,11 @@
 <title>إدارة الري — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
 --danger:#e74c3c;--warn:#e67e22;--text:#1a1a2e;--text2:#444;--text3:#888;--border:#e0e6ef;
---bg:#f5f7fa;--bg2:#f0f2f7;--font:'Tahoma',Arial,sans-serif;}
+--bg:#f4f7f4;--bg2:#eef4ee;--font:'Tajawal','Tahoma',Arial,sans-serif;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh;color:var(--text);font-size:14px;}
 .fi{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:14px;outline:none;background:#fff;color:var(--text);direction:rtl;}
@@ -59,6 +60,8 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 .wf-sumtitle{font-size:15px;font-weight:800;color:#1e5429;margin-bottom:8px}
 #sec-fin .fi{margin-bottom:10px}
 .sec-nav{display:flex;gap:8px;justify-content:center;padding:14px 16px 0;flex-wrap:wrap}
+.sec-nav .btn{border-radius:12px;padding:10px 22px;font-size:14px;font-weight:800;box-shadow:0 1px 5px rgba(0,0,0,.07)}
+.sec-nav .btn.bp{background:linear-gradient(135deg,#1e5429,#2d7a3e);border-color:#1e5429;box-shadow:0 3px 12px rgba(30,84,41,.3)}
 </style>
 <!-- PWA & Mobile Meta -->
 <link rel="manifest" href="manifest.json">
@@ -295,8 +298,12 @@ async function showWaterApp(user){
   wfUser=user;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='flex';
-  await loadWaterFromDB();
-  openWaterSchedule();
+  try{ await loadWaterFromDB(); }catch(e){ console.log('loadWaterFromDB:',e); }
+  try{ await openWaterSchedule(); }
+  catch(e){
+    var mc=document.getElementById('water-main-content');
+    if(mc) mc.innerHTML='<div style="background:#fdeaea;border:1px solid #f2bcbc;border-radius:12px;padding:20px;text-align:center;color:#c0392b">⚠️ خطأ في تحميل نظام الري: '+e.message+'<br><button class="btn" style="margin-top:10px" onclick="openWaterSchedule()">🔄 إعادة المحاولة</button></div>';
+  }
   if(location.hash==='#finance'){showSection('fin');}
 }
 
@@ -697,8 +704,9 @@ async function openWaterSchedule() {
     // SETTINGS panel
     +'<div id="ir-settings" style="display:none"><div id="irr-settings-body"></div></div>';
 
-  document.getElementById('MB').innerHTML = html_content;
-  document.getElementById('OV').classList.add('open');
+  var mc=document.getElementById('water-main-content');
+  if(mc){ mc.innerHTML = html_content; }
+  else { document.getElementById('MB').innerHTML = html_content; document.getElementById('OV').classList.add('open'); }
   renderIrrList();
 }
 
