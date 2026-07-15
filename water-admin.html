@@ -184,6 +184,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       </div>
       <div class="wf-err" id="e-err"></div>
       <button class="btn bp" style="width:100%;justify-content:center;background:#c0392b;border-color:#c0392b" onclick="saveExpense()">💾 حفظ المصروف</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="wfShareLast()">🧾 مشاركة آخر إيصال (واتساب / بريد)</button>
     </div>
 
     <div id="pane-collect" class="wf-card" style="display:none">
@@ -202,6 +203,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <input class="fi" id="c-notes">
       <div class="wf-err" id="c-err"></div>
       <button class="btn bp" style="width:100%;justify-content:center" onclick="saveCollection()">💾 حفظ الجباية</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="wfShareLast()">🧾 مشاركة آخر إيصال (واتساب / بريد)</button>
     </div>
 
     <div id="pane-reports" style="display:none">
@@ -1263,7 +1265,7 @@ async function saveExpense(){
   toast('✓ تم حفظ المصروف');
   ['e-amount','e-desc','e-notes'].forEach(i=>document.getElementById(i).value='');
   await loadFinance();
-  if(data&&data[0]) openReceiptShare(data[0]);
+  if(data&&data[0]){wfLastSaved=data[0];openReceiptShare(data[0]);}
 }
 async function saveCollection(){
   const date=document.getElementById('c-date').value;
@@ -1282,7 +1284,7 @@ async function saveCollection(){
   toast('✓ تم حفظ الجباية');
   ['c-amount','c-person','c-receipt','c-notes'].forEach(i=>document.getElementById(i).value='');
   await loadFinance();
-  if(data&&data[0]) openReceiptShare(data[0]);
+  if(data&&data[0]){wfLastSaved=data[0];openReceiptShare(data[0]);}
 }
 function groupSum(list,keyFn){
   const m={};
@@ -1399,7 +1401,7 @@ async function exportPDF(mode){
   btn.disabled=false; btn.textContent=btnLabel;
 }
 // ── 📤 SHARE (report or receipt) via WhatsApp / Email ──
-let wfSendMode='full', wfShareCtx=null; // wfShareCtx = entry object => receipt mode
+let wfSendMode='full', wfShareCtx=null, wfLastSaved=null; // wfShareCtx = entry object => receipt mode
 function openSendModal(mode){
   wfSendMode=mode; wfShareCtx=null;
   document.getElementById('wf-share-title').textContent='📤 مشاركة التقرير';
@@ -1409,6 +1411,10 @@ function openReceiptShare(entry){
   wfShareCtx=entry;
   document.getElementById('wf-share-title').textContent='🧾 مشاركة الإيصال';
   document.getElementById('wf-share-ov').style.display='flex';
+}
+function wfShareLast(){
+  if(!wfLastSaved){toast('⚠️ لا يوجد إيصال محفوظ بعد في هذه الجلسة','err');return;}
+  openReceiptShare(wfLastSaved);
 }
 function wfReceiptById(id){
   const e=wfEntries.find(x=>String(x.id)===String(id));
@@ -1470,6 +1476,7 @@ function wfShareOpts(){
   }
   return wfPdfOpts(wfSendMode);
 }
+function wfReportFileName(mode){return (mode==='summary'?'التقارير_الملخصة_صندوق_المياه_':'تقرير_صندوق_لجنة_المياه_')+wfToday()+'.pdf';}
 function wfShareFileName(){ return wfShareCtx ? wfShareOpts().filename : wfReportFileName(wfSendMode); }
 function wfShareText(){
   if(wfShareCtx){
@@ -1507,13 +1514,19 @@ async function wfShareFile(){
     } else {
       const url=URL.createObjectURL(file);
       const a=document.createElement('a');a.href=url;a.download=file.name;a.click();URL.revokeObjectURL(url);
-      window.open('https://wa.me/?text='+encodeURIComponent(wfShareText()+'\n\n📎 الملف تم تنزيله على جهازك — أرفقه في المحادثة'),'_blank');
+      wfOpenWa(wfShareText()+'\n\n📎 الملف تم تنزيله على جهازك — أرفقه في المحادثة');
     }
   }catch(e){ if(String(e).indexOf('Abort')<0) toast('⚠️ '+(e.message||e),'err'); }
 }
+function wfOpenWa(text){
+  const url='https://wa.me/?text='+encodeURIComponent(text);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';
+  document.body.appendChild(a);a.click();a.remove();
+}
 function wfShareWhatsText(){
   closeSendModal();
-  window.open('https://wa.me/?text='+encodeURIComponent(wfShareText()),'_blank');
+  wfOpenWa(wfShareText());
 }
 async function wfShareEmail(){
   closeSendModal();
