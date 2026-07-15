@@ -155,6 +155,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <button class="btn bp" id="pdf-btn" onclick="exportPDF()">📄 تقرير PDF</button>
         <button class="btn" onclick="exportCSV()">⬇️ تصدير CSV</button>
+        <button class="btn" onclick="openSendModal('full')">📤 مشاركة</button>
         <button class="btn" onclick="wfChangePassword()">🔑 تغيير كلمة المرور</button>
       </div>
       <div class="wf-tblwrap">
@@ -207,6 +208,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <div class="wf-card" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
         <div class="wf-sumtitle" style="margin:0">📊 التقارير الملخّصة</div>
         <button class="btn bp" id="pdf-btn2" style="width:auto" onclick="exportPDF('summary')">📄 تصدير التقارير PDF</button>
+        <button class="btn" style="width:auto" onclick="openSendModal('summary')">📤 مشاركة</button>
       </div>
       <div class="wf-card">
         <div class="wf-sumtitle">👷 المصاريف حسب العامل (المدفوع له)</div>
@@ -224,6 +226,15 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
         <div class="wf-sumtitle">🏠 الجباية حسب المشترك</div>
         <div class="wf-tblwrap"><table><thead><tr><th>المشترك / المنزل</th><th>عدد الدفعات</th><th>المجموع ($)</th><th>آخر دفعة</th></tr></thead><tbody id="rep-payers"></tbody></table></div>
       </div>
+    </div>
+  </div>
+  <div id="wf-share-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99995;align-items:center;justify-content:center" onclick="if(event.target===this)closeSendModal()">
+    <div style="background:#fff;border-radius:16px;padding:20px;max-width:340px;width:90%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25)">
+      <div id="wf-share-title" style="font-weight:800;font-size:16px;color:#0f4d82;margin-bottom:14px">📤 مشاركة التقرير</div>
+      <button class="btn bp" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfShareFile()">📱 مشاركة الملف (واتساب / تطبيقات)</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfShareWhatsText()">💬 واتساب — ملخص نصي</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfShareEmail()">📧 بريد إلكتروني + PDF مرفق</button>
+      <button class="btn" style="width:100%;justify-content:center" onclick="closeSendModal()">إلغاء</button>
     </div>
   </div>
   <datalist id="dl-workers"></datalist>
@@ -1224,7 +1235,7 @@ function renderLedger(){
       +'<td>'+(e.receipt_no||'')+'</td>'
       +'<td class="'+(signed<0?'amt-neg':'amt-pos')+'">'+(signed<0?'-':'+')+'$'+wfFmt(Math.abs(signed))+'</td>'
       +'<td class="'+(bal<0?'bal-neg':'bal-pos')+'">$'+wfFmt(bal)+'</td>'
-      +'<td><button style="border:none;background:none;cursor:pointer" title="حذف" onclick="wfDel(\''+e.id+'\')">🗑️</button></td>'
+      +'<td style="white-space:nowrap"><button style="border:none;background:none;cursor:pointer" title="إيصال" onclick="wfReceiptById(\''+e.id+'\')">🧾</button> <button style="border:none;background:none;cursor:pointer" title="حذف" onclick="wfDel(\''+e.id+'\')">🗑️</button></td>'
       +'</tr>';
   });
   document.getElementById('ledger-body').innerHTML=rows||'<tr><td colspan="10" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
@@ -1247,11 +1258,12 @@ async function saveExpense(){
     phase:document.getElementById('e-phase').value.trim()||null,
     notes:document.getElementById('e-notes').value.trim()||null,
     created_by:wfUser?wfUser.email:null};
-  const{error}=await sb.from('water_finance').insert(rec);
+  const{data,error}=await sb.from('water_finance').insert(rec).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم حفظ المصروف');
   ['e-amount','e-desc','e-notes'].forEach(i=>document.getElementById(i).value='');
   await loadFinance();
+  if(data&&data[0]) openReceiptShare(data[0]);
 }
 async function saveCollection(){
   const date=document.getElementById('c-date').value;
@@ -1265,11 +1277,12 @@ async function saveCollection(){
     receipt_no:document.getElementById('c-receipt').value.trim()||null,
     notes:document.getElementById('c-notes').value.trim()||null,
     created_by:wfUser?wfUser.email:null};
-  const{error}=await sb.from('water_finance').insert(rec);
+  const{data,error}=await sb.from('water_finance').insert(rec).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم حفظ الجباية');
   ['c-amount','c-person','c-receipt','c-notes'].forEach(i=>document.getElementById(i).value='');
   await loadFinance();
+  if(data&&data[0]) openReceiptShare(data[0]);
 }
 function groupSum(list,keyFn){
   const m={};
@@ -1316,11 +1329,7 @@ function getFilteredWithBalance(){
   });
   return out;
 }
-async function exportPDF(mode){
-  const btn=document.getElementById(mode==='summary'?'pdf-btn2':'pdf-btn');
-  const btnLabel=btn.textContent;
-  btn.disabled=true; btn.textContent='⏳ جاري إنشاء PDF…';
-  try{
+function wfBuildReportEl(mode){
     let inc=0,exp=0;
     wfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
     const TYPE_AR={expense:'مصروف',collection:'جباية',opening:'رصيد افتتاحي'};
@@ -1364,19 +1373,170 @@ async function exportPDF(mode){
       +pdfTable(['المشترك / المنزل','عدد الدفعات','المجموع','آخر دفعة'],payRows)
       +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
       +'<div>التوقيع: ________________</div><div>أُنشئ بواسطة: '+(wfUser?wfUser.email:'')+'</div></div>';
+    return el;
+}
+function wfPdfOpts(mode){
+  return {
+    margin:[10,8,12,8],
+    filename:(mode==='summary'?'التقارير_الملخصة_صندوق_المياه_':'تقرير_صندوق_لجنة_المياه_')+wfToday()+'.pdf',
+    image:{type:'jpeg',quality:0.96},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['css','legacy']}
+  };
+}
+async function exportPDF(mode){
+  const btn=document.getElementById(mode==='summary'?'pdf-btn2':'pdf-btn');
+  const btnLabel=btn.textContent;
+  btn.disabled=true; btn.textContent='⏳ جاري إنشاء PDF…';
+  try{
+    const el=wfBuildReportEl(mode);
     document.body.appendChild(el);
-    await html2pdf().set({
-      margin:[10,8,12,8],
-      filename:(mode==='summary'?'التقارير_الملخصة_صندوق_المياه_':'تقرير_صندوق_لجنة_المياه_')+wfToday()+'.pdf',
-      image:{type:'jpeg',quality:0.96},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['css','legacy']}
-    }).from(el).save();
+    await html2pdf().set(wfPdfOpts(mode)).from(el).save();
     el.remove();
     toast('✓ تم إنشاء تقرير PDF');
   }catch(e){ toast('⚠️ فشل إنشاء PDF: '+e.message,'err'); }
   btn.disabled=false; btn.textContent=btnLabel;
+}
+// ── 📤 SHARE (report or receipt) via WhatsApp / Email ──
+let wfSendMode='full', wfShareCtx=null; // wfShareCtx = entry object => receipt mode
+function openSendModal(mode){
+  wfSendMode=mode; wfShareCtx=null;
+  document.getElementById('wf-share-title').textContent='📤 مشاركة التقرير';
+  document.getElementById('wf-share-ov').style.display='flex';
+}
+function openReceiptShare(entry){
+  wfShareCtx=entry;
+  document.getElementById('wf-share-title').textContent='🧾 مشاركة الإيصال';
+  document.getElementById('wf-share-ov').style.display='flex';
+}
+function wfReceiptById(id){
+  const e=wfEntries.find(x=>String(x.id)===String(id));
+  if(e) openReceiptShare(e);
+}
+function closeSendModal(){document.getElementById('wf-share-ov').style.display='none';}
+
+function wfReceiptKind(e){
+  return e.entry_type==='collection'?'سند قبض':(e.entry_type==='opening'?'إشعار رصيد افتتاحي':'سند صرف');
+}
+function wfReceiptNum(e){
+  return e.receipt_no||('#'+String(e.id).replace(/-/g,'').slice(0,8).toUpperCase());
+}
+function wfBuildReceiptEl(e){
+  const isIn=e.entry_type!=='expense';
+  const color=isIn?'#1f9d55':'#c0392b';
+  const row=(l,v)=>'<div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #f0f2f0;font-size:13px"><div style="color:#777;font-weight:700;white-space:nowrap">'+l+'</div><div style="text-align:left;font-weight:700">'+(v||'')+'</div></div>';
+  const el=document.createElement('div');
+  el.setAttribute('dir','rtl');
+  el.style.cssText='width:560px;background:#fff;color:#191c24;font-family:Tajawal,Tahoma,sans-serif;padding:16px';
+  el.innerHTML=
+    '<div style="border:2px solid '+color+';border-radius:14px;overflow:hidden">'
+    +'<div style="background:'+color+';color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div><div style="font-size:17px;font-weight:800">💧 صندوق لجنة المياه</div><div style="font-size:11px;opacity:.92">بلدية وادي الست</div></div>'
+      +'<div style="text-align:left"><div style="font-size:15px;font-weight:800">'+wfReceiptKind(e)+'</div><div style="font-size:11px;opacity:.92">إيصال رقم: '+wfReceiptNum(e)+'</div></div>'
+    +'</div>'
+    +'<div style="padding:14px 16px">'
+      +row('التاريخ', e.entry_date.split('-').reverse().join('/'))
+      +row('البيان', e.description)
+      +(e.person? row(e.entry_type==='collection'?'الدافع / المشترك':'المدفوع له', e.person):'')
+      +(e.handled_by? row('المستلم', e.handled_by):'')
+      +(e.phase? row('المرحلة', e.phase):'')
+      +(e.notes? row('ملاحظات', e.notes):'')
+      +'<div style="margin:14px 0 4px;text-align:center;background:'+(isIn?'#eafbf0':'#fdecea')+';border:1.5px dashed '+color+';border-radius:12px;padding:12px">'
+        +'<div style="font-size:12px;color:#555">المبلغ</div>'
+        +'<div style="font-size:30px;font-weight:800;color:'+color+'">$'+wfFmt(e.amount)+'</div>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;margin-top:24px;font-size:12px;color:#555;text-align:center">'
+        +'<div>توقيع '+(e.entry_type==='collection'?'الدافع':'المستلم')+'<br><br>________________</div>'
+        +'<div>توقيع أمين الصندوق<br><br>________________</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="background:#f6f8f6;padding:7px 16px;font-size:10px;color:#888;display:flex;justify-content:space-between"><div>أُنشئ في '+new Date().toLocaleString('ar-LB')+'</div><div>'+(e.created_by||'')+'</div></div>'
+    +'</div>';
+  return el;
+}
+
+function wfBuildShareEl(){ return wfShareCtx ? wfBuildReceiptEl(wfShareCtx) : wfBuildReportEl(wfSendMode); }
+function wfShareOpts(){
+  if(wfShareCtx){
+    return {
+      margin:[10,10,10,10],
+      filename:'ايصال_'+wfReceiptNum(wfShareCtx).replace('#','')+'_'+wfShareCtx.entry_date+'.pdf',
+      image:{type:'jpeg',quality:0.96},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a5',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    };
+  }
+  return wfPdfOpts(wfSendMode);
+}
+function wfShareFileName(){ return wfShareCtx ? wfShareOpts().filename : wfReportFileName(wfSendMode); }
+function wfShareText(){
+  if(wfShareCtx){
+    const e=wfShareCtx;
+    return '🧾 *'+wfReceiptKind(e)+' — صندوق لجنة المياه*\n'
+      +'بلدية وادي الست\n\n'
+      +'رقم الإيصال: '+wfReceiptNum(e)+'\n'
+      +'📅 التاريخ: '+e.entry_date.split('-').reverse().join('/')+'\n'
+      +'💵 المبلغ: $'+wfFmt(e.amount)+'\n'
+      +'📝 البيان: '+(e.description||'')+'\n'
+      +(e.person?('👤 '+(e.entry_type==='collection'?'الدافع':'المدفوع له')+': '+e.person+'\n'):'')
+      +(e.handled_by?('🤝 المستلم: '+e.handled_by+'\n'):'')
+      +(e.receipt_no?('🧾 رقم الدفتر: '+e.receipt_no+'\n'):'');
+  }
+  return wfTextSummary();
+}
+async function wfMakePdfB64(){
+  const el=wfBuildShareEl();
+  document.body.appendChild(el);
+  try{
+    const dataUri=await html2pdf().set(wfShareOpts()).from(el).outputPdf('datauristring');
+    return dataUri.split(',')[1];
+  } finally { el.remove(); }
+}
+async function wfShareFile(){
+  closeSendModal();
+  try{
+    toast('⏳ جاري تجهيز الملف…');
+    const b64=await wfMakePdfB64();
+    const bin=atob(b64); const arr=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+    const file=new File([arr],wfShareFileName(),{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:wfShareCtx?'إيصال — صندوق لجنة المياه':'تقرير صندوق لجنة المياه'});
+    } else {
+      const url=URL.createObjectURL(file);
+      const a=document.createElement('a');a.href=url;a.download=file.name;a.click();URL.revokeObjectURL(url);
+      window.open('https://wa.me/?text='+encodeURIComponent(wfShareText()+'\n\n📎 الملف تم تنزيله على جهازك — أرفقه في المحادثة'),'_blank');
+    }
+  }catch(e){ if(String(e).indexOf('Abort')<0) toast('⚠️ '+(e.message||e),'err'); }
+}
+function wfShareWhatsText(){
+  closeSendModal();
+  window.open('https://wa.me/?text='+encodeURIComponent(wfShareText()),'_blank');
+}
+async function wfShareEmail(){
+  closeSendModal();
+  const to=prompt('البريد الإلكتروني للمستلم:');
+  if(!to)return;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to.trim())){alert('⚠️ بريد إلكتروني غير صالح');return;}
+  var s={};
+  try{ if(typeof getMergedIrrSettings==='function')s=getMergedIrrSettings()||{}; }catch(_e){}
+  var senderEmail=s.senderEmail||'noreply@municipality-wadi-el-sitt.org';
+  var senderName='لجنة المياه — بلدية وادي الست';
+  try{
+    toast('⏳ جاري الإنشاء والإرسال…');
+    const b64=await wfMakePdfB64();
+    const el=wfBuildShareEl();
+    await sendEmailViaEdge({
+      sender:{name:senderName,email:senderEmail},
+      to:[{email:to.trim()}],
+      subject:(wfShareCtx?(wfReceiptKind(wfShareCtx)+' '+wfReceiptNum(wfShareCtx)):'تقرير صندوق لجنة المياه')+' — '+new Date().toLocaleDateString('ar-LB'),
+      htmlContent:'<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;max-width:800px">'+el.innerHTML+'</div>',
+      attachment:[{name:wfShareFileName(),content:b64}]
+    });
+    toast('✓ تم الإرسال إلى '+to.trim());
+  }catch(e){ toast('⚠️ فشل الإرسال: '+(e.message||e),'err'); }
 }
 function showTab(t){
   ['ledger','expense','collect','reports'].forEach(x=>{
