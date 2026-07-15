@@ -1479,6 +1479,16 @@ function wfShareOpts(){
 }
 function wfReportFileName(mode){return (mode==='summary'?'التقارير_الملخصة_صندوق_المياه_':'تقرير_صندوق_لجنة_المياه_')+wfToday()+'.pdf';}
 function wfShareFileName(){ return wfShareCtx ? wfShareOpts().filename : wfReportFileName(wfSendMode); }
+function wfTextSummary(){
+  let inc=0,exp=0;
+  wfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+  return '💧 *صندوق لجنة المياه — بلدية وادي الست*\n'
+    +'📅 '+new Date().toLocaleDateString('ar-LB')+'\n\n'
+    +'💰 الرصيد الحالي: $'+wfFmt(inc-exp)+'\n'
+    +'⬇️ إجمالي المداخيل: $'+wfFmt(inc)+'\n'
+    +'⬆️ إجمالي المصاريف: $'+wfFmt(exp)+'\n'
+    +'🧾 عدد الحركات: '+wfEntries.length;
+}
 function wfShareText(){
   if(wfShareCtx){
     const e=wfShareCtx;
