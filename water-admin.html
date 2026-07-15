@@ -236,6 +236,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <button class="btn bp" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfShareFile()">📱 مشاركة الملف (واتساب / تطبيقات)</button>
       <button class="btn" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfShareWhatsText()">💬 واتساب — ملخص نصي</button>
       <button class="btn" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfShareEmail()">📧 بريد إلكتروني + PDF مرفق</button>
+      <button class="btn" style="width:100%;justify-content:center;margin-bottom:8px" onclick="wfCopyText()">📋 نسخ النص (للصقه في أي تطبيق)</button>
       <button class="btn" style="width:100%;justify-content:center" onclick="closeSendModal()">إلغاء</button>
     </div>
   </div>
@@ -1519,10 +1520,26 @@ async function wfShareFile(){
   }catch(e){ if(String(e).indexOf('Abort')<0) toast('⚠️ '+(e.message||e),'err'); }
 }
 function wfOpenWa(text){
-  const url='https://wa.me/?text='+encodeURIComponent(text);
-  const a=document.createElement('a');
-  a.href=url;a.target='_blank';a.rel='noopener';
-  document.body.appendChild(a);a.click();a.remove();
+  const enc=encodeURIComponent(text);
+  const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(isMobile){
+    // direct scheme navigation opens the WhatsApp app — never popup-blocked, works in PWA
+    location.href='whatsapp://send?text='+enc;
+    setTimeout(function(){ if(!document.hidden) location.href='https://wa.me/?text='+enc; },1600);
+  } else {
+    const w=window.open('https://wa.me/?text='+enc,'_blank','noopener');
+    if(!w) location.href='https://wa.me/?text='+enc;
+  }
+}
+async function wfCopyText(){
+  closeSendModal();
+  const t=wfShareText();
+  try{ await navigator.clipboard.writeText(t); toast('✓ تم نسخ النص — الصقه في واتساب'); }
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('✓ تم نسخ النص — الصقه في واتساب');}catch(_e){toast('⚠️ تعذّر النسخ','err');}
+    ta.remove();
+  }
 }
 function wfShareWhatsText(){
   closeSendModal();
