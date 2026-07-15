@@ -305,7 +305,7 @@ async function showWaterApp(user){
   if(location.hash==='#finance'){showSection('fin');}
 }
 
-function doLogout(){sb.auth.signOut().then(function(){location.reload();});}
+function doLogout(){sb.auth.signOut({scope:'local'}).then(function(){location.reload();});}
 
 function closeM(){
   var ov=document.getElementById('OV');
@@ -1392,7 +1392,15 @@ async function wfChangePassword(){
   if(p2===null)return;
   if(p1!==p2){alert('⚠️ كلمتا المرور غير متطابقتين');return;}
   const{error}=await sb.auth.updateUser({password:p1});
-  if(error){alert('⚠️ فشل تغيير كلمة المرور: '+error.message);return;}
+  if(error){
+    if(/session|jwt|token|expired/i.test(error.message)){
+      alert('⚠️ انتهت صلاحية الجلسة. يرجى تسجيل الدخول من جديد ثم إعادة المحاولة.');
+      await sb.auth.signOut({scope:'local'});
+      location.reload();
+      return;
+    }
+    alert('⚠️ فشل تغيير كلمة المرور: '+error.message);return;
+  }
   toast('✓ تم تغيير كلمة المرور بنجاح');
 }
 
