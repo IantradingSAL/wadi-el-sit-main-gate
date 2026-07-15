@@ -906,6 +906,33 @@ const WN_DEFAULT = [
 
 const WN_VERSIONS = [
   {
+    version: '3.2',
+    date: {ar:'تموز 2026', en:'July 2026', fr:'Juillet 2026'},
+    color: '#e8f1fb', badgeColor: '#1a6eb5',
+    features: [
+      {icon:'💰',
+        title:{ar:'صندوق لجنة المياه', en:'Water Committee Fund', fr:'Caisse du comité des eaux'},
+        desc:{ar:'نظام كامل للمصاريف والجباية ضمن صفحة إدارة الري — سجل الحركات مع الرصيد الجاري، إدخال المصاريف، وجباية لكل مشترك مع رقم الإيصال',
+              en:'Full expenses and collection system inside the irrigation admin page — transaction ledger with running balance, expense entry, and per-household collection with receipt numbers',
+              fr:'Système complet de dépenses et de collecte dans la page admin irrigation — registre avec solde courant, saisie des dépenses et collecte par foyer avec numéro de reçu'}},
+      {icon:'📄',
+        title:{ar:'تقارير PDF', en:'PDF Reports', fr:'Rapports PDF'},
+        desc:{ar:'تصدير تقرير كامل أو ملخّص بصيغة PDF بالعربية — السجل، المصاريف حسب العامل والمستلم والمرحلة، والجباية حسب المشترك، مع تصدير CSV',
+              en:'Export full or summary reports as Arabic PDF — ledger, expenses by worker, handler and phase, and collection by household, plus CSV export',
+              fr:'Export de rapports complets ou résumés en PDF arabe — registre, dépenses par ouvrier, réceptionnaire et phase, collecte par foyer, plus export CSV'}},
+      {icon:'📅',
+        title:{ar:'إصلاح نظام إدارة الري', en:'Irrigation Admin Fixed', fr:'Admin irrigation réparé'},
+        desc:{ar:'إصلاح مشكلة تسجيل الدخول وتحميل الجدول في صفحة إدارة الري، مع تصميم موحّد مع باقي البوابة وشعار دائري يعيدك للصفحة الرئيسية',
+              en:'Fixed login and schedule loading in the irrigation admin page, with a unified portal design and a circular logo that returns to the main page',
+              fr:"Correction de la connexion et du chargement du planning dans l'admin irrigation, avec un design unifié et un logo circulaire qui ramène à l'accueil"}},
+      {icon:'🔐',
+        title:{ar:'تحسينات أمنية وجلسات أفضل', en:'Security & Session Improvements', fr:'Sécurité et sessions améliorées'},
+        desc:{ar:'تغيير كلمة المرور من داخل الصفحة، تسجيل الخروج من جهاز واحد لا يقطع الأجهزة الأخرى، ونقل إرسال البريد الإلكتروني إلى الخادم لحماية المفاتيح',
+              en:'In-page password change, logging out on one device no longer disconnects others, and email sending moved server-side to protect API keys',
+              fr:"Changement de mot de passe intégré, la déconnexion d'un appareil ne coupe plus les autres, et l'envoi d'e-mails déplacé côté serveur pour protéger les clés"}},
+    ]
+  },
+  {
     version: '3.1',
     date: {ar:'أبريل 2026', en:'April 2026', fr:'Avril 2026'},
     color: '#fff4e0', badgeColor: '#d88e0a',
