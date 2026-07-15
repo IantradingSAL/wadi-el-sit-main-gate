@@ -251,7 +251,7 @@ async function doLogin(){
   }
 }
 async function doLogout(){
-  await sb.auth.signOut();
+  await sb.auth.signOut({scope:'local'});
   currentUser=null;entries=[];
   document.getElementById('app').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
@@ -266,7 +266,15 @@ async function changePassword(){
   if(p2===null)return;
   if(p1!==p2){alert('⚠️ كلمتا المرور غير متطابقتين');return;}
   const{error}=await sb.auth.updateUser({password:p1});
-  if(error){alert('⚠️ فشل تغيير كلمة المرور: '+error.message);return;}
+  if(error){
+    if(/session|jwt|token|expired/i.test(error.message)){
+      alert('⚠️ انتهت صلاحية الجلسة. يرجى تسجيل الدخول من جديد ثم إعادة المحاولة.');
+      await sb.auth.signOut({scope:'local'});
+      location.reload();
+      return;
+    }
+    alert('⚠️ فشل تغيير كلمة المرور: '+error.message);return;
+  }
   toast('✓ تم تغيير كلمة المرور بنجاح');
 }
 async function enterApp(user){
@@ -523,8 +531,9 @@ function showTab(t){
 window.addEventListener('DOMContentLoaded',async function(){
   sb=window.supabase.createClient(SB_URL,SB_KEY);
   try{
-    const{data}=await sb.auth.getSession();
-    if(data&&data.session&&data.session.user){enterApp(data.session.user);}
+    const{data,error}=await sb.auth.getUser();
+    if(!error&&data&&data.user){enterApp(data.user);}
+    else if(error){await sb.auth.signOut({scope:'local'});}
   }catch(e){}
 });
 </script>
