@@ -1332,6 +1332,11 @@ function wfFitForPdf(el,opts){
   const w=Math.max(el.scrollWidth,el.offsetWidth,560);
   el.style.width=w+'px';
   if(el.parentNode)el.parentNode.style.width=w+'px';
+  // html2canvas drops inter-word spaces in Arabic text — swap them for NBSP + a zero-width break point
+  try{
+    const tw=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
+    let n; while((n=tw.nextNode())){ if(n.nodeValue&&n.nodeValue.indexOf(' ')>-1) n.nodeValue=n.nodeValue.replace(/ /g,'\u00A0\u200B'); }
+  }catch(_e){}
   opts.html2canvas=Object.assign({},opts.html2canvas,{width:w,windowWidth:w,x:0,y:0,scrollX:0,scrollY:0});
   return opts;
 }
@@ -1409,6 +1414,7 @@ async function exportPDF(mode){
   const btnLabel=btn.textContent;
   btn.disabled=true; btn.textContent='⏳ جاري إنشاء PDF…';
   try{
+    try{await document.fonts.ready;}catch(_e){}
     const el=wfBuildReportEl(mode);
     const hold=wfMountForPdf(el);
     try{
@@ -1522,6 +1528,7 @@ function wfShareText(){
   return wfTextSummary();
 }
 async function wfMakePdfB64(){
+  try{await document.fonts.ready;}catch(_e){}
   const el=wfBuildShareEl();
   const hold=wfMountForPdf(el);
   try{
