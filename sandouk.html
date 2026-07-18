@@ -75,7 +75,15 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 .bf-tblwrap table{width:100%;border-collapse:collapse;font-size:13px}
 .bf-tblwrap th{background:#eef3fa;color:#0f4d82;padding:8px 6px;font-weight:800;white-space:nowrap;text-align:right}
 .bf-tblwrap td{padding:7px 6px;border-bottom:1px solid #eef2f5;white-space:nowrap}
-.bf-tblwrap tr:hover td{background:#f8fafc}
+.bf-tblwrap tbody tr{cursor:pointer;transition:background .15s}
+.bf-tblwrap tbody tr:hover td{background:#e8f1fb}
+.bf-kpi{transition:transform .15s,box-shadow .15s}
+.bf-kpi:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,77,130,.14)}
+.bf-tab{transition:background .15s,color .15s,transform .1s}
+.bf-tab:hover{transform:translateY(-1px)}
+.bf-tab:not(.on):hover{background:#eef3fa;color:#0f4d82}
+.bf-actbtn{transition:transform .12s}
+.bf-actbtn:hover{transform:scale(1.25)}
 .bf-neg{color:#a83232;font-weight:700}.bf-pos{color:#1f7a45;font-weight:700}
 .bf-balc{color:#0f4d82;font-weight:800}
 .bf-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
@@ -123,6 +131,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
     <!-- LEDGER -->
     <div id="bf-pane-ledger" class="bf-card">
       <div class="bf-filters">
+        <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
         <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option></select></div>
         <div><label class="fl">الفئة</label><select class="fi" id="bf-f-cat" onchange="bfRenderLedger()"><option value="">الكل</option></select></div>
         <div><label class="fl">العملة</label><select class="fi" id="bf-f-cur" onchange="bfRenderLedger()"><option value="">الكل</option><option value="USD">دولار $</option><option value="LBP">ليرة ل.ل.</option></select></div>
@@ -241,6 +250,21 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
   </div>
 </div>
 
+<!-- CASE DETAIL MODAL -->
+<div class="bf-share-ov" id="bf-case-ov" onclick="if(event.target===this)bfCloseCase()">
+  <div class="bf-share-box" style="max-width:470px">
+    <div id="bf-case-body"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfCaseShare()">🧾 السند والمشاركة</button>
+      <button class="bf-share-btn" style="flex:1;justify-content:center;margin-bottom:0" onclick="bfCasePrint()">🖨️ طباعة</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="bf-share-btn" style="flex:1;justify-content:center;color:#a83232;margin-bottom:0" onclick="bfCaseDel()">🗑️ حذف الحركة</button>
+      <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfCloseCase()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
 <!-- READY-TO-SHARE MODAL (iOS needs a fresh tap for navigator.share) -->
 <div class="bf-share-ov" id="bf-ready-ov" onclick="if(event.target===this)document.getElementById('bf-ready-ov').style.display='none'">
   <div class="bf-share-box" style="text-align:center">
@@ -341,6 +365,7 @@ function bfFiltered(){
   const ft=document.getElementById('bf-f-type').value, fc=document.getElementById('bf-f-cat').value,
         fcur=document.getElementById('bf-f-cur').value,
         fpay=document.getElementById('bf-f-pay').value,
+        fq=(document.getElementById('bf-f-q').value||'').trim().toLowerCase(),
         from=document.getElementById('bf-f-from').value, to=document.getElementById('bf-f-to').value;
   let balU=0,balL=0; const out=[];
   bfEntries.forEach(e=>{
@@ -350,12 +375,16 @@ function bfFiltered(){
     if(fcur&&(e.currency||'USD')!==fcur)return;
     if(fpay&&(e.payment_method||'cash')!==fpay)return;
     if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
+    if(fq){
+      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount].join(' ').toLowerCase();
+      if(hay.indexOf(fq)<0)return;
+    }
     out.push(Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)}));
   });
   return out;
 }
 function bfRenderLedger(){
-  const rows=bfFiltered().map(e=>'<tr>'
+  const rows=bfFiltered().map(e=>'<tr onclick="bfOpenCase(\''+e.id+'\')">'
     +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
     +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+'</td>'
     +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+'</td>'
@@ -365,7 +394,7 @@ function bfRenderLedger(){
     +'<td>'+(e.person||'')+'</td>'
     +'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+'</td>'
     +'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'
-    +'<td style="white-space:nowrap">'
+    +'<td style="white-space:nowrap" onclick="event.stopPropagation()">'
       +((e.documents&&e.documents.length)?'<button class="bf-actbtn" title="المرفقات" onclick="bfDocsById(\''+e.id+'\')">📎'+e.documents.length+'</button>':'')
       +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
       +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
@@ -801,6 +830,38 @@ function bfDocsById(id){
   document.getElementById('bf-docs-ov').style.display='flex';
 }
 function bfCloseDocs(){document.getElementById('bf-docs-ov').style.display='none';}
+
+// ── 🗂️ CASE DETAIL ──
+let bfCaseId=null;
+function bfOpenCase(id){
+  const e=bfEntries.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  bfCaseId=e.id;
+  const c=bfColor(e);
+  const dr=(l,v)=>v?'<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 2px;border-bottom:1px dashed #eef0f4;font-size:13.5px"><div style="color:#8a8f9c;font-weight:700;white-space:nowrap">'+l+'</div><div style="text-align:left;font-weight:700">'+v+'</div></div>':'';
+  document.getElementById('bf-case-body').innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">'
+    +'<div style="background:'+c+';color:#fff;font-size:14px;font-weight:800;padding:6px 14px;border-radius:8px">'+bfKind(e)+'</div>'
+    +'<div style="font-weight:800;color:#0f4d82;direction:ltr">'+(e.receipt_no||'')+'</div>'
+    +'</div>'
+    +'<div style="text-align:center;background:#f7fafc;border:1.5px solid '+c+';border-radius:12px;padding:9px;margin-bottom:8px">'
+    +'<span style="font-size:24px;font-weight:800;color:'+c+'">'+bfMoney(e.amount,e.currency)+'</span></div>'
+    +dr('التاريخ','<span style="direction:ltr;unicode-bidi:embed">'+e.entry_date.split('-').reverse().join('/')+'</span>')
+    +dr('الفئة',e.category)
+    +dr('طريقة الدفع',bfPay(e))
+    +dr('البيان',e.description)
+    +dr(e.entry_type==='income'?'الدافع':'المستفيد',e.person)
+    +dr(e.entry_type==='income'?'المستلم':'المسلّم',e.handled_by)
+    +dr('ملاحظات',e.notes)
+    +dr('أُدخلت بواسطة',e.created_by)
+    +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
+      +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
+  document.getElementById('bf-case-ov').style.display='flex';
+}
+function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none';bfCaseId=null;}
+function bfCaseShare(){const id=bfCaseId;bfCloseCase();if(id)bfReceiptById(id);}
+function bfCasePrint(){const id=bfCaseId;bfCloseCase();if(id)bfPrintById(id);}
+function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
 
 // ── 🔐 AUTH (standalone) ──
 const BF_ALLOWED=['mayor','admin','sandouk'];
