@@ -242,11 +242,29 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 <div class="bf-share-ov" id="bf-share-ov" onclick="if(event.target===this)bfCloseSendModal()">
   <div class="bf-share-box">
     <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:14px" id="bf-share-title">🧾 مشاركة السند</div>
+    <button class="bf-share-btn" id="bf-share-sign" style="display:none" onclick="bfSignFromShare()">✍️ <span>توقيع على الشاشة (المستلم / الدافع)</span></button>
     <button class="bf-share-btn" onclick="bfPrint()">🖨️ <span>طباعة السند</span></button>
     <button class="bf-share-btn" onclick="bfShareFile()">📎 <span>مشاركة كملف PDF (واتساب / حفظ)</span></button>
     <button class="bf-share-btn" onclick="bfShareWaText()">🟢 <span>إرسال ملخّص نصي عبر واتساب</span></button>
     <button class="bf-share-btn" onclick="bfCopyText()">📋 <span>نسخ النص</span></button>
     <button class="bf-share-btn" style="justify-content:center;color:#999" onclick="bfCloseSendModal()">إغلاق</button>
+  </div>
+</div>
+
+<!-- SIGNATURE PAD (DHL-style) -->
+<div class="bf-share-ov" id="bf-sign-ov">
+  <div class="bf-share-box" style="max-width:540px">
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:3px">✍️ التوقيع على السند</div>
+    <div id="bf-sign-sub" style="font-size:12.5px;color:#888;margin-bottom:10px"></div>
+    <div style="border:2px dashed #b9c6d8;border-radius:12px;background:#fff;touch-action:none">
+      <canvas id="bf-sign-cv" style="width:100%;height:190px;display:block;border-radius:12px;touch-action:none"></canvas>
+    </div>
+    <div style="font-size:11px;color:#aaa;text-align:center;margin:6px 0 12px">وقّع بإصبعك (أو بالفأرة) داخل الإطار</div>
+    <div style="display:flex;gap:8px">
+      <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfSignSave()">✔️ حفظ التوقيع</button>
+      <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;margin-bottom:0" onclick="bfSignClear()">🧹 مسح</button>
+      <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;color:#999;margin-bottom:0" onclick="bfSignClose()">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -257,6 +275,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
       <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfCaseShare()">🧾 السند والمشاركة</button>
       <button class="bf-share-btn" style="flex:1;justify-content:center;margin-bottom:0" onclick="bfCasePrint()">🖨️ طباعة</button>
+      <button class="bf-share-btn" style="flex:1;justify-content:center;margin-bottom:0" onclick="bfCaseSign()">✍️ توقيع</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="bf-share-btn" style="flex:1;justify-content:center;color:#a83232;margin-bottom:0" onclick="bfCaseDel()">🗑️ حذف الحركة</button>
@@ -386,7 +405,7 @@ function bfFiltered(){
 function bfRenderLedger(){
   const rows=bfFiltered().map(e=>'<tr onclick="bfOpenCase(\''+e.id+'\')">'
     +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
-    +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+'</td>'
+    +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(e.signature?' ✍️':'')+'</td>'
     +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+'</td>'
     +'<td style="font-size:12px">'+(e.category||'')+'</td>'
     +'<td style="font-size:12px">'+bfPay(e)+'</td>'
@@ -524,7 +543,11 @@ function bfReceiptHTML(e){
       +'<div style="font-size:33px;font-weight:800;color:'+c+';direction:ltr;unicode-bidi:embed">'+(e.currency==='LBP'?bfFmt(e.amount)+' ل.ل.':'$'+bfFmt(e.amount))+'</div>'
     +'</div>'
     +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
-      +'<div style="flex:1">'+(isIn?'توقيع الدافع':'توقيع المستفيد')+'<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
+      +'<div style="flex:1">'+(isIn?'توقيع الدافع':'توقيع المستفيد')+'<br>'
+        +(e.signature?'<img src="'+e.signature+'" style="height:44px;margin:1px 0">':'<br>')
+        +'<div style="border-top:1.5px solid #bbb;margin:0 12px"></div>'
+        +(e.signature?'<div style="font-size:8.5px;color:#1f7a45;margin-top:2px;font-weight:700">✓ موقّع إلكترونياً'+(e.signed_at?' · '+new Date(e.signed_at).toLocaleDateString('ar-LB'):'')+'</div>':'')
+      +'</div>'
       +'<div style="flex:1">أمين الصندوق<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
       +'<div style="flex:1">رئيس البلدية<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
     +'</div>'
@@ -553,6 +576,9 @@ function bfPrintById(id){
 function bfOpenReceiptShare(e){
   bfShareCtx=e;
   document.getElementById('bf-share-title').textContent='🧾 '+bfKind(e)+' — '+(e.receipt_no||'');
+  const sb2=document.getElementById('bf-share-sign');
+  sb2.style.display='';
+  sb2.querySelector('span').textContent=e.signature?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع الدافع على الشاشة':'✍️ توقيع المستلم على الشاشة');
   document.getElementById('bf-share-ov').style.display='flex';
 }
 function bfShareLast(){
@@ -562,6 +588,7 @@ function bfShareLast(){
 function bfOpenSendModal(){
   bfShareCtx=null;
   document.getElementById('bf-share-title').textContent='📤 مشاركة تقرير الصندوق';
+  document.getElementById('bf-share-sign').style.display='none';
   document.getElementById('bf-share-ov').style.display='flex';
 }
 function bfCloseSendModal(){document.getElementById('bf-share-ov').style.display='none';}
@@ -702,6 +729,7 @@ function bfShareText(){
       +((e.documents&&e.documents.length)?('المرفقات: '+e.documents.length+' مستند\n'):'')
       +(e.person?((e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
       +(e.handled_by?((e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'')
+      +(e.signature?'موقّع إلكترونياً ✓\n':'')
       +SEP;
   }
   let iU=0,eU=0,iL=0,eL=0;
@@ -853,6 +881,7 @@ function bfOpenCase(id){
     +dr(e.entry_type==='income'?'الدافع':'المستفيد',e.person)
     +dr(e.entry_type==='income'?'المستلم':'المسلّم',e.handled_by)
     +dr('ملاحظات',e.notes)
+    +dr('التوقيع',e.signature?'موقّع إلكترونياً ✓':'')
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
       +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
@@ -862,6 +891,60 @@ function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none
 function bfCaseShare(){const id=bfCaseId;bfCloseCase();if(id)bfReceiptById(id);}
 function bfCasePrint(){const id=bfCaseId;bfCloseCase();if(id)bfPrintById(id);}
 function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
+
+// ── ✍️ SIGNATURE PAD ──
+let bfSignTarget=null, bfSignCtx2=null, bfSignDrawn=false;
+function bfSignFromShare(){const e=bfShareCtx;bfCloseSendModal();if(e&&e.id)bfOpenSign(e.id);}
+function bfCaseSign(){const id=bfCaseId;bfCloseCase();if(id)bfOpenSign(id);}
+function bfOpenSign(id){
+  const e=bfEntries.find(x=>String(x.id)===String(id)); if(!e)return;
+  bfSignTarget=e;
+  document.getElementById('bf-sign-sub').textContent=(e.entry_type==='income'?'توقيع الدافع':'توقيع المستلم')+(e.person?' — '+e.person:'')+' · '+(e.receipt_no||'');
+  document.getElementById('bf-sign-ov').style.display='flex';
+  setTimeout(bfSignInit,80);
+}
+function bfSignInit(){
+  const cv=document.getElementById('bf-sign-cv');
+  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  const ctx=cv.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0f2f56';
+  bfSignCtx2=ctx; bfSignDrawn=false;
+  if(!cv._bound){
+    cv._bound=true;
+    let drawing=false,lx=0,ly=0;
+    const pos=ev=>{const b=cv.getBoundingClientRect();return[ev.clientX-b.left,ev.clientY-b.top];};
+    cv.addEventListener('pointerdown',ev=>{ev.preventDefault();drawing=true;const p=pos(ev);lx=p[0];ly=p[1];try{cv.setPointerCapture(ev.pointerId);}catch(_e){}});
+    cv.addEventListener('pointermove',ev=>{
+      if(!drawing)return;ev.preventDefault();
+      const p=pos(ev);
+      bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(p[0],p[1]);bfSignCtx2.stroke();
+      lx=p[0];ly=p[1];bfSignDrawn=true;
+    });
+    const end=()=>{drawing=false;};
+    cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);cv.addEventListener('pointerleave',end);
+  }
+}
+function bfSignClear(){
+  const cv=document.getElementById('bf-sign-cv');
+  if(bfSignCtx2)bfSignCtx2.clearRect(0,0,cv.width,cv.height);
+  bfSignDrawn=false;
+}
+function bfSignClose(){document.getElementById('bf-sign-ov').style.display='none';bfSignTarget=null;}
+async function bfSignSave(){
+  if(!bfSignTarget)return;
+  if(!bfSignDrawn){toast('⚠️ الرجاء التوقيع داخل الإطار أولاً','err');return;}
+  const cv=document.getElementById('bf-sign-cv');
+  const dataUrl=cv.toDataURL('image/png');
+  const{data,error}=await sb.from('baladieh_finance').update({signature:dataUrl,signed_at:new Date().toISOString()}).eq('id',bfSignTarget.id).select();
+  if(error){toast('⚠️ فشل حفظ التوقيع: '+error.message,'err');return;}
+  toast('✓ تم حفظ التوقيع على السند');
+  const saved=data&&data[0];
+  bfSignClose();
+  await bfLoad();
+  if(saved){bfLastSaved=saved;bfOpenReceiptShare(saved);}
+}
 
 // ── 🔐 AUTH (standalone) ──
 const BF_ALLOWED=['mayor','admin','sandouk'];
