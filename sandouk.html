@@ -255,15 +255,17 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 <div class="bf-share-ov" id="bf-sign-ov">
   <div class="bf-share-box" style="max-width:540px">
     <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:3px">✍️ التوقيع على السند</div>
-    <div id="bf-sign-sub" style="font-size:12.5px;color:#888;margin-bottom:10px"></div>
+    <div id="bf-sign-sub" style="font-size:12.5px;color:#888;margin-bottom:8px"></div>
+    <div style="font-size:12px;font-weight:800;color:#444;margin-bottom:6px">من يوقّع الآن؟ <span style="color:#999;font-weight:700">(التوقيع اختياري — لا يمنع أي عملية)</span></div>
+    <div id="bf-sign-roles" style="display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap"></div>
     <div style="border:2px dashed #b9c6d8;border-radius:12px;background:#fff;touch-action:none">
-      <canvas id="bf-sign-cv" style="width:100%;height:190px;display:block;border-radius:12px;touch-action:none"></canvas>
+      <canvas id="bf-sign-cv" style="width:100%;height:190px;display:block;border-radius:12px;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none"></canvas>
     </div>
     <div style="font-size:11px;color:#aaa;text-align:center;margin:6px 0 12px">وقّع بإصبعك (أو بالفأرة) داخل الإطار</div>
     <div style="display:flex;gap:8px">
       <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfSignSave()">✔️ حفظ التوقيع</button>
       <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;margin-bottom:0" onclick="bfSignClear()">🧹 مسح</button>
-      <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;color:#999;margin-bottom:0" onclick="bfSignClose()">إلغاء</button>
+      <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;color:#999;margin-bottom:0" onclick="bfSignFinish()">إنهاء</button>
     </div>
   </div>
 </div>
@@ -317,6 +319,23 @@ function bfFmt(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits
 function bfMoney(a,c){return (c==='LBP') ? bfFmt(a)+' ل.ل.' : '$'+bfFmt(a);}
 function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار أميركي';}
 const BF_PAY={cash:'نقداً',transfer:'حوالة مصرفية',whish:'Whish'};
+const BF_SIGN_ROLES=['person','cashier','mayor'];
+function bfSigs(e){
+  const s=(e.signatures&&typeof e.signatures==='object')?e.signatures:{};
+  if(e.signature&&!(s.person&&s.person.img))return Object.assign({person:{img:e.signature,at:e.signed_at}},s);
+  return s;
+}
+function bfSigCount(e){const s=bfSigs(e);return BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).length;}
+function bfSignRoleLabel(e,role){
+  if(role==='person')return e.entry_type==='income'?'الدافع':'المستفيد';
+  if(role==='cashier')return 'أمين الصندوق';
+  return 'رئيس البلدية';
+}
+function bfSignRoleName(e,role){
+  if(role==='person')return e.person||'';
+  if(role==='cashier')return e.handled_by||'';
+  return '';
+}
 function bfPay(e){return BF_PAY[e.payment_method]||'نقداً';}
 function bfSumTxt(v){const p=[];if(v.usd)p.push('$'+bfFmt(v.usd));if(v.lbp)p.push(bfFmt(v.lbp)+' ل.ل.');return p.join(' + ')||'$0';}
 function bfToday(){return new Date().toISOString().slice(0,10);}
@@ -405,7 +424,7 @@ function bfFiltered(){
 function bfRenderLedger(){
   const rows=bfFiltered().map(e=>'<tr onclick="bfOpenCase(\''+e.id+'\')">'
     +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
-    +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(e.signature?' ✍️':'')+'</td>'
+    +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' ✍️'+bfSigCount(e):'')+'</td>'
     +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+'</td>'
     +'<td style="font-size:12px">'+(e.category||'')+'</td>'
     +'<td style="font-size:12px">'+bfPay(e)+'</td>'
@@ -415,6 +434,7 @@ function bfRenderLedger(){
     +'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'
     +'<td style="white-space:nowrap" onclick="event.stopPropagation()">'
       +((e.documents&&e.documents.length)?'<button class="bf-actbtn" title="المرفقات" onclick="bfDocsById(\''+e.id+'\')">📎'+e.documents.length+'</button>':'')
+      +'<button class="bf-actbtn" title="توقيع" onclick="bfOpenSign(\''+e.id+'\')">✍️</button>'
       +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
       +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
       +'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>'
@@ -509,6 +529,15 @@ function bfExportCSV(){
 function bfReceiptHTML(e){
   const c=bfColor(e);
   const isIn=e.entry_type!=='expense';
+  const sigs=bfSigs(e);
+  const sigBlock=(label,role)=>{
+    const s=sigs[role];
+    return '<div style="flex:1">'+label+'<br>'
+      +(s&&s.img?'<img src="'+s.img+'" style="height:44px;margin:1px 0">':'<br>')
+      +'<div style="border-top:1.5px solid #bbb;margin:0 12px"></div>'
+      +(s&&s.img?'<div style="font-size:8.5px;color:#1f7a45;margin-top:2px;font-weight:700">✓ موقّع إلكترونياً'+(s.at?' · '+new Date(s.at).toLocaleDateString('ar-LB'):'')+'</div>':'')
+    +'</div>';
+  };
   const row=(l,v)=>v?'<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 2px;border-bottom:1px dashed #e5e9f0;font-size:13.5px"><div style="color:#8a8f9c;font-weight:700;white-space:nowrap">'+l+'</div><div style="text-align:left;font-weight:700;color:#1a1a2e">'+v+'</div></div>':'';
   return ''
   +'<div style="position:relative;border:2.5px solid #0f4d82;border-radius:4px;padding:5px;background:#fff">'
@@ -543,13 +572,9 @@ function bfReceiptHTML(e){
       +'<div style="font-size:33px;font-weight:800;color:'+c+';direction:ltr;unicode-bidi:embed">'+(e.currency==='LBP'?bfFmt(e.amount)+' ل.ل.':'$'+bfFmt(e.amount))+'</div>'
     +'</div>'
     +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
-      +'<div style="flex:1">'+(isIn?'توقيع الدافع':'توقيع المستفيد')+'<br>'
-        +(e.signature?'<img src="'+e.signature+'" style="height:44px;margin:1px 0">':'<br>')
-        +'<div style="border-top:1.5px solid #bbb;margin:0 12px"></div>'
-        +(e.signature?'<div style="font-size:8.5px;color:#1f7a45;margin-top:2px;font-weight:700">✓ موقّع إلكترونياً'+(e.signed_at?' · '+new Date(e.signed_at).toLocaleDateString('ar-LB'):'')+'</div>':'')
-      +'</div>'
-      +'<div style="flex:1">أمين الصندوق<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
-      +'<div style="flex:1">رئيس البلدية<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
+      +sigBlock(isIn?'توقيع الدافع':'توقيع المستفيد','person')
+      +sigBlock('أمين الصندوق','cashier')
+      +sigBlock('رئيس البلدية','mayor')
     +'</div>'
   +'</div>'
   +'<div style="display:flex;justify-content:space-between;padding:6px 10px 2px;font-size:9.5px;color:#98a0ad">'
@@ -729,7 +754,7 @@ function bfShareText(){
       +((e.documents&&e.documents.length)?('المرفقات: '+e.documents.length+' مستند\n'):'')
       +(e.person?((e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
       +(e.handled_by?((e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'')
-      +(e.signature?'موقّع إلكترونياً ✓\n':'')
+      +(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k));return L.length?('موقّع إلكترونياً ✓ ('+L.join('، ')+')\n'):'';})()
       +SEP;
   }
   let iU=0,eU=0,iL=0,eL=0;
@@ -881,7 +906,7 @@ function bfOpenCase(id){
     +dr(e.entry_type==='income'?'الدافع':'المستفيد',e.person)
     +dr(e.entry_type==='income'?'المستلم':'المسلّم',e.handled_by)
     +dr('ملاحظات',e.notes)
-    +dr('التوقيع',e.signature?'موقّع إلكترونياً ✓':'')
+    +dr('التواقيع',(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k)+' ✓');return L.length?L.join(' · '):'';})())
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
       +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
@@ -893,19 +918,38 @@ function bfCasePrint(){const id=bfCaseId;bfCloseCase();if(id)bfPrintById(id);}
 function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
 
 // ── ✍️ SIGNATURE PAD ──
-let bfSignTarget=null, bfSignCtx2=null, bfSignDrawn=false;
+let bfSignTarget=null, bfSignCtx2=null, bfSignDrawn=false, bfSignRole='person', bfSignedAny=false;
 function bfSignFromShare(){const e=bfShareCtx;bfCloseSendModal();if(e&&e.id)bfOpenSign(e.id);}
 function bfCaseSign(){const id=bfCaseId;bfCloseCase();if(id)bfOpenSign(id);}
 function bfOpenSign(id){
   const e=bfEntries.find(x=>String(x.id)===String(id)); if(!e)return;
-  bfSignTarget=e;
-  document.getElementById('bf-sign-sub').textContent=(e.entry_type==='income'?'توقيع الدافع':'توقيع المستلم')+(e.person?' — '+e.person:'')+' · '+(e.receipt_no||'');
+  bfSignTarget=e; bfSignedAny=false;
+  const s=bfSigs(e);
+  bfSignRole=BF_SIGN_ROLES.find(k=>!(s[k]&&s[k].img))||'person';
+  document.getElementById('bf-sign-sub').textContent=bfKind(e)+' '+(e.receipt_no||'')+' — '+bfMoney(e.amount,e.currency);
+  bfSignRenderRoles();
   document.getElementById('bf-sign-ov').style.display='flex';
+  document.body.style.overflow='hidden';
   setTimeout(bfSignInit,80);
 }
+function bfSignRenderRoles(){
+  const e=bfSignTarget; if(!e)return;
+  const s=bfSigs(e);
+  document.getElementById('bf-sign-roles').innerHTML=BF_SIGN_ROLES.map(k=>{
+    const signed=!!(s[k]&&s[k].img);
+    const on=k===bfSignRole;
+    const name=bfSignRoleName(e,k);
+    return '<button onclick="bfSignPick(\''+k+'\')" style="flex:1;min-width:105px;padding:8px 6px;border-radius:10px;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;'
+      +(on?'background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:1.5px solid #0f4d82;':'background:#fff;color:#444;border:1.5px solid #dfe5ee;')
+      +'">'+bfSignRoleLabel(e,k)+(signed?' ✓':'')+(name?'<br><span style="font-weight:700;font-size:10.5px;opacity:.8">'+name+'</span>':'')+'</button>';
+  }).join('');
+}
+function bfSignPick(role){bfSignRole=role;bfSignClear();bfSignRenderRoles();}
 function bfSignInit(){
   const cv=document.getElementById('bf-sign-cv');
-  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  const r=cv.getBoundingClientRect();
+  if(r.width<10){setTimeout(bfSignInit,120);return;} // layout not ready yet
+  const dpr=window.devicePixelRatio||1;
   cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
   const ctx=cv.getContext('2d');
   ctx.scale(dpr,dpr);
@@ -914,16 +958,24 @@ function bfSignInit(){
   if(!cv._bound){
     cv._bound=true;
     let drawing=false,lx=0,ly=0;
-    const pos=ev=>{const b=cv.getBoundingClientRect();return[ev.clientX-b.left,ev.clientY-b.top];};
-    cv.addEventListener('pointerdown',ev=>{ev.preventDefault();drawing=true;const p=pos(ev);lx=p[0];ly=p[1];try{cv.setPointerCapture(ev.pointerId);}catch(_e){}});
-    cv.addEventListener('pointermove',ev=>{
-      if(!drawing)return;ev.preventDefault();
-      const p=pos(ev);
+    const P=(x,y)=>{const b=cv.getBoundingClientRect();return[x-b.left,y-b.top];};
+    const start=(x,y)=>{drawing=true;const p=P(x,y);lx=p[0];ly=p[1];
+      // نقطة عند اللمس حتى لو لم يتحرك الإصبع
+      bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(lx+0.1,ly+0.1);bfSignCtx2.stroke();bfSignDrawn=true;};
+    const move=(x,y)=>{if(!drawing)return;const p=P(x,y);
       bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(p[0],p[1]);bfSignCtx2.stroke();
-      lx=p[0];ly=p[1];bfSignDrawn=true;
-    });
+      lx=p[0];ly=p[1];bfSignDrawn=true;};
     const end=()=>{drawing=false;};
-    cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);cv.addEventListener('pointerleave',end);
+    // touch أولاً — الأكثر موثوقية على الهواتف
+    cv.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();const t=ev.touches[0];if(t)start(t.clientX,t.clientY);},{passive:false});
+    cv.addEventListener('touchmove',ev=>{ev.preventDefault();ev.stopPropagation();const t=ev.touches[0];if(t)move(t.clientX,t.clientY);},{passive:false});
+    cv.addEventListener('touchend',ev=>{ev.preventDefault();end();},{passive:false});
+    cv.addEventListener('touchcancel',end);
+    // فأرة لأجهزة الكمبيوتر
+    cv.addEventListener('mousedown',ev=>{ev.preventDefault();start(ev.clientX,ev.clientY);});
+    cv.addEventListener('mousemove',ev=>move(ev.clientX,ev.clientY));
+    cv.addEventListener('mouseup',end);
+    cv.addEventListener('mouseleave',end);
   }
 }
 function bfSignClear(){
@@ -931,19 +983,36 @@ function bfSignClear(){
   if(bfSignCtx2)bfSignCtx2.clearRect(0,0,cv.width,cv.height);
   bfSignDrawn=false;
 }
-function bfSignClose(){document.getElementById('bf-sign-ov').style.display='none';bfSignTarget=null;}
+function bfSignClose(){document.getElementById('bf-sign-ov').style.display='none';document.body.style.overflow='';bfSignTarget=null;}
+function bfSignFinish(){
+  const e=bfSignTarget;
+  document.getElementById('bf-sign-ov').style.display='none';
+  document.body.style.overflow='';
+  bfSignTarget=null;
+  if(e&&bfSignedAny){
+    const fresh=bfEntries.find(x=>String(x.id)===String(e.id))||e;
+    bfLastSaved=fresh; bfOpenReceiptShare(fresh);
+  }
+}
 async function bfSignSave(){
   if(!bfSignTarget)return;
   if(!bfSignDrawn){toast('⚠️ الرجاء التوقيع داخل الإطار أولاً','err');return;}
   const cv=document.getElementById('bf-sign-cv');
   const dataUrl=cv.toDataURL('image/png');
-  const{data,error}=await sb.from('baladieh_finance').update({signature:dataUrl,signed_at:new Date().toISOString()}).eq('id',bfSignTarget.id).select();
+  const sigs=Object.assign({},bfSigs(bfSignTarget));
+  sigs[bfSignRole]={img:dataUrl,at:new Date().toISOString()};
+  const{data,error}=await sb.from('baladieh_finance').update({signatures:sigs}).eq('id',bfSignTarget.id).select();
   if(error){toast('⚠️ فشل حفظ التوقيع: '+error.message,'err');return;}
-  toast('✓ تم حفظ التوقيع على السند');
-  const saved=data&&data[0];
-  bfSignClose();
+  bfSignedAny=true;
+  toast('✓ تم حفظ توقيع '+bfSignRoleLabel(bfSignTarget,bfSignRole)+' — يمكن لطرف آخر التوقيع أو اضغط إنهاء');
+  if(data&&data[0])bfSignTarget=data[0];
   await bfLoad();
-  if(saved){bfLastSaved=saved;bfOpenReceiptShare(saved);}
+  const fresh=bfEntries.find(x=>String(x.id)===String(bfSignTarget.id));
+  if(fresh)bfSignTarget=fresh;
+  const s=bfSigs(bfSignTarget);
+  bfSignRole=BF_SIGN_ROLES.find(k=>!(s[k]&&s[k].img))||bfSignRole;
+  bfSignClear();
+  bfSignRenderRoles();
 }
 
 // ── 🔐 AUTH (standalone) ──
