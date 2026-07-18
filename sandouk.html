@@ -97,7 +97,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 #bf-screen .fi{margin-bottom:10px}
 .bf-actbtn{border:none;background:none;cursor:pointer;font-size:15px;padding:2px}
 .bf-share-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9500;display:none;align-items:center;justify-content:center;padding:16px}
-.bf-share-box{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px}
+.bf-share-box{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px;max-height:92vh;overflow-y:auto}
 .bf-share-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:1.5px solid #e0e6ef;border-radius:12px;background:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;color:#1a1a2e}
 .bf-share-btn:hover{background:#f5f8fc;border-color:#1a6eb5}
 </style>
@@ -263,9 +263,9 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
     </div>
     <div style="font-size:11px;color:#aaa;text-align:center;margin:6px 0 12px">وقّع بإصبعك (أو بالفأرة) داخل الإطار</div>
     <div style="display:flex;gap:8px">
-      <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfSignSave()">✔️ حفظ التوقيع</button>
-      <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;margin-bottom:0" onclick="bfSignClear()">🧹 مسح</button>
-      <button class="bf-share-btn" style="flex:0 0 auto;justify-content:center;color:#999;margin-bottom:0" onclick="bfSignFinish()">إنهاء</button>
+      <button class="bf-share-btn" style="flex:2;width:auto;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfSignSave()">✔️ حفظ التوقيع</button>
+      <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;margin-bottom:0" onclick="bfSignClear()">🧹 مسح</button>
+      <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#0f4d82;font-weight:800;border-color:#0f4d82;margin-bottom:0" onclick="bfSignFinish()">✅ إنهاء</button>
     </div>
   </div>
 </div>
@@ -944,7 +944,30 @@ function bfSignRenderRoles(){
       +'">'+bfSignRoleLabel(e,k)+(signed?' ✓':'')+(name?'<br><span style="font-weight:700;font-size:10.5px;opacity:.8">'+name+'</span>':'')+'</button>';
   }).join('');
 }
-function bfSignPick(role){bfSignRole=role;bfSignClear();bfSignRenderRoles();}
+async function bfSignCommit(role){
+  if(!bfSignTarget||!bfSignDrawn)return false;
+  const cv=document.getElementById('bf-sign-cv');
+  const dataUrl=cv.toDataURL('image/png');
+  const sigs=Object.assign({},bfSigs(bfSignTarget));
+  sigs[role]={img:dataUrl,at:new Date().toISOString()};
+  const{data,error}=await sb.from('baladieh_finance').update({signatures:sigs}).eq('id',bfSignTarget.id).select();
+  if(error){toast('⚠️ فشل حفظ التوقيع: '+error.message,'err');return false;}
+  bfSignedAny=true;
+  if(data&&data[0])bfSignTarget=data[0];
+  toast('✓ تم حفظ توقيع '+bfSignRoleLabel(bfSignTarget,role));
+  bfSignClear();
+  bfSignRenderRoles();
+  bfLoad().then(function(){
+    const f=bfEntries.find(x=>String(x.id)===String(bfSignTarget&&bfSignTarget.id));
+    if(f){bfSignTarget=f;bfSignRenderRoles();}
+  });
+  return true;
+}
+async function bfSignPick(role){
+  // الانتقال إلى موقّع آخر يحفظ التوقيع الحالي تلقائياً
+  if(bfSignDrawn)await bfSignCommit(bfSignRole);
+  bfSignRole=role;bfSignClear();bfSignRenderRoles();
+}
 function bfSignInit(){
   const cv=document.getElementById('bf-sign-cv');
   const r=cv.getBoundingClientRect();
@@ -984,7 +1007,8 @@ function bfSignClear(){
   bfSignDrawn=false;
 }
 function bfSignClose(){document.getElementById('bf-sign-ov').style.display='none';document.body.style.overflow='';bfSignTarget=null;}
-function bfSignFinish(){
+async function bfSignFinish(){
+  if(bfSignDrawn&&bfSignTarget)await bfSignCommit(bfSignRole);
   const e=bfSignTarget;
   document.getElementById('bf-sign-ov').style.display='none';
   document.body.style.overflow='';
@@ -997,21 +1021,9 @@ function bfSignFinish(){
 async function bfSignSave(){
   if(!bfSignTarget)return;
   if(!bfSignDrawn){toast('⚠️ الرجاء التوقيع داخل الإطار أولاً','err');return;}
-  const cv=document.getElementById('bf-sign-cv');
-  const dataUrl=cv.toDataURL('image/png');
-  const sigs=Object.assign({},bfSigs(bfSignTarget));
-  sigs[bfSignRole]={img:dataUrl,at:new Date().toISOString()};
-  const{data,error}=await sb.from('baladieh_finance').update({signatures:sigs}).eq('id',bfSignTarget.id).select();
-  if(error){toast('⚠️ فشل حفظ التوقيع: '+error.message,'err');return;}
-  bfSignedAny=true;
-  toast('✓ تم حفظ توقيع '+bfSignRoleLabel(bfSignTarget,bfSignRole)+' — يمكن لطرف آخر التوقيع أو اضغط إنهاء');
-  if(data&&data[0])bfSignTarget=data[0];
-  await bfLoad();
-  const fresh=bfEntries.find(x=>String(x.id)===String(bfSignTarget.id));
-  if(fresh)bfSignTarget=fresh;
+  await bfSignCommit(bfSignRole);
   const s=bfSigs(bfSignTarget);
   bfSignRole=BF_SIGN_ROLES.find(k=>!(s[k]&&s[k].img))||bfSignRole;
-  bfSignClear();
   bfSignRenderRoles();
 }
 
