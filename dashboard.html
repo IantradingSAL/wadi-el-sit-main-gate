@@ -5330,14 +5330,14 @@ function bfFitForPdf(el,opts){
 function bfPdfOpts(){
   if(bfShareCtx){
     return {margin:[10,10,10,10],
-      filename:'سند_'+String(bfShareCtx.receipt_no||'').replace(/[\/\\]/g,'-')+'_'+bfShareCtx.entry_date+'.pdf',
+      filename:(bfShareCtx.entry_type==='income'?'سند-قبض-':'سند-صرف-')+String(bfShareCtx.receipt_no||'').replace(/[\/\\]/g,'-')+'.pdf',
       image:{type:'jpeg',quality:0.96},
       html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
       jsPDF:{unit:'mm',format:'a5',orientation:'portrait'},
       pagebreak:{mode:['css','legacy']}};
   }
   return {margin:[10,8,12,8],
-    filename:'تقرير_صندوق_البلدية_'+bfToday()+'.pdf',
+    filename:'تقرير-صندوق-البلدية-'+bfToday()+'.pdf',
     image:{type:'jpeg',quality:0.96},
     html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
@@ -5357,25 +5357,31 @@ async function bfExportPDF(){
   btn.disabled=false;btn.textContent=lbl;
 }
 function bfShareText(){
+  const SEP='ــــــــــــــــــــــــــــ';
   if(bfShareCtx){
     const e=bfShareCtx;
-    return '🧾 *'+bfKind(e)+' — بلدية وادي الست*\n'
+    return '*'+bfKind(e)+' — بلدية وادي الست*\n'
+      +'قضاء الشوف — جبل لبنان\n'
+      +SEP+'\n'
       +'رقم السند: '+(e.receipt_no||'')+'\n'
-      +'📅 التاريخ: '+e.entry_date.split('-').reverse().join('/')+'\n'
-      +'💵 المبلغ: $'+bfFmt(e.amount)+'\n'
-      +'🏷️ الفئة: '+(e.category||'')+'\n'
-      +'📝 البيان: '+(e.description||'')+'\n'
-      +(e.person?('👤 '+(e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
-      +(e.handled_by?('🤝 '+(e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'');
+      +'التاريخ: '+e.entry_date.split('-').reverse().join('/')+'\n'
+      +'المبلغ: '+bfFmt(e.amount)+' دولار\n'
+      +'الفئة: '+(e.category||'')+'\n'
+      +'البيان: '+(e.description||'')+'\n'
+      +(e.person?((e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
+      +(e.handled_by?((e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'')
+      +SEP;
   }
   let inc=0,exp=0;
   bfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
-  return '💰 *صندوق البلدية — بلدية وادي الست*\n'
-    +'📅 '+new Date().toLocaleDateString('ar-LB')+'\n\n'
-    +'💰 الرصيد الحالي: $'+bfFmt(inc-exp)+'\n'
-    +'⬇️ إجمالي المقبوضات: $'+bfFmt(inc)+'\n'
-    +'⬆️ إجمالي المصروفات: $'+bfFmt(exp)+'\n'
-    +'🧾 عدد الحركات: '+bfEntries.length;
+  return '*صندوق البلدية — بلدية وادي الست*\n'
+    +'التاريخ: '+new Date().toLocaleDateString('ar-LB')+'\n'
+    +SEP+'\n'
+    +'الرصيد الحالي: '+bfFmt(inc-exp)+' دولار\n'
+    +'إجمالي المقبوضات: '+bfFmt(inc)+' دولار\n'
+    +'إجمالي المصروفات: '+bfFmt(exp)+' دولار\n'
+    +'عدد الحركات: '+bfEntries.length+'\n'
+    +SEP;
 }
 function bfOpenWa(text){
   const enc=encodeURIComponent(text);
