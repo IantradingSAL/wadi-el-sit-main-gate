@@ -241,6 +241,18 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
   </div>
 </div>
 
+<!-- READY-TO-SHARE MODAL (iOS needs a fresh tap for navigator.share) -->
+<div class="bf-share-ov" id="bf-ready-ov" onclick="if(event.target===this)document.getElementById('bf-ready-ov').style.display='none'">
+  <div class="bf-share-box" style="text-align:center">
+    <div style="font-size:34px;margin-bottom:6px">✅</div>
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:4px">الملف جاهز</div>
+    <div style="font-size:12.5px;color:#888;margin-bottom:14px" id="bf-ready-name"></div>
+    <button class="bf-share-btn" style="justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none" onclick="bfShareReady()">📤 مشاركة (واتساب وغيره)</button>
+    <button class="bf-share-btn" style="justify-content:center" onclick="bfDownloadReady()">⬇️ تنزيل الملف</button>
+    <button class="bf-share-btn" style="justify-content:center;color:#999" onclick="document.getElementById('bf-ready-ov').style.display='none'">إغلاق</button>
+  </div>
+</div>
+
 <!-- DOCS MODAL -->
 <div class="bf-share-ov" id="bf-docs-ov" onclick="if(event.target===this)bfCloseDocs()">
   <div class="bf-share-box">
@@ -252,7 +264,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 
 <script>
 // ═══════════ 💰 BALADIEH FINANCE (صندوق البلدية) ═══════════
-let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null;
+let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null, bfReadyFile=null;
 const BF_LOGO=(function(){try{return document.querySelector('.sb-logo').src;}catch(e){return '';}})();
 const BF_CATS={
   income:['جباية ورسوم بلدية','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
@@ -617,14 +629,14 @@ function bfFitForPdf(el,opts){
 function bfPdfOpts(){
   if(bfShareCtx){
     return {margin:[10,10,10,10],
-      filename:(bfShareCtx.entry_type==='income'?'سند-قبض-':'سند-صرف-')+String(bfShareCtx.receipt_no||'').replace(/[\/\\]/g,'-')+'.pdf',
+      filename:(bfShareCtx.entry_type==='income'?'Sanad-Qabd-':'Sanad-Sarf-')+String(bfShareCtx.receipt_no||'').replace(/[\/\\]/g,'-')+'.pdf',
       image:{type:'jpeg',quality:0.96},
       html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
       jsPDF:{unit:'mm',format:'a5',orientation:'portrait'},
       pagebreak:{mode:['css','legacy']}};
   }
   return {margin:[10,8,12,8],
-    filename:'تقرير-صندوق-البلدية-'+bfToday()+'.pdf',
+    filename:'Sandouk-Baladieh-Report-'+bfToday()+'.pdf',
     image:{type:'jpeg',quality:0.96},
     html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
     jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
@@ -717,14 +729,43 @@ async function bfShareFile(){
     const bin=atob(b64);const arr=new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
     const file=new File([arr],bfPdfOpts().filename,{type:'application/pdf'});
+    bfReadyFile=file;
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:bfShareCtx?bfKind(bfShareCtx)+' — بلدية وادي الست':'تقرير صندوق البلدية'});
-    }else{
-      const url=URL.createObjectURL(file);
-      const a=document.createElement('a');a.href=url;a.download=file.name;a.click();URL.revokeObjectURL(url);
-      bfOpenWa(bfShareText()+'\n\n📎 الملف تم تنزيله على جهازك — أرفقه في المحادثة');
+      try{
+        await navigator.share({files:[file],title:bfShareCtx?bfKind(bfShareCtx)+' — بلدية وادي الست':'تقرير صندوق البلدية'});
+        return;
+      }catch(se){
+        if(se&&se.name==='AbortError')return; // المستخدم ألغى المشاركة
+        // iOS: انتهت صلاحية اللمسة أثناء تجهيز الملف — نعرض زرًا للمشاركة بلمسة جديدة
+        bfShowReady();
+        return;
+      }
     }
+    const url=URL.createObjectURL(file);
+    const a=document.createElement('a');a.href=url;a.download=file.name;a.click();URL.revokeObjectURL(url);
+    bfOpenWa(bfShareText()+'\n\n📎 الملف تم تنزيله على جهازك — أرفقه في المحادثة');
   }catch(e){if(String(e).indexOf('Abort')<0)toast('⚠️ '+(e.message||e),'err');}
+}
+function bfShowReady(){
+  try{document.getElementById('bf-ready-name').textContent=bfReadyFile?bfReadyFile.name:'';}catch(_e){}
+  document.getElementById('bf-ready-ov').style.display='flex';
+}
+async function bfShareReady(){
+  const f=bfReadyFile; if(!f)return;
+  try{
+    await navigator.share({files:[f],title:'بلدية وادي الست'});
+    document.getElementById('bf-ready-ov').style.display='none';
+  }catch(e){
+    if(e&&e.name==='AbortError')return;
+    bfDownloadReady();
+  }
+}
+function bfDownloadReady(){
+  const f=bfReadyFile; if(!f)return;
+  const url=URL.createObjectURL(f);
+  const a=document.createElement('a');a.href=url;a.download=f.name;a.click();URL.revokeObjectURL(url);
+  document.getElementById('bf-ready-ov').style.display='none';
+  toast('✓ تم تنزيل الملف');
 }
 
 // ── 📎 ATTACHMENTS ──
