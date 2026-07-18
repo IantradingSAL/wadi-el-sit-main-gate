@@ -1320,10 +1320,19 @@ function pdfTable(headers,rowsHtml){
 }
 function pdfTd(v,style){return '<td style="padding:4px;border:1px solid #e0e6e0;word-break:break-word;'+(style||'')+'">'+(v==null?'':v)+'</td>';}
 // Fit element to its real content width so html2canvas captures everything and html2pdf scales it into the page
+function wfMountForPdf(el){
+  const hold=document.createElement('div');
+  hold.setAttribute('dir','rtl');
+  hold.style.cssText='position:absolute;top:0;left:0;z-index:-1;background:#fff;overflow:visible;';
+  hold.appendChild(el);
+  document.body.appendChild(hold);
+  return hold;
+}
 function wfFitForPdf(el,opts){
-  const w=Math.max(el.scrollWidth,el.offsetWidth,760);
+  const w=Math.max(el.scrollWidth,el.offsetWidth,560);
   el.style.width=w+'px';
-  opts.html2canvas=Object.assign({},opts.html2canvas,{width:w,windowWidth:w});
+  if(el.parentNode)el.parentNode.style.width=w+'px';
+  opts.html2canvas=Object.assign({},opts.html2canvas,{width:w,windowWidth:w,x:0,y:0,scrollX:0,scrollY:0});
   return opts;
 }
 function getFilteredWithBalance(){
@@ -1401,9 +1410,10 @@ async function exportPDF(mode){
   btn.disabled=true; btn.textContent='⏳ جاري إنشاء PDF…';
   try{
     const el=wfBuildReportEl(mode);
-    document.body.appendChild(el);
-    await html2pdf().set(wfFitForPdf(el,wfPdfOpts(mode))).from(el).save();
-    el.remove();
+    const hold=wfMountForPdf(el);
+    try{
+      await html2pdf().set(wfFitForPdf(el,wfPdfOpts(mode))).from(el).save();
+    }finally{hold.remove();}
     toast('✓ تم إنشاء تقرير PDF');
   }catch(e){ toast('⚠️ فشل إنشاء PDF: '+e.message,'err'); }
   btn.disabled=false; btn.textContent=btnLabel;
@@ -1513,11 +1523,11 @@ function wfShareText(){
 }
 async function wfMakePdfB64(){
   const el=wfBuildShareEl();
-  document.body.appendChild(el);
+  const hold=wfMountForPdf(el);
   try{
     const dataUri=await html2pdf().set(wfFitForPdf(el,wfShareOpts())).from(el).outputPdf('datauristring');
     return dataUri.split(',')[1];
-  } finally { el.remove(); }
+  } finally { hold.remove(); }
 }
 async function wfShareFile(){
   closeSendModal();

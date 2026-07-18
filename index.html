@@ -488,6 +488,7 @@ html[lang="ar"] input[type="tel"], html[lang="ar"] input[inputmode="tel"]{direct
     <a href="super-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm4">🛡️ الإدارة الكلّية</a>
     <a href="water-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm5">💧 إدارة الري</a>
     <a href="water-admin.html#finance" style="color:rgba(255,255,255,.55);text-decoration:none">💰 صندوق لجنة المياه</a>
+    <a href="sandouk.html" style="color:rgba(255,255,255,.55);text-decoration:none">💰 صندوق البلدية</a>
   </div>
 </footer>
 
@@ -905,6 +906,23 @@ const WN_DEFAULT = [
 ];
 
 const WN_VERSIONS = [
+  {
+    version: '3.7',
+    date: {ar:'تموز 2026', en:'July 2026', fr:'Juillet 2026'},
+    color: '#fdf6e3', badgeColor: '#c9a227',
+    features: [
+      {icon:'💰',
+        title:{ar:'صفحة مستقلة لصندوق البلدية', en:'Standalone Municipal Treasury Page', fr:'Page indépendante de la caisse municipale'},
+        desc:{ar:'صندوق البلدية أصبح صفحة مستقلة بتسجيل دخول خاص — يمكن منح موظفين صلاحية الصندوق فقط دون الوصول إلى لوحة التحكم، مع بيانات نموذجية جاهزة كسندات قبض وصرف',
+              en:'The municipal treasury is now a standalone page with its own login — staff can be granted treasury-only access without the dashboard, with ready sample receipt and payment vouchers',
+              fr:"La caisse municipale est désormais une page indépendante avec sa propre connexion — le personnel peut recevoir un accès caisse uniquement, avec des exemples de reçus prêts"}},
+      {icon:'📎',
+        title:{ar:'إرفاق مستندات بالسندات', en:'Attach Documents to Vouchers', fr:'Pièces jointes aux reçus'},
+        desc:{ar:'يمكن الآن إرفاق صور وفواتير وملفات PDF مع كل سند قبض أو صرف، وتظهر المرفقات في السجل وعلى السند نفسه',
+              en:'Photos, invoices and PDF files can now be attached to any receipt or payment voucher, visible in the ledger and on the voucher itself',
+              fr:"Photos, factures et fichiers PDF peuvent être joints à chaque reçu ou bon de paiement, visibles dans le registre et sur le reçu"}},
+    ]
+  },
   {
     version: '3.6',
     date: {ar:'تموز 2026', en:'July 2026', fr:'Juillet 2026'},
