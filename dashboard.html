@@ -291,6 +291,7 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
       <div class="ni" onclick="window.location='news-admin.html'"><span class="nii">📰</span> إدارة الأخبار</div>
       <div class="ni" onclick="window.location='news-admin.html'"><span class="nii">📝</span> إدارة الأخبار</div>
       <div class="ni" id="nav-water" onclick="openWaterSchedule()" style="display:none"><span class="nii">💧</span> دورة المياه <span id="water-badge" style="background:#0891b2;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;display:none"></span></div>
+      <div class="ni" id="nav-sandouk" onclick="openSandouk()" style="display:none"><span class="nii">💰</span> صندوق البلدية</div>
       <div class="ni" onclick="openProfile()"><span class="nii">🪪</span> ملفي الوظيفي</div>
       <div class="ni" id="nav-whatsnew" onclick="openManageNews()" style="display:none"><span class="nii">🚀</span> ما الجديد</div>
       <div class="ni feature-export" onclick="exportCSV()"><span class="nii">⬇️</span> تصدير CSV</div>
@@ -489,6 +490,7 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 <div style="position:fixed;bottom:0;left:0;right:0;background:rgba(15,77,130,0.95);color:rgba(255,255,255,0.6);text-align:center;padding:8px;font-size:12px;z-index:9999;pointer-events:none;direction:ltr">Powered by <strong style="color:#fff">IanTrading SAL</strong> &nbsp;·&nbsp; All rights reserved © 2026</div>
 <button class="help-btn" onclick="openHelp('d')" title="مساعدة">?</button>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>const MUN_ID='00000000-0000-0000-0000-000000000001';
 
 
@@ -571,6 +573,7 @@ function applyRoleVisibility(){
   show('#nav-wa',R.wa,'flex');
   show('#nav-cit-msgs',R.admin||R.activity,'flex');
   show('#nav-water', canDo('f_water'), 'flex');
+  show('#nav-sandouk', R.admin, 'flex');
   show('.feature-export',R.export,'inline-flex');
   document.querySelectorAll('[onclick="printFiltered()"]').forEach(el=>el.style.display=R.print?'inline-flex':'none');
   // water_only: hide everything except water nav
@@ -4858,5 +4861,569 @@ async function openHelp(page){
 
 function openHelp(p){var c='<b style="color:#1a6eb5;font-size:14px">⚙️ لوحة تحكم موظفي البلدية</b><br><br>📋 <b>الطلبات</b>: ترى فقط التصنيفات المسموحة.<br>➕ <b>إضافة طلب</b>: الاسم والهاتف والنوع إلزامية.<br>👥 <b>المستخدمين</b>: للمدير ورئيس البلدية فقط.<br>🎭 <b>الأدوار</b>: YES/NO لكل ميزة وتصنيف.<br>💧 <b>دورة المياه</b>: المشتركين والجدول والإشعارات.';var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%"><div style="display:flex;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل لوحة التحكم</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';}
 </script>
+
+<!-- ═══════════════ 💰 صندوق البلدية (Baladieh Finance) ═══════════════ -->
+<style>
+#bf-screen{position:fixed;inset:0;background:#f2f5f9;z-index:9000;display:none;flex-direction:column;overflow-y:auto;direction:rtl;font-family:inherit}
+.bf-top{background:linear-gradient(120deg,#0f4d82,#1a6eb5);color:#fff;padding:13px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+.bf-top img{height:40px;background:#fff;border-radius:50%;padding:3px}
+.bf-wrap{max-width:1150px;margin:0 auto;width:100%;padding:16px}
+.bf-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.bf-kpi{background:#fff;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06);border-top:3px solid transparent}
+.bf-kpi .v{font-size:23px;font-weight:800}.bf-kpi .l{font-size:12px;color:#888;font-weight:700;margin-top:2px}
+.bf-kpi.bal{border-top-color:#c9a227}.bf-kpi.bal .v{color:#0f4d82}
+.bf-kpi.inc .v{color:#1f7a45}.bf-kpi.inc{border-top-color:#1f7a45}
+.bf-kpi.exp .v{color:#a83232}.bf-kpi.exp{border-top-color:#a83232}
+.bf-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.bf-tab{flex:1;min-width:110px;padding:10px 8px;border:none;border-radius:10px;background:#fff;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;color:#555;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.bf-tab.on{background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff}
+.bf-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px}
+.bf-tblwrap{overflow-x:auto}
+.bf-tblwrap table{width:100%;border-collapse:collapse;font-size:13px}
+.bf-tblwrap th{background:#eef3fa;color:#0f4d82;padding:8px 6px;font-weight:800;white-space:nowrap;text-align:right}
+.bf-tblwrap td{padding:7px 6px;border-bottom:1px solid #eef2f5;white-space:nowrap}
+.bf-tblwrap tr:hover td{background:#f8fafc}
+.bf-neg{color:#a83232;font-weight:700}.bf-pos{color:#1f7a45;font-weight:700}
+.bf-balc{color:#0f4d82;font-weight:800}
+.bf-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
+.bf-badge.exp{background:#fdecec;color:#a83232}.bf-badge.inc{background:#e8f5ec;color:#1f7a45}.bf-badge.opn{background:#eef3fa;color:#0f4d82}
+.bf-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.bf-g2{grid-template-columns:1fr}}
+.bf-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+.bf-filters>div{flex:1;min-width:130px}
+.bf-err{color:#a83232;font-size:13px;min-height:18px;margin-bottom:6px}
+.bf-sumtitle{font-size:15px;font-weight:800;color:#0f4d82;margin:2px 0 8px}
+#bf-screen .fi{margin-bottom:10px}
+.bf-actbtn{border:none;background:none;cursor:pointer;font-size:15px;padding:2px}
+.bf-share-ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9500;display:none;align-items:center;justify-content:center;padding:16px}
+.bf-share-box{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px}
+.bf-share-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:1.5px solid #e0e6ef;border-radius:12px;background:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;color:#1a1a2e}
+.bf-share-btn:hover{background:#f5f8fc;border-color:#1a6eb5}
+</style>
+
+<div id="bf-screen">
+  <div class="bf-top">
+    <img id="bf-logo-img" alt="شعار">
+    <div style="flex:1">
+      <div style="font-size:16px;font-weight:800">💰 صندوق البلدية</div>
+      <div style="font-size:11px;opacity:.75">بلدية وادي الست · قضاء الشوف — جبل لبنان</div>
+    </div>
+    <button class="btn" onclick="closeSandouk()" style="padding:7px 16px;font-size:13px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:700">✕ إغلاق</button>
+  </div>
+
+  <div class="bf-wrap">
+    <div class="bf-kpis">
+      <div class="bf-kpi bal"><div class="v" id="bf-k-bal">—</div><div class="l">الرصيد الحالي</div></div>
+      <div class="bf-kpi inc"><div class="v" id="bf-k-inc">—</div><div class="l">إجمالي المقبوضات</div></div>
+      <div class="bf-kpi exp"><div class="v" id="bf-k-exp">—</div><div class="l">إجمالي المصروفات</div></div>
+      <div class="bf-kpi"><div class="v" id="bf-k-cnt" style="color:#555">—</div><div class="l">عدد الحركات</div></div>
+    </div>
+
+    <div class="bf-tabs">
+      <button class="bf-tab on" id="bf-tab-ledger" onclick="bfShowTab('ledger')">📒 السجل</button>
+      <button class="bf-tab" id="bf-tab-income" onclick="bfShowTab('income')">🟢 سند قبض</button>
+      <button class="bf-tab" id="bf-tab-expense" onclick="bfShowTab('expense')">🔴 سند صرف</button>
+      <button class="bf-tab" id="bf-tab-reports" onclick="bfShowTab('reports')">📊 التقارير</button>
+    </div>
+
+    <!-- LEDGER -->
+    <div id="bf-pane-ledger" class="bf-card">
+      <div class="bf-filters">
+        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option></select></div>
+        <div><label class="fl">الفئة</label><select class="fi" id="bf-f-cat" onchange="bfRenderLedger()"><option value="">الكل</option></select></div>
+        <div><label class="fl">من تاريخ</label><input type="date" class="fi" id="bf-f-from" onchange="bfRenderLedger()"></div>
+        <div><label class="fl">إلى تاريخ</label><input type="date" class="fi" id="bf-f-to" onchange="bfRenderLedger()"></div>
+      </div>
+      <div class="bf-tblwrap"><table>
+        <thead><tr><th>التاريخ</th><th>السند</th><th>النوع</th><th>الفئة</th><th>البيان</th><th>الجهة</th><th>المبلغ</th><th>الرصيد</th><th></th></tr></thead>
+        <tbody id="bf-ledger-body"><tr><td colspan="9" style="text-align:center;color:#999;padding:20px">⏳ جاري التحميل…</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- INCOME ENTRY -->
+    <div id="bf-pane-income" class="bf-card" style="display:none">
+      <div class="bf-sumtitle">🟢 تسجيل مقبوضات — سند قبض</div>
+      <div class="bf-g2">
+        <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-i-date"></div>
+        <div><label class="fl">المبلغ ($) *</label><input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr"></div>
+      </div>
+      <div class="bf-g2">
+        <div><label class="fl">الفئة *</label><select class="fi" id="bf-i-cat" onchange="bfCatOther('i')"></select></div>
+        <div id="bf-i-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-i-cat-other" placeholder="فئة أخرى…"></div>
+      </div>
+      <label class="fl">البيان *</label><input type="text" class="fi" id="bf-i-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
+      <div class="bf-g2">
+        <div><label class="fl">الدافع / الجهة</label><input type="text" class="fi" id="bf-i-person" list="bf-dl-persons" placeholder="اسم الدافع"></div>
+        <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
+      </div>
+      <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
+      <div class="bf-err" id="bf-i-err"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="bf-tab on" style="flex:1;min-width:160px" onclick="bfSave('income')">💾 حفظ وإنشاء سند القبض</button>
+        <button class="bf-tab" style="flex:0 1 auto" onclick="bfShareLast()">🧾 مشاركة آخر سند</button>
+      </div>
+    </div>
+
+    <!-- EXPENSE ENTRY -->
+    <div id="bf-pane-expense" class="bf-card" style="display:none">
+      <div class="bf-sumtitle">🔴 تسجيل مصروف — سند صرف</div>
+      <div class="bf-g2">
+        <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-e-date"></div>
+        <div><label class="fl">المبلغ ($) *</label><input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr"></div>
+      </div>
+      <div class="bf-g2">
+        <div><label class="fl">الفئة *</label><select class="fi" id="bf-e-cat" onchange="bfCatOther('e')"></select></div>
+        <div id="bf-e-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-e-cat-other" placeholder="فئة أخرى…"></div>
+      </div>
+      <label class="fl">البيان *</label><input type="text" class="fi" id="bf-e-desc" placeholder="مثال: صيانة إنارة الشارع الرئيسي">
+      <div class="bf-g2">
+        <div><label class="fl">المدفوع له / الجهة</label><input type="text" class="fi" id="bf-e-person" list="bf-dl-persons" placeholder="اسم المستفيد"></div>
+        <div><label class="fl">المسلّم (أمين الصندوق)</label><input type="text" class="fi" id="bf-e-handled" list="bf-dl-handlers" placeholder="اسم المسلّم"></div>
+      </div>
+      <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-e-notes" placeholder="اختياري">
+      <div class="bf-err" id="bf-e-err"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="bf-tab on" style="flex:1;min-width:160px" onclick="bfSave('expense')">💾 حفظ وإنشاء سند الصرف</button>
+        <button class="bf-tab" style="flex:0 1 auto" onclick="bfShareLast()">🧾 مشاركة آخر سند</button>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="bf-pane-reports" style="display:none">
+      <div class="bf-card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <button class="bf-tab on" id="bf-pdf-btn" style="flex:1;min-width:150px" onclick="bfExportPDF()">📄 تصدير تقرير PDF</button>
+          <button class="bf-tab" style="flex:1;min-width:150px" onclick="bfOpenSendModal()">📤 مشاركة التقرير</button>
+          <button class="bf-tab" style="flex:1;min-width:150px" onclick="bfExportCSV()">⬇️ تصدير CSV</button>
+        </div>
+      </div>
+      <div class="bf-g2">
+        <div class="bf-card"><div class="bf-sumtitle">🟢 المقبوضات حسب الفئة</div><div class="bf-tblwrap"><table><thead><tr><th>الفئة</th><th>عدد</th><th>المجموع</th></tr></thead><tbody id="bf-rep-inc"></tbody></table></div></div>
+        <div class="bf-card"><div class="bf-sumtitle">🔴 المصروفات حسب الفئة</div><div class="bf-tblwrap"><table><thead><tr><th>الفئة</th><th>عدد</th><th>المجموع</th></tr></thead><tbody id="bf-rep-exp"></tbody></table></div></div>
+      </div>
+      <div class="bf-card"><div class="bf-sumtitle">👥 حسب الجهة</div><div class="bf-tblwrap"><table><thead><tr><th>الجهة</th><th>عدد الحركات</th><th>مقبوضات</th><th>مصروفات</th></tr></thead><tbody id="bf-rep-person"></tbody></table></div></div>
+    </div>
+  </div>
+
+  <datalist id="bf-dl-persons"></datalist>
+  <datalist id="bf-dl-handlers"></datalist>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="bf-share-ov" id="bf-share-ov" onclick="if(event.target===this)bfCloseSendModal()">
+  <div class="bf-share-box">
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:14px" id="bf-share-title">🧾 مشاركة السند</div>
+    <button class="bf-share-btn" onclick="bfPrint()">🖨️ <span>طباعة السند</span></button>
+    <button class="bf-share-btn" onclick="bfShareFile()">📎 <span>مشاركة كملف PDF (واتساب / حفظ)</span></button>
+    <button class="bf-share-btn" onclick="bfShareWaText()">🟢 <span>إرسال ملخّص نصي عبر واتساب</span></button>
+    <button class="bf-share-btn" onclick="bfCopyText()">📋 <span>نسخ النص</span></button>
+    <button class="bf-share-btn" style="justify-content:center;color:#999" onclick="bfCloseSendModal()">إغلاق</button>
+  </div>
+</div>
+
+<script>
+// ═══════════ 💰 BALADIEH FINANCE (صندوق البلدية) ═══════════
+let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null;
+const BF_LOGO=(function(){try{return document.querySelector('.sb-logo').src;}catch(e){return '';}})();
+const BF_CATS={
+  income:['جباية ورسوم بلدية','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
+  expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
+};
+function bfFmt(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:2});}
+function bfToday(){return new Date().toISOString().slice(0,10);}
+function bfKind(e){return e.entry_type==='income'?'سند قبض':(e.entry_type==='opening'?'إشعار رصيد افتتاحي':'سند صرف');}
+function bfColor(e){return e.entry_type==='income'?'#1f7a45':(e.entry_type==='opening'?'#0f4d82':'#a83232');}
+
+function openSandouk(){
+  if(!guard('admin','🚫 صندوق البلدية متاح للإدارة فقط'))return;
+  document.getElementById('bf-logo-img').src=BF_LOGO;
+  document.getElementById('bf-screen').style.display='flex';
+  document.body.style.overflow='hidden';
+  if(!bfLoaded){bfLoaded=true;bfInitForms();bfLoad();}
+}
+function closeSandouk(){
+  document.getElementById('bf-screen').style.display='none';
+  document.body.style.overflow='';
+}
+function bfInitForms(){
+  document.getElementById('bf-i-date').value=bfToday();
+  document.getElementById('bf-e-date').value=bfToday();
+  const fill=(id,list)=>document.getElementById(id).innerHTML=list.map(c=>'<option>'+c+'</option>').join('');
+  fill('bf-i-cat',BF_CATS.income); fill('bf-e-cat',BF_CATS.expense);
+}
+function bfCatOther(p){
+  const v=document.getElementById('bf-'+p+'-cat').value;
+  document.getElementById('bf-'+p+'-cat-other-w').style.display = v==='أخرى' ? '' : 'none';
+}
+async function bfLoad(){
+  const{data,error}=await sb.from('baladieh_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true});
+  if(error){toast('⚠️ خطأ في تحميل الصندوق: '+error.message,'err');return;}
+  bfEntries=data||[];
+  bfRefresh();
+}
+function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();}
+function bfKPIs(){
+  let inc=0,exp=0;
+  bfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+  document.getElementById('bf-k-bal').textContent='$'+bfFmt(inc-exp);
+  document.getElementById('bf-k-inc').textContent='$'+bfFmt(inc);
+  document.getElementById('bf-k-exp').textContent='$'+bfFmt(exp);
+  document.getElementById('bf-k-cnt').textContent=bfEntries.length;
+}
+function bfBuildFilters(){
+  const cats=[...new Set(bfEntries.map(e=>e.category).filter(Boolean))].sort();
+  const el=document.getElementById('bf-f-cat'); const v=el.value;
+  el.innerHTML='<option value="">الكل</option>'+cats.map(c=>'<option>'+c+'</option>').join('');
+  el.value=v;
+}
+function bfDatalists(){
+  const uniq=a=>[...new Set(a.filter(Boolean))].sort();
+  document.getElementById('bf-dl-persons').innerHTML=uniq(bfEntries.map(e=>e.person)).map(v=>'<option value="'+v+'">').join('');
+  document.getElementById('bf-dl-handlers').innerHTML=uniq(bfEntries.map(e=>e.handled_by)).map(v=>'<option value="'+v+'">').join('');
+}
+const BF_TYPE_LABEL={expense:'<span class="bf-badge exp">مصروف</span>',income:'<span class="bf-badge inc">مقبوضات</span>',opening:'<span class="bf-badge opn">رصيد افتتاحي</span>'};
+function bfShowTab(t){
+  ['ledger','income','expense','reports'].forEach(x=>{
+    document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
+    document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
+  });
+}
+function bfFiltered(){
+  const ft=document.getElementById('bf-f-type').value, fc=document.getElementById('bf-f-cat').value,
+        from=document.getElementById('bf-f-from').value, to=document.getElementById('bf-f-to').value;
+  let bal=0; const out=[];
+  bfEntries.forEach(e=>{
+    const signed=e.entry_type==='expense'?-e.amount:+e.amount; bal+=signed;
+    if(ft&&e.entry_type!==ft)return; if(fc&&e.category!==fc)return;
+    if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
+    out.push(Object.assign({},e,{signed,bal}));
+  });
+  return out;
+}
+function bfRenderLedger(){
+  const rows=bfFiltered().map(e=>'<tr>'
+    +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
+    +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+'</td>'
+    +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+'</td>'
+    +'<td style="font-size:12px">'+(e.category||'')+'</td>'
+    +'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'
+    +'<td>'+(e.person||'')+'</td>'
+    +'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.signed<0?'-':'+')+'$'+bfFmt(Math.abs(e.signed))+'</td>'
+    +'<td class="bf-balc">$'+bfFmt(e.bal)+'</td>'
+    +'<td style="white-space:nowrap">'
+      +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
+      +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
+      +'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>'
+    +'</td></tr>').join('');
+  document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="9" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
+}
+async function bfDel(id){
+  if(!confirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
+  const{error}=await sb.from('baladieh_finance').delete().eq('id',id);
+  if(error){toast('⚠️ فشل الحذف: '+error.message,'err');return;}
+  toast('✓ تم الحذف'); await bfLoad();
+}
+function bfNextNo(type,dateStr){
+  const y=(dateStr||bfToday()).slice(0,4);
+  const pre=(type==='income'?'Q':'S')+'-'+y+'-';
+  let max=0;
+  bfEntries.forEach(e=>{
+    if(e.receipt_no&&e.receipt_no.indexOf(pre)===0){
+      const n=parseInt(e.receipt_no.slice(pre.length),10);
+      if(n>max)max=n;
+    }
+  });
+  return pre+String(max+1).padStart(3,'0');
+}
+async function bfSave(type){
+  const p=type==='income'?'i':'e';
+  const date=document.getElementById('bf-'+p+'-date').value;
+  const amount=parseFloat(document.getElementById('bf-'+p+'-amount').value);
+  const desc=document.getElementById('bf-'+p+'-desc').value.trim();
+  let cat=document.getElementById('bf-'+p+'-cat').value;
+  if(cat==='أخرى'){const o=document.getElementById('bf-'+p+'-cat-other').value.trim();if(o)cat=o;}
+  const err=document.getElementById('bf-'+p+'-err');err.textContent='';
+  if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة التاريخ والفئة والبيان والمبلغ';return;}
+  const rec={entry_date:date,entry_type:type,category:cat,description:desc,amount:amount,
+    person:document.getElementById('bf-'+p+'-person').value.trim()||null,
+    handled_by:document.getElementById('bf-'+p+'-handled').value.trim()||null,
+    receipt_no:bfNextNo(type,date),
+    notes:document.getElementById('bf-'+p+'-notes').value.trim()||null,
+    created_by:currentUser?currentUser.email:null};
+  const{data,error}=await sb.from('baladieh_finance').insert(rec).select();
+  if(error){err.textContent='⚠️ '+error.message;return;}
+  toast('✓ تم الحفظ — السند رقم '+rec.receipt_no);
+  try{logAudit('baladieh_finance','create',rec.receipt_no,bfKind(rec)+' — '+desc+' — $'+bfFmt(amount));}catch(_e){}
+  ['amount','desc','person','notes'].forEach(f=>document.getElementById('bf-'+p+'-'+f).value='');
+  await bfLoad();
+  if(data&&data[0]){bfLastSaved=data[0];bfOpenReceiptShare(data[0]);}
+}
+function bfGroup(list,keyFn){
+  const m={};
+  list.forEach(e=>{const k=keyFn(e)||'—';if(!m[k])m[k]={n:0,sum:0};m[k].n++;m[k].sum+=+e.amount;});
+  return Object.entries(m).sort((a,b)=>b[1].sum-a[1].sum);
+}
+function bfRenderReports(){
+  const incs=bfEntries.filter(e=>e.entry_type!=='expense');
+  const exps=bfEntries.filter(e=>e.entry_type==='expense');
+  const row=(k,v,cls)=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">$'+bfFmt(v.sum)+'</td></tr>';
+  const empty='<tr><td colspan="4" style="color:#999;text-align:center">—</td></tr>';
+  document.getElementById('bf-rep-inc').innerHTML=bfGroup(incs,e=>e.category).map(([k,v])=>row(k,v,'bf-pos')).join('')||empty;
+  document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>row(k,v,'bf-neg')).join('')||empty;
+  const pm={};
+  bfEntries.forEach(e=>{const k=e.person||'—';if(!pm[k])pm[k]={n:0,inc:0,exp:0};pm[k].n++;if(e.entry_type==='expense')pm[k].exp+=+e.amount;else pm[k].inc+=+e.amount;});
+  document.getElementById('bf-rep-person').innerHTML=Object.entries(pm).sort((a,b)=>(b[1].inc+b[1].exp)-(a[1].inc+a[1].exp))
+    .map(([k,v])=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">$'+bfFmt(v.inc)+'</td><td class="bf-neg">$'+bfFmt(v.exp)+'</td></tr>').join('')||empty;
+}
+function bfExportCSV(){
+  let bal=0;
+  const lines=['التاريخ,رقم السند,النوع,الفئة,البيان,الجهة,المستلم,المبلغ,الرصيد'];
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  bfEntries.forEach(e=>{
+    const signed=e.entry_type==='expense'?-e.amount:+e.amount;bal+=signed;
+    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(e.description),q(e.person),q(e.handled_by),signed,bal].join(','));
+  });
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+// ── 🧾 RECEIPT (سند قبض / سند صرف — بشعار البلدية) ──
+function bfReceiptHTML(e){
+  const c=bfColor(e);
+  const isIn=e.entry_type!=='expense';
+  const row=(l,v)=>v?'<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 2px;border-bottom:1px dashed #e5e9f0;font-size:13.5px"><div style="color:#8a8f9c;font-weight:700;white-space:nowrap">'+l+'</div><div style="text-align:left;font-weight:700;color:#1a1a2e">'+v+'</div></div>':'';
+  return ''
+  +'<div style="position:relative;border:2.5px solid #0f4d82;border-radius:4px;padding:5px;background:#fff">'
+  +'<div style="position:relative;border:1.5px solid #c9a227;border-radius:2px;padding:18px 22px;overflow:hidden">'
+    +(BF_LOGO?'<img src="'+BF_LOGO+'" style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:270px;opacity:.05;pointer-events:none">':'')
+    +'<div style="display:flex;align-items:center;gap:14px;border-bottom:2.5px solid #c9a227;padding-bottom:12px;position:relative">'
+      +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:58px">':'')
+      +'<div style="flex:1">'
+        +'<div style="font-size:11px;color:#8a8f9c;font-weight:700;letter-spacing:1px">الجمهورية اللبنانية</div>'
+        +'<div style="font-size:19px;font-weight:800;color:#0f4d82">بلدية وادي الست</div>'
+        +'<div style="font-size:11px;color:#8a8f9c;font-weight:700">قضاء الشوف — محافظة جبل لبنان</div>'
+      +'</div>'
+      +'<div style="text-align:center">'
+        +'<div style="background:'+c+';color:#fff;font-size:15px;font-weight:800;padding:7px 18px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.12)">'+bfKind(e)+'</div>'
+        +'<div style="font-size:12px;font-weight:800;color:#0f4d82;margin-top:6px;direction:ltr">'+(e.receipt_no||'')+'</div>'
+      +'</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 4px;position:relative">'
+      +'<div style="font-size:13px;font-weight:700;color:#555">📅 التاريخ: <b style="color:#1a1a2e">'+e.entry_date.split('-').reverse().join('/')+'</b></div>'
+      +(e.category?'<div style="background:#fdf6e3;border:1px solid #c9a227;color:#8a6d1a;font-size:12px;font-weight:800;padding:3px 12px;border-radius:999px">'+e.category+'</div>':'')
+    +'</div>'
+    +'<div style="position:relative">'
+      +row('البيان',e.description)
+      +row(isIn?'وصلنا من السيد/ة':'دُفع إلى السيد/ة',e.person)
+      +row(isIn?'المستلم':'المسلّم',e.handled_by)
+      +row('ملاحظات',e.notes)
+    +'</div>'
+    +'<div style="margin:16px 0 6px;text-align:center;background:linear-gradient(135deg,'+(isIn?'#f0faf3':'#fdf1f1')+',#fff);border:2px solid '+c+';border-radius:14px;padding:13px;position:relative">'
+      +'<div style="font-size:12px;color:#8a8f9c;font-weight:700">المبلغ — دولار أميركي</div>'
+      +'<div style="font-size:33px;font-weight:800;color:'+c+';direction:ltr">$'+bfFmt(e.amount)+'</div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
+      +'<div style="flex:1">'+(isIn?'توقيع الدافع':'توقيع المستفيد')+'<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
+      +'<div style="flex:1">أمين الصندوق<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
+      +'<div style="flex:1">رئيس البلدية<br><br><div style="border-top:1.5px solid #bbb;margin:0 12px"></div></div>'
+    +'</div>'
+  +'</div>'
+  +'<div style="display:flex;justify-content:space-between;padding:6px 10px 2px;font-size:9.5px;color:#98a0ad">'
+    +'<div>أُنشئ في '+new Date().toLocaleString('ar-LB')+'</div>'
+    +'<div>'+(e.created_by||'')+' · municipality-wadi-el-sitt.org</div>'
+  +'</div>'
+  +'</div>';
+}
+function bfBuildReceiptEl(e){
+  const el=document.createElement('div');
+  el.setAttribute('dir','rtl');
+  el.style.cssText='width:560px;background:#fff;color:#1a1a2e;font-family:Tajawal,Tahoma,sans-serif;padding:14px';
+  el.innerHTML=bfReceiptHTML(e);
+  return el;
+}
+function bfReceiptById(id){
+  const e=bfEntries.find(x=>String(x.id)===String(id));
+  if(e)bfOpenReceiptShare(e);
+}
+function bfPrintById(id){
+  const e=bfEntries.find(x=>String(x.id)===String(id));
+  if(e){bfShareCtx=e;bfPrint();}
+}
+function bfOpenReceiptShare(e){
+  bfShareCtx=e;
+  document.getElementById('bf-share-title').textContent='🧾 '+bfKind(e)+' — '+(e.receipt_no||'');
+  document.getElementById('bf-share-ov').style.display='flex';
+}
+function bfShareLast(){
+  if(!bfLastSaved){toast('⚠️ لا يوجد سند محفوظ بعد في هذه الجلسة','err');return;}
+  bfOpenReceiptShare(bfLastSaved);
+}
+function bfOpenSendModal(){
+  bfShareCtx=null;
+  document.getElementById('bf-share-title').textContent='📤 مشاركة تقرير الصندوق';
+  document.getElementById('bf-share-ov').style.display='flex';
+}
+function bfCloseSendModal(){document.getElementById('bf-share-ov').style.display='none';}
+
+// ── PRINT ──
+function bfPrint(){
+  bfCloseSendModal();
+  const inner=bfShareCtx?bfReceiptHTML(bfShareCtx):bfBuildReportEl().innerHTML;
+  const w=window.open('','_blank');
+  if(!w){toast('⚠️ يرجى السماح بالنوافذ المنبثقة للطباعة','err');return;}
+  w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>طباعة</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">'
+    +'<style>@page{size:'+(bfShareCtx?'A5':'A4')+';margin:9mm}body{font-family:Tajawal,Tahoma,sans-serif;margin:0;direction:rtl}</style>'
+    +'</head><body>'+(bfShareCtx?'<div style="max-width:560px;margin:0 auto">'+inner+'</div>':'<div style="max-width:760px;margin:0 auto">'+inner+'</div>')
+    +'<script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script></body></html>');
+  w.document.close();
+}
+
+// ── REPORT PDF ──
+function bfBuildReportEl(){
+  let inc=0,exp=0;
+  bfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+  const dts=new Date().toLocaleDateString('ar-LB');
+  const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
+  const td=(v,s)=>'<td style="padding:4px;border:1px solid #e0e6ef;word-break:break-word;'+(s||'')+'">'+(v==null?'':v)+'</td>';
+  const tbl=(h,r)=>'<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><thead><tr>'
+    +h.map(x=>'<th style="background:#eef3fa;color:#0f4d82;padding:5px 4px;border:1px solid #d5dfec;text-align:right;font-weight:800">'+x+'</th>').join('')
+    +'</tr></thead><tbody>'+r+'</tbody></table>';
+  const secT=t=>'<div style="font-size:14px;font-weight:800;color:#0f4d82;margin:14px 0 6px">'+t+'</div>';
+  const rows=bfFiltered().map(e=>'<tr style="page-break-inside:avoid">'
+    +td(e.entry_date.split('-').reverse().join('/'))+td(e.receipt_no)+td(TYPE_AR[e.entry_type]||e.entry_type)
+    +td(e.category,'font-size:10px')+td(e.description)+td(e.person)
+    +td((e.signed<0?'-':'+')+'$'+bfFmt(Math.abs(e.signed)),'font-weight:800;color:'+(e.signed<0?'#a83232':'#1f7a45'))
+    +td('$'+bfFmt(e.bal),'font-weight:800;color:#0f4d82')+'</tr>').join('');
+  const sumR=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+td(k)+td(v.n)+td('$'+bfFmt(v.sum),'font-weight:800;color:'+color)+'</tr>').join('');
+  const el=document.createElement('div');
+  el.setAttribute('dir','rtl');
+  el.style.cssText='width:760px;background:#fff;color:#1a1a2e;font-family:Tajawal,sans-serif;padding:10px';
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #c9a227;padding-bottom:10px;margin-bottom:12px">'
+    +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:52px">':'')
+    +'<div style="flex:1"><div style="font-size:19px;font-weight:800;color:#0f4d82">💰 صندوق البلدية — بلدية وادي الست</div>'
+    +'<div style="font-size:11px;color:#8a8f9c;font-weight:700">قضاء الشوف — جبل لبنان · تقرير المقبوضات والمصروفات · تاريخ التقرير: '+dts+'</div></div></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:14px;text-align:center">'
+    +['<b style="color:#0f4d82;font-size:16px">$'+bfFmt(inc-exp)+'</b><br>الرصيد الحالي',
+      '<b style="color:#1f7a45;font-size:16px">$'+bfFmt(inc)+'</b><br>إجمالي المقبوضات',
+      '<b style="color:#a83232;font-size:16px">$'+bfFmt(exp)+'</b><br>إجمالي المصروفات',
+      '<b style="font-size:16px">'+bfEntries.length+'</b><br>عدد الحركات'
+     ].map(x=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
+    +'</div>'
+    +secT('📒 سجل الحركات')
+    +tbl(['التاريخ','السند','النوع','الفئة','البيان','الجهة','المبلغ','الرصيد'],rows||'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>')
+    +secT('🟢 المقبوضات حسب الفئة')
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'))
+    +secT('🔴 المصروفات حسب الفئة')
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'))
+    +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
+    +'<div>أمين الصندوق: ________________</div><div>رئيس البلدية: ________________</div><div>أُنشئ بواسطة: '+(currentUser?currentUser.email:'')+'</div></div>';
+  return el;
+}
+function bfFitForPdf(el,opts){
+  const w=Math.max(el.scrollWidth,el.offsetWidth,560);
+  el.style.width=w+'px';
+  opts.html2canvas=Object.assign({},opts.html2canvas,{width:w,windowWidth:w});
+  return opts;
+}
+function bfPdfOpts(){
+  if(bfShareCtx){
+    return {margin:[10,10,10,10],
+      filename:'سند_'+String(bfShareCtx.receipt_no||'').replace(/[\/\\]/g,'-')+'_'+bfShareCtx.entry_date+'.pdf',
+      image:{type:'jpeg',quality:0.96},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a5',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}};
+  }
+  return {margin:[10,8,12,8],
+    filename:'تقرير_صندوق_البلدية_'+bfToday()+'.pdf',
+    image:{type:'jpeg',quality:0.96},
+    html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['css','legacy']}};
+}
+async function bfExportPDF(){
+  const btn=document.getElementById('bf-pdf-btn');const lbl=btn.textContent;
+  btn.disabled=true;btn.textContent='⏳ جاري إنشاء PDF…';
+  bfShareCtx=null;
+  try{
+    const el=bfBuildReportEl();
+    document.body.appendChild(el);
+    await html2pdf().set(bfFitForPdf(el,bfPdfOpts())).from(el).save();
+    el.remove();
+    toast('✓ تم إنشاء التقرير');
+  }catch(e){toast('⚠️ فشل إنشاء PDF: '+e.message,'err');}
+  btn.disabled=false;btn.textContent=lbl;
+}
+function bfShareText(){
+  if(bfShareCtx){
+    const e=bfShareCtx;
+    return '🧾 *'+bfKind(e)+' — بلدية وادي الست*\n'
+      +'رقم السند: '+(e.receipt_no||'')+'\n'
+      +'📅 التاريخ: '+e.entry_date.split('-').reverse().join('/')+'\n'
+      +'💵 المبلغ: $'+bfFmt(e.amount)+'\n'
+      +'🏷️ الفئة: '+(e.category||'')+'\n'
+      +'📝 البيان: '+(e.description||'')+'\n'
+      +(e.person?('👤 '+(e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
+      +(e.handled_by?('🤝 '+(e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'');
+  }
+  let inc=0,exp=0;
+  bfEntries.forEach(e=>{if(e.entry_type==='expense')exp+=+e.amount;else inc+=+e.amount;});
+  return '💰 *صندوق البلدية — بلدية وادي الست*\n'
+    +'📅 '+new Date().toLocaleDateString('ar-LB')+'\n\n'
+    +'💰 الرصيد الحالي: $'+bfFmt(inc-exp)+'\n'
+    +'⬇️ إجمالي المقبوضات: $'+bfFmt(inc)+'\n'
+    +'⬆️ إجمالي المصروفات: $'+bfFmt(exp)+'\n'
+    +'🧾 عدد الحركات: '+bfEntries.length;
+}
+function bfOpenWa(text){
+  const enc=encodeURIComponent(text);
+  const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if(isMobile){
+    location.href='whatsapp://send?text='+enc;
+    setTimeout(function(){if(!document.hidden)location.href='https://wa.me/?text='+enc;},1600);
+  }else{
+    const w=window.open('https://wa.me/?text='+enc,'_blank','noopener');
+    if(!w)location.href='https://wa.me/?text='+enc;
+  }
+}
+function bfShareWaText(){bfCloseSendModal();bfOpenWa(bfShareText());}
+async function bfCopyText(){
+  bfCloseSendModal();
+  const t=bfShareText();
+  try{await navigator.clipboard.writeText(t);toast('✓ تم نسخ النص — الصقه في واتساب');}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');toast('✓ تم نسخ النص');}catch(_e){toast('⚠️ تعذّر النسخ','err');}
+    ta.remove();
+  }
+}
+async function bfShareFile(){
+  bfCloseSendModal();
+  try{
+    toast('⏳ جاري تجهيز الملف…');
+    const el=bfShareCtx?bfBuildReceiptEl(bfShareCtx):bfBuildReportEl();
+    document.body.appendChild(el);
+    let b64;
+    try{
+      const dataUri=await html2pdf().set(bfFitForPdf(el,bfPdfOpts())).from(el).outputPdf('datauristring');
+      b64=dataUri.split(',')[1];
+    }finally{el.remove();}
+    const bin=atob(b64);const arr=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+    const file=new File([arr],bfPdfOpts().filename,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:bfShareCtx?bfKind(bfShareCtx)+' — بلدية وادي الست':'تقرير صندوق البلدية'});
+    }else{
+      const url=URL.createObjectURL(file);
+      const a=document.createElement('a');a.href=url;a.download=file.name;a.click();URL.revokeObjectURL(url);
+      bfOpenWa(bfShareText()+'\n\n📎 الملف تم تنزيله على جهازك — أرفقه في المحادثة');
+    }
+  }catch(e){if(String(e).indexOf('Abort')<0)toast('⚠️ '+(e.message||e),'err');}
+}
+</script>
+<!-- ═══════════════ END صندوق البلدية ═══════════════ -->
+
 </body>
 </html>

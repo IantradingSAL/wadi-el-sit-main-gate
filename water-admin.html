@@ -1318,7 +1318,14 @@ function pdfTable(headers,rowsHtml){
     +'<thead><tr>'+headers.map(h=>'<th style="background:#e8f5e9;color:#1e5429;padding:5px 4px;border:1px solid #cfe0cf;text-align:right;font-weight:800">'+h+'</th>').join('')+'</tr></thead>'
     +'<tbody>'+rowsHtml+'</tbody></table>';
 }
-function pdfTd(v,style){return '<td style="padding:4px;border:1px solid #e0e6e0;'+(style||'')+'">'+(v==null?'':v)+'</td>';}
+function pdfTd(v,style){return '<td style="padding:4px;border:1px solid #e0e6e0;word-break:break-word;'+(style||'')+'">'+(v==null?'':v)+'</td>';}
+// Fit element to its real content width so html2canvas captures everything and html2pdf scales it into the page
+function wfFitForPdf(el,opts){
+  const w=Math.max(el.scrollWidth,el.offsetWidth,760);
+  el.style.width=w+'px';
+  opts.html2canvas=Object.assign({},opts.html2canvas,{width:w,windowWidth:w});
+  return opts;
+}
 function getFilteredWithBalance(){
   const ft=document.getElementById('f-type').value, fp=document.getElementById('f-phase').value,
         fpe=document.getElementById('f-person').value, from=document.getElementById('f-from').value,
@@ -1395,7 +1402,7 @@ async function exportPDF(mode){
   try{
     const el=wfBuildReportEl(mode);
     document.body.appendChild(el);
-    await html2pdf().set(wfPdfOpts(mode)).from(el).save();
+    await html2pdf().set(wfFitForPdf(el,wfPdfOpts(mode))).from(el).save();
     el.remove();
     toast('✓ تم إنشاء تقرير PDF');
   }catch(e){ toast('⚠️ فشل إنشاء PDF: '+e.message,'err'); }
@@ -1508,7 +1515,7 @@ async function wfMakePdfB64(){
   const el=wfBuildShareEl();
   document.body.appendChild(el);
   try{
-    const dataUri=await html2pdf().set(wfShareOpts()).from(el).outputPdf('datauristring');
+    const dataUri=await html2pdf().set(wfFitForPdf(el,wfShareOpts())).from(el).outputPdf('datauristring');
     return dataUri.split(',')[1];
   } finally { el.remove(); }
 }
