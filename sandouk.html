@@ -87,7 +87,9 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 .bf-neg{color:#a83232;font-weight:700}.bf-pos{color:#1f7a45;font-weight:700}
 .bf-balc{color:#0f4d82;font-weight:800}
 .bf-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:800}
-.bf-badge.exp{background:#fdecec;color:#a83232}.bf-badge.inc{background:#e8f5ec;color:#1f7a45}.bf-badge.opn{background:#eef3fa;color:#0f4d82}
+.bf-badge.exp{background:#fdecec;color:#a83232}
+.bf-void td{opacity:.55}
+.bf-void td s{opacity:.8}.bf-badge.inc{background:#e8f5ec;color:#1f7a45}.bf-badge.opn{background:#eef3fa;color:#0f4d82}
 .bf-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:560px){.bf-g2{grid-template-columns:1fr}}
 .bf-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
@@ -132,7 +134,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
     <div id="bf-pane-ledger" class="bf-card">
       <div class="bf-filters">
         <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
-        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option></select></div>
+        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option></select></div>
         <div><label class="fl">الفئة</label><select class="fi" id="bf-f-cat" onchange="bfRenderLedger()"><option value="">الكل</option></select></div>
         <div><label class="fl">العملة</label><select class="fi" id="bf-f-cur" onchange="bfRenderLedger()"><option value="">الكل</option><option value="USD">دولار $</option><option value="LBP">ليرة ل.ل.</option></select></div>
         <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-f-pay" onchange="bfRenderLedger()"><option value="">الكل</option><option value="cash">نقداً</option><option value="transfer">حوالة</option><option value="whish">Whish</option></select></div>
@@ -251,6 +253,24 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
   </div>
 </div>
 
+<!-- VOID MODAL -->
+<div class="bf-share-ov" id="bf-void-ov" onclick="if(event.target===this)bfCloseVoid()">
+  <div class="bf-share-box">
+    <div style="font-size:16px;font-weight:800;color:#c22;margin-bottom:3px">⛔ إلغاء السند (Void)</div>
+    <div id="bf-void-sub" style="font-size:12.5px;color:#888;margin-bottom:10px"></div>
+    <div style="background:#fff7ed;border:1.5px solid #f0c88a;color:#8a5a00;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;margin-bottom:10px">
+      السند لن يُحذف — يبقى في السجل بعلامة "ملغى"، ويُستبعد مبلغه من الرصيد والمجاميع والتقارير.
+    </div>
+    <label class="fl">سبب الإلغاء *</label>
+    <textarea class="fi" id="bf-void-reason" rows="3" placeholder="مثال: خطأ في المبلغ، ازدواجية في التسجيل، إلغاء العملية…"></textarea>
+    <div class="bf-err" id="bf-void-err"></div>
+    <div style="display:flex;gap:8px">
+      <button class="bf-share-btn" style="flex:2;width:auto;justify-content:center;background:#c22;color:#fff;border:none;margin-bottom:0" onclick="bfVoidConfirm()">⛔ تأكيد الإلغاء</button>
+      <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#999;margin-bottom:0" onclick="bfCloseVoid()">رجوع</button>
+    </div>
+  </div>
+</div>
+
 <!-- SIGNATURE PAD (DHL-style) -->
 <div class="bf-share-ov" id="bf-sign-ov">
   <div class="bf-share-box" style="max-width:540px">
@@ -283,6 +303,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
       <button class="bf-share-btn" style="flex:1;justify-content:center;color:#a83232;margin-bottom:0" onclick="bfCaseDel()">🗑️ حذف الحركة</button>
       <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfCloseCase()">إغلاق</button>
     </div>
+    <div id="bf-case-voidrow" style="display:flex;gap:8px;margin-top:8px"></div>
   </div>
 </div>
 
@@ -370,6 +391,7 @@ function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bf
 function bfKPIs(){
   let iU=0,eU=0,iL=0,eL=0;
   bfEntries.forEach(e=>{
+    if(e.voided)return;
     const l=e.currency==='LBP';
     if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
     else { if(l)iL+=+e.amount; else iU+=+e.amount; }
@@ -408,13 +430,15 @@ function bfFiltered(){
   let balU=0,balL=0; const out=[];
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
-    if(e.currency==='LBP')balL+=signed; else balU+=signed;
-    if(ft&&e.entry_type!==ft)return; if(fc&&e.category!==fc)return;
+    if(!e.voided){ if(e.currency==='LBP')balL+=signed; else balU+=signed; }
+    if(ft==='__voided'){ if(!e.voided)return; }
+    else if(ft&&e.entry_type!==ft)return;
+    if(fc&&e.category!==fc)return;
     if(fcur&&(e.currency||'USD')!==fcur)return;
     if(fpay&&(e.payment_method||'cash')!==fpay)return;
     if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
     if(fq){
-      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount].join(' ').toLowerCase();
+      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason].join(' ').toLowerCase();
       if(hay.indexOf(fq)<0)return;
     }
     out.push(Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)}));
@@ -422,15 +446,15 @@ function bfFiltered(){
   return out;
 }
 function bfRenderLedger(){
-  const rows=bfFiltered().map(e=>'<tr onclick="bfOpenCase(\''+e.id+'\')">'
+  const rows=bfFiltered().map(e=>'<tr'+(e.voided?' class="bf-void"':'')+' onclick="bfOpenCase(\''+e.id+'\')">'
     +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
     +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' ✍️'+bfSigCount(e):'')+'</td>'
-    +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+'</td>'
+    +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+(e.voided?' <span class="bf-badge" style="background:#fdecec;color:#c22">⛔ ملغى</span>':'')+'</td>'
     +'<td style="font-size:12px">'+(e.category||'')+'</td>'
     +'<td style="font-size:12px">'+bfPay(e)+'</td>'
     +'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'
     +'<td>'+(e.person||'')+'</td>'
-    +'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+'</td>'
+    +'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'
     +'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'
     +'<td style="white-space:nowrap" onclick="event.stopPropagation()">'
       +((e.documents&&e.documents.length)?'<button class="bf-actbtn" title="المرفقات" onclick="bfDocsById(\''+e.id+'\')">📎'+e.documents.length+'</button>':'')
@@ -491,7 +515,7 @@ async function bfSave(type){
 }
 function bfGroup(list,keyFn){
   const m={};
-  list.forEach(e=>{const k=keyFn(e)||'—';if(!m[k])m[k]={n:0,usd:0,lbp:0};m[k].n++;if(e.currency==='LBP')m[k].lbp+=+e.amount;else m[k].usd+=+e.amount;});
+  list.forEach(e=>{if(e.voided)return;const k=keyFn(e)||'—';if(!m[k])m[k]={n:0,usd:0,lbp:0};m[k].n++;if(e.currency==='LBP')m[k].lbp+=+e.amount;else m[k].usd+=+e.amount;});
   return Object.entries(m).sort((a,b)=>((b[1].usd*100000+b[1].lbp)-(a[1].usd*100000+a[1].lbp)));
 }
 function bfRenderReports(){
@@ -503,6 +527,7 @@ function bfRenderReports(){
   document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>row(k,v,'bf-neg')).join('')||empty;
   const pm={};
   bfEntries.forEach(e=>{
+    if(e.voided)return;
     const k=e.person||'—';if(!pm[k])pm[k]={n:0,inc:{usd:0,lbp:0},exp:{usd:0,lbp:0}};pm[k].n++;
     const b=e.entry_type==='expense'?pm[k].exp:pm[k].inc;
     if(e.currency==='LBP')b.lbp+=+e.amount;else b.usd+=+e.amount;
@@ -513,13 +538,13 @@ function bfRenderReports(){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,النوع,الفئة,طريقة الدفع,البيان,الجهة,المستلم,المبلغ,العملة,الرصيد'];
+  const lines=['التاريخ,رقم السند,النوع,الفئة,طريقة الدفع,البيان,الجهة,المستلم,المبلغ,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     const lbp=e.currency==='LBP';
-    if(lbp)balL+=signed; else balU+=signed;
-    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),signed,(lbp?'LBP':'USD'),(lbp?balL:balU)].join(','));
+    if(!e.voided){ if(lbp)balL+=signed; else balU+=signed; }
+    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
@@ -543,6 +568,7 @@ function bfReceiptHTML(e){
   +'<div style="position:relative;border:2.5px solid #0f4d82;border-radius:4px;padding:5px;background:#fff">'
   +'<div style="position:relative;border:1.5px solid #c9a227;border-radius:2px;padding:18px 22px;overflow:hidden">'
     +(BF_LOGO?'<img src="'+BF_LOGO+'" style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:270px;opacity:.05;pointer-events:none">':'')
+    +(e.voided?'<div style="position:absolute;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-16deg);border:4px solid #c22;color:#c22;font-size:46px;font-weight:800;padding:4px 34px;border-radius:12px;opacity:.8;z-index:5;letter-spacing:0">ملغى</div>':'')
     +'<div style="display:flex;align-items:center;gap:14px;border-bottom:2.5px solid #c9a227;padding-bottom:12px;position:relative">'
       +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:58px">':'')
       +'<div style="flex:1">'
@@ -559,6 +585,7 @@ function bfReceiptHTML(e){
       +'<div style="font-size:13px;font-weight:700;color:#555">التاريخ: <b style="color:#1a1a2e;direction:ltr;unicode-bidi:embed">'+e.entry_date.split('-').reverse().join('/')+'</b></div>'
       +(e.category?'<div style="background:#fdf6e3;border:1px solid #c9a227;color:#8a6d1a;font-size:12px;font-weight:800;padding:3px 12px;border-radius:999px">'+e.category+'</div>':'')
     +'</div>'
+    +(e.voided?'<div style="background:#fdecec;border:1.5px solid #c22;color:#a11;border-radius:10px;padding:7px 12px;margin:8px 0 2px;font-size:12px;font-weight:700;position:relative">⛔ سند ملغى'+(e.voided_at?' بتاريخ '+new Date(e.voided_at).toLocaleDateString('ar-LB'):'')+(e.void_reason?'<br>السبب: '+e.void_reason:'')+'</div>':'')
     +'<div style="position:relative">'
       +row('البيان',e.description)
       +row(isIn?'وصلنا من السيد/ة':'دُفع إلى السيد/ة',e.person)
@@ -569,7 +596,7 @@ function bfReceiptHTML(e){
     +'</div>'
     +'<div style="margin:16px 0 6px;text-align:center;background:linear-gradient(135deg,'+(isIn?'#f0faf3':'#fdf1f1')+',#fff);border:2px solid '+c+';border-radius:14px;padding:13px;position:relative">'
       +'<div style="font-size:12px;color:#8a8f9c;font-weight:700">المبلغ — '+bfCurWord(e.currency)+'</div>'
-      +'<div style="font-size:33px;font-weight:800;color:'+c+';direction:ltr;unicode-bidi:embed">'+(e.currency==='LBP'?bfFmt(e.amount)+' ل.ل.':'$'+bfFmt(e.amount))+'</div>'
+      +'<div style="font-size:33px;font-weight:800;color:'+(e.voided?'#999':c)+';direction:ltr;unicode-bidi:embed">'+(e.voided?'<s>':'')+(e.currency==='LBP'?bfFmt(e.amount)+' ل.ل.':'$'+bfFmt(e.amount))+(e.voided?'</s>':'')+'</div>'
     +'</div>'
     +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
       +sigBlock(isIn?'توقيع الدافع':'توقيع المستفيد','person')
@@ -636,6 +663,7 @@ function bfPrint(){
 function bfBuildReportEl(){
   let iU=0,eU=0,iL=0,eL=0;
   bfEntries.forEach(e=>{
+    if(e.voided)return;
     const l=e.currency==='LBP';
     if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
     else { if(l)iL+=+e.amount; else iU+=+e.amount; }
@@ -651,8 +679,10 @@ function bfBuildReportEl(){
   const secT=t=>'<div style="font-size:14px;font-weight:800;color:#0f4d82;margin:14px 0 6px">'+t+'</div>';
   const rows=bfFiltered().map(e=>'<tr style="page-break-inside:avoid">'
     +td(e.entry_date.split('-').reverse().join('/'))+td(e.receipt_no)+td(TYPE_AR[e.entry_type]||e.entry_type)
-    +td(e.category,'font-size:10px')+td(bfPay(e),'font-size:10px')+td(e.description)+td(e.person)
-    +td((e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency),'font-weight:800;color:'+(e.signed<0?'#a83232':'#1f7a45'))
+    +td(e.category,'font-size:10px')+td(bfPay(e),'font-size:10px')
+    +td((e.description||'')+(e.voided?' — ⛔ ملغى'+(e.void_reason?': '+e.void_reason:''):''),e.voided?'color:#c22':'')
+    +td(e.person)
+    +td((e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':''),'font-weight:800;color:'+(e.voided?'#999':(e.signed<0?'#a83232':'#1f7a45')))
     +td(bfMoney(e.bal,e.currency),'font-weight:800;color:#0f4d82')+'</tr>').join('');
   const sumR=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+td(k)+td(v.n)+td(bfSumTxt(v),'font-weight:800;color:'+color)+'</tr>').join('');
   const el=document.createElement('div');
@@ -746,6 +776,7 @@ function bfShareText(){
       +'قضاء الشوف — جبل لبنان\n'
       +SEP+'\n'
       +'رقم السند: '+(e.receipt_no||'')+'\n'
+      +(e.voided?('⛔ سند ملغى — السبب: '+(e.void_reason||'غير محدد')+'\n'):'')
       +'التاريخ: '+e.entry_date.split('-').reverse().join('/')+'\n'
       +'المبلغ: '+bfFmt(e.amount)+' '+(e.currency==='LBP'?'ليرة لبنانية':'دولار')+'\n'
       +'طريقة الدفع: '+bfPay(e)+'\n'
@@ -759,6 +790,7 @@ function bfShareText(){
   }
   let iU=0,eU=0,iL=0,eL=0;
   bfEntries.forEach(e=>{
+    if(e.voided)return;
     const l=e.currency==='LBP';
     if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
     else { if(l)iL+=+e.amount; else iU+=+e.amount; }
@@ -898,7 +930,8 @@ function bfOpenCase(id){
     +'<div style="font-weight:800;color:#0f4d82;direction:ltr">'+(e.receipt_no||'')+'</div>'
     +'</div>'
     +'<div style="text-align:center;background:#f7fafc;border:1.5px solid '+c+';border-radius:12px;padding:9px;margin-bottom:8px">'
-    +'<span style="font-size:24px;font-weight:800;color:'+c+'">'+bfMoney(e.amount,e.currency)+'</span></div>'
+    +'<span style="font-size:24px;font-weight:800;color:'+(e.voided?'#999':c)+'">'+(e.voided?'<s>':'')+bfMoney(e.amount,e.currency)+(e.voided?'</s>':'')+'</span></div>'
+    +(e.voided?('<div style="background:#fdecec;border:1.5px solid #c22;color:#a11;border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:12.5px;font-weight:700">⛔ سند ملغى'+(e.voided_at?' · '+new Date(e.voided_at).toLocaleDateString('ar-LB'):'')+(e.void_reason?'<br>السبب: '+e.void_reason:'')+(e.voided_by?'<br>بواسطة: '+e.voided_by:'')+'</div>'):'')
     +dr('التاريخ','<span style="direction:ltr;unicode-bidi:embed">'+e.entry_date.split('-').reverse().join('/')+'</span>')
     +dr('الفئة',e.category)
     +dr('طريقة الدفع',bfPay(e))
@@ -910,12 +943,52 @@ function bfOpenCase(id){
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
       +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
+  document.getElementById('bf-case-voidrow').innerHTML = e.voided
+    ? '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#1f7a45;margin-bottom:0" onclick="bfCaseUnvoid()">↩️ استعادة السند (إلغاء الـ Void)</button>'
+    : '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#c22;border-color:#eec2c2;margin-bottom:0" onclick="bfCaseVoid()">⛔ إلغاء السند (Void) — دون حذف</button>';
   document.getElementById('bf-case-ov').style.display='flex';
 }
 function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none';bfCaseId=null;}
 function bfCaseShare(){const id=bfCaseId;bfCloseCase();if(id)bfReceiptById(id);}
 function bfCasePrint(){const id=bfCaseId;bfCloseCase();if(id)bfPrintById(id);}
 function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
+
+// ── ⛔ VOID (إلغاء دون حذف) ──
+let bfVoidId=null;
+function bfCaseVoid(){const id=bfCaseId;bfCloseCase();if(id)bfOpenVoid(id);}
+function bfOpenVoid(id){
+  const e=bfEntries.find(x=>String(x.id)===String(id)); if(!e)return;
+  bfVoidId=e.id;
+  document.getElementById('bf-void-sub').textContent=bfKind(e)+' '+(e.receipt_no||'')+' — '+bfMoney(e.amount,e.currency)+(e.person?' — '+e.person:'');
+  document.getElementById('bf-void-reason').value='';
+  document.getElementById('bf-void-err').textContent='';
+  document.getElementById('bf-void-ov').style.display='flex';
+}
+function bfCloseVoid(){document.getElementById('bf-void-ov').style.display='none';bfVoidId=null;}
+async function bfVoidConfirm(){
+  if(!bfVoidId)return;
+  const reason=document.getElementById('bf-void-reason').value.trim();
+  const err=document.getElementById('bf-void-err');
+  if(!reason){err.textContent='⚠️ يرجى كتابة سبب الإلغاء — إلزامي';return;}
+  const{data,error}=await sb.from('baladieh_finance')
+    .update({voided:true,void_reason:reason,voided_at:new Date().toISOString(),voided_by:bfUser?bfUser.email:null})
+    .eq('id',bfVoidId).select();
+  if(error){err.textContent='⚠️ '+error.message;return;}
+  toast('✓ تم إلغاء السند — المبلغ مستبعد من الرصيد');
+  bfCloseVoid();
+  await bfLoad();
+  if(data&&data[0])bfOpenReceiptShare(data[0]);
+}
+async function bfCaseUnvoid(){
+  const id=bfCaseId; bfCloseCase(); if(!id)return;
+  if(!confirm('استعادة هذا السند؟ سيعود مبلغه إلى الرصيد والتقارير.'))return;
+  const{error}=await sb.from('baladieh_finance')
+    .update({voided:false,void_reason:null,voided_at:null,voided_by:null})
+    .eq('id',id);
+  if(error){toast('⚠️ فشل الاستعادة: '+error.message,'err');return;}
+  toast('✓ تمت استعادة السند');
+  await bfLoad();
+}
 
 // ── ✍️ SIGNATURE PAD ──
 let bfSignTarget=null, bfSignCtx2=null, bfSignDrawn=false, bfSignRole='person', bfSignedAny=false;
