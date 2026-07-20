@@ -34,7 +34,8 @@ async function runImport(){
   for(const t of tables){
     const {cols,rows}=DATA[t];
     document.getElementById('st').textContent='🧹 تفريغ '+t+'…';
-    await sb.from(t).delete().gte('baladieh_int_id',0);
+    const c0=DATA[t].cols[0];
+    await sb.from(t).delete().or(c0+'.is.null,'+c0+'.not.is.null');
     for(let i=0;i<rows.length;i+=500){
       const chunk=rows.slice(i,i+500).map(r=>{const o={};cols.forEach((c,ix)=>o[c]=r[ix]);return o;});
       const{error}=await sb.from(t).insert(chunk);
