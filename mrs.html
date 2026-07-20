@@ -16,6 +16,13 @@
 .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
 .tab{flex:1;min-width:100px;padding:10px 8px;border:none;border-radius:10px;background:#fff;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;color:#555;box-shadow:0 1px 5px rgba(0,0,0,.06)}
 .tab.on{background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff}
+.tab{transition:transform .12s,background .15s,color .15s}
+.tab:hover{transform:translateY(-1px)}
+.tab:not(.on):hover{background:#eef3fa;color:var(--b)}
+.kpi{transition:transform .15s,box-shadow .15s}
+.kpi:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,77,130,.14)}
+.abtn{flex:1;min-width:110px;padding:9px 8px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;font-family:inherit;font-size:12.5px;font-weight:800;color:#444;cursor:pointer;transition:transform .12s,border-color .15s,color .15s}
+.abtn:hover{transform:translateY(-1px);border-color:var(--b);color:var(--b)}
 .card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px}
 .fi{width:100%;padding:10px 13px;border:1.5px solid var(--bd);border-radius:10px;font-family:inherit;font-size:14px;margin-bottom:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -76,7 +83,17 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
     </div>
   </div>
   <div class="card">
-    <input class="fi" id="q" placeholder="🔍 بحث بالاسم، رقم الإشعار، رقم الإيصال، السنة…" oninput="render()">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+      <div style="flex:2;min-width:200px"><input class="fi" id="q" style="margin-bottom:0" placeholder="🔍 بحث بالاسم، رقم الإشعار، رقم الإيصال، السنة…" oninput="applyF()"></div>
+      <div style="flex:0 0 150px"><div style="font-size:11px;font-weight:800;color:#888;margin-bottom:3px">من تاريخ</div><input type="date" class="fi" id="f-from" style="margin-bottom:0" onchange="applyF()"></div>
+      <div style="flex:0 0 150px"><div style="font-size:11px;font-weight:800;color:#888;margin-bottom:3px">إلى تاريخ</div><input type="date" class="fi" id="f-to" style="margin-bottom:0" onchange="applyF()"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="abtn" onclick="mrsWa()">📤 إرسال واتساب</button>
+      <button class="abtn" onclick="mrsMail()">📧 إرسال بريد</button>
+      <button class="abtn" onclick="mrsCsv()">📊 تصدير Excel</button>
+      <button class="abtn" onclick="mrsPrint()">🖨️ طباعة التقرير</button>
+    </div>
     <div class="tw"><table><thead id="hd"></thead><tbody id="bd"><tr><td style="text-align:center;color:#999;padding:24px">⏳ جاري تحميل الأرشيف…</td></tr></tbody></table></div>
     <div id="cnt" style="font-size:12px;color:#999;margin-top:8px"></div>
   </div>
@@ -92,6 +109,21 @@ const sb=window.supabase.createClient('https://onjbwhkmmtqnymhjnplw.supabase.co'
 const ALLOWED=['mayor','admin','sandouk'];
 let T={},cur='muk';
 const F=n=>n==null?'':Number(n).toLocaleString('en-US');
+function dOK(d){
+  const f=(document.getElementById('f-from')||{}).value, t=(document.getElementById('f-to')||{}).value;
+  if(!f&&!t)return true;
+  if(!d)return false;
+  const x=String(d).slice(0,10);
+  if(f&&x<f)return false; if(t&&x>t)return false;
+  return true;
+}
+function periodTxt(){
+  const f=(document.getElementById('f-from')||{}).value, t=(document.getElementById('f-to')||{}).value;
+  if(!f&&!t)return 'كل الفترة';
+  const d=s=>s.split('-').reverse().join('/');
+  return (f?d(f):'البداية')+' ← '+(t?d(t):'اليوم');
+}
+function applyF(){kpis(); if(cur==='dash'){renderDash();}else{render();}}
 const DT=s=>s?String(s).slice(0,10).split('-').reverse().join('/'):'';
 async function fetchAll(t){
   let out=[],i=0;
@@ -125,7 +157,7 @@ async function boot(u){
 function kpis(){
   const ish=T.mrs_ishaarat;
   let tk=0,paid=0,unpaid=0;
-  ish.forEach(i=>{tk+=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);paid+=(+i.paid_amount||0);if(i.paid_status!=='Y')unpaid++;});
+  ish.forEach(i=>{if(!dOK(i.ishaar_date))return;tk+=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);paid+=(+i.paid_amount||0);if(i.paid_status!=='Y')unpaid++;});
   document.getElementById('k1').textContent=F(T.mrs_mukallaf.length);
   document.getElementById('k2').textContent=F(tk);
   document.getElementById('k3').textContent=F(paid);
@@ -143,22 +175,22 @@ function render(){
   if(cur==='muk'){
     h='<tr><th>#</th><th>المكلف</th><th>إشعارات</th><th>التكليف+غرامات</th><th>المدفوع</th><th>غير مدفوع</th></tr>';
     const agg={};
-    T.mrs_ishaarat.forEach(i=>{const a=agg[i.mukallaf_id]=agg[i.mukallaf_id]||{n:0,t:0,p:0,u:0};a.n++;a.t+=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);a.p+=(+i.paid_amount||0);if(i.paid_status!=='Y')a.u++;});
+    T.mrs_ishaarat.forEach(i=>{if(!dOK(i.ishaar_date))return;const a=agg[i.mukallaf_id]=agg[i.mukallaf_id]||{n:0,t:0,p:0,u:0};a.n++;a.t+=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);a.p+=(+i.paid_amount||0);if(i.paid_status!=='Y')a.u++;});
     rows=T.mrs_mukallaf.filter(m=>!q||match(q,[m.mukallaf_id,m.mukallaf_name])).map(m=>{
       const a=agg[m.mukallaf_id]||{n:0,t:0,p:0,u:0};
       return '<tr onclick="openMuk('+m.mukallaf_id+')"><td>'+m.mukallaf_id+'</td><td style="font-weight:700">'+m.mukallaf_name+'</td><td>'+a.n+'</td><td class="bal">'+F(a.t)+'</td><td class="pos">'+F(a.p)+'</td><td>'+(a.u?'<span class="bdg n">'+a.u+'</span>':'<span class="bdg y">0</span>')+'</td></tr>';});
   }else if(cur==='ish'){
     h='<tr><th>الإشعار</th><th>السنة</th><th>التاريخ</th><th>المكلف</th><th>التكليف</th><th>غرامات</th><th>المدفوع</th><th>الحالة</th></tr>';
-    rows=T.mrs_ishaarat.filter(i=>!q||match(q,[i.ishaar_number,i.takleef_year,T.muk[i.mukallaf_id]||''])).map(i=>
+    rows=T.mrs_ishaarat.filter(i=>dOK(i.ishaar_date)&&(!q||match(q,[i.ishaar_number,i.takleef_year,T.muk[i.mukallaf_id]||'']))).map(i=>
       '<tr onclick="openIsh('+i.ishaar_id+')"><td style="font-weight:700;color:var(--b)">'+(i.ishaar_number||'')+'</td><td>'+(i.takleef_year||'')+'</td><td>'+DT(i.ishaar_date)+'</td><td>'+(T.muk[i.mukallaf_id]||'')+'</td><td>'+F(i.takleef_amount)+'</td><td>'+F((+i.fine_amount||0)+(+i.late_pmt_fine||0))+'</td><td class="pos">'+F(i.paid_amount)+'</td><td>'+(i.paid_status==='Y'?'<span class="bdg y">مدفوع</span>':(+i.paid_amount>0?'<span class="bdg p">جزئي</span>':'<span class="bdg n">غير مدفوع</span>'))+'</td></tr>');
   }else if(cur==='rec'){
     const ishById={};T.mrs_ishaarat.forEach(i=>ishById[i.ishaar_id]=i);
     h='<tr><th>إيصال رقم</th><th>التاريخ</th><th>السنة</th><th>المكلف</th><th>المبلغ</th><th>غرامة</th></tr>';
-    rows=T.mrs_receipts.filter(r=>{const nm=(ishById[r.ishaar_id]||{}).mukallaf_id;return !q||match(q,[r.receipt_number,r.budget_year,T.muk[nm]||'']);}).map(r=>{
+    rows=T.mrs_receipts.filter(r=>{if(!dOK(r.receipt_date))return false;const nm=(ishById[r.ishaar_id]||{}).mukallaf_id;return !q||match(q,[r.receipt_number,r.budget_year,T.muk[nm]||'']);}).map(r=>{
       const nm=T.muk[(ishById[r.ishaar_id]||{}).mukallaf_id]||'';
       return '<tr onclick="openIsh('+r.ishaar_id+')"><td style="font-weight:700;color:var(--b)">'+r.receipt_number+'</td><td>'+DT(r.receipt_date)+'</td><td>'+(r.budget_year||'')+'</td><td>'+nm+'</td><td class="pos">'+F(r.receipt_amount)+'</td><td>'+F(r.receipt_fine_amount)+'</td></tr>';});
   }else if(cur==='fee'){
-    const use={};T.mrs_takleefat.forEach(k=>use[k.fee_type_id]=(use[k.fee_type_id]||0)+1);
+    const use={};T.mrs_takleefat.forEach(k=>{if(!dOK(k.takleef_date))return;use[k.fee_type_id]=(use[k.fee_type_id]||0)+1;});
     h='<tr><th>#</th><th>نوع الرسم</th><th>سنوي</th><th>مرات الاستخدام</th></tr>';
     rows=T.mrs_fee_types.filter(f=>!q||match(q,[f.fee_type_id,f.fee_type_name])).map(f=>
       '<tr><td>'+f.fee_type_id+'</td><td style="font-weight:700">'+f.fee_type_name+'</td><td>'+(f.yearly==='Y'?'نعم':'لا')+'</td><td>'+(use[f.fee_type_id]||0)+'</td></tr>');
@@ -166,7 +198,7 @@ function render(){
     const acc={};(T.mrs_mbs_acceptances||[]).forEach(a=>acc[a.budget_year+'_'+a.accept_seq_yr]=a);
     h='<tr><th>السنة</th><th>صرف رقم</th><th>التاريخ</th><th>المبلغ</th><th>المستفيد</th><th>إجازة النفقة</th><th>إجازة الدفع</th><th>الحالة</th></tr>';
     rows=(T.mrs_mbs_payments||[]).slice().sort((a,b)=>(b.budget_year-a.budget_year)||(b.payment_seq_yr-a.payment_seq_yr))
-      .filter(p=>{const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};return !q||match(q,[p.budget_year,p.payment_seq_yr,a.beneficiary||'',p.amount]);})
+      .filter(p=>{if(!dOK(p.pay_date))return false;const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};return !q||match(q,[p.budget_year,p.payment_seq_yr,a.beneficiary||'',p.amount]);})
       .map(p=>{const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};
       return '<tr><td>'+p.budget_year+'</td><td style="font-weight:700;color:var(--b)">'+p.payment_seq_yr+'</td><td>'+DT(p.pay_date)+'</td><td class="bal">'+F(p.amount)+'</td><td style="white-space:normal">'+(a.beneficiary||'')+'</td><td>'+(p.expense_auth_by||'')+'</td><td>'+(p.pay_auth_by||'')+'</td><td>'+(p.active==='Y'?'<span class="bdg y">نافذ</span>':'<span class="bdg n">ملغى</span>')+'</td></tr>';});
   }else{
@@ -191,7 +223,7 @@ function hbars(data,color){
 function renderDash(){
   // 1: جباية by year — تكليف vs محصّل
   const y1={},y2={};
-  T.mrs_ishaarat.forEach(i=>{const y=i.takleef_year||'؟';y1[y]=(y1[y]||0)+(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);y2[y]=(y2[y]||0)+(+i.paid_amount||0);});
+  T.mrs_ishaarat.forEach(i=>{if(!dOK(i.ishaar_date))return;const y=i.takleef_year||'؟';y1[y]=(y1[y]||0)+(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);y2[y]=(y2[y]||0)+(+i.paid_amount||0);});
   const yrs=Object.keys(y1).sort();
   const mx=Math.max.apply(null,yrs.map(y=>Math.max(y1[y]||0,y2[y]||0)).concat([1]));
   document.getElementById('ch1').innerHTML=yrs.map(y=>
@@ -201,18 +233,87 @@ function renderDash(){
     +'<div style="font-size:11px;color:#888;margin-top:6px"><span style="color:#8a6200">■</span> التكليف مع الغرامات &nbsp; <span style="color:#1f7a45">■</span> المحصّل</div>';
   // 2: budget payments by year
   const by={};
-  (T.mrs_mbs_payments||[]).forEach(p=>{if(p.active!=='Y')return;by[p.budget_year]=(by[p.budget_year]||0)+(+p.amount||0);});
+  (T.mrs_mbs_payments||[]).forEach(p=>{if(p.active!=='Y'||!dOK(p.pay_date))return;by[p.budget_year]=(by[p.budget_year]||0)+(+p.amount||0);});
   document.getElementById('ch2').innerHTML=hbars(Object.keys(by).sort().map(y=>({l:y,v:by[y]})),'linear-gradient(90deg,#0f4d82,#1a6eb5)');
   // 3: top fee types
   const ft={};
-  T.mrs_takleefat.forEach(k=>{ft[k.fee_type_id]=(ft[k.fee_type_id]||0)+(+k.takleef_amount||0);});
+  T.mrs_takleefat.forEach(k=>{if(!dOK(k.takleef_date))return;ft[k.fee_type_id]=(ft[k.fee_type_id]||0)+(+k.takleef_amount||0);});
   const top=Object.entries(ft).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.fee[k]||('#'+k),v:v}));
   document.getElementById('ch3').innerHTML=hbars(top,'#8a6200');
   // 4: top unpaid balances
   const un={};
-  T.mrs_ishaarat.forEach(i=>{const due=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0)-(+i.paid_amount||0);if(due>0)un[i.mukallaf_id]=(un[i.mukallaf_id]||0)+due;});
+  T.mrs_ishaarat.forEach(i=>{if(!dOK(i.ishaar_date))return;const due=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0)-(+i.paid_amount||0);if(due>0)un[i.mukallaf_id]=(un[i.mukallaf_id]||0)+due;});
   const topu=Object.entries(un).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.muk[k]||('#'+k),v:v}));
   document.getElementById('ch4').innerHTML=hbars(topu,'#a83232');
+}
+const TAB_AR={dash:'اللوحة الإحصائية',muk:'المكلفون',ish:'الإشعارات',rec:'الإيصالات',fee:'أنواع الرسوم',ikr:'العقارات',bud:'الموازنة'};
+function statsText(){
+  const g=id=>document.getElementById(id).textContent;
+  let t='🗄️ تقرير أرشيف الرسوم — بلدية وادي الست\n'
+    +'الفترة: '+periodTxt()+'\n'
+    +'━━━━━━━━━━━━━━\n'
+    +'المكلفون: '+g('k1')+'\n'
+    +'إجمالي التكليفات: '+g('k2')+' ل.ل.\n'
+    +'المحصّل: '+g('k3')+' ل.ل.\n'
+    +'إشعارات غير مدفوعة: '+g('k4')+'\n';
+  if(cur!=='dash'){
+    t+='━━━━━━━━━━━━━━\nالعرض الحالي: '+TAB_AR[cur]+' — '+document.getElementById('cnt').textContent+'\n';
+  }
+  t+='\n(مصدر البيانات: نظام IDEAS MRS — نسخة 20/07/2026)';
+  return t;
+}
+function mrsWa(){window.open('https://wa.me/?text='+encodeURIComponent(statsText()),'_blank');}
+function mrsMail(){location.href='mailto:?subject='+encodeURIComponent('تقرير أرشيف الرسوم — بلدية وادي الست')+'&body='+encodeURIComponent(statsText());}
+function mrsCsv(){
+  const today=new Date().toISOString().slice(0,10);
+  let csv='\ufeff';
+  const qq=s=>'"'+String(s==null?'':s).replace(/"/g,'""').replace(/\n/g,' ')+'"';
+  if(cur==='dash'){
+    const g=id=>document.getElementById(id).textContent;
+    csv+=['البند,القيمة','المكلفون,'+qq(g('k1')),'إجمالي التكليفات (ل.ل.),'+qq(g('k2')),'المحصّل (ل.ل.),'+qq(g('k3')),'إشعارات غير مدفوعة,'+qq(g('k4')),'الفترة,'+qq(periodTxt())].join('\n');
+  }else{
+    const heads=[...document.querySelectorAll('#hd th')].map(th=>qq(th.textContent));
+    csv+=heads.join(',')+'\n';
+    [...document.querySelectorAll('#bd tr')].forEach(tr=>{
+      const cells=[...tr.querySelectorAll('td')];
+      if(cells.length<2)return;
+      csv+=cells.map(td=>qq(td.textContent.trim())).join(',')+'\n';
+    });
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='MRS-Archive-'+cur+'-'+today+'.csv';
+  a.click();
+}
+function mrsPrint(){
+  const logo=(document.querySelector('.top img')||{}).src||'';
+  const g=id=>document.getElementById(id).textContent;
+  const kpiBox=(v,l)=>'<div style="flex:1;border:1.5px solid #c9a227;border-radius:10px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0f4d82">'+v+'</div><div style="font-size:11px;color:#777;font-weight:700">'+l+'</div></div>';
+  let body;
+  if(cur==='dash'){
+    body=document.getElementById('dashwrap').innerHTML;
+  }else{
+    body='<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead>'+document.getElementById('hd').innerHTML+'</thead><tbody>'+document.getElementById('bd').innerHTML+'</tbody></table>';
+  }
+  const w=window.open('','_blank');
+  w.document.write('<html dir="rtl"><head><meta charset="utf-8"><title>تقرير أرشيف الرسوم</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">'
+    +'<style>body{font-family:Tajawal,Tahoma,sans-serif;padding:24px;color:#1a1a2e}'
+    +'th{background:#eef3fa;color:#0f4d82;padding:6px;text-align:right;border:1px solid #dde;font-size:11px}'
+    +'td{padding:5px 6px;border:1px solid #eee}'
+    +'.bdg{padding:1px 6px;border-radius:6px;font-size:10px}'
+    +'@media print{button{display:none}}</style></head><body>'
+    +'<div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid #c9a227;padding-bottom:12px;margin-bottom:14px">'
+    +(logo?'<img src="'+logo+'" style="height:58px">':'')
+    +'<div><div style="font-size:19px;font-weight:800;color:#0f4d82">بلدية وادي الست — أرشيف الرسوم البلدية</div>'
+    +'<div style="font-size:12px;color:#777">'+TAB_AR[cur]+' · الفترة: '+periodTxt()+' · طُبع في '+new Date().toLocaleDateString('ar-LB')+'</div></div></div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:16px">'
+    +kpiBox(g('k1'),'المكلفون')+kpiBox(g('k2'),'إجمالي التكليفات (ل.ل.)')+kpiBox(g('k3'),'المحصّل (ل.ل.)')+kpiBox(g('k4'),'إشعارات غير مدفوعة')
+    +'</div>'+body
+    +'<div style="margin-top:18px;font-size:10px;color:#999;border-top:1px solid #eee;padding-top:8px">المصدر: نظام IDEAS MRS — قاعدة بيانات 20/07/2026 · بوابة بلدية وادي الست الرقمية</div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(()=>{try{w.focus();w.print();}catch(_e){}},600);
 }
 function dr(l,v){return (v===0||v)?'<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 2px;border-bottom:1px dashed #eef0f4;font-size:13.5px"><div style="color:#8a8f9c;font-weight:700">'+l+'</div><div style="font-weight:700">'+v+'</div></div>':'';}
 function openMuk(id){
