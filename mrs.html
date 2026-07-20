@@ -59,11 +59,21 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
     <div class="kpi"><div class="v" id="k4">—</div><div class="l">إشعارات غير مدفوعة</div></div>
   </div>
   <div class="tabs">
-    <button class="tab on" id="t-muk" onclick="show('muk')">👥 المكلفون</button>
+    <button class="tab on" id="t-dash" onclick="show('dash')">📊 اللوحة</button>
+    <button class="tab" id="t-muk" onclick="show('muk')">👥 المكلفون</button>
     <button class="tab" id="t-ish" onclick="show('ish')">📄 الإشعارات</button>
     <button class="tab" id="t-rec" onclick="show('rec')">🧾 الإيصالات</button>
     <button class="tab" id="t-fee" onclick="show('fee')">🏷️ أنواع الرسوم</button>
     <button class="tab" id="t-ikr" onclick="show('ikr')">🏠 العقارات</button>
+    <button class="tab" id="t-bud" onclick="show('bud')">💼 الموازنة</button>
+  </div>
+  <div id="dashwrap" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px">
+      <div class="card"><div class="sec" style="margin-top:0">💰 الجباية عبر السنوات (تكليف / محصّل — ل.ل.)</div><div id="ch1"></div></div>
+      <div class="card"><div class="sec" style="margin-top:0">💼 نفقات الموازنة المدفوعة عبر السنوات (ل.ل.)</div><div id="ch2"></div></div>
+      <div class="card"><div class="sec" style="margin-top:0">🏷️ أعلى أنواع الرسوم تكليفاً</div><div id="ch3"></div></div>
+      <div class="card"><div class="sec" style="margin-top:0">⚠️ أعلى الأرصدة غير المدفوعة</div><div id="ch4"></div></div>
+    </div>
   </div>
   <div class="card">
     <input class="fi" id="q" placeholder="🔍 بحث بالاسم، رقم الإشعار، رقم الإيصال، السنة…" oninput="render()">
@@ -98,7 +108,7 @@ async function boot(u){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   try{
-    const names=['mrs_mukallaf','mrs_ishaarat','mrs_receipts','mrs_takleefat','mrs_fee_types','mrs_ikarat','mrs_ikar_details','mrs_receipts_det'];
+    const names=['mrs_mukallaf','mrs_ishaarat','mrs_receipts','mrs_takleefat','mrs_fee_types','mrs_ikarat','mrs_ikar_details','mrs_receipts_det','mrs_mbs_payments','mrs_mbs_acceptances','mrs_mbs_accept_details'];
     const res=await Promise.all(names.map(fetchAll));
     names.forEach((n,i)=>T[n]=res[i]);
     if(!T.mrs_mukallaf.length){
@@ -107,7 +117,7 @@ async function boot(u){
     }
     T.fee={}; T.mrs_fee_types.forEach(f=>T.fee[f.fee_type_id]=f.fee_type_name);
     T.muk={}; T.mrs_mukallaf.forEach(m=>T.muk[m.mukallaf_id]=m.mukallaf_name);
-    kpis(); show('muk');
+    kpis(); show('dash');
   }catch(e){
     document.getElementById('bd').innerHTML='<tr><td style="text-align:center;color:#a83232;padding:24px">⚠️ '+e.message+'</td></tr>';
   }
@@ -121,7 +131,10 @@ function kpis(){
   document.getElementById('k3').textContent=F(paid);
   document.getElementById('k4').textContent=F(unpaid);
 }
-function show(t){cur=t;['muk','ish','rec','fee','ikr'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===t));render();}
+function show(t){cur=t;['dash','muk','ish','rec','fee','ikr','bud'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===t));
+  document.getElementById('dashwrap').style.display = t==='dash' ? '' : 'none';
+  document.querySelector('.card:not(.kpi)').style.display = t==='dash' ? 'none' : '';
+  if(t==='dash'){renderDash();}else{render();}}
 function match(q,arr){return arr.join(' ').toLowerCase().indexOf(q)>=0;}
 function render(){
   const q=(document.getElementById('q').value||'').trim().toLowerCase();
@@ -149,6 +162,13 @@ function render(){
     h='<tr><th>#</th><th>نوع الرسم</th><th>سنوي</th><th>مرات الاستخدام</th></tr>';
     rows=T.mrs_fee_types.filter(f=>!q||match(q,[f.fee_type_id,f.fee_type_name])).map(f=>
       '<tr><td>'+f.fee_type_id+'</td><td style="font-weight:700">'+f.fee_type_name+'</td><td>'+(f.yearly==='Y'?'نعم':'لا')+'</td><td>'+(use[f.fee_type_id]||0)+'</td></tr>');
+  }else if(cur==='bud'){
+    const acc={};(T.mrs_mbs_acceptances||[]).forEach(a=>acc[a.budget_year+'_'+a.accept_seq_yr]=a);
+    h='<tr><th>السنة</th><th>صرف رقم</th><th>التاريخ</th><th>المبلغ</th><th>المستفيد</th><th>إجازة النفقة</th><th>إجازة الدفع</th><th>الحالة</th></tr>';
+    rows=(T.mrs_mbs_payments||[]).slice().sort((a,b)=>(b.budget_year-a.budget_year)||(b.payment_seq_yr-a.payment_seq_yr))
+      .filter(p=>{const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};return !q||match(q,[p.budget_year,p.payment_seq_yr,a.beneficiary||'',p.amount]);})
+      .map(p=>{const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};
+      return '<tr><td>'+p.budget_year+'</td><td style="font-weight:700;color:var(--b)">'+p.payment_seq_yr+'</td><td>'+DT(p.pay_date)+'</td><td class="bal">'+F(p.amount)+'</td><td style="white-space:normal">'+(a.beneficiary||'')+'</td><td>'+(p.expense_auth_by||'')+'</td><td>'+(p.pay_auth_by||'')+'</td><td>'+(p.active==='Y'?'<span class="bdg y">نافذ</span>':'<span class="bdg n">ملغى</span>')+'</td></tr>';});
   }else{
     const dets={};T.mrs_ikar_details.forEach(x=>{(dets[x.ikar_id]=dets[x.ikar_id]||[]).push(x);});
     h='<tr><th>عقار رقم</th><th>القسم</th><th>المنطقة</th><th>وحدات</th><th>المالكون</th></tr>';
@@ -160,6 +180,39 @@ function render(){
   hd.innerHTML=h;
   bd.innerHTML=rows.join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:20px">لا نتائج</td></tr>';
   document.getElementById('cnt').textContent=rows.length.toLocaleString()+' سجل';
+}
+function hbars(data,color){
+  const mx=Math.max.apply(null,data.map(d=>d.v).concat([1]));
+  return data.map(d=>'<div style="display:flex;align-items:center;gap:8px;margin:6px 0">'
+    +'<div style="width:135px;font-size:11.5px;font-weight:700;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.l+'</div>'
+    +'<div style="flex:1;background:#eef2f7;border-radius:6px;height:17px"><div style="width:'+Math.max(d.v/mx*100,1)+'%;background:'+color+';height:100%;border-radius:6px"></div></div>'
+    +'<div style="width:95px;font-size:11.5px;font-weight:800;color:#0f4d82;text-align:left;direction:ltr">'+F(d.v)+'</div></div>').join('')||'<div style="color:#999;font-size:12px">لا بيانات</div>';
+}
+function renderDash(){
+  // 1: جباية by year — تكليف vs محصّل
+  const y1={},y2={};
+  T.mrs_ishaarat.forEach(i=>{const y=i.takleef_year||'؟';y1[y]=(y1[y]||0)+(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);y2[y]=(y2[y]||0)+(+i.paid_amount||0);});
+  const yrs=Object.keys(y1).sort();
+  const mx=Math.max.apply(null,yrs.map(y=>Math.max(y1[y]||0,y2[y]||0)).concat([1]));
+  document.getElementById('ch1').innerHTML=yrs.map(y=>
+    '<div style="margin:8px 0"><div style="font-size:12px;font-weight:800;color:#555">'+y+'</div>'
+    +'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div style="flex:1;background:#eef2f7;border-radius:5px;height:13px"><div style="width:'+Math.max((y1[y]||0)/mx*100,1)+'%;background:#c9a227;height:100%;border-radius:5px"></div></div><div style="width:95px;font-size:11px;font-weight:800;text-align:left;direction:ltr;color:#8a6200">'+F(y1[y])+'</div></div>'
+    +'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div style="flex:1;background:#eef2f7;border-radius:5px;height:13px"><div style="width:'+Math.max((y2[y]||0)/mx*100,1)+'%;background:#1f7a45;height:100%;border-radius:5px"></div></div><div style="width:95px;font-size:11px;font-weight:800;text-align:left;direction:ltr;color:#1f7a45">'+F(y2[y])+'</div></div></div>').join('')
+    +'<div style="font-size:11px;color:#888;margin-top:6px"><span style="color:#8a6200">■</span> التكليف مع الغرامات &nbsp; <span style="color:#1f7a45">■</span> المحصّل</div>';
+  // 2: budget payments by year
+  const by={};
+  (T.mrs_mbs_payments||[]).forEach(p=>{if(p.active!=='Y')return;by[p.budget_year]=(by[p.budget_year]||0)+(+p.amount||0);});
+  document.getElementById('ch2').innerHTML=hbars(Object.keys(by).sort().map(y=>({l:y,v:by[y]})),'linear-gradient(90deg,#0f4d82,#1a6eb5)');
+  // 3: top fee types
+  const ft={};
+  T.mrs_takleefat.forEach(k=>{ft[k.fee_type_id]=(ft[k.fee_type_id]||0)+(+k.takleef_amount||0);});
+  const top=Object.entries(ft).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.fee[k]||('#'+k),v:v}));
+  document.getElementById('ch3').innerHTML=hbars(top,'#8a6200');
+  // 4: top unpaid balances
+  const un={};
+  T.mrs_ishaarat.forEach(i=>{const due=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0)-(+i.paid_amount||0);if(due>0)un[i.mukallaf_id]=(un[i.mukallaf_id]||0)+due;});
+  const topu=Object.entries(un).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.muk[k]||('#'+k),v:v}));
+  document.getElementById('ch4').innerHTML=hbars(topu,'#a83232');
 }
 function dr(l,v){return (v===0||v)?'<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 2px;border-bottom:1px dashed #eef0f4;font-size:13.5px"><div style="color:#8a8f9c;font-weight:700">'+l+'</div><div style="font-weight:700">'+v+'</div></div>':'';}
 function openMuk(id){
