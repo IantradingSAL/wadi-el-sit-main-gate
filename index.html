@@ -489,6 +489,7 @@ html[lang="ar"] input[type="tel"], html[lang="ar"] input[inputmode="tel"]{direct
     <a href="water-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm5">💧 إدارة الري</a>
     <a href="water-admin.html#finance" style="color:rgba(255,255,255,.55);text-decoration:none">💰 صندوق لجنة المياه</a>
     <a href="sandouk.html" style="color:rgba(255,255,255,.55);text-decoration:none">💰 صندوق البلدية</a>
+    <a href="mrs.html" style="color:rgba(255,255,255,.55);text-decoration:none">🗄️ أرشيف الرسوم</a>
   </div>
 </footer>
 
@@ -906,6 +907,18 @@ const WN_DEFAULT = [
 ];
 
 const WN_VERSIONS = [
+  {
+    version: '3.8',
+    date: {ar:'تموز 2026', en:'July 2026', fr:'Juillet 2026'},
+    color: '#eef3fa', badgeColor: '#0f4d82',
+    features: [
+      {icon:'🗄️',
+        title:{ar:'أرشيف نظام الرسوم البلدية (IDEAS)', en:'Municipal Fees Archive (IDEAS)', fr:'Archives des taxes municipales (IDEAS)'},
+        desc:{ar:'استُخرجت بيانات نظام الرسوم القديم (Oracle) وأصبحت متاحة للإدارة في صفحة أرشيف حديثة: المكلفون، الإشعارات، الإيصالات، أنواع الرسوم والعقارات — مع بحث فوري وبطاقة تفصيلية لكل مكلف',
+              en:'The legacy fees system data (Oracle) was extracted and is now available to administrators in a modern archive page: taxpayers, notices, receipts, fee types and properties — with instant search and per-taxpayer detail cards',
+              fr:"Les données de l'ancien système de taxes (Oracle) ont été extraites et sont disponibles dans une page d'archives moderne avec recherche instantanée"}},
+    ]
+  },
   {
     version: '3.7',
     date: {ar:'تموز 2026', en:'July 2026', fr:'Juillet 2026'},
