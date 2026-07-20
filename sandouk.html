@@ -300,7 +300,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
       <button class="bf-share-btn" style="flex:1;justify-content:center;margin-bottom:0" onclick="bfCaseSign()">✍️ توقيع</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="bf-share-btn" style="flex:1;justify-content:center;color:#a83232;margin-bottom:0" onclick="bfCaseDel()">🗑️ حذف الحركة</button>
+      <button class="bf-share-btn" id="bf-case-delbtn" style="flex:1;justify-content:center;color:#a83232;margin-bottom:0" onclick="bfCaseDel()">🗑️ حذف الحركة</button>
       <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfCloseCase()">إغلاق</button>
     </div>
     <div id="bf-case-voidrow" style="display:flex;gap:8px;margin-top:8px"></div>
@@ -341,6 +341,12 @@ function bfMoney(a,c){return (c==='LBP') ? bfFmt(a)+' ل.ل.' : '$'+bfFmt(a);}
 function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار أميركي';}
 const BF_PAY={cash:'نقداً',transfer:'حوالة مصرفية',whish:'Whish'};
 const BF_SIGN_ROLES=['person','cashier','mayor'];
+const BF_SUPER='imadaehn@gmail.com';
+function bfCanDel(){
+  if(!bfUser)return false;
+  if(String(bfUser.email||'').toLowerCase()===BF_SUPER)return true;
+  return !!(bfUser.user_metadata&&bfUser.user_metadata.sandouk_delete===true);
+}
 function bfSigs(e){
   const s=(e.signatures&&typeof e.signatures==='object')?e.signatures:{};
   if(e.signature&&!(s.person&&s.person.img))return Object.assign({person:{img:e.signature,at:e.signed_at}},s);
@@ -461,11 +467,12 @@ function bfRenderLedger(){
       +'<button class="bf-actbtn" title="توقيع" onclick="bfOpenSign(\''+e.id+'\')">✍️</button>'
       +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
       +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
-      +'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>'
+      +(bfCanDel()?'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>':'')
     +'</td></tr>').join('');
   document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="10" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
 }
 async function bfDel(id){
+  if(!bfCanDel()){toast('🚫 صلاحية الحذف محصورة بالمشرف العام','err');return;}
   if(!confirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
   const e=bfEntries.find(x=>String(x.id)===String(id));
   const{error}=await sb.from('baladieh_finance').delete().eq('id',id);
@@ -943,8 +950,11 @@ function bfOpenCase(id){
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
       +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
+  document.getElementById('bf-case-delbtn').style.display = bfCanDel() ? '' : 'none';
   document.getElementById('bf-case-voidrow').innerHTML = e.voided
-    ? '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#1f7a45;margin-bottom:0" onclick="bfCaseUnvoid()">↩️ استعادة السند (إلغاء الـ Void)</button>'
+    ? (bfCanDel()
+        ? '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#1f7a45;margin-bottom:0" onclick="bfCaseUnvoid()">↩️ استعادة السند (إلغاء الـ Void)</button>'
+        : '<div style="flex:1;text-align:center;font-size:12px;color:#999;padding:8px">↩️ استعادة السند محصورة بالمشرف العام</div>')
     : '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#c22;border-color:#eec2c2;margin-bottom:0" onclick="bfCaseVoid()">⛔ إلغاء السند (Void) — دون حذف</button>';
   document.getElementById('bf-case-ov').style.display='flex';
 }
@@ -980,6 +990,7 @@ async function bfVoidConfirm(){
   if(data&&data[0])bfOpenReceiptShare(data[0]);
 }
 async function bfCaseUnvoid(){
+  if(!bfCanDel()){toast('🚫 استعادة السندات محصورة بالمشرف العام','err');return;}
   const id=bfCaseId; bfCloseCase(); if(!id)return;
   if(!confirm('استعادة هذا السند؟ سيعود مبلغه إلى الرصيد والتقارير.'))return;
   const{error}=await sb.from('baladieh_finance')

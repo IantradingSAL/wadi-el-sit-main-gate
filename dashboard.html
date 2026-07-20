@@ -1410,6 +1410,7 @@ async function loadEmp() {
     el.innerHTML = users.map(u => {
       const nm = u.user_metadata?.name || u.email.split('@')[0];
       const rl = u.user_metadata?.role || 'officer';
+      const sd = u.user_metadata?.sandouk_delete === true;
       const [fc, bc] = gc2(nm);
       const opts = ['viewer','officer','approver','admin','mayor','sandouk','water_only'].map(r =>
         `<option value="${r}"${r === rl ? ' selected' : ''}>${RL[r]}</option>`).join('');
@@ -1423,7 +1424,7 @@ async function loadEmp() {
         <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px">
           <select onchange="chRole(this)" data-uid="${u.id}" data-nm="${nm.replace(/"/g,'')}"
             style="padding:7px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px;cursor:pointer;background:#fff">${opts}</select>
-          <button onclick="editEmp(this)" data-uid="${u.id}" data-nm="${nm.replace(/"/g,'')}" data-rl="${rl}"
+          <button onclick="editEmp(this)" data-uid="${u.id}" data-nm="${nm.replace(/"/g,'')}" data-rl="${rl}" data-sd="${sd?1:0}"
             style="padding:7px 12px;background:var(--blue3);color:var(--blue);border:1px solid var(--blue);border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">✏️ تعديل</button>
           <button onclick="delEmp(this)" data-uid="${u.id}" data-nm="${nm.replace(/"/g,'')}"
             style="padding:7px 12px;background:var(--danger-bg);color:var(--danger);border:1px solid #f2bcbc;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">🗑 حذف</button>
@@ -1450,7 +1451,7 @@ async function chRole(sel) {
 
 function editEmp(btn) {
   if(!guard('admin','🚫 تعديل الموظفين متاح للإدارة فقط')) return;
-  const uid = btn.dataset.uid, name = btn.dataset.nm, role = btn.dataset.rl;
+  const uid = btn.dataset.uid, name = btn.dataset.nm, role = btn.dataset.rl, sd = btn.dataset.sd === '1';
   const RL = { mayor: '👑 رئيس البلدية', admin: '⚙️ المدير', approver: '✅ مسؤول الموافقات', officer: '👤 موظف المتابعة', viewer:'👁️ عرض فقط', sandouk:'💰 صلاحية الصندوق فقط', water_only:'💧 صلاحية الري فقط' };
   const old = document.getElementById('edit-emp-form');
   if (old) old.remove();
@@ -1461,6 +1462,13 @@ function editEmp(btn) {
       <div style="font-size:14px;font-weight:700;color:var(--blue2);margin-bottom:12px">✏️ تعديل: ${name}</div>
       <div class="fg"><div class="fl">الاسم</div><input type="text" id="edit-nm" class="fi" value="${name}"></div>
       <div class="fg"><div class="fl">الدور</div><select id="edit-rl" class="fi">${opts}</select></div>
+      <div class="fg" style="background:#fdf6e3;border:1px solid #e8d9a8;border-radius:10px;padding:10px 12px">
+        <label style="display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700;color:#6b5200;cursor:pointer">
+          <input type="checkbox" id="edit-sd" ${sd ? 'checked' : ''} style="width:17px;height:17px;accent-color:#8a6200">
+          🗑️ صلاحية حذف واستعادة سندات صندوق البلدية
+        </label>
+        <div style="font-size:11px;color:#9a8548;margin-top:4px">افتراضياً محصورة بالمشرف العام فقط</div>
+      </div>
       <div style="display:flex;gap:8px">
         <button onclick="saveEmp('${uid}')" class="btn bp" style="flex:2;justify-content:center">✓ حفظ</button>
         <button onclick="document.getElementById('edit-emp-form').remove()" class="btn bg" style="flex:1;justify-content:center">إلغاء</button>
@@ -1477,7 +1485,7 @@ async function saveEmp(uid) {
     const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/auth/v1/admin/users/' + uid, {
       method: 'PUT',
       headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_metadata: { name: nm, role: rl } })
+      body: JSON.stringify({ user_metadata: { name: nm, role: rl, sandouk_delete: !!document.getElementById('edit-sd')?.checked } })
     });
     const d = await r.json();
     if (d.error) throw new Error(d.msg || JSON.stringify(d.error));
