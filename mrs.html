@@ -21,6 +21,9 @@
 .tab:not(.on):hover{background:#eef3fa;color:var(--b)}
 .kpi{transition:transform .15s,box-shadow .15s}
 .kpi:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,77,130,.14)}
+.kpi{cursor:pointer}
+.hrow{cursor:pointer;border-radius:9px;padding:3px 5px;margin:2px -5px;transition:background .12s,transform .12s}
+.hrow:hover{background:#eef3fa;transform:translateX(-2px)}
 .tdi{width:118px;padding:5px 6px;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:11px;font-weight:700;color-scheme:dark}
 .tdi:hover{background:rgba(255,255,255,.2)}
 #mbtn:hover{background:rgba(255,255,255,.25)}
@@ -92,10 +95,10 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
 </div>
 <div class="wrap">
   <div class="kpis">
-    <div class="kpi"><div class="v" id="k1">—</div><div class="l">المكلفون</div></div>
-    <div class="kpi"><div class="v" id="k2">—</div><div class="l">إجمالي التكليفات (ل.ل.)</div></div>
-    <div class="kpi"><div class="v" id="k3">—</div><div class="l">المحصّل (ل.ل.)</div></div>
-    <div class="kpi"><div class="v" id="k4">—</div><div class="l">إشعارات غير مدفوعة</div></div>
+    <div class="kpi" onclick="goTab('muk','')" title="عرض المكلفين"><div class="v" id="k1">—</div><div class="l">المكلفون</div></div>
+    <div class="kpi" onclick="goTab('ish','')" title="عرض الإشعارات"><div class="v" id="k2">—</div><div class="l">إجمالي التكليفات (ل.ل.)</div></div>
+    <div class="kpi" onclick="goTab('rec','')" title="عرض الإيصالات"><div class="v" id="k3">—</div><div class="l">المحصّل (ل.ل.)</div></div>
+    <div class="kpi" onclick="goTab('muk','',5)" title="المكلفون مرتّبون حسب غير المدفوع"><div class="v" id="k4">—</div><div class="l">إشعارات غير مدفوعة</div></div>
   </div>
   <div class="tabs">
     <button class="tab on" id="t-dash" onclick="show('dash')">📊 اللوحة</button>
@@ -238,6 +241,14 @@ function render(){
   bindSort();
 }
 let sortState={tab:null,col:-1,dir:1};
+let HB=[];
+function HBrun(i){if(HB[i])HB[i]();}
+function goTab(t,q,sortCol){
+  document.getElementById('q').value=q||'';
+  show(t);
+  if(sortCol!=null){sortState={tab:t,col:sortCol,dir:1};sortBy(sortCol);}
+  document.getElementById('tblcard').scrollIntoView({behavior:'smooth',block:'start'});
+}
 function bindSort(){
   const ths=[...document.querySelectorAll('#hd th')];
   ths.forEach((th,ix)=>{th.onclick=()=>sortBy(ix);});
@@ -269,35 +280,40 @@ function sortBy(ix){
 }
 function hbars(data,color){
   const mx=Math.max.apply(null,data.map(d=>d.v).concat([1]));
-  return data.map(d=>'<div style="display:flex;align-items:center;gap:8px;margin:6px 0">'
+  return data.map(d=>{
+    let attr='';
+    if(d.fn){const hi=HB.push(d.fn)-1;attr=' class="hrow" onclick="HBrun('+hi+')" title="'+(d.tip||'اضغط للتفاصيل')+'"';}
+    return '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"'+attr+'>'
     +'<div style="width:135px;font-size:11.5px;font-weight:700;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+d.l+'</div>'
     +'<div style="flex:1;background:#eef2f7;border-radius:6px;height:17px"><div style="width:'+Math.max(d.v/mx*100,1)+'%;background:'+color+';height:100%;border-radius:6px"></div></div>'
-    +'<div style="width:95px;font-size:11.5px;font-weight:800;color:#0f4d82;text-align:left;direction:ltr">'+F(d.v)+'</div></div>').join('')||'<div style="color:#999;font-size:12px">لا بيانات</div>';
+    +'<div style="width:95px;font-size:11.5px;font-weight:800;color:#0f4d82;text-align:left;direction:ltr">'+F(d.v)+'</div></div>';}).join('')||'<div style="color:#999;font-size:12px">لا بيانات</div>';
 }
 function renderDash(){
+  HB=[];
   // 1: جباية by year — تكليف vs محصّل
   const y1={},y2={};
   T.mrs_ishaarat.forEach(i=>{if(!dOK(i.ishaar_date))return;const y=i.takleef_year||'؟';y1[y]=(y1[y]||0)+(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);y2[y]=(y2[y]||0)+(+i.paid_amount||0);});
   const yrs=Object.keys(y1).sort();
   const mx=Math.max.apply(null,yrs.map(y=>Math.max(y1[y]||0,y2[y]||0)).concat([1]));
-  document.getElementById('ch1').innerHTML=yrs.map(y=>
-    '<div style="margin:8px 0"><div style="font-size:12px;font-weight:800;color:#555">'+y+'</div>'
+  document.getElementById('ch1').innerHTML=yrs.map(y=>{
+    const hi=HB.push(()=>goTab('ish',String(y)))-1;
+    return '<div style="margin:8px 0" class="hrow" onclick="HBrun('+hi+')" title="عرض إشعارات '+y+'"><div style="font-size:12px;font-weight:800;color:#555">'+y+'</div>'
     +'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div style="flex:1;background:#eef2f7;border-radius:5px;height:13px"><div style="width:'+Math.max((y1[y]||0)/mx*100,1)+'%;background:#c9a227;height:100%;border-radius:5px"></div></div><div style="width:95px;font-size:11px;font-weight:800;text-align:left;direction:ltr;color:#8a6200">'+F(y1[y])+'</div></div>'
-    +'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div style="flex:1;background:#eef2f7;border-radius:5px;height:13px"><div style="width:'+Math.max((y2[y]||0)/mx*100,1)+'%;background:#1f7a45;height:100%;border-radius:5px"></div></div><div style="width:95px;font-size:11px;font-weight:800;text-align:left;direction:ltr;color:#1f7a45">'+F(y2[y])+'</div></div></div>').join('')
+    +'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><div style="flex:1;background:#eef2f7;border-radius:5px;height:13px"><div style="width:'+Math.max((y2[y]||0)/mx*100,1)+'%;background:#1f7a45;height:100%;border-radius:5px"></div></div><div style="width:95px;font-size:11px;font-weight:800;text-align:left;direction:ltr;color:#1f7a45">'+F(y2[y])+'</div></div></div>';}).join('')
     +'<div style="font-size:11px;color:#888;margin-top:6px"><span style="color:#8a6200">■</span> التكليف مع الغرامات &nbsp; <span style="color:#1f7a45">■</span> المحصّل</div>';
   // 2: budget payments by year
   const by={};
   (T.mrs_mbs_payments||[]).forEach(p=>{if(p.active!=='Y'||!dOK(p.pay_date))return;by[p.budget_year]=(by[p.budget_year]||0)+(+p.amount||0);});
-  document.getElementById('ch2').innerHTML=hbars(Object.keys(by).sort().map(y=>({l:y,v:by[y]})),'linear-gradient(90deg,#0f4d82,#1a6eb5)');
+  document.getElementById('ch2').innerHTML=hbars(Object.keys(by).sort().map(y=>({l:y,v:by[y],fn:()=>goTab('bud',String(y)),tip:'عرض مدفوعات '+y})),'linear-gradient(90deg,#0f4d82,#1a6eb5)');
   // 3: top fee types
   const ft={};
   T.mrs_takleefat.forEach(k=>{if(!dOK(k.takleef_date))return;ft[k.fee_type_id]=(ft[k.fee_type_id]||0)+(+k.takleef_amount||0);});
-  const top=Object.entries(ft).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.fee[k]||('#'+k),v:v}));
+  const top=Object.entries(ft).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.fee[k]||('#'+k),v:v,fn:()=>goTab('fee',T.fee[k]||String(k)),tip:'عرض نوع الرسم'}));
   document.getElementById('ch3').innerHTML=hbars(top,'#8a6200');
   // 4: top unpaid balances
   const un={};
   T.mrs_ishaarat.forEach(i=>{if(!dOK(i.ishaar_date))return;const due=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0)-(+i.paid_amount||0);if(due>0)un[i.mukallaf_id]=(un[i.mukallaf_id]||0)+due;});
-  const topu=Object.entries(un).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.muk[k]||('#'+k),v:v}));
+  const topu=Object.entries(un).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.muk[k]||('#'+k),v:v,fn:()=>openMuk(+k),tip:'فتح ملف المكلف'}));
   document.getElementById('ch4').innerHTML=hbars(topu,'#a83232');
 }
 const TAB_AR={dash:'اللوحة الإحصائية',muk:'المكلفون',ish:'الإشعارات',rec:'الإيصالات',fee:'أنواع الرسوم',ikr:'العقارات',bud:'الموازنة'};
