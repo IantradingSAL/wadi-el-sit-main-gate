@@ -24,6 +24,8 @@
 .kpi{cursor:pointer}
 .hrow{cursor:pointer;border-radius:9px;padding:3px 5px;margin:2px -5px;transition:background .12s,transform .12s}
 .hrow:hover{background:#eef3fa;transform:translateX(-2px)}
+.olnk{color:var(--b);font-weight:700;cursor:pointer;transition:color .12s}
+.olnk:hover{color:#c9a227;text-decoration:underline}
 .tdi{width:118px;padding:5px 6px;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:11px;font-weight:700;color-scheme:dark}
 .tdi:hover{background:rgba(255,255,255,.2)}
 #mbtn:hover{background:rgba(255,255,255,.25)}
@@ -236,10 +238,15 @@ function render(){
   }else{
     const dets={};T.mrs_ikar_details.forEach(x=>{(dets[x.ikar_id]=dets[x.ikar_id]||[]).push(x);});
     h='<tr><th>عقار رقم</th><th>القسم</th><th>المنطقة</th><th>وحدات</th><th>المالكون</th></tr>';
-    rows=T.mrs_ikarat.filter(k=>!q||match(q,[k.ikar_number,k.ikar_section||''])).map(k=>{
+    rows=T.mrs_ikarat.map(k=>{
       const ds=dets[k.ikar_id]||[];
-      const owners=[...new Set(ds.map(x=>T.muk[x.owner_id]).filter(Boolean))].join('، ');
-      return '<tr><td style="font-weight:700;color:var(--b)">'+(k.ikar_number||'')+'</td><td>'+(k.ikar_section||'')+'</td><td>'+(k.region_id||'')+'</td><td>'+ds.length+'</td><td style="white-space:normal">'+owners+'</td></tr>';});
+      const oids=[...new Set(ds.map(x=>x.owner_id).filter(x=>x!=null&&T.muk[x]))];
+      return {k,ds,oids,otxt:oids.map(x=>T.muk[x]).join('، ')};
+    }).filter(o=>!q||match(q,[o.k.ikar_number,o.k.ikar_section||'',o.k.region_id||'',o.otxt]))
+      .map(o=>{
+      const k=o.k;
+      const ohtml=o.oids.map(x=>'<span class="olnk" onclick="event.stopPropagation();openMuk('+x+')" title="فتح ملف المالك">'+T.muk[x]+'</span>').join('، ');
+      return '<tr><td style="font-weight:700;color:var(--b)">'+(k.ikar_number||'')+'</td><td>'+(k.ikar_section||'')+'</td><td>'+(k.region_id||'')+'</td><td>'+o.ds.length+'</td><td style="white-space:normal">'+ohtml+'</td></tr>';});
   }
   hd.innerHTML=h;
   bd.innerHTML=rows.join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:20px">لا نتائج</td></tr>';
