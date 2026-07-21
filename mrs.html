@@ -102,6 +102,7 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
   </div>
   <div class="tabs">
     <button class="tab on" id="t-dash" onclick="show('dash')">📊 اللوحة</button>
+    <button class="tab" id="t-cit" onclick="show('cit')">👤 ملف المواطن</button>
     <button class="tab" id="t-muk" onclick="show('muk')">👥 المكلفون</button>
     <button class="tab" id="t-ish" onclick="show('ish')">📄 الإشعارات</button>
     <button class="tab" id="t-rec" onclick="show('rec')">🧾 الإيصالات</button>
@@ -119,7 +120,8 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
   </div>
   <div class="card" id="tblcard">
     <input class="fi" id="q" placeholder="🔍 بحث بالاسم، رقم الإشعار، رقم الإيصال، السنة…" oninput="applyF()">
-    <div class="tw"><table><thead id="hd"></thead><tbody id="bd"><tr><td style="text-align:center;color:#999;padding:24px">⏳ جاري تحميل الأرشيف…</td></tr></tbody></table></div>
+    <div class="tw" id="twmain"><table><thead id="hd"></thead><tbody id="bd"><tr><td style="text-align:center;color:#999;padding:24px">⏳ جاري تحميل الأرشيف…</td></tr></tbody></table></div>
+    <div id="citwrap" style="display:none"></div>
     <div id="cnt" style="font-size:12px;color:#999;margin-top:8px"></div>
   </div>
 </div>
@@ -189,12 +191,16 @@ function kpis(){
   document.getElementById('k3').textContent=F(paid);
   document.getElementById('k4').textContent=F(unpaid);
 }
-function show(t){cur=t;['dash','muk','ish','rec','fee','ikr','bud'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===t));
+function show(t){cur=t;['dash','cit','muk','ish','rec','fee','ikr','bud'].forEach(x=>document.getElementById('t-'+x).classList.toggle('on',x===t));
+  document.getElementById('q').placeholder = t==='cit' ? '🔍 اكتب اسم المواطن…' : '🔍 بحث بالاسم، رقم الإشعار، رقم الإيصال، السنة…';
   document.getElementById('dashwrap').style.display = t==='dash' ? '' : 'none';
   document.getElementById('tblcard').style.display = t==='dash' ? 'none' : '';
   if(t==='dash'){renderDash();}else{render();}}
 function match(q,arr){return arr.join(' ').toLowerCase().indexOf(q)>=0;}
 function render(){
+  const twm=document.getElementById('twmain'), cw=document.getElementById('citwrap');
+  if(cur==='cit'){twm.style.display='none';cw.style.display='';document.getElementById('cnt').textContent='';renderCit();return;}
+  twm.style.display='';cw.style.display='none';
   const q=(document.getElementById('q').value||'').trim().toLowerCase();
   const hd=document.getElementById('hd'),bd=document.getElementById('bd');
   let rows=[],h='';
@@ -316,7 +322,62 @@ function renderDash(){
   const topu=Object.entries(un).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.muk[k]||('#'+k),v:v,fn:()=>openMuk(+k),tip:'فتح ملف المكلف'}));
   document.getElementById('ch4').innerHTML=hbars(topu,'#a83232');
 }
-const TAB_AR={dash:'اللوحة الإحصائية',muk:'المكلفون',ish:'الإشعارات',rec:'الإيصالات',fee:'أنواع الرسوم',ikr:'العقارات',bud:'الموازنة'};
+let citSel=null, citQ='';
+function citPick(id){citSel=id;citQ=document.getElementById('q').value.trim().toLowerCase();renderCit();}
+function citRow(inner,click,tip){return '<div class="hrow" style="display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #eef0f4;border-radius:10px;margin-bottom:6px;font-size:12.5px;align-items:center" onclick="'+click+'" title="'+(tip||'اضغط للتفاصيل')+'">'+inner+'</div>';}
+function renderCit(){
+  const w=document.getElementById('citwrap');
+  const q=document.getElementById('q').value.trim().toLowerCase();
+  if(citSel&&q!==citQ)citSel=null;
+  if(!citSel){
+    if(q.length<2){
+      w.innerHTML='<div style="text-align:center;color:#888;padding:30px 10px;font-size:13.5px">👤 اكتب اسم المواطن في خانة البحث أعلاه<br><span style="font-size:11.5px;color:#aaa">حرفان على الأقل — ويظهر كل ما يتعلق به: إشعارات، إيصالات، عقارات، أرصدة</span></div>';
+      return;
+    }
+    const m=T.mrs_mukallaf.filter(x=>String(x.mukallaf_name||'').toLowerCase().indexOf(q)>=0);
+    if(!m.length){w.innerHTML='<div style="text-align:center;color:#999;padding:26px">لا يوجد مواطن بهذا الاسم</div>';return;}
+    if(m.length===1){citSel=m[0].mukallaf_id;citQ=q;}
+    else{
+      w.innerHTML='<div style="font-size:12px;color:#888;font-weight:800;margin-bottom:8px">'+m.length+' نتيجة — اختر المواطن:</div>'
+        +m.slice(0,25).map(x=>citRow('<span style="font-weight:800;color:var(--b)">'+x.mukallaf_name+'</span><span style="color:#999">#'+x.mukallaf_id+'</span>','citPick('+x.mukallaf_id+')','فتح الملف')).join('');
+      return;
+    }
+  }
+  const id=citSel, name=T.muk[id]||('#'+id);
+  const ishs=T.mrs_ishaarat.filter(i=>i.mukallaf_id==id&&dOK(i.ishaar_date));
+  const ishIds={};ishs.forEach(i=>ishIds[i.ishaar_id]=i);
+  const recs=T.mrs_receipts.filter(r=>ishIds[r.ishaar_id]&&dOK(r.receipt_date));
+  const dets=T.mrs_ikar_details.filter(x=>x.owner_id==id);
+  const ikById={};T.mrs_ikarat.forEach(k=>ikById[k.ikar_id]=k);
+  let tk=0,pd=0;
+  ishs.forEach(i=>{tk+=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);pd+=(+i.paid_amount||0);});
+  const bal=tk-pd;
+  const box=(v,l,c)=>'<div style="flex:1;min-width:130px;border:1.5px solid var(--gold);border-radius:12px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:'+(c||'var(--b)')+';direction:ltr">'+F(v)+'</div><div style="font-size:10.5px;color:#888;font-weight:700">'+l+'</div></div>';
+  let h='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">'
+    +'<div><span style="font-size:17px;font-weight:800;color:var(--b)">👤 '+name+'</span> <span style="color:#999;font-size:12px">#'+id+'</span></div>'
+    +'<button class="mit" style="border:1.5px solid var(--bd);width:auto" onclick="openMuk('+id+')">📇 البطاقة الكاملة</button></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+    +box(tk,'التكليف + غرامات (ل.ل.)')+box(pd,'المدفوع (ل.ل.)','#1f7a45')+box(bal,'الرصيد المتبقي (ل.ل.)',bal>0?'#a83232':'#1f7a45')+'</div>';
+  // إشعارات
+  h+='<div class="sec" style="margin-top:4px">🧾 إشعاراته ('+ishs.length+')</div>';
+  h+=ishs.length?ishs.slice().sort((a,b)=>(b.takleef_year||0)-(a.takleef_year||0)).map(i=>{
+    const due=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0)-(+i.paid_amount||0);
+    return citRow('<span>إشعار <b style="color:var(--b)">'+(i.ishaar_number||i.ishaar_id)+'</b> · '+(i.takleef_year||'')+'</span><span style="direction:ltr;font-weight:800;color:'+(due>0?'#a83232':'#1f7a45')+'">'+(due>0?F(due)+' متبقٍ':'مسدّد ✓')+'</span>','openIsh('+i.ishaar_id+')','تفاصيل الإشعار');
+  }).join(''):'<div style="color:#999;font-size:12px;margin-bottom:8px">لا إشعارات ضمن الفترة</div>';
+  // إيصالات
+  h+='<div class="sec">🧾 إيصالاته ('+recs.length+')</div>';
+  h+=recs.length?recs.slice().sort((a,b)=>String(b.receipt_date||'').localeCompare(String(a.receipt_date||''))).map(r=>
+    citRow('<span>إيصال <b style="color:var(--b)">'+(r.receipt_number||'')+'</b> · '+DT(r.receipt_date)+'</span><span style="direction:ltr;font-weight:800;color:#1f7a45">'+F((+r.paid_amount||0)+(+r.fine_amount||0))+'</span>','goTab(\'rec\',\''+String(r.receipt_number||'')+'\')','عرض في الإيصالات')
+  ).join(''):'<div style="color:#999;font-size:12px;margin-bottom:8px">لا إيصالات ضمن الفترة</div>';
+  // عقارات
+  h+='<div class="sec">🏠 عقاراته ('+dets.length+')</div>';
+  h+=dets.length?dets.map(d=>{
+    const k=ikById[d.ikar_id]||{};
+    return citRow('<span>عقار رقم <b style="color:var(--b)">'+(k.ikar_number||d.ikar_id)+'</b>'+(k.ikar_section?' · قسم '+k.ikar_section:'')+'</span><span style="color:#888;font-size:11px">حصة: '+(d.share_amount||d.owner_share||'—')+'</span>','goTab(\'ikr\',\''+String(k.ikar_number||'')+'\')','عرض في العقارات');
+  }).join(''):'<div style="color:#999;font-size:12px">لا عقارات مسجّلة</div>';
+  w.innerHTML=h;
+}
+const TAB_AR={dash:'اللوحة الإحصائية',cit:'ملف المواطن',muk:'المكلفون',ish:'الإشعارات',rec:'الإيصالات',fee:'أنواع الرسوم',ikr:'العقارات',bud:'الموازنة'};
 function statsText(){
   const g=id=>document.getElementById(id).textContent;
   let t='🗄️ تقرير أرشيف الرسوم — بلدية وادي الست\n'
