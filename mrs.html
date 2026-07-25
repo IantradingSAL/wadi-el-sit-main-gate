@@ -26,6 +26,9 @@
 .hrow:hover{background:#eef3fa;transform:translateX(-2px)}
 .olnk{color:var(--b);font-weight:700;cursor:pointer;transition:color .12s}
 .olnk:hover{color:#c9a227;text-decoration:underline}
+.bpill{flex:1;padding:8px 10px;border:1.5px solid var(--bd);border-radius:10px;background:#fff;font-family:inherit;font-size:12.5px;font-weight:800;color:#555;cursor:pointer;transition:all .15s}
+.bpill:hover{border-color:var(--b);color:var(--b)}
+.bpill.on{background:linear-gradient(135deg,#0f4d82,#1a6eb5);border-color:transparent;color:#fff}
 .tdi{width:118px;padding:5px 6px;border:1.5px solid rgba(255,255,255,.25);border-radius:8px;background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:11px;font-weight:700;color-scheme:dark}
 .tdi:hover{background:rgba(255,255,255,.2)}
 #mbtn:hover{background:rgba(255,255,255,.25)}
@@ -122,6 +125,10 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
   </div>
   <div class="card" id="tblcard">
     <input class="fi" id="q" placeholder="🔍 بحث بالاسم، رقم الإشعار، رقم الإيصال، السنة…" oninput="applyF()">
+    <div id="budbar" style="display:none;gap:8px;margin-bottom:10px">
+      <button class="bpill on" id="bp-exp" onclick="setBudView('exp')">💸 بنود النفقات (الموازنة)</button>
+      <button class="bpill" id="bp-pay" onclick="setBudView('pay')">📄 أوامر الصرف (المدفوعات)</button>
+    </div>
     <div class="tw" id="twmain"><table><thead id="hd"></thead><tbody id="bd"><tr><td style="text-align:center;color:#999;padding:24px">⏳ جاري تحميل الأرشيف…</td></tr></tbody></table></div>
     <div id="citwrap" style="display:none"></div>
     <div id="cnt" style="font-size:12px;color:#999;margin-top:8px"></div>
@@ -170,7 +177,7 @@ async function boot(u){
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   try{
-    const names=['mrs_mukallaf','mrs_ishaarat','mrs_receipts','mrs_takleefat','mrs_fee_types','mrs_ikarat','mrs_ikar_details','mrs_receipts_det','mrs_mbs_payments','mrs_mbs_acceptances','mrs_mbs_accept_details'];
+    const names=['mrs_mukallaf','mrs_ishaarat','mrs_receipts','mrs_takleefat','mrs_fee_types','mrs_ikarat','mrs_ikar_details','mrs_receipts_det','mrs_mbs_payments','mrs_mbs_acceptances','mrs_mbs_accept_details','mrs_mbs_expenses_bud','mrs_mbs_sections','mrs_mbs_reserves'];
     const res=await Promise.all(names.map(fetchAll));
     names.forEach((n,i)=>T[n]=res[i]);
     if(!T.mrs_mukallaf.length){
@@ -179,7 +186,10 @@ async function boot(u){
     }
     T.fee={}; T.mrs_fee_types.forEach(f=>T.fee[f.fee_type_id]=f.fee_type_name);
     T.muk={}; T.mrs_mukallaf.forEach(m=>T.muk[m.mukallaf_id]=m.mukallaf_name);
-    kpis(); show('dash');
+    T.secE={};T.secEany={};
+  (T.mrs_mbs_sections||[]).forEach(s=>{if(s.chapter_type!=='E')return;T.secE[s.budget_year+'|'+s.chapter+'|'+s.section]=s.descript;T.secEany[s.chapter+'|'+s.section]=s.descript;});
+  T.resv={};(T.mrs_mbs_reserves||[]).forEach(r=>{T.resv[r.budget_year+'_'+r.reserve_seq_yr]=r;});
+  kpis(); show('dash');
   }catch(e){
     document.getElementById('bd').innerHTML='<tr><td style="text-align:center;color:#a83232;padding:24px">⚠️ '+e.message+'</td></tr>';
   }
@@ -203,6 +213,7 @@ function render(){
   const twm=document.getElementById('twmain'), cw=document.getElementById('citwrap');
   if(cur==='cit'){twm.style.display='none';cw.style.display='';document.getElementById('cnt').textContent='';renderCit();return;}
   twm.style.display='';cw.style.display='none';
+  document.getElementById('budbar').style.display = cur==='bud' ? 'flex' : 'none';
   const q=(document.getElementById('q').value||'').trim().toLowerCase();
   const hd=document.getElementById('hd'),bd=document.getElementById('bd');
   let rows=[],h='';
@@ -228,13 +239,32 @@ function render(){
     h='<tr><th>#</th><th>نوع الرسم</th><th>سنوي</th><th>مرات الاستخدام</th></tr>';
     rows=T.mrs_fee_types.filter(f=>!q||match(q,[f.fee_type_id,f.fee_type_name])).map(f=>
       '<tr><td>'+f.fee_type_id+'</td><td style="font-weight:700">'+f.fee_type_name+'</td><td>'+(f.yearly==='Y'?'نعم':'لا')+'</td><td>'+(use[f.fee_type_id]||0)+'</td></tr>');
+  }else if(cur==='bud'&&budView==='exp'){
+    const yf=(document.getElementById('f-from')||{}).value, yt=(document.getElementById('f-to')||{}).value;
+    const y1=yf?+yf.slice(0,4):null, y2=yt?+yt.slice(0,4):null;
+    h='<tr><th>السنة</th><th>الفصل</th><th>البند</th><th>اسم البند</th><th>المرصود (ل.ل.)</th><th>إضافات</th><th>مدوّر</th><th>الإجمالي</th></tr>';
+    rows=(T.mrs_mbs_expenses_bud||[]).slice()
+      .sort((a,b)=>(b.budget_year-a.budget_year)||(a.chapter-b.chapter)||(a.section-b.section))
+      .filter(e=>{
+        if(y1&&+e.budget_year<y1)return false; if(y2&&+e.budget_year>y2)return false;
+        const nm=secName(e.budget_year,e.chapter,e.section);
+        return !q||match(q,[e.budget_year,e.chapter,e.section,nm]);
+      })
+      .map(e=>{
+        const nm=secName(e.budget_year,e.chapter,e.section);
+        const rd=(+e.rdr_amount||0)+(+e.rdunr_amount||0);
+        const tot=(+e.bd_amount||0)+(+e.add_amount||0)+rd;
+        return '<tr><td style="font-weight:700;color:var(--b)">'+e.budget_year+'</td><td>'+e.chapter+'</td><td>'+e.section+'</td><td style="white-space:normal;font-weight:700">'+nm+(e.exceptional_flag==='Y'?' <span class="bdg n">استثنائي</span>':'')+'</td><td class="bal">'+F(e.bd_amount)+'</td><td>'+F(e.add_amount)+'</td><td>'+F(rd)+'</td><td class="bal" style="color:var(--b)">'+F(tot)+'</td></tr>';});
   }else if(cur==='bud'){
     const acc={};(T.mrs_mbs_acceptances||[]).forEach(a=>acc[a.budget_year+'_'+a.accept_seq_yr]=a);
-    h='<tr><th>السنة</th><th>صرف رقم</th><th>التاريخ</th><th>المبلغ</th><th>المستفيد</th><th>إجازة النفقة</th><th>إجازة الدفع</th><th>الحالة</th></tr>';
+    h='<tr><th>السنة</th><th>صرف رقم</th><th>التاريخ</th><th>المبلغ</th><th>المستفيد</th><th>البند</th><th>إجازة النفقة</th><th>إجازة الدفع</th><th>الحالة</th></tr>';
     rows=(T.mrs_mbs_payments||[]).slice().sort((a,b)=>(b.budget_year-a.budget_year)||(b.payment_seq_yr-a.payment_seq_yr))
       .filter(p=>{if(!dOK(p.pay_date))return false;const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};return !q||match(q,[p.budget_year,p.payment_seq_yr,a.beneficiary||'',p.amount]);})
       .map(p=>{const a=acc[p.budget_year+'_'+p.accept_seq_yr]||{};
-      return '<tr><td>'+p.budget_year+'</td><td style="font-weight:700;color:var(--b)">'+p.payment_seq_yr+'</td><td>'+DT(p.pay_date)+'</td><td class="bal">'+F(p.amount)+'</td><td style="white-space:normal">'+(a.beneficiary||'')+'</td><td>'+(p.expense_auth_by||'')+'</td><td>'+(p.pay_auth_by||'')+'</td><td>'+(p.active==='Y'?'<span class="bdg y">نافذ</span>':'<span class="bdg n">ملغى</span>')+'</td></tr>';});
+      const rv=a.reserve_seq_yr!=null?(T.resv[a.budget_year+'_'+a.reserve_seq_yr]||{}):{};
+      let bnd=rv.chapter!=null?(secName(p.budget_year,rv.chapter,rv.section)||rv.descript||''):'';
+      if(bnd&&rv.chapter!=null)bnd=rv.chapter+'/'+rv.section+' · '+bnd;
+      return '<tr><td>'+p.budget_year+'</td><td style="font-weight:700;color:var(--b)">'+p.payment_seq_yr+'</td><td>'+DT(p.pay_date)+'</td><td class="bal">'+F(p.amount)+'</td><td style="white-space:normal">'+(a.beneficiary||'')+'</td><td style="white-space:normal;font-size:11px">'+bnd+'</td><td>'+(p.expense_auth_by||'')+'</td><td>'+(p.pay_auth_by||'')+'</td><td>'+(p.active==='Y'?'<span class="bdg y">نافذ</span>':'<span class="bdg n">ملغى</span>')+'</td></tr>';});
   }else{
     const dets={};T.mrs_ikar_details.forEach(x=>{(dets[x.ikar_id]=dets[x.ikar_id]||[]).push(x);});
     h='<tr><th>عقار رقم</th><th>القسم</th><th>المنطقة</th><th>وحدات</th><th>المالكون</th></tr>';
@@ -329,6 +359,9 @@ function renderDash(){
   const topu=Object.entries(un).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({l:T.muk[k]||('#'+k),v:v,fn:()=>openMuk(+k),tip:'فتح ملف المكلف'}));
   document.getElementById('ch4').innerHTML=hbars(topu,'#a83232');
 }
+let budView='exp';
+function setBudView(v){budView=v;document.getElementById('bp-exp').classList.toggle('on',v==='exp');document.getElementById('bp-pay').classList.toggle('on',v==='pay');render();}
+function secName(y,ch,sec){return T.secE[y+'|'+ch+'|'+sec]||T.secEany[ch+'|'+sec]||'';}
 let citSel=null, citQ='';
 function citPick(id){citSel=id;citQ=document.getElementById('q').value.trim().toLowerCase();renderCit();}
 function citRow(inner,click,tip){return '<div class="hrow" style="display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid #eef0f4;border-radius:10px;margin-bottom:6px;font-size:12.5px;align-items:center" onclick="'+click+'" title="'+(tip||'اضغط للتفاصيل')+'">'+inner+'</div>';}
