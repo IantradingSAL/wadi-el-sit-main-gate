@@ -268,7 +268,7 @@ function render(){
   }else{
     const dets={};T.mrs_ikar_details.forEach(x=>{(dets[x.ikar_id]=dets[x.ikar_id]||[]).push(x);});
     h='<tr><th>عقار رقم</th><th>القسم</th><th>المنطقة</th><th>وحدات</th><th>المالكون</th></tr>';
-    rows=T.mrs_ikarat.map(k=>{
+    rows=T.mrs_ikarat.filter(k=>+k.ikar_id>0&&+k.ikar_number>0).map(k=>{
       const ds=dets[k.ikar_id]||[];
       const oids=[...new Set(ds.map(x=>x.owner_id).filter(x=>x!=null&&T.muk[x]))];
       return {k,ds,oids,otxt:oids.map(x=>T.muk[x]).join('، ')};
@@ -387,7 +387,7 @@ function renderCit(){
   const ishs=T.mrs_ishaarat.filter(i=>i.mukallaf_id==id&&dOK(i.ishaar_date));
   const ishIds={};ishs.forEach(i=>ishIds[i.ishaar_id]=i);
   const recs=T.mrs_receipts.filter(r=>ishIds[r.ishaar_id]&&dOK(r.receipt_date));
-  const dets=T.mrs_ikar_details.filter(x=>x.owner_id==id);
+  const dets=T.mrs_ikar_details.filter(x=>x.owner_id==id&&+x.ikar_id>0);
   const ikById={};T.mrs_ikarat.forEach(k=>ikById[k.ikar_id]=k);
   let tk=0,pd=0;
   ishs.forEach(i=>{tk+=(+i.takleef_amount||0)+(+i.fine_amount||0)+(+i.late_pmt_fine||0);pd+=(+i.paid_amount||0);});
@@ -413,7 +413,7 @@ function renderCit(){
   h+='<div class="sec">🏠 عقاراته ('+dets.length+')</div>';
   h+=dets.length?dets.map(d=>{
     const k=ikById[d.ikar_id]||{};
-    return citRow('<span>عقار رقم <b style="color:var(--b)">'+(k.ikar_number||d.ikar_id)+'</b>'+(k.ikar_section?' · قسم '+k.ikar_section:'')+'</span><span style="color:#888;font-size:11px">حصة: '+(d.share_amount||d.owner_share||'—')+'</span>','goTab(\'ikr\',\''+String(k.ikar_number||'')+'\')','عرض في العقارات');
+    return citRow('<span>عقار رقم <b style="color:var(--b)">'+(k.ikar_number||d.ikar_id)+'</b>'+(k.ikar_section?' · قسم '+k.ikar_section:'')+'</span><span style="color:#888;font-size:11px">'+[(d.block_number!=null&&d.block_number!==''?'بناية '+d.block_number:''),(d.floor_number!=null&&d.floor_number!==''?'طابق '+d.floor_number:''),(d.appt_number!=null&&d.appt_number!==''?'شقة '+d.appt_number:''),(d.mukallafieh_number!=null&&d.mukallafieh_number!==''?'مكلفية '+d.mukallafieh_number:'')].filter(Boolean).join(' · ')+'</span>','goTab(\'ikr\',\''+String(k.ikar_number||'')+'\')','عرض في العقارات');
   }).join(''):'<div style="color:#999;font-size:12px">لا عقارات مسجّلة</div>';
   w.innerHTML=h;
 }
