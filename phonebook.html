@@ -1008,7 +1008,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const MUN_ID = "00000000-0000-0000-0000-000000000001";
 const MUN_PHONE = "+96176789039";
 const MUN_EMAIL = "managemenet@municipality-wadi-el-sitt.org";
-const ADMIN_ROLES = ['mayor','admin','approver'];
+const ADMIN_ROLES = ['mayor','admin','approver','super_admin'];
 
 let sb = null;
 try {
@@ -2946,10 +2946,12 @@ async function submitLogin(e){
     const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if(error) throw error;
     currentUser = data.user;
-    // SECURITY (post-audit C2): read role from server-side user_roles table, not user_metadata
+    // SECURITY (post-audit C2): read role from server-side user_roles table, not user_metadata.
+    // A user may have multiple role rows — pick the first one in ADMIN_ROLES if any.
     try {
-      const _rr = await sb.from('user_roles').select('role').eq('user_id', data.user.id).maybeSingle();
-      userRole = _rr.data?.role || 'citizen';
+      const _rr = await sb.from('user_roles').select('role').eq('user_id', data.user.id);
+      const _roles = (_rr.data || []).map(x => x.role);
+      userRole = ADMIN_ROLES.find(r => _roles.includes(r)) || _roles[0] || 'citizen';
     } catch(_e) { userRole = 'citizen'; }
     isAdmin = ADMIN_ROLES.includes(userRole);
     if(!isAdmin){
@@ -3812,10 +3814,12 @@ async function checkSession(){
     const { data } = await sb.auth.getSession();
     if(data?.session?.user){
       currentUser = data.session.user;
-      // SECURITY (post-audit C2): read role from server-side user_roles table
+      // SECURITY (post-audit C2): read role from server-side user_roles table.
+      // A user may have multiple role rows — pick the first one in ADMIN_ROLES if any.
       try {
-        const _rr = await sb.from('user_roles').select('role').eq('user_id', currentUser.id).maybeSingle();
-        userRole = _rr.data?.role || 'citizen';
+        const _rr = await sb.from('user_roles').select('role').eq('user_id', currentUser.id);
+        const _roles = (_rr.data || []).map(x => x.role);
+        userRole = ADMIN_ROLES.find(r => _roles.includes(r)) || _roles[0] || 'citizen';
       } catch(_e) { userRole = 'citizen'; }
       isAdmin = ADMIN_ROLES.includes(userRole);
       if(isAdmin){

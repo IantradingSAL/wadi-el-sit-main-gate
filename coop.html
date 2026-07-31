@@ -3475,15 +3475,18 @@ async function doAdminLogin(){
     if (authErr) throw authErr;
     if (!authData || !authData.user) throw new Error('login_failed');
 
-    // Verify the user has an admin/mayor role via the user_roles table
-    const { data: roleData, error: roleErr } = await sb
+    // Verify the user has an admin/mayor/super_admin role via user_roles.
+    // A single user may have MULTIPLE role rows — fetch them all and pick
+    // the highest-privilege one from our whitelist.
+    const { data: roleRows, error: roleErr } = await sb
       .from('user_roles')
       .select('role')
-      .eq('user_id', authData.user.id)
-      .maybeSingle();
+      .eq('user_id', authData.user.id);
     if (roleErr) throw roleErr;
-    const role = roleData?.role || 'citizen';
-    if (!['mayor', 'admin'].includes(role)) {
+    const roles = (roleRows || []).map(r => r.role);
+    const ADMIN_WHITELIST = ['super_admin', 'mayor', 'admin'];
+    const role = ADMIN_WHITELIST.find(r => roles.includes(r)) || (roles[0] || 'citizen');
+    if (!ADMIN_WHITELIST.includes(role)) {
       // Not an admin — sign them back out and refuse
       await sb.auth.signOut();
       err.textContent = (typeof L === 'function' ? (L().notAdmin || 'هذا الحساب ليس له صلاحيات إدارية') : 'هذا الحساب ليس له صلاحيات إدارية');
@@ -3499,7 +3502,7 @@ async function doAdminLogin(){
       email: authData.user.email,
       display_name: profile?.name || authData.user.email,
       role: role,
-      is_super: role === 'mayor'
+      is_super: role === 'mayor' || role === 'super_admin'
     };
     // NOTE: We do NOT persist admin status to localStorage anymore.
     // The session lives in sb.auth (httpOnly-equivalent, server-validated).
@@ -3519,16 +3522,18 @@ async function restoreAdminSession(){
     if (!sb) return;
     const { data: { session } } = await sb.auth.getSession();
     if (!session || !session.user) return;
-    const { data: roleData } = await sb.from('user_roles').select('role').eq('user_id', session.user.id).maybeSingle();
-    const role = roleData?.role;
-    if (!['mayor','admin'].includes(role)) return;
+    const { data: roleRows } = await sb.from('user_roles').select('role').eq('user_id', session.user.id);
+    const roles = (roleRows || []).map(r => r.role);
+    const ADMIN_WHITELIST = ['super_admin','mayor','admin'];
+    const role = ADMIN_WHITELIST.find(r => roles.includes(r));
+    if (!role) return;
     const { data: profile } = await sb.from('profiles').select('name').eq('user_id', session.user.id).maybeSingle();
     currentAdmin = {
       user_id: session.user.id,
       email: session.user.email,
       display_name: profile?.name || session.user.email,
       role: role,
-      is_super: role === 'mayor'
+      is_super: role === 'mayor' || role === 'super_admin'
     };
   } catch(e) { /* silent */ }
 }
@@ -3715,7 +3720,7 @@ async function loadAdminPanel(){
 
 
 async function saveCurrencyRate(){
-  if (!currentAdmin || !['mayor','admin'].includes(currentAdmin.role)) {
+  if (!currentAdmin || !['mayor','admin','super_admin'].includes(currentAdmin.role)) {
     toast(L().notAdmin || 'Not authorized','err'); return;
   }
   const newRate = parseFloat(document.getElementById('rate-input').value);
