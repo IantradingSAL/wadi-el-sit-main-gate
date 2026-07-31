@@ -170,7 +170,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
       <div id="bf-i-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-i-cat-other" placeholder="فئة أخرى…"></div>
       <label class="fl">البيان *</label><input type="text" class="fi" id="bf-i-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
       <div class="bf-g2">
-        <div><label class="fl">الدافع / الجهة</label><input type="text" class="fi" id="bf-i-person" list="bf-dl-persons" placeholder="اسم الدافع"></div>
+        <div><label class="fl">الدافع / الجهة</label><div style="display:flex;gap:6px"><input type="text" class="fi" id="bf-i-person" list="bf-dl-persons" placeholder="اسم الدافع" style="flex:1"><button type="button" class="btn" onclick="bfAddPhonebookPerson('bf-i-person')" title="إضافة اسم جديد إلى الدليل" style="padding:8px 12px;font-size:13px">➕</button></div></div>
         <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
       </div>
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
@@ -206,7 +206,7 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
       <div id="bf-e-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-e-cat-other" placeholder="فئة أخرى…"></div>
       <label class="fl">البيان *</label><input type="text" class="fi" id="bf-e-desc" placeholder="مثال: صيانة إنارة الشارع الرئيسي">
       <div class="bf-g2">
-        <div><label class="fl">المدفوع له / الجهة</label><input type="text" class="fi" id="bf-e-person" list="bf-dl-persons" placeholder="اسم المستفيد"></div>
+        <div><label class="fl">المدفوع له / الجهة</label><div style="display:flex;gap:6px"><input type="text" class="fi" id="bf-e-person" list="bf-dl-persons" placeholder="اسم المستفيد" style="flex:1"><button type="button" class="btn" onclick="bfAddPhonebookPerson('bf-e-person')" title="إضافة اسم جديد إلى الدليل" style="padding:8px 12px;font-size:13px">➕</button></div></div>
         <div><label class="fl">المسلّم (أمين الصندوق)</label><input type="text" class="fi" id="bf-e-handled" list="bf-dl-handlers" placeholder="اسم المسلّم"></div>
       </div>
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-e-notes" placeholder="اختياري">
@@ -332,6 +332,8 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 <script>
 // ═══════════ 💰 BALADIEH FINANCE (صندوق البلدية) ═══════════
 let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null, bfReadyFile=null;
+let bfPhonebookNames=[]; // names loaded from public.phonebook_entries so the payer/beneficiary dropdown includes every registered citizen
+const BF_MUN_ID='00000000-0000-0000-0000-000000000001';
 const BF_LOGO=(function(){try{return document.querySelector('.sb-logo').src;}catch(e){return '';}})();
 const BF_CATS={
   income:['جباية ورسوم بلدية','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
@@ -389,9 +391,13 @@ function bfCatOther(p){
   document.getElementById('bf-'+p+'-cat-other-w').style.display = v==='أخرى' ? '' : 'none';
 }
 async function bfLoad(){
-  const{data,error}=await sb.from('baladieh_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true});
-  if(error){toast('⚠️ خطأ في تحميل الصندوق: '+error.message,'err');return;}
-  bfEntries=data||[];
+  const[fin, pb]=await Promise.all([
+    sb.from('baladieh_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true}),
+    sb.from('phonebook_entries').select('name,first,family').eq('mun_id',BF_MUN_ID).eq('status','approved').eq('entry_hidden',false)
+  ]);
+  if(fin.error){toast('⚠️ خطأ في تحميل الصندوق: '+fin.error.message,'err');return;}
+  bfEntries=fin.data||[];
+  bfPhonebookNames=(pb.data||[]).map(r=>r.name||[r.first,r.family].filter(Boolean).join(' ')).filter(Boolean);
   bfRefresh();
 }
 function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();}
@@ -418,8 +424,33 @@ function bfBuildFilters(){
 }
 function bfDatalists(){
   const uniq=a=>[...new Set(a.filter(Boolean))].sort();
-  document.getElementById('bf-dl-persons').innerHTML=uniq(bfEntries.map(e=>e.person)).map(v=>'<option value="'+v+'">').join('');
-  document.getElementById('bf-dl-handlers').innerHTML=uniq(bfEntries.map(e=>e.handled_by)).map(v=>'<option value="'+v+'">').join('');
+  const persons=uniq([...bfEntries.map(e=>e.person),...bfPhonebookNames]);
+  document.getElementById('bf-dl-persons').innerHTML=persons.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
+  document.getElementById('bf-dl-handlers').innerHTML=uniq(bfEntries.map(e=>e.handled_by)).map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
+}
+
+async function bfAddPhonebookPerson(targetInputId){
+  const suggested=(document.getElementById(targetInputId)||{}).value||'';
+  const name=(prompt('👤 اسم الشخص الكامل:',suggested.trim())||'').trim();
+  if(!name) return;
+  const phone=(prompt('📞 رقم الهاتف (اختياري) — يمكن تركه فارغاً:','')||'').trim();
+  const parts=name.split(/\s+/);
+  const payload={
+    mun_id:BF_MUN_ID,
+    name:name,
+    first:parts[0]||name,
+    family:parts.slice(1).join(' ')||null,
+    phone:phone||null,
+    status:'approved',
+    source:'sandouk',
+    entry_hidden:false
+  };
+  const{error}=await sb.from('phonebook_entries').insert(payload);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  const target=document.getElementById(targetInputId);
+  if(target) target.value=name;
+  toast('✓ تمت الإضافة إلى الدليل');
+  await bfLoad();
 }
 const BF_TYPE_LABEL={expense:'<span class="bf-badge exp">مصروف</span>',income:'<span class="bf-badge inc">مقبوضات</span>',opening:'<span class="bf-badge opn">رصيد افتتاحي</span>'};
 function bfShowTab(t){
