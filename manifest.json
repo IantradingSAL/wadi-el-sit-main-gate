@@ -6,15 +6,45 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
-  "orientation": "portrait",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "any",
   "background_color": "#f5f7fa",
   "theme_color": "#1a6eb5",
   "lang": "ar",
   "dir": "rtl",
   "handle_links": "preferred",
   "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
-  "categories": ["utilities", "social", "government"],
+  "categories": ["utilities", "social", "government", "news", "shopping"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "edge_side_panel": { "preferred_width": 480 },
+  "protocol_handlers": [
+    { "protocol": "web+wadi", "url": "./?deep=%s" }
+  ],
+  "share_target": {
+    "action": "./citizen.html",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
+  "widgets": [
+    {
+      "name": "أخبار البلدية",
+      "short_name": "الأخبار",
+      "description": "آخر الأخبار والإعلانات من بلدية وادي الست",
+      "tag": "wadi-news",
+      "ms_ac_template": "widget/news.template.json",
+      "data": "widget/news.data.json",
+      "type": "application/json",
+      "screenshots": [
+        { "src": "icons/icon-512.png", "sizes": "512x512", "label": "أخبار البلدية" }
+      ],
+      "icons": [
+        { "src": "icons/icon-192.png", "sizes": "192x192" }
+      ],
+      "auth": false,
+      "update": 3600
+    }
+  ],
+  "file_handlers": [],
   "icons": [
     { "src": "icons/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
@@ -28,8 +58,10 @@
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "monochrome" }
   ],
   "screenshots": [
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "الشاشة الرئيسية" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "Main portal" }
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "الشاشة الرئيسية — Main portal" },
+    { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png", "form_factor": "narrow", "label": "الأخبار — News" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "form_factor": "narrow", "label": "التعاونية — Coop store" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide",   "label": "Main portal — desktop" }
   ],
   "shortcuts": [
     {
