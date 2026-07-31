@@ -411,8 +411,9 @@ a{color:inherit;text-decoration:none;}
 /* ═══════════ HEADER ═══════════ */
 .hd{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--blue2) 0%,var(--blue) 60%,var(--green2) 100%);color:#fff;box-shadow:var(--shadow);padding-top:var(--safe-top);}
 .hd-inner{max-width:1280px;margin:0 auto;padding:11px 14px;display:flex;align-items:center;gap:11px;}
-.hd-logo{height:42px;width:42px;border-radius:50%;background:#fff;padding:4px;flex-shrink:0;box-shadow:0 4px 14px rgba(0,0,0,.18);}
-.hd-logo img{width:100%;height:100%;object-fit:contain;}
+.hd-logo{height:52px;width:52px;border-radius:50%;background:#fff;padding:3px;flex-shrink:0;box-shadow:0 4px 14px rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.95);overflow:hidden;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.hd-logo img{width:100%;height:100%;object-fit:contain;display:block;background:#fff;border-radius:50%}
+@media(max-width:430px){.hd-logo{height:46px;width:46px;padding:2px}}
 .hd-title-wrap{flex:1;min-width:0;}
 .hd-title{font-size:16px;font-weight:800;line-height:1.15;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
 .hd-yp{display:inline-flex;align-items:center;gap:4px;background:var(--sun);color:#3a2502;font-size:10px;font-weight:800;padding:2px 8px;border-radius:var(--r-full);box-shadow:0 2px 6px rgba(245,166,35,.4);}
@@ -868,7 +869,7 @@ html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;
 <header class="hd">
   <div class="hd-inner">
     <a href="index.html" class="hd-logo wadi-logo-link" aria-label="Main gate" data-i18n-aria-label="wadiHomeAria" style="text-decoration:none">
-      <img id="LOGO" src="icons/apple-touch-icon.png" alt="شعار بلدية وادي الست" width="56" height="56" style="height:56px;width:56px;border-radius:50%;background:#fff;object-fit:contain;padding:4px;box-shadow:0 3px 10px rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.95);">
+      <img id="LOGO" src="icons/apple-touch-icon.png" alt="شعار بلدية وادي الست" loading="eager" decoding="async">
     </a>
     <div class="hd-title-wrap">
       <div class="hd-title"><span data-i18n="hdTitle">دليل وادي الست</span> <span class="hd-yp">Yellow Pages</span></div>
