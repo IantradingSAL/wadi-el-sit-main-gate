@@ -6,6 +6,7 @@
 <title>إدارة الري — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -195,7 +196,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
         <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" id="c-amount" type="number" step="0.01" min="0" placeholder="0"></div>
       </div>
       <div class="wf-g2">
-        <div><label class="wf-fl">اسم الدافع / المنزل *</label><input class="fi" id="c-person" list="dl-payers" placeholder="اسم المشترك"></div>
+        <div><label class="wf-fl">اسم الدافع / المنزل *</label><div class="wf-picker" data-picker-for="c-person" style="position:relative"><input class="fi" id="c-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="wf-picker-dd" id="c-person-dd" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(15,77,130,.14);max-height:280px;overflow-y:auto;z-index:60;padding:4px 0"></div></div></div>
         <div><label class="wf-fl">رقم الإيصال</label><input class="fi" id="c-receipt" placeholder="رقم دفتر الفواتير"></div>
       </div>
       <label class="wf-fl">البيان</label>
@@ -1188,10 +1189,136 @@ function showSection(s){
 async function loadFinance(){
   document.getElementById('e-date').value=wfToday();
   document.getElementById('c-date').value=wfToday();
-  const{data,error}=await sb.from('water_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true});
-  if(error){toast('⚠️ خطأ في تحميل بيانات الصندوق: '+error.message,'err');return;}
-  wfEntries=data||[];
+  const[fin,pb]=await Promise.all([
+    sb.from('water_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true}),
+    sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',MUN_ID).eq('status','approved').eq('entry_hidden',false)
+  ]);
+  if(fin.error){toast('⚠️ خطأ في تحميل بيانات الصندوق: '+fin.error.message,'err');return;}
+  wfEntries=fin.data||[];
+
+  // Merge municipal citizen registry (contacts-registry.js window.__CONTACTS)
+  // with phonebook_entries rows into wfPhonebookEntries — same shape and
+  // rules as the sandouk picker.
+  const registry=(typeof window!=='undefined' && Array.isArray(window.__CONTACTS)) ? window.__CONTACTS : [];
+  const bag=new Map();
+  const keyOf=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
+  registry.forEach(r=>{
+    const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
+    if(!name) return;
+    bag.set(keyOf(name),{id:'reg:'+(r.id||name),name,phone:r.phone||'',is_wadi:true});
+  });
+  (pb.data||[]).forEach(r=>{
+    const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
+    if(!name) return;
+    bag.set(keyOf(name),{id:r.id,name,phone:r.phone||'',is_wadi:!!r.is_wadi_citizen});
+  });
+  wfPhonebookEntries=Array.from(bag.values());
+
   wfRefresh();
+  wfWirePickers();
+}
+
+// ── phonebook picker for water-admin — same widget as sandouk ──
+let wfPhonebookEntries=[];
+function wfNorm(s){
+  return (s||'').toString().toLowerCase()
+    .replace(/[ً-ْٰ]/g,'')
+    .replace(/[أإآا]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
+    .replace(/[^\p{L}\p{N}\s+-]/gu,' ').trim();
+}
+function wfMakePicker(inputId){
+  const input=document.getElementById(inputId);
+  if(!input || input.dataset.pickerReady==='1') return;
+  const dd=document.getElementById(inputId+'-dd');
+  const wrap=input.closest('.wf-picker');
+  if(!dd||!wrap) return;
+  input.dataset.pickerReady='1';
+  const state={hi:-1,opts:[]};
+  function open(){dd.style.display='block';}
+  function close(){dd.style.display='none';state.hi=-1;}
+  function render(){
+    const raw=input.value||'';
+    const q=wfNorm(raw);
+    let matches=[];
+    if(!q){
+      matches=wfPhonebookEntries.slice().sort((a,b)=>a.name.localeCompare(b.name,'ar')).slice(0,20);
+    } else {
+      matches=wfPhonebookEntries.map(r=>{
+        const n=wfNorm(r.name),ph=(r.phone||'').replace(/[^0-9+]/g,'');
+        if(n.startsWith(q)) return {r,rank:0};
+        if(n.includes(' '+q)) return {r,rank:1};
+        if(n.includes(q)) return {r,rank:2};
+        if(q.length>=3 && ph.includes(q.replace(/[^0-9+]/g,''))) return {r,rank:3};
+        return null;
+      }).filter(Boolean).sort((a,b)=>a.rank-b.rank||a.r.name.localeCompare(b.r.name,'ar')).slice(0,20).map(x=>x.r);
+    }
+    const exactHit=matches.some(m=>wfNorm(m.name)===q);
+    const rows=matches.map((r,i)=>{
+      const wadi=r.is_wadi?'<span style="display:inline-flex;align-items:center;gap:3px;background:#dcfce7;color:#1f7a45;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;margin-right:auto">🏡 وادي الست</span>':'';
+      const phone=r.phone?'<span style="font-size:11px;color:#8a95a3;margin-top:2px;direction:ltr">📞 '+r.phone.replace(/</g,'&lt;')+'</span>':'';
+      return '<div class="wf-pk-opt" data-idx="'+i+'" style="padding:9px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;line-height:1.4;border-top:1px solid #f0f2f7"><div style="flex:1;min-width:0"><div style="font-weight:700;color:#1a1a2e">'+r.name.replace(/</g,'&lt;')+'</div>'+phone+'</div>'+wadi+'</div>';
+    }).join('');
+    let html='';
+    if(rows) html+=rows;
+    else html+='<div style="padding:14px 12px;font-size:12.5px;color:#8a95a3;text-align:center">لا يوجد اسم مطابق في الدليل</div>';
+    if(raw.trim() && !exactHit){
+      html+='<div class="wf-pk-opt" data-idx="add" style="background:#f0f7ff;color:#0f4d82;font-weight:800;border-top:1.5px solid #cfe0f2;padding:11px 12px;cursor:pointer">➕ إضافة "'+raw.trim().replace(/</g,'&lt;')+'" إلى الدليل</div>';
+    }
+    dd.innerHTML=html;
+    state.opts=matches;
+    state.hi=-1;
+    open();
+  }
+  input.addEventListener('input',render);
+  input.addEventListener('focus',render);
+  input.addEventListener('keydown',ev=>{
+    if(dd.style.display!=='block'){
+      if(ev.key==='ArrowDown'){render();ev.preventDefault();}
+      return;
+    }
+    const opts=Array.from(dd.querySelectorAll('.wf-pk-opt'));
+    if(ev.key==='Escape'){close();return;}
+    if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){
+      ev.preventDefault();
+      if(!opts.length) return;
+      state.hi=ev.key==='ArrowDown'?(state.hi+1)%opts.length:(state.hi-1+opts.length)%opts.length;
+      opts.forEach((o,i)=>o.style.background=(i===state.hi?'#eef5fc':''));
+      opts[state.hi].scrollIntoView({block:'nearest'});
+    } else if(ev.key==='Enter' && state.hi>=0){
+      ev.preventDefault(); opts[state.hi].click();
+    }
+  });
+  dd.addEventListener('mousedown',ev=>{
+    const opt=ev.target.closest('.wf-pk-opt');
+    if(!opt) return;
+    ev.preventDefault();
+    const idx=opt.dataset.idx;
+    if(idx==='add'){
+      const typed=input.value.trim();
+      close();
+      wfShowAddPhonebookModal(typed, inputId);
+    } else {
+      const r=state.opts[parseInt(idx,10)];
+      if(r){ input.value=r.name; close(); }
+    }
+  });
+  document.addEventListener('click',ev=>{ if(!wrap.contains(ev.target)) close(); });
+}
+function wfWirePickers(){ wfMakePicker('c-person'); }
+async function wfShowAddPhonebookModal(prefillName, targetInputId){
+  const nm=(prompt('👤 اسم الشخص الكامل:',prefillName||'')||'').trim();
+  if(!nm) return;
+  const ph=(prompt('📞 رقم الهاتف (اختياري):','')||'').trim();
+  const wadi=confirm('🏡 هل هو مواطن من بلدة وادي الست؟');
+  const parts=nm.split(/\s+/);
+  const{error}=await sb.from('phonebook_entries').insert({
+    mun_id:MUN_ID,name:nm,first:parts[0]||nm,family:parts.slice(1).join(' ')||null,
+    phone:ph||null,is_wadi_citizen:wadi,status:'approved',source:'water-admin',entry_hidden:false
+  });
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  const t=document.getElementById(targetInputId); if(t) t.value=nm;
+  toast('✓ تمت الإضافة إلى الدليل','ok');
+  await loadFinance();
 }
 function wfRefresh(){renderKPIs();buildFilters();buildDatalists();renderLedger();renderReports();}
 function renderKPIs(){
