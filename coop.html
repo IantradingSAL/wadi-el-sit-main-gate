@@ -3595,9 +3595,18 @@ async function loadAdminPanel(){
         <div class="section-title mt-3 mb-1">🚚 عمّال توصيل منتظرون ${pendingAgents>0?`<span style="background:var(--red);color:#fff;font-size:11px;padding:2px 8px;border-radius:999px;margin-right:6px">${pendingAgents}</span>`:''}</div>
         <div id="admin-pending-agents"></div>
         
-        <div class="section-title mt-3 mb-1">📋 آخر الطلبات</div>
+        <div class="section-title mt-3 mb-1">👥 الباعة النشطون</div>
+        <div id="admin-active-sellers"></div>
+
+        <div class="section-title mt-3 mb-1">🚚 عمّال التوصيل النشطون</div>
+        <div id="admin-active-agents"></div>
+
+        <div class="section-title mt-3 mb-1">📦 كل المنتجات (${products.length})</div>
+        <div id="admin-all-products"></div>
+
+        <div class="section-title mt-3 mb-1">📋 كل الطلبات (${orders.length})</div>
         <div id="admin-recent-orders"></div>
-        
+
         <div class="section-title mt-3 mb-1" data-i18n="currencyTitle">💱 العملة وسعر الصرف</div>
         <div class="settings-item" style="cursor:default;flex-direction:column;align-items:stretch;padding:14px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -3687,16 +3696,146 @@ async function loadAdminPanel(){
       });
     }
 
-    // Recent orders
+    // Active sellers — block/unblock/delete
+    const asl=document.getElementById('admin-active-sellers');
+    const activeS=sellers.filter(x=>x.status!=='pending');
+    if(activeS.length===0){
+      asl.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد بائع نشط بعد</div>`;
+    }else{
+      asl.innerHTML='';
+      activeS.forEach(seller=>{
+        const el=document.createElement('div');
+        el.className='order-card';
+        const blocked=seller.status==='suspended';
+        el.innerHTML=`
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div class="brand-avatar" style="width:36px;height:36px;font-size:16px;${blocked?'filter:grayscale(1);opacity:.55':''}">${escapeHtml(seller.display_name?.charAt(0)||'?')}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:700">${escapeHtml(seller.display_name)}${blocked?' <span style="background:#fee2e2;color:#a83232;font-size:10px;padding:1px 6px;border-radius:6px;margin-right:4px">🚫 محظور</span>':''}</div>
+              <div style="font-size:11px;color:var(--text3)">${escapeHtml(seller.phone)} · ${escapeHtml(seller.area||'-')}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${blocked
+              ? `<button class="btn btn-green btn-sm" data-id="${escapeAttr(seller.id)}" data-act="unblock-seller">✅ إلغاء الحظر</button>`
+              : `<button class="btn btn-ghost btn-sm" data-id="${escapeAttr(seller.id)}" data-act="block-seller" style="border-color:#e5b73b;color:#8a6200">🚫 حظر</button>`}
+            <button class="btn btn-red btn-sm" data-id="${escapeAttr(seller.id)}" data-name="${escapeAttr(seller.display_name||'')}" data-act="delete-seller">🗑️ حذف</button>
+          </div>
+        `;
+        el.querySelectorAll('button[data-act]').forEach(b=>{
+          b.onclick=async(e)=>{
+            e.stopPropagation();
+            const act=b.dataset.act,id=b.dataset.id;
+            if(act==='delete-seller'){
+              if(!confirm('حذف البائع "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له منتجات أو طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              const{error}=await sb.from('coop_sellers').delete().eq('id',id);
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast('🗑️ تم حذف البائع','ok');
+            } else {
+              const newStatus=act==='block-seller'?'suspended':'approved';
+              const{error}=await sb.from('coop_sellers').update({status:newStatus}).eq('id',id);
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast(act==='block-seller'?'🚫 تم حظر البائع':'✅ تم إلغاء الحظر','ok');
+            }
+            loadAdminPanel();
+          };
+        });
+        asl.appendChild(el);
+      });
+    }
+
+    // Active delivery agents — block/unblock/delete
+    const aa=document.getElementById('admin-active-agents');
+    const activeA=agents.filter(x=>x.status!=='pending');
+    if(activeA.length===0){
+      aa.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد عامل نشط بعد</div>`;
+    }else{
+      aa.innerHTML='';
+      const vehMap={motorcycle:'🏍️',car:'🚗',van:'🚐',bike:'🚲'};
+      activeA.forEach(agent=>{
+        const el=document.createElement('div');
+        el.className='order-card';
+        const blocked=agent.status==='suspended'||agent.status==='rejected';
+        el.innerHTML=`
+          <div style="margin-bottom:8px">
+            <div style="font-size:14px;font-weight:700">${escapeHtml(agent.name)} ${vehMap[agent.vehicle]||''}${blocked?' <span style="background:#fee2e2;color:#a83232;font-size:10px;padding:1px 6px;border-radius:6px;margin-right:4px">🚫 محظور</span>':''}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${escapeHtml(agent.phone)} · ${escapeHtml(agent.area)}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${blocked
+              ? `<button class="btn btn-green btn-sm" data-id="${escapeAttr(agent.id)}" data-act="unblock-agent">✅ إلغاء الحظر</button>`
+              : `<button class="btn btn-ghost btn-sm" data-id="${escapeAttr(agent.id)}" data-act="block-agent" style="border-color:#e5b73b;color:#8a6200">🚫 حظر</button>`}
+            <button class="btn btn-red btn-sm" data-id="${escapeAttr(agent.id)}" data-name="${escapeAttr(agent.name||'')}" data-act="delete-agent">🗑️ حذف</button>
+          </div>
+        `;
+        el.querySelectorAll('button[data-act]').forEach(b=>{
+          b.onclick=async(e)=>{
+            e.stopPropagation();
+            const act=b.dataset.act,id=b.dataset.id;
+            if(act==='delete-agent'){
+              if(!confirm('حذف عامل التوصيل "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              const{error}=await sb.from('coop_delivery_agents').delete().eq('id',id);
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast('🗑️ تم حذف العامل','ok');
+            } else {
+              const newStatus=act==='block-agent'?'suspended':'approved';
+              const{error}=await sb.from('coop_delivery_agents').update({status:newStatus}).eq('id',id);
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast(act==='block-agent'?'🚫 تم حظر العامل':'✅ تم إلغاء الحظر','ok');
+            }
+            loadAdminPanel();
+          };
+        });
+        aa.appendChild(el);
+      });
+    }
+
+    // All products — delete button per product
+    const ap=document.getElementById('admin-all-products');
+    if(products.length===0){
+      ap.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد منتج بعد</div>`;
+    }else{
+      ap.innerHTML='';
+      const sellerName={};sellers.forEach(s=>{sellerName[s.id]=s.display_name;});
+      products.forEach(p=>{
+        const el=document.createElement('div');
+        el.className='order-card';
+        el.innerHTML=`
+          <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:6px">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:14px;font-weight:700">${escapeHtml(p.name||'—')}</div>
+              <div style="font-size:11px;color:var(--text3)">${escapeHtml(sellerName[p.seller_id]||'?')} · <span style="background:#eef2f8;padding:1px 6px;border-radius:6px">${escapeHtml(p.status||'')}</span></div>
+            </div>
+            <div style="font-size:13px;font-weight:800;color:var(--primary);white-space:nowrap">${formatPrice(p.price,p.currency)}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-red btn-sm" data-id="${escapeAttr(p.id)}" data-name="${escapeAttr(p.name||'')}" data-act="delete-product">🗑️ حذف المنتج</button>
+          </div>
+        `;
+        el.querySelectorAll('button[data-act="delete-product"]').forEach(b=>{
+          b.onclick=async(e)=>{
+            e.stopPropagation();
+            if(!confirm('حذف المنتج "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات مرتبطة.'))return;
+            const{error}=await sb.from('coop_products').delete().eq('id',b.dataset.id);
+            if(error){toast('⚠️ '+error.message,'err');return;}
+            toast('🗑️ تم حذف المنتج','ok');
+            loadAdminPanel();
+          };
+        });
+        ap.appendChild(el);
+      });
+    }
+
+    // All orders — cancel + delete buttons
     const ro=document.getElementById('admin-recent-orders');
-    const recentO=orders.slice(0,5);
-    if(recentO.length===0){
+    if(orders.length===0){
       ro.innerHTML=`<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">${L().noOrders}</div>`;
     }else{
       ro.innerHTML='';
-      recentO.forEach(o=>{
+      orders.forEach(o=>{
         const el=document.createElement('div');
         el.className='order-card';
+        const canCancel=o.status!=='cancelled'&&o.status!=='delivered';
         el.innerHTML=`
           <div class="order-row">
             <span class="order-id">#${(''+o.id).slice(0,8).toUpperCase()}</span>
@@ -3708,7 +3847,29 @@ async function loadAdminPanel(){
             <span class="order-date">${formatDate(o.created_at)}</span>
             <span class="order-total">${formatPrice(o.total)}</span>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            ${canCancel?`<button class="btn btn-ghost btn-sm" data-id="${escapeAttr(o.id)}" data-act="cancel-order" style="border-color:#e5b73b;color:#8a6200">🚫 إلغاء الطلب</button>`:''}
+            <button class="btn btn-red btn-sm" data-id="${escapeAttr(o.id)}" data-act="delete-order">🗑️ حذف نهائي</button>
+          </div>
         `;
+        el.querySelectorAll('button[data-act]').forEach(b=>{
+          b.onclick=async(e)=>{
+            e.stopPropagation();
+            const act=b.dataset.act,id=b.dataset.id;
+            if(act==='delete-order'){
+              if(!confirm('حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع.'))return;
+              const{error}=await sb.from('coop_orders').delete().eq('id',id);
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast('🗑️ تم حذف الطلب','ok');
+            } else {
+              if(!confirm('إلغاء الطلب؟'))return;
+              const{error}=await sb.from('coop_orders').update({status:'cancelled'}).eq('id',id);
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast('🚫 تم إلغاء الطلب','ok');
+            }
+            loadAdminPanel();
+          };
+        });
         ro.appendChild(el);
       });
     }
