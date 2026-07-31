@@ -10,6 +10,7 @@
 <script src="pwa.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-common.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--green4:#ebf7ee;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0;--shadow:0 2px 10px rgba(15,77,130,.06)}
@@ -424,7 +425,10 @@ function showStats(id){
       ${a.gallery && a.gallery.length ? `<div><strong style="color:var(--text2)">📸 الصور:</strong> ${a.gallery.length}</div>` : ''}
     </div>
 
-    <div class="alert info" style="margin-bottom:12px;font-size:11.5px">💡 ملاحظة: تتبُّع <strong>مَن</strong> شاهد الخبر بالتحديد يتطلّب إضافة جدول <code>news_views</code> منفصل. حاليّاً المنصّة تُحصي عدد المشاهدات فقط.</div>
+    <div style="margin-bottom:12px">
+      <button class="btn btn-out btn-sm" onclick="loadViewers(${a.id})" id="LOAD_VIEWERS_BTN">👥 عرض مَن شاهد الخبر</button>
+      <div id="VIEWERS_LIST" style="margin-top:10px"></div>
+    </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-out btn-sm" onclick="closeStats();openEditor(${a.id})">✏️ تعديل</button>
@@ -434,6 +438,32 @@ function showStats(id){
   `;
   document.getElementById('STATS_MODAL').classList.add('on');
 }
+
+async function loadViewers(id){
+  const btn = document.getElementById('LOAD_VIEWERS_BTN');
+  const box = document.getElementById('VIEWERS_LIST');
+  if (!box) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التحميل…'; }
+  box.innerHTML = '';
+  try {
+    const {data, error} = await sb.rpc('get_news_viewers', {article_id: parseInt(id)});
+    if (error) throw error;
+    if (!data || !data.length) {
+      box.innerHTML = '<div class="alert info" style="font-size:11.5px">لا يوجد مستخدمون مسجّلون شاهدوا هذا الخبر بعد. (عدد المشاهدات الإجمالي يشمل الزوّار غير المسجّلين أيضاً.)</div>';
+    } else {
+      const rows = data.map(v => {
+        const d = v.viewed_at ? formatFull(v.viewed_at) : '—';
+        return `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12.5px"><span style="direction:ltr;color:var(--text)">${esc(v.email||'—')}</span><span style="color:var(--text3);white-space:nowrap">${d}</span></div>`;
+      }).join('');
+      box.innerHTML = `<div style="background:var(--bg);border-radius:10px;padding:6px 8px 2px;max-height:260px;overflow:auto"><div style="padding:6px 10px;font-weight:800;font-size:12px;color:var(--text2)">👥 ${data.length} مستخدم شاهد الخبر</div>${rows}</div>`;
+    }
+  } catch(ex) {
+    box.innerHTML = `<div class="alert err" style="font-size:11.5px">⚠️ ${esc(ex.message||String(ex))}</div>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 تحديث القائمة'; }
+  }
+}
+
 function closeStats(){document.getElementById('STATS_MODAL').classList.remove('on');}
 
 function openEditor(id){

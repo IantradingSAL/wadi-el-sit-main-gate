@@ -287,8 +287,12 @@ async function loadArticle(){
     if (!data) throw new Error(L().articleNotFound);
     currentArticle = data;
     renderArticle(data);
-    // Increment view count (fire and forget)
-    sb.rpc('increment_news_view', {article_id: parseInt(id)}).then().catch(() => {});
+    // Record view: bumps counter + logs which user saw it (if signed in).
+    // Fire-and-forget; falls back to the old counter-only RPC if the new
+    // one hasn't been deployed yet.
+    sb.rpc('record_news_view', {article_id: parseInt(id)})
+      .then(res => { if (res && res.error) sb.rpc('increment_news_view', {article_id: parseInt(id)}).then().catch(()=>{}); })
+      .catch(() => { sb.rpc('increment_news_view', {article_id: parseInt(id)}).then().catch(()=>{}); });
     // Load related
     loadRelated(data);
   } catch(ex) {
