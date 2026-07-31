@@ -530,6 +530,115 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   }
 }); }catch(e){} }
 
+/* ═══════ Coop-admin professional dashboard translations ═══════ */
+if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
+  ar: {
+    dashTitle: '📊 لوحة الإدارة الشاملة',
+    dashPeriodAll: 'كل الفترة',
+    dashPeriod30: 'آخر 30 يوماً',
+    dashPeriod7:  'آخر 7 أيام',
+    kpiGross: 'إجمالي المبيعات',
+    kpiOwed:  'مستحق للتحويل',
+    kpiPaid:  'إجمالي المدفوعات',
+    kpiOrders:'طلبات مسلَّمة',
+    kpiAllOrders:'كل الطلبات',
+    kpiActiveSellers:'باعة نشطون',
+    kpiActiveProducts:'منتجات نشطة',
+    kpiAvgTicket:'متوسط الطلب',
+    chartSalesTrend:'📈 المبيعات اليومية (آخر 30 يوماً)',
+    chartOrdersByStatus:'🎯 توزيع الطلبات حسب الحالة',
+    chartTopSellers:'🏆 أعلى الباعة إيراداً',
+    sectSellerEarnings:'💰 كشف حساب الباعة',
+    sectTopProducts:'🥇 أفضل المنتجات مبيعاً',
+    sectTopCustomers:'⭐ أفضل الزبائن',
+    tblRank:'#', tblProduct:'المنتج', tblSeller:'البائع', tblQty:'الكميّة', tblRevenue:'الإيراد',
+    tblCustomer:'الزبون', tblPhone:'الهاتف', tblOrders:'طلبات', tblSpent:'إنفاق',
+    lblSales:'مبيعات', lblPaid:'مدفوع', lblDue:'مستحق', lblSettled:'مسدَّد',
+    btnRecordPayout:'💸 تسجيل تحويل / دفعة',
+    payoutPrompt:'المبلغ المُحوَّل إلى',
+    payoutOwed:'المستحق',
+    payoutNote:'ملاحظة (اختياري) — مثال: تحويل بنكي / حوالة / نقداً',
+    payoutInvalid:'مبلغ غير صحيح',
+    payoutSaved:'✓ تم تسجيل التحويل',
+    ordersDelivered:'مسلَّم', ordersConfirmed:'مؤكَّد', ordersPending:'قيد الانتظار', ordersOutFor:'قيد التوصيل', ordersCancelled:'مُلغى',
+    noSalesYet:'لا توجد مبيعات مسلَّمة بعد',
+    noSellersYet:'لا يوجد بائع بعد',
+    noCustomersYet:'لا يوجد زبائن بعد',
+    noDataYet:'لا توجد بيانات كافية بعد',
+    dashOrdersCount:'طلب مسلَّم',
+  },
+  en: {
+    dashTitle: '📊 Management Dashboard',
+    dashPeriodAll: 'All time',
+    dashPeriod30: 'Last 30 days',
+    dashPeriod7:  'Last 7 days',
+    kpiGross: 'Gross sales',
+    kpiOwed:  'Owed to sellers',
+    kpiPaid:  'Total paid out',
+    kpiOrders:'Delivered orders',
+    kpiAllOrders:'All orders',
+    kpiActiveSellers:'Active sellers',
+    kpiActiveProducts:'Active products',
+    kpiAvgTicket:'Avg order',
+    chartSalesTrend:'📈 Daily sales (last 30 days)',
+    chartOrdersByStatus:'🎯 Orders by status',
+    chartTopSellers:'🏆 Top sellers by revenue',
+    sectSellerEarnings:'💰 Seller earnings & payouts',
+    sectTopProducts:'🥇 Best-selling products',
+    sectTopCustomers:'⭐ Top customers',
+    tblRank:'#', tblProduct:'Product', tblSeller:'Seller', tblQty:'Qty', tblRevenue:'Revenue',
+    tblCustomer:'Customer', tblPhone:'Phone', tblOrders:'Orders', tblSpent:'Spent',
+    lblSales:'Sales', lblPaid:'Paid', lblDue:'Owed', lblSettled:'Settled',
+    btnRecordPayout:'💸 Record payout',
+    payoutPrompt:'Payout amount to',
+    payoutOwed:'owed',
+    payoutNote:'Note (optional) — e.g. bank transfer / cash / voucher',
+    payoutInvalid:'Invalid amount',
+    payoutSaved:'✓ Payout recorded',
+    ordersDelivered:'Delivered', ordersConfirmed:'Confirmed', ordersPending:'Pending', ordersOutFor:'Out for delivery', ordersCancelled:'Cancelled',
+    noSalesYet:'No delivered sales yet',
+    noSellersYet:'No sellers yet',
+    noCustomersYet:'No customers yet',
+    noDataYet:'Not enough data yet',
+    dashOrdersCount:'delivered',
+  },
+  fr: {
+    dashTitle: '📊 Tableau de bord de gestion',
+    dashPeriodAll: 'Toute la période',
+    dashPeriod30: '30 derniers jours',
+    dashPeriod7:  '7 derniers jours',
+    kpiGross: 'Ventes brutes',
+    kpiOwed:  'Dû aux vendeurs',
+    kpiPaid:  'Total versé',
+    kpiOrders:'Commandes livrées',
+    kpiAllOrders:'Toutes commandes',
+    kpiActiveSellers:'Vendeurs actifs',
+    kpiActiveProducts:'Produits actifs',
+    kpiAvgTicket:'Panier moyen',
+    chartSalesTrend:'📈 Ventes quotidiennes (30 j)',
+    chartOrdersByStatus:'🎯 Commandes par statut',
+    chartTopSellers:'🏆 Meilleurs vendeurs',
+    sectSellerEarnings:'💰 Comptes des vendeurs',
+    sectTopProducts:'🥇 Produits les plus vendus',
+    sectTopCustomers:'⭐ Meilleurs clients',
+    tblRank:'#', tblProduct:'Produit', tblSeller:'Vendeur', tblQty:'Qté', tblRevenue:'Revenu',
+    tblCustomer:'Client', tblPhone:'Téléphone', tblOrders:'Commandes', tblSpent:'Dépensé',
+    lblSales:'Ventes', lblPaid:'Payé', lblDue:'Dû', lblSettled:'Réglé',
+    btnRecordPayout:'💸 Enregistrer un versement',
+    payoutPrompt:'Montant versé à',
+    payoutOwed:'dû',
+    payoutNote:'Note (facultatif) — ex. virement bancaire / espèces',
+    payoutInvalid:'Montant invalide',
+    payoutSaved:'✓ Versement enregistré',
+    ordersDelivered:'Livrée', ordersConfirmed:'Confirmée', ordersPending:'En attente', ordersOutFor:'En livraison', ordersCancelled:'Annulée',
+    noSalesYet:'Aucune vente livrée encore',
+    noSellersYet:'Aucun vendeur',
+    noCustomersYet:'Aucun client',
+    noDataYet:'Pas assez de données',
+    dashOrdersCount:'livrée(s)',
+  }
+}); }catch(e){} }
+
 
 /* Currency feature translations */
 if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
@@ -3626,16 +3735,16 @@ async function loadAdminPanel(){
         <div class="section-title mt-3 mb-1">🚚 عمّال توصيل منتظرون ${pendingAgents>0?`<span style="background:var(--red);color:#fff;font-size:11px;padding:2px 8px;border-radius:999px;margin-right:6px">${pendingAgents}</span>`:''}</div>
         <div id="admin-pending-agents"></div>
         
-        <div class="section-title mt-3 mb-1">📊 لوحة الإدارة الشاملة</div>
+        <div class="section-title mt-3 mb-1">${(L()||{}).dashTitle||'📊 Dashboard'}</div>
         <div id="admin-analytics"></div>
 
-        <div class="section-title mt-3 mb-1">💰 الأرباح والتحويلات لكل بائع</div>
+        <div class="section-title mt-3 mb-1">${(L()||{}).sectSellerEarnings||'💰 Seller earnings'}</div>
         <div id="admin-seller-earnings"></div>
 
-        <div class="section-title mt-3 mb-1">🏆 أفضل المنتجات مبيعاً</div>
+        <div class="section-title mt-3 mb-1">${(L()||{}).sectTopProducts||'🥇 Top products'}</div>
         <div id="admin-top-products"></div>
 
-        <div class="section-title mt-3 mb-1">👤 أفضل الزبائن</div>
+        <div class="section-title mt-3 mb-1">${(L()||{}).sectTopCustomers||'⭐ Top customers'}</div>
         <div id="admin-top-customers"></div>
 
         <div class="section-title mt-3 mb-1">👥 الباعة النشطون</div>
@@ -3670,6 +3779,7 @@ async function loadAdminPanel(){
     populateCurrencyAdmin();
 
     // ─── ANALYTICS: aggregate delivered orders into per-seller + per-product + per-customer numbers ───
+    const dashT = (k) => (L() && L()[k]) || k;
     const paidOrders = orders.filter(o => o.status === 'delivered');
     const sellerName = {}; sellers.forEach(s => { sellerName[s.id] = s.display_name || s.phone || '—'; });
     const productById = {}; products.forEach(p => { productById[p.id] = p; });
@@ -3711,26 +3821,141 @@ async function loadAdminPanel(){
     const totalGross = Object.values(gross).reduce((a,b)=>a+b,0);
     const totalPaidOut = Object.values(paidOut).reduce((a,b)=>a+b,0);
     const balanceOwed = totalGross - totalPaidOut;
+    const avgTicket = paidOrders.length ? totalGross/paidOrders.length : 0;
+    const activeSellersCount = sellers.filter(s => s.status==='approved').length;
+    const activeProductsCount = products.filter(p => p.status==='active').length;
+
+    // Daily sales series — last 30 days (for the sparkline)
+    const now = new Date();
+    const days = 30;
+    const daySeries = [];
+    const dayLabels = [];
+    for(let i=days-1;i>=0;i--){
+      const d = new Date(now);
+      d.setHours(0,0,0,0);
+      d.setDate(d.getDate()-i);
+      const key = d.toISOString().slice(0,10);
+      dayLabels.push(key);
+      daySeries.push(0);
+    }
+    paidOrders.forEach(o => {
+      const raw = o.delivered_at || o.created_at;
+      if(!raw) return;
+      const key = new Date(raw).toISOString().slice(0,10);
+      const idx = dayLabels.indexOf(key);
+      if(idx>=0) daySeries[idx] += Number(o.total||0);
+    });
+
+    // Orders-by-status distribution (all statuses)
+    const statusColors = {pending:'#f59e0b', confirmed:'#3b82f6', out_for_delivery:'#8b5cf6', delivered:'#16a34a', cancelled:'#94a3b8'};
+    const statusLabelMap = {pending:'ordersPending', confirmed:'ordersConfirmed', out_for_delivery:'ordersOutFor', delivered:'ordersDelivered', cancelled:'ordersCancelled'};
+    const statusCounts = {};
+    orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status]||0) + 1; });
+
+    // SVG chart helpers ────────────────────────────────────────────────────
+    const svgSparkline = (data, w=280, h=64, pad=4) => {
+      if(!data.length || data.every(v => v===0)) return `<div style="font-size:11.5px;color:var(--text3);text-align:center;padding:22px 0">${dashT('noDataYet')}</div>`;
+      const max = Math.max(...data, 1);
+      const dx = (w - 2*pad) / Math.max(1, data.length - 1);
+      const pts = data.map((v,i) => [pad + i*dx, h - pad - (v/max)*(h - 2*pad)]);
+      const line = pts.map((p,i) => (i===0?'M':'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+      const fill = `M${pts[0][0].toFixed(1)} ${h-pad} ${pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')} L${pts[pts.length-1][0].toFixed(1)} ${h-pad} Z`;
+      const lastPt = pts[pts.length-1];
+      return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:${h}px;display:block"><defs><linearGradient id="sp-grad" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#1e5429" stop-opacity=".35"/><stop offset="100%" stop-color="#1e5429" stop-opacity="0"/></linearGradient></defs><path d="${fill}" fill="url(#sp-grad)"/><path d="${line}" fill="none" stroke="#1e5429" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${lastPt[0].toFixed(1)}" cy="${lastPt[1].toFixed(1)}" r="3.5" fill="#1e5429"/></svg>`;
+    };
+    const svgDonut = (segments, size=140, thickness=22) => {
+      const total = segments.reduce((a,s)=>a+s.value,0);
+      if(!total) return `<div style="font-size:11.5px;color:var(--text3);text-align:center;padding:36px 0">${dashT('noDataYet')}</div>`;
+      const r = (size - thickness) / 2;
+      const c = size / 2;
+      let angle = -Math.PI/2;
+      const paths = segments.map(s => {
+        const frac = s.value/total;
+        const start = angle;
+        const end = angle + frac*2*Math.PI;
+        angle = end;
+        if(frac === 0) return '';
+        if(frac >= 0.999){
+          return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${thickness}"/>`;
+        }
+        const large = frac > 0.5 ? 1 : 0;
+        const x1 = c + r*Math.cos(start), y1 = c + r*Math.sin(start);
+        const x2 = c + r*Math.cos(end),   y2 = c + r*Math.sin(end);
+        return `<path d="M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}" fill="none" stroke="${s.color}" stroke-width="${thickness}" stroke-linecap="butt"/>`;
+      }).join('');
+      return `<svg viewBox="0 0 ${size} ${size}" style="width:${size}px;height:${size}px;flex-shrink:0"><g>${paths}</g><text x="${c}" y="${c-2}" text-anchor="middle" font-size="22" font-weight="900" fill="#0f172a">${total}</text><text x="${c}" y="${c+15}" text-anchor="middle" font-size="10" font-weight="700" fill="#64748b" style="text-transform:uppercase;letter-spacing:.5px">${dashT('tblOrders').toUpperCase()}</text></svg>`;
+    };
+    const svgBars = (rows, maxWidth=100) => {
+      if(!rows.length) return `<div style="font-size:11.5px;color:var(--text3);text-align:center;padding:22px 0">${dashT('noDataYet')}</div>`;
+      const max = Math.max(...rows.map(r=>r.value), 1);
+      return rows.map(r => {
+        const pct = (r.value/max) * maxWidth;
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12.5px">
+          <div style="flex:0 0 34%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700">${escapeHtml(r.label)}</div>
+          <div style="flex:1;background:#eef2f7;border-radius:6px;overflow:hidden;height:14px;position:relative">
+            <div style="background:linear-gradient(90deg,#1a6eb5,#0f4d82);height:100%;width:${pct}%;border-radius:6px;transition:width .4s"></div>
+          </div>
+          <div style="flex:0 0 auto;font-weight:800;color:#0f4d82;font-size:12px;white-space:nowrap">${formatPrice(r.value)}</div>
+        </div>`;
+      }).join('');
+    };
+
+    const statusSegments = Object.keys(statusCounts).map(k => ({
+      value: statusCounts[k], color: statusColors[k]||'#64748b', label: dashT(statusLabelMap[k]||k)
+    }));
+
+    const topSellersForChart = Object.entries(gross)
+      .map(([sid,g])=>({label:sellerName[sid]||'—', value:g}))
+      .sort((a,b)=>b.value-a.value)
+      .slice(0,5);
+
     document.getElementById('admin-analytics').innerHTML = `
-      <div class="row-2 mb-2">
-        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center;background:linear-gradient(135deg,#dcfce7,#fff);border-color:#a7f3d0">
-          <div style="font-size:20px;font-weight:900;color:#1f7a45">${formatPrice(totalGross)}</div>
-          <div style="font-size:11px;color:var(--text3);font-weight:700">إجمالي المبيعات (طلبات مسلَّمة)</div>
+      <style>
+      .adm-kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
+      @media(min-width:640px){.adm-kpi-grid{grid-template-columns:repeat(4,1fr)}}
+      .adm-kpi{border-radius:14px;padding:14px 12px;box-shadow:0 2px 8px rgba(15,23,42,.06);position:relative;overflow:hidden;background:#fff;border:1px solid rgba(15,23,42,.06)}
+      .adm-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpc,#1a6eb5)}
+      .adm-kpi-i{font-size:22px;line-height:1;margin-bottom:6px;display:block}
+      .adm-kpi-v{font-size:19px;font-weight:900;color:#0f172a;line-height:1.1;word-break:break-word}
+      .adm-kpi-l{font-size:11px;font-weight:700;color:#64748b;margin-top:4px;line-height:1.3}
+      .adm-charts{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+      @media(min-width:720px){.adm-charts{grid-template-columns:1.4fr 1fr}}
+      .adm-chart-card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(15,23,42,.05)}
+      .adm-chart-title{font-size:12.5px;font-weight:800;color:#0f4d82;margin-bottom:10px}
+      .adm-donut-wrap{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+      .adm-donut-legend{flex:1;min-width:120px}
+      .adm-lg-row{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:5px}
+      .adm-lg-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+      .adm-lg-val{margin-inline-start:auto;font-weight:800;color:#0f172a}
+      </style>
+      <div class="adm-kpi-grid">
+        <div class="adm-kpi" style="--kpc:#16a34a"><span class="adm-kpi-i">💵</span><div class="adm-kpi-v">${formatPrice(totalGross)}</div><div class="adm-kpi-l">${dashT('kpiGross')}</div></div>
+        <div class="adm-kpi" style="--kpc:#f59e0b"><span class="adm-kpi-i">⏳</span><div class="adm-kpi-v">${formatPrice(balanceOwed)}</div><div class="adm-kpi-l">${dashT('kpiOwed')}</div></div>
+        <div class="adm-kpi" style="--kpc:#4338ca"><span class="adm-kpi-i">🏦</span><div class="adm-kpi-v">${formatPrice(totalPaidOut)}</div><div class="adm-kpi-l">${dashT('kpiPaid')}</div></div>
+        <div class="adm-kpi" style="--kpc:#1a6eb5"><span class="adm-kpi-i">📦</span><div class="adm-kpi-v">${paidOrders.length}</div><div class="adm-kpi-l">${dashT('kpiOrders')}</div></div>
+        <div class="adm-kpi" style="--kpc:#0891b2"><span class="adm-kpi-i">🧾</span><div class="adm-kpi-v">${orders.length}</div><div class="adm-kpi-l">${dashT('kpiAllOrders')}</div></div>
+        <div class="adm-kpi" style="--kpc:#8b5cf6"><span class="adm-kpi-i">👥</span><div class="adm-kpi-v">${activeSellersCount}</div><div class="adm-kpi-l">${dashT('kpiActiveSellers')}</div></div>
+        <div class="adm-kpi" style="--kpc:#c8910a"><span class="adm-kpi-i">🛒</span><div class="adm-kpi-v">${activeProductsCount}</div><div class="adm-kpi-l">${dashT('kpiActiveProducts')}</div></div>
+        <div class="adm-kpi" style="--kpc:#e11d48"><span class="adm-kpi-i">🎯</span><div class="adm-kpi-v">${formatPrice(avgTicket)}</div><div class="adm-kpi-l">${dashT('kpiAvgTicket')}</div></div>
+      </div>
+      <div class="adm-charts">
+        <div class="adm-chart-card">
+          <div class="adm-chart-title">${dashT('chartSalesTrend')}</div>
+          ${svgSparkline(daySeries)}
         </div>
-        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center;background:linear-gradient(135deg,#fef3c7,#fff);border-color:#fbbf24">
-          <div style="font-size:20px;font-weight:900;color:#b45309">${formatPrice(balanceOwed)}</div>
-          <div style="font-size:11px;color:var(--text3);font-weight:700">مستحق للتحويل للباعة</div>
+        <div class="adm-chart-card">
+          <div class="adm-chart-title">${dashT('chartOrdersByStatus')}</div>
+          <div class="adm-donut-wrap">
+            ${svgDonut(statusSegments)}
+            <div class="adm-donut-legend">
+              ${statusSegments.map(s => `<div class="adm-lg-row"><span class="adm-lg-dot" style="background:${s.color}"></span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.label}</span><span class="adm-lg-val">${s.value}</span></div>`).join('') || `<div style="font-size:11.5px;color:var(--text3)">${dashT('noDataYet')}</div>`}
+            </div>
+          </div>
         </div>
       </div>
-      <div class="row-2 mb-2">
-        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center">
-          <div style="font-size:18px;font-weight:900;color:#4338ca">${formatPrice(totalPaidOut)}</div>
-          <div style="font-size:11px;color:var(--text3);font-weight:700">إجمالي المدفوعات</div>
-        </div>
-        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center">
-          <div style="font-size:18px;font-weight:900;color:var(--primary)">${paidOrders.length}</div>
-          <div style="font-size:11px;color:var(--text3);font-weight:700">طلبات مسلَّمة</div>
-        </div>
+      <div class="adm-chart-card" style="margin-bottom:12px">
+        <div class="adm-chart-title">${dashT('chartTopSellers')}</div>
+        ${svgBars(topSellersForChart)}
       </div>
     `;
 
@@ -3738,7 +3963,7 @@ async function loadAdminPanel(){
     const se = document.getElementById('admin-seller-earnings');
     const activeSellersForEarnings = sellers.filter(s => s.status !== 'pending');
     if(activeSellersForEarnings.length === 0){
-      se.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد بائع بعد</div>`;
+      se.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">${dashT('noSellersYet')}</div>`;
     } else {
       se.innerHTML = '';
       activeSellersForEarnings
@@ -3751,33 +3976,33 @@ async function loadAdminPanel(){
           el.innerHTML = `
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
               <div style="font-size:14px;font-weight:800">${escapeHtml(s.display_name||s.phone||'—')}</div>
-              <div style="font-size:11px;color:var(--text3)">${n} طلب مسلَّم</div>
+              <div style="font-size:11px;color:var(--text3)">${n} ${dashT('dashOrdersCount')}</div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;margin-bottom:8px">
               <div style="text-align:center;background:#f4f8fd;border-radius:8px;padding:8px 4px">
                 <div style="font-weight:800;color:#1f7a45">${formatPrice(g)}</div>
-                <div style="color:var(--text3);font-size:10px">مبيعات</div>
+                <div style="color:var(--text3);font-size:10px">${dashT('lblSales')}</div>
               </div>
               <div style="text-align:center;background:#f4f8fd;border-radius:8px;padding:8px 4px">
                 <div style="font-weight:800;color:#4338ca">${formatPrice(po)}</div>
-                <div style="color:var(--text3);font-size:10px">مدفوع</div>
+                <div style="color:var(--text3);font-size:10px">${dashT('lblPaid')}</div>
               </div>
               <div style="text-align:center;background:${bal>0?'#fef3c7':'#dcfce7'};border-radius:8px;padding:8px 4px">
                 <div style="font-weight:800;color:${bal>0?'#b45309':'#1f7a45'}">${formatPrice(bal)}</div>
-                <div style="color:var(--text3);font-size:10px">${bal>0?'مستحق':'مسدَّد'}</div>
+                <div style="color:var(--text3);font-size:10px">${bal>0?dashT('lblDue'):dashT('lblSettled')}</div>
               </div>
             </div>
-            ${bal>0?`<button class="btn btn-primary btn-sm" data-sid="${escapeAttr(s.id)}" data-sname="${escapeAttr(s.display_name||'')}" data-max="${bal}" data-act="record-payout" style="width:100%">💸 تسجيل تحويل / دفعة</button>`:''}
+            ${bal>0?`<button class="btn btn-primary btn-sm" data-sid="${escapeAttr(s.id)}" data-sname="${escapeAttr(s.display_name||'')}" data-max="${bal}" data-act="record-payout" style="width:100%">${dashT('btnRecordPayout')}</button>`:''}
           `;
           const btn = el.querySelector('button[data-act="record-payout"]');
           if(btn){
             btn.onclick = async () => {
               const suggest = btn.dataset.max;
-              const raw = window.prompt(`المبلغ المُحوَّل إلى ${btn.dataset.sname} (المستحق ${suggest}):`, suggest);
+              const raw = window.prompt(`${dashT('payoutPrompt')} ${btn.dataset.sname} (${dashT('payoutOwed')} ${suggest}):`, suggest);
               if(raw === null) return;
               const amt = Number(raw);
-              if(!(amt>0)){ toast('⚠️ مبلغ غير صحيح','err'); return; }
-              const note = window.prompt('ملاحظة (اختياري) — مثال: تحويل بنكي / حوالة / نقداً:','')||'';
+              if(!(amt>0)){ toast('⚠️ '+dashT('payoutInvalid'),'err'); return; }
+              const note = window.prompt(dashT('payoutNote')+':','')||'';
               const { error } = await sb.from('coop_transactions').insert({
                 seller_id: btn.dataset.sid,
                 type: 'withdrawal',
@@ -3787,7 +4012,7 @@ async function loadAdminPanel(){
                 created_by: (currentAdmin && currentAdmin.email) || 'admin'
               });
               if(error){ toast('⚠️ '+error.message,'err'); return; }
-              toast('✓ تم تسجيل التحويل','ok');
+              toast(dashT('payoutSaved'),'ok');
               loadAdminPanel();
             };
           }
@@ -3799,9 +4024,10 @@ async function loadAdminPanel(){
     const tp = document.getElementById('admin-top-products');
     const topProducts = Object.entries(prodStat).map(([id,v])=>({id,...v})).sort((a,b)=>b.revenue-a.revenue||b.qty-a.qty).slice(0,10);
     if(topProducts.length===0){
-      tp.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا توجد مبيعات مسلَّمة بعد</div>`;
+      tp.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">${dashT('noSalesYet')}</div>`;
     } else {
-      tp.innerHTML = `<div class="order-card" style="padding:0"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><thead><tr style="background:#f4f8fd"><th style="text-align:right;padding:9px 10px;font-weight:800">#</th><th style="text-align:right;padding:9px 10px;font-weight:800">المنتج</th><th style="text-align:right;padding:9px 10px;font-weight:800">البائع</th><th style="text-align:right;padding:9px 10px;font-weight:800">الكميّة</th><th style="text-align:right;padding:9px 10px;font-weight:800">الإيراد</th></tr></thead><tbody>${
+      const _th = s => `<th style="text-align:start;padding:9px 10px;font-weight:800">${s}</th>`;
+      tp.innerHTML = `<div class="order-card" style="padding:0;overflow-x:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse;min-width:420px"><thead><tr style="background:#f4f8fd">${_th(dashT('tblRank'))}${_th(dashT('tblProduct'))}${_th(dashT('tblSeller'))}${_th(dashT('tblQty'))}${_th(dashT('tblRevenue'))}</tr></thead><tbody>${
         topProducts.map((p,i)=>`<tr style="border-top:1px solid #eef2f7"><td style="padding:8px 10px;color:var(--text3)">${i+1}</td><td style="padding:8px 10px;font-weight:700">${escapeHtml(p.name)}</td><td style="padding:8px 10px;color:var(--text3);font-size:11.5px">${escapeHtml(p.seller)}</td><td style="padding:8px 10px;font-weight:700">${p.qty}</td><td style="padding:8px 10px;font-weight:800;color:#1f7a45">${formatPrice(p.revenue)}</td></tr>`).join('')
       }</tbody></table></div>`;
     }
@@ -3810,9 +4036,10 @@ async function loadAdminPanel(){
     const tc = document.getElementById('admin-top-customers');
     const topCustomers = Object.values(custStat).sort((a,b)=>b.spent-a.spent||b.orders-a.orders).slice(0,10);
     if(topCustomers.length===0){
-      tc.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد زبائن بعد</div>`;
+      tc.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">${dashT('noCustomersYet')}</div>`;
     } else {
-      tc.innerHTML = `<div class="order-card" style="padding:0"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><thead><tr style="background:#f4f8fd"><th style="text-align:right;padding:9px 10px;font-weight:800">#</th><th style="text-align:right;padding:9px 10px;font-weight:800">الزبون</th><th style="text-align:right;padding:9px 10px;font-weight:800">الهاتف</th><th style="text-align:right;padding:9px 10px;font-weight:800">طلبات</th><th style="text-align:right;padding:9px 10px;font-weight:800">إنفاق</th></tr></thead><tbody>${
+      const _th = s => `<th style="text-align:start;padding:9px 10px;font-weight:800">${s}</th>`;
+      tc.innerHTML = `<div class="order-card" style="padding:0;overflow-x:auto"><table style="width:100%;font-size:12.5px;border-collapse:collapse;min-width:420px"><thead><tr style="background:#f4f8fd">${_th(dashT('tblRank'))}${_th(dashT('tblCustomer'))}${_th(dashT('tblPhone'))}${_th(dashT('tblOrders'))}${_th(dashT('tblSpent'))}</tr></thead><tbody>${
         topCustomers.map((c,i)=>`<tr style="border-top:1px solid #eef2f7"><td style="padding:8px 10px;color:var(--text3)">${i+1}</td><td style="padding:8px 10px;font-weight:700">${escapeHtml(c.name)}</td><td style="padding:8px 10px;color:var(--text3);font-size:11.5px;direction:ltr">${escapeHtml(c.phone||'—')}</td><td style="padding:8px 10px;font-weight:700">${c.orders}</td><td style="padding:8px 10px;font-weight:800;color:#1f7a45">${formatPrice(c.spent)}</td></tr>`).join('')
       }</tbody></table></div>`;
     }
