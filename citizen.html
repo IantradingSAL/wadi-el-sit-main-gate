@@ -804,9 +804,12 @@ async function getCurrentUserRole(){
     if (!sb) return 'citizen';
     const { data: { user } } = await sb.auth.getUser();
     if (!user) return null;
-    const { data, error } = await sb.from('user_roles').select('role').eq('user_id', user.id).maybeSingle();
-    if (error || !data) return 'citizen';
-    return data.role;
+    // A user may have multiple role rows — pick the most privileged.
+    const { data, error } = await sb.from('user_roles').select('role').eq('user_id', user.id);
+    if (error || !data || !data.length) return 'citizen';
+    const RANK = ['super_admin','mayor','admin','approver','water_admin','staff','coop_admin','dalail_admin','baladieh','coop_customer','water_owner'];
+    const roles = data.map(r => r.role);
+    return RANK.find(r => roles.includes(r)) || roles[0];
   } catch(e) { return 'citizen'; }
 }
 async function getCurrentUserProfile(){

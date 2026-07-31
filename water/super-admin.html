@@ -205,7 +205,7 @@ async function checkSuperAdmin(user) {
   var meta = user.user_metadata || {};
   var role = meta.role || '';
   var email = user.email || '';
-  var ok = KNOWN_SUPER.indexOf(email) >= 0 || role === 'mayor' || role === 'admin';
+  var ok = KNOWN_SUPER.indexOf(email) >= 0 || role === 'mayor' || role === 'admin' || role === 'super_admin';
   if (!ok) {
     try {
       var r = await sb.from('super_admins').select('id').eq('email', email).single();
