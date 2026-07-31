@@ -1,15 +1,19 @@
 {
+  "id": "/wadi-el-sit-main-gate/",
   "name": "بلدية وادي الست",
   "short_name": "وادي الست",
-  "description": "البوابة الإلكترونية لبلدية وادي الست — دليل، خدمات، واتصالات",
+  "description": "البوابة الإلكترونية لبلدية وادي الست — دليل صفحات صفراء، خدمات المواطن، بوابة الري، صندوق البلدية، والتعاونية. Wadi El Sit municipality portal — yellow pages, citizen services, irrigation, treasury, cooperative.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#f5f7fa",
   "theme_color": "#1a6eb5",
   "lang": "ar",
   "dir": "rtl",
+  "handle_links": "preferred",
+  "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
   "categories": ["utilities", "social", "government"],
   "icons": [
     { "src": "icons/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
@@ -20,7 +24,12 @@
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "monochrome" }
+  ],
+  "screenshots": [
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "narrow", "label": "الشاشة الرئيسية" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "form_factor": "wide", "label": "Main portal" }
   ],
   "shortcuts": [
     {
@@ -43,7 +52,15 @@
       "description": "جدول دورة الري",
       "url": "./water.html",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "التعاونية",
+      "short_name": "التعاونية",
+      "description": "متجر التعاونية — منتجات محلية",
+      "url": "./coop.html",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "related_applications": []
 }
