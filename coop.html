@@ -566,6 +566,27 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     noCustomersYet:'لا يوجد زبائن بعد',
     noDataYet:'لا توجد بيانات كافية بعد',
     dashOrdersCount:'طلب مسلَّم',
+    sectCategories:'🏷️ إدارة تصنيفات المتجر',
+    catAddNew:'➕ تصنيف جديد',
+    catEditTitle:'تعديل التصنيف',
+    catNewTitle:'إضافة تصنيف جديد',
+    catId:'المعرِّف (ID)',
+    catIdHint:'حروف لاتينية صغيرة وأرقام فقط، مثال: honey — لا يمكن تغييره لاحقاً',
+    catNameAr:'الاسم بالعربية',
+    catNameEn:'الاسم بالإنكليزية',
+    catNameFr:'الاسم بالفرنسية',
+    catEmoji:'الرمز التعبيري (Emoji)',
+    catColor:'اللون',
+    catImage:'رابط الصورة (URL)',
+    catImageHint:'يظهر تلقائياً في الصفحة الرئيسية للمتجر — 600×600px مستحسن',
+    catSort:'ترتيب العرض',
+    catSave:'💾 حفظ',
+    catDelete:'🗑️ حذف',
+    catConfirmDelete:'حذف هذا التصنيف نهائياً؟ المنتجات المرتبطة به ستبقى لكن بدون تصنيف مرئي.',
+    catInvalidId:'⚠️ المعرِّف مطلوب ويجب أن يحتوي فقط على حروف صغيرة وأرقام و _',
+    catSaved:'✓ تم حفظ التصنيف',
+    catDeleted:'🗑️ تم حذف التصنيف',
+    catNone:'لا يوجد تصنيف بعد — اضغط "تصنيف جديد" للبدء',
   },
   en: {
     dashTitle: '📊 Management Dashboard',
@@ -601,6 +622,27 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     noCustomersYet:'No customers yet',
     noDataYet:'Not enough data yet',
     dashOrdersCount:'delivered',
+    sectCategories:'🏷️ Store categories',
+    catAddNew:'➕ New category',
+    catEditTitle:'Edit category',
+    catNewTitle:'New category',
+    catId:'ID',
+    catIdHint:'Lowercase letters, digits and _ only (e.g. honey) — cannot be changed later',
+    catNameAr:'Name (Arabic)',
+    catNameEn:'Name (English)',
+    catNameFr:'Name (French)',
+    catEmoji:'Emoji',
+    catColor:'Color',
+    catImage:'Image URL',
+    catImageHint:'Shown on the store home page — 600×600px recommended',
+    catSort:'Sort order',
+    catSave:'💾 Save',
+    catDelete:'🗑️ Delete',
+    catConfirmDelete:'Delete this category permanently? Existing products keep their category_id but lose the visible tile.',
+    catInvalidId:'⚠️ ID required — lowercase letters, digits and _ only',
+    catSaved:'✓ Category saved',
+    catDeleted:'🗑️ Category deleted',
+    catNone:'No categories yet — click "New category" to start',
   },
   fr: {
     dashTitle: '📊 Tableau de bord de gestion',
@@ -636,6 +678,27 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     noCustomersYet:'Aucun client',
     noDataYet:'Pas assez de données',
     dashOrdersCount:'livrée(s)',
+    sectCategories:'🏷️ Catégories de la boutique',
+    catAddNew:'➕ Nouvelle catégorie',
+    catEditTitle:'Modifier la catégorie',
+    catNewTitle:'Nouvelle catégorie',
+    catId:'ID',
+    catIdHint:'Lettres minuscules, chiffres et _ uniquement (ex. honey) — non modifiable plus tard',
+    catNameAr:'Nom (arabe)',
+    catNameEn:'Nom (anglais)',
+    catNameFr:'Nom (français)',
+    catEmoji:'Emoji',
+    catColor:'Couleur',
+    catImage:'URL de l\'image',
+    catImageHint:'Affichée sur la page d\'accueil de la boutique — 600×600px recommandé',
+    catSort:'Ordre d\'affichage',
+    catSave:'💾 Enregistrer',
+    catDelete:'🗑️ Supprimer',
+    catConfirmDelete:'Supprimer définitivement cette catégorie ? Les produits existants gardent leur category_id mais perdent la vignette visible.',
+    catInvalidId:'⚠️ ID requis — lettres minuscules, chiffres et _ uniquement',
+    catSaved:'✓ Catégorie enregistrée',
+    catDeleted:'🗑️ Catégorie supprimée',
+    catNone:'Aucune catégorie — cliquez « Nouvelle catégorie » pour commencer',
   }
 }); }catch(e){} }
 
@@ -3694,14 +3757,15 @@ async function loadAdminPanel(){
   const c=document.getElementById('admin-content');
   c.innerHTML='<div class="spinner"></div>';
   try{
-    const [s,o,p,da,tx]=await Promise.all([
+    const [s,o,p,da,tx,cats]=await Promise.all([
       sb.from('coop_sellers').select('*').order('created_at',{ascending:false}),
       sb.from('coop_orders').select('*').order('created_at',{ascending:false}).limit(500),
       sb.from('coop_products').select('*').order('created_at',{ascending:false}),
       sb.from('coop_delivery_agents').select('*').order('created_at',{ascending:false}),
-      sb.from('coop_transactions').select('*').order('created_at',{ascending:false}).limit(500)
+      sb.from('coop_transactions').select('*').order('created_at',{ascending:false}).limit(500),
+      sb.from('coop_categories').select('*').order('sort_order',{ascending:true,nullsFirst:false})
     ]);
-    const sellers=s.data||[],orders=o.data||[],products=p.data||[],agents=da.data||[],transactions=tx.data||[];
+    const sellers=s.data||[],orders=o.data||[],products=p.data||[],agents=da.data||[],transactions=tx.data||[],adminCats=cats.data||[];
     const pendingSellers=sellers.filter(x=>x.status==='pending').length;
     const pendingOrders=orders.filter(x=>x.status==='pending').length;
     const pendingAgents=agents.filter(x=>x.status==='pending').length;
@@ -3746,6 +3810,12 @@ async function loadAdminPanel(){
 
         <div class="section-title mt-3 mb-1">${(L()||{}).sectTopCustomers||'⭐ Top customers'}</div>
         <div id="admin-top-customers"></div>
+
+        <div class="section-title mt-3 mb-1" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${(L()||{}).sectCategories||'🏷️ Categories'}</span>
+          <button class="btn btn-primary btn-sm" onclick="openCatEditor(null)">${(L()||{}).catAddNew||'➕ New'}</button>
+        </div>
+        <div id="admin-categories"></div>
 
         <div class="section-title mt-3 mb-1">👥 الباعة النشطون</div>
         <div id="admin-active-sellers"></div>
@@ -4044,6 +4114,48 @@ async function loadAdminPanel(){
       }</tbody></table></div>`;
     }
 
+    // Category management — list every coop_categories row with edit/delete
+    const ac = document.getElementById('admin-categories');
+    if(!adminCats.length){
+      ac.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">${dashT('catNone')}</div>`;
+    } else {
+      ac.innerHTML = adminCats.map(cat => {
+        const nm = cat.name_i18n ? pickLang(cat.name_i18n) : (cat.label || cat.id);
+        const swatchImg = cat.image_url
+          ? `<img src="${escapeAttr(cat.image_url)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'${cat.icon||'📦'}',style:'font-size:26px;display:flex;align-items:center;justify-content:center;width:100%;height:100%'}))">`
+          : `<div style="font-size:26px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${cat.icon||'📦'}</div>`;
+        return `<div class="order-card" style="display:flex;align-items:center;gap:12px;padding:10px 12px">
+          <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;background:#f0f2f7;flex-shrink:0;border:1.5px solid ${cat.color||'#e5e7eb'}">${swatchImg}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:800;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat.icon||''} ${escapeHtml(nm)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;direction:ltr">${escapeHtml(cat.id)} · <span style="display:inline-block;width:10px;height:10px;background:${cat.color||'#94a3b8'};border-radius:2px;vertical-align:middle;margin:0 3px"></span></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="btn btn-out btn-sm" data-cat-id="${escapeAttr(cat.id)}" data-act="edit-cat" style="padding:6px 10px">✏️</button>
+            <button class="btn btn-red btn-sm" data-cat-id="${escapeAttr(cat.id)}" data-cat-name="${escapeAttr(nm)}" data-act="del-cat" style="padding:6px 10px">🗑️</button>
+          </div>
+        </div>`;
+      }).join('');
+      ac.querySelectorAll('button[data-act]').forEach(b => {
+        b.onclick = async (ev) => {
+          ev.stopPropagation();
+          const id = b.dataset.catId;
+          if(b.dataset.act === 'del-cat'){
+            if(!confirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
+            const { error } = await sb.from('coop_categories').delete().eq('id', id);
+            if(error){ toast('⚠️ '+error.message,'err'); return; }
+            toast(dashT('catDeleted'),'ok');
+            await reloadCategoriesFromDB();
+            if(typeof renderHomeCategories==='function') renderHomeCategories();
+            loadAdminPanel();
+          } else {
+            const cat = adminCats.find(c => c.id === id);
+            openCatEditor(cat || null);
+          }
+        };
+      });
+    }
+
     // Pending sellers
     const ps=document.getElementById('admin-pending-sellers');
     const pendingS=sellers.filter(x=>x.status==='pending');
@@ -4319,6 +4431,137 @@ async function saveCurrencyRate(){
     const upd = document.getElementById('rate-updated');
     if (upd) upd.textContent = (L().now || 'الآن');
   } catch(e) { toast('Error: ' + e.message,'err'); }
+}
+
+// ─── Category editor modal ───────────────────────────────────────────────
+// openCatEditor(catOrNull) — pass an existing row to edit, or null to
+// create a new one. Renders a small overlay with fields for id, three
+// language names, emoji, color, image URL, sort order. On save,
+// upserts into coop_categories and refreshes the storefront + admin.
+function openCatEditor(cat){
+  const dashT = (k) => (L() && L()[k]) || k;
+  const isNew = !cat;
+  let ov = document.getElementById('admin-cat-editor-ov');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'admin-cat-editor-ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,40,70,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999';
+    ov.innerHTML = `<div id="admin-cat-editor" style="background:#fff;border-radius:16px;padding:22px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 12px 40px rgba(15,40,70,.24)">
+      <h3 id="cat-ed-title" style="font-size:16px;font-weight:900;color:#0f4d82;margin:0 0 14px"></h3>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-id"></label>
+        <input id="cat-ed-id" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:ltr">
+        <div id="cat-ed-idhint" style="font-size:10.5px;color:#94a3b8;margin-top:3px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-emoji"></label>
+          <input id="cat-ed-emoji" maxlength="4" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:20px;text-align:center">
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-color"></label>
+          <input id="cat-ed-color" type="color" style="width:100%;height:40px;padding:2px;border:1.5px solid #e5e7eb;border-radius:9px;cursor:pointer">
+        </div>
+      </div>
+      <div style="margin-bottom:8px"><label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-ar"></label><input id="cat-ed-nm-ar" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:rtl"></div>
+      <div style="margin-bottom:8px"><label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-en"></label><input id="cat-ed-nm-en" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:ltr"></div>
+      <div style="margin-bottom:8px"><label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-fr"></label><input id="cat-ed-nm-fr" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:ltr"></div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-img"></label>
+        <input id="cat-ed-img" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:12px;direction:ltr" placeholder="https://…">
+        <div id="cat-ed-imghint" style="font-size:10.5px;color:#94a3b8;margin-top:3px"></div>
+      </div>
+      <div style="margin-bottom:12px"><label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-sort"></label><input id="cat-ed-sort" type="number" min="0" step="1" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:ltr"></div>
+      <div id="cat-ed-preview" style="display:flex;gap:10px;align-items:center;padding:10px;background:#f8fafc;border-radius:10px;margin-bottom:12px">
+        <div id="cat-ed-prev-tile" style="width:44px;height:44px;border-radius:10px;overflow:hidden;background:#f0f2f7;flex-shrink:0;border:1.5px solid #e5e7eb"></div>
+        <div style="font-size:12px;color:#64748b">👁 معاينة</div>
+      </div>
+      <div id="cat-ed-err" style="color:#bf2424;font-size:12.5px;min-height:18px;margin-bottom:6px"></div>
+      <div style="display:flex;gap:8px">
+        <button id="cat-ed-save" class="btn btn-primary" style="flex:1">💾</button>
+        <button id="cat-ed-cancel" class="btn btn-ghost" style="flex:0 0 auto">إلغاء</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', ev => { if(ev.target === ov) ov.style.display='none'; });
+    document.getElementById('cat-ed-cancel').addEventListener('click', () => ov.style.display='none');
+  }
+  // Populate labels (i18n)
+  document.getElementById('cat-ed-title').textContent = dashT(isNew ? 'catNewTitle' : 'catEditTitle');
+  document.getElementById('cat-ed-l-id').textContent = dashT('catId') + ' *';
+  document.getElementById('cat-ed-idhint').textContent = dashT('catIdHint');
+  document.getElementById('cat-ed-l-emoji').textContent = dashT('catEmoji');
+  document.getElementById('cat-ed-l-color').textContent = dashT('catColor');
+  document.getElementById('cat-ed-l-ar').textContent = dashT('catNameAr') + ' *';
+  document.getElementById('cat-ed-l-en').textContent = dashT('catNameEn');
+  document.getElementById('cat-ed-l-fr').textContent = dashT('catNameFr');
+  document.getElementById('cat-ed-l-img').textContent = dashT('catImage');
+  document.getElementById('cat-ed-imghint').textContent = dashT('catImageHint');
+  document.getElementById('cat-ed-l-sort').textContent = dashT('catSort');
+  document.getElementById('cat-ed-save').textContent = dashT('catSave');
+  // Fill values
+  const idInput = document.getElementById('cat-ed-id');
+  idInput.value = (cat && cat.id) || '';
+  idInput.disabled = !isNew;
+  idInput.style.opacity = isNew ? '1' : '.6';
+  const nmI18n = (cat && cat.name_i18n) || {};
+  document.getElementById('cat-ed-nm-ar').value = nmI18n.ar || cat?.label || '';
+  document.getElementById('cat-ed-nm-en').value = nmI18n.en || '';
+  document.getElementById('cat-ed-nm-fr').value = nmI18n.fr || '';
+  document.getElementById('cat-ed-emoji').value = (cat && cat.icon) || '📦';
+  document.getElementById('cat-ed-color').value = (cat && cat.color) || '#1a6eb5';
+  document.getElementById('cat-ed-img').value = (cat && cat.image_url) || '';
+  document.getElementById('cat-ed-sort').value = (cat && cat.sort_order != null) ? cat.sort_order : 999;
+  document.getElementById('cat-ed-err').textContent = '';
+  // Live preview
+  const updatePreview = () => {
+    const tile = document.getElementById('cat-ed-prev-tile');
+    const url = document.getElementById('cat-ed-img').value.trim();
+    const emoji = document.getElementById('cat-ed-emoji').value || '📦';
+    const color = document.getElementById('cat-ed-color').value;
+    tile.style.borderColor = color;
+    tile.innerHTML = url
+      ? `<img src="${url.replace(/"/g,'&quot;')}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'${emoji}',style:'font-size:24px;display:flex;align-items:center;justify-content:center;width:100%;height:100%'}))">`
+      : `<div style="font-size:24px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${emoji}</div>`;
+  };
+  ['cat-ed-img','cat-ed-emoji','cat-ed-color'].forEach(id => {
+    const el = document.getElementById(id); el.oninput = updatePreview;
+  });
+  updatePreview();
+  // Save handler
+  const saveBtn = document.getElementById('cat-ed-save');
+  saveBtn.onclick = async () => {
+    const id = document.getElementById('cat-ed-id').value.trim().toLowerCase();
+    const err = document.getElementById('cat-ed-err');
+    if(!/^[a-z0-9_]+$/.test(id)){ err.textContent = dashT('catInvalidId'); return; }
+    const ar = document.getElementById('cat-ed-nm-ar').value.trim();
+    if(!ar){ err.textContent = '⚠️ '+dashT('catNameAr')+' *'; return; }
+    const payload = {
+      id: id,
+      label: ar,
+      icon: document.getElementById('cat-ed-emoji').value.trim() || '📦',
+      color: document.getElementById('cat-ed-color').value,
+      image_url: document.getElementById('cat-ed-img').value.trim() || null,
+      sort_order: parseInt(document.getElementById('cat-ed-sort').value||'999',10),
+      name_i18n: {
+        ar: ar,
+        en: document.getElementById('cat-ed-nm-en').value.trim() || ar,
+        fr: document.getElementById('cat-ed-nm-fr').value.trim() || ar
+      }
+    };
+    err.textContent = '⏳';
+    saveBtn.disabled = true;
+    const { error } = await sb.from('coop_categories').upsert(payload, { onConflict: 'id' });
+    saveBtn.disabled = false;
+    if(error){ err.textContent = '⚠️ '+error.message; return; }
+    toast(dashT('catSaved'),'ok');
+    ov.style.display = 'none';
+    await reloadCategoriesFromDB();
+    if(typeof renderHomeCategories==='function') renderHomeCategories();
+    loadAdminPanel();
+  };
+  ov.style.display = 'flex';
+  setTimeout(() => (isNew ? idInput : document.getElementById('cat-ed-nm-ar')).focus(), 40);
 }
 
 function populateCurrencyAdmin(){
