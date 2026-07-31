@@ -274,16 +274,52 @@ function showLoginScreen(initialError) {
     + '  <div class="fg"><div class="fl" style="text-align:right">كلمة المرور</div><input type="password" id="li-pw" class="fi" autocomplete="current-password" style="direction:ltr"></div>'
     + '  <div id="li-err" class="err' + (initialError ? ' has' : '') + '">' + (initialError || '') + '</div>'
     + '  <button class="btn bg" style="width:100%;justify-content:center;margin-top:8px" id="li-btn">دخول</button>'
+    + '  <div style="margin-top:14px;text-align:center;font-size:12.5px">'
+    + '    <a href="#" id="li-forgot" style="color:#0f4d82;font-weight:700;text-decoration:none">نسيت كلمة المرور؟</a>'
+    + '  </div>'
     + '</div>';
   ov.style.display = 'flex';
   setTimeout(function(){
     var btn = document.getElementById('li-btn');
     var em = document.getElementById('li-em');
     var pw = document.getElementById('li-pw');
+    var fg = document.getElementById('li-forgot');
     btn.addEventListener('click', doLogin);
     pw.addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+    if (fg) fg.addEventListener('click', function(e){ e.preventDefault(); doForgotPassword(); });
     em.focus();
   }, 50);
+}
+
+async function doForgotPassword() {
+  var em = (document.getElementById('li-em').value || '').trim();
+  var err = document.getElementById('li-err');
+  if (!em) {
+    err.className = 'err has';
+    err.textContent = '⚠️ أدخل البريد الإلكتروني أولاً ثم اضغط "نسيت كلمة المرور؟"';
+    var emInput = document.getElementById('li-em');
+    if (emInput) emInput.focus();
+    return;
+  }
+  err.className = 'err';
+  err.textContent = '⏳ جاري إرسال رابط إعادة التعيين…';
+  try {
+    var redirectTo = location.origin + location.pathname.replace(/[^\/]+$/, '') + 'reset-password.html';
+    var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: redirectTo });
+    if (r && r.error) {
+      err.className = 'err has';
+      err.textContent = '⚠️ ' + r.error.message;
+      return;
+    }
+    err.className = 'err has';
+    err.style.background = '#e6f4ea';
+    err.style.borderRightColor = '#1e8e3e';
+    err.style.color = '#1e5429';
+    err.textContent = '✅ تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. تفقد صندوق الوارد (وسلة الرسائل غير المرغوب فيها).';
+  } catch(e) {
+    err.className = 'err has';
+    err.textContent = '⚠️ ' + e.message;
+  }
 }
 
 async function doLogin() {
