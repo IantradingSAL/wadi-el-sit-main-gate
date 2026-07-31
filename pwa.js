@@ -39,6 +39,15 @@ function _t(key, ar){
           window.PWA.autoLink().catch(e => console.warn('[PWA] autoLink failed:', e));
         }
       }, 2500);
+
+      // 👁️ TOUCH last_used_at on every page load so admins see accurate
+      // "opened after notification" indicators. Fires only if the user
+      // has an active push subscription — no-op otherwise.
+      setTimeout(() => {
+        if (window.PWA && window.PWA.touch) {
+          window.PWA.touch().catch(e => console.warn('[PWA] touch failed:', e));
+        }
+      }, 4000);
     });
   }
 
@@ -353,6 +362,30 @@ function _t(key, ar){
     // If there's a push subscription AND wadi_user in localStorage,
     // ensure the subscription is linked with the current name/phone.
     // This catches cases where the user enabled push BEFORE entering name.
+    // Bump last_used_at for the current subscription so admin "opened / not
+    // opened" indicators actually reflect that the user visited the site
+    // after a push. Silent no-op if there is no subscription yet.
+    touch: async () => {
+      try {
+        const sub = await window.PWA.getCurrentSubscription();
+        if (!sub || !sub.endpoint) return false;
+        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ last_used_at: new Date().toISOString() })
+        });
+        return true;
+      } catch (e) {
+        console.warn('[PWA] touch error:', e);
+        return false;
+      }
+    },
+
     autoLink: async () => {
       try {
         const sub = await window.PWA.getCurrentSubscription();

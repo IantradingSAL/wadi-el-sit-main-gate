@@ -3,8 +3,12 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v40';
+const CACHE_NAME   = 'wadi-elsit-v41';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v3';
+
+// Push tracking config — used by notificationclick to mark opens.
+const PUSH_SUPABASE_URL = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
+const PUSH_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
 
 // ★ KEY FIX: derive scope dynamically (handles /wadi-el-sit-main-gate/ subpath)
 // self.registration.scope returns full URL like:
@@ -193,18 +197,40 @@ self.addEventListener('notificationclick', (event) => {
   const fullUrl = resolveNotificationUrl(targetUrl);
   console.log('[SW v6] Opening:', fullUrl);
 
-  event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
-          return client.focus().then(c => {
-            if (c && 'navigate' in c) return c.navigate(fullUrl).catch(() => {});
-          });
+  // 👁️ Mark the notification as "opened" for admin analytics: bump
+  // last_used_at on this device's push_subscriptions row so it becomes
+  // >= the notification's sent_at. Fire-and-forget; never blocks navigation.
+  const markOpened = self.registration.pushManager.getSubscription()
+    .then((sub) => {
+      if (!sub || !sub.endpoint) return;
+      return fetch(
+        PUSH_SUPABASE_URL + '/rest/v1/push_subscriptions?endpoint=eq.' + encodeURIComponent(sub.endpoint),
+        {
+          method: 'PATCH',
+          headers: {
+            'apikey': PUSH_SUPABASE_KEY,
+            'Authorization': 'Bearer ' + PUSH_SUPABASE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({ last_used_at: new Date().toISOString() })
         }
-      }
-      if (self.clients.openWindow) return self.clients.openWindow(fullUrl);
+      ).catch(() => {});
     })
-  );
+    .catch(() => {});
+
+  const openWindowTask = self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    for (const client of clientList) {
+      if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+        return client.focus().then(c => {
+          if (c && 'navigate' in c) return c.navigate(fullUrl).catch(() => {});
+        });
+      }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(fullUrl);
+  });
+
+  event.waitUntil(Promise.all([markOpened, openWindowTask]));
 });
 
 self.addEventListener('pushsubscriptionchange', (event) => {
