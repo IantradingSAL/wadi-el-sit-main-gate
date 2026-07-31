@@ -818,12 +818,15 @@ input,textarea,select{font-family:var(--font);outline:none}
 
 /* ───── Categories Grid ───── */
 .cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px}
-.cat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r2);padding:16px 8px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text);text-align:center;cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm);min-height:100px;position:relative;overflow:hidden}
+.cat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r2);display:flex;flex-direction:column;align-items:stretch;color:var(--text);text-align:center;cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;padding:0}
 .cat-card:active{transform:scale(.96);border-color:var(--primary)}
 .cat-card:hover{border-color:var(--primary3);box-shadow:var(--shadow)}
-.cat-icon{font-size:32px;margin-bottom:6px;line-height:1;position:relative;z-index:1}
-.cat-name{font-size:12px;font-weight:700;line-height:1.2;position:relative;z-index:1;color:var(--text)}
-.cat-stripe{position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r2) var(--r2) 0 0}
+.cat-photo{width:100%;aspect-ratio:1/1;background:#f0f2f7;overflow:hidden;position:relative}
+.cat-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.cat-photo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:44px;line-height:1}
+.cat-icon{font-size:32px;padding:14px 0 4px;line-height:1;position:relative;z-index:1}
+.cat-name{font-size:12.5px;font-weight:800;line-height:1.25;padding:8px 6px 10px;color:var(--text)}
+.cat-stripe{position:absolute;top:0;left:0;right:0;height:4px;z-index:2}
 
 /* ───── Brand / Seller Cards ───── */
 .brand-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px}
@@ -1870,22 +1873,35 @@ let currentAdmin=null;
 let currentProductDetail=null;
 let pendingQty=1;
 
-// Category photos: Unsplash CDN URLs, cropped square at 600px. If any URL
-// fails to load, the client's onerror handler swaps the <img> for the
-// emoji so the UI never breaks. Admins can later add per-category photo
-// upload; for now this array is the single source of truth.
-const CAT_IMG = 'https://images.unsplash.com/photo-';
-const CAT_Q   = '?w=600&h=600&fit=crop&auto=format&q=75';
-const CATEGORIES=[
-  {id:'food',    name:{ar:'أطعمة',en:'Food',fr:'Alimentation'},                        icon:'🍞', color:'#c8910a', image: CAT_IMG+'1607103058027-4c5b0c6cabc1'+CAT_Q},
-  {id:'dairy',   name:{ar:'ألبان وأجبان',en:'Dairy & cheese',fr:'Produits laitiers'},   icon:'🧀', color:'#e0a83a', image: CAT_IMG+'1486297678162-eb2a19b0a32d'+CAT_Q},
-  {id:'produce', name:{ar:'خضار وفواكه',en:'Fruits & vegetables',fr:'Fruits & légumes'},icon:'🥕', color:'#2d7a3e', image: CAT_IMG+'1518977676601-b53f82aba655'+CAT_Q},
-  {id:'crafts',  name:{ar:'صناعات يدويّة',en:'Handicrafts',fr:'Artisanat'},              icon:'🧺', color:'#8b5cf6', image: CAT_IMG+'1489367874814-f5d040621dd8'+CAT_Q},
-  {id:'oil',     name:{ar:'زيت وزيتون',en:'Oil & olives',fr:'Huile & olives'},           icon:'🫒', color:'#558b2f', image: CAT_IMG+'1474979266404-7eaacbcd87c5'+CAT_Q},
-  {id:'honey',   name:{ar:'عسل ومعجّنات',en:'Honey & pastries',fr:'Miel & pâtisseries'},  icon:'🍯', color:'#f59e0b', image: CAT_IMG+'1587049352846-4a222e784d38'+CAT_Q},
-  {id:'plants',  name:{ar:'نباتات',en:'Plants',fr:'Plantes'},                            icon:'🌿', color:'#16a34a', image: CAT_IMG+'1485955900006-10f4d324d411'+CAT_Q},
-  {id:'other',   name:{ar:'أخرى',en:'Other',fr:'Autre'},                                 icon:'📦', color:'#1a6eb5', image: CAT_IMG+'1513475382585-d06e58bcb0e0'+CAT_Q}
+// Categories are loaded from public.coop_categories at startup (see
+// reloadCategoriesFromDB below). This hardcoded array is only a
+// fallback used until the DB fetch completes or if it fails.
+let CATEGORIES=[
+  {id:'food',    name:{ar:'أطعمة',en:'Food',fr:'Alimentation'},                        icon:'🍞', color:'#c8910a', image: 'https://images.unsplash.com/photo-1607103058027-4c5b0c6cabc1?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'dairy',   name:{ar:'ألبان وأجبان',en:'Dairy & cheese',fr:'Produits laitiers'},   icon:'🧀', color:'#e0a83a', image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'produce', name:{ar:'خضار وفواكه',en:'Fruits & vegetables',fr:'Fruits & légumes'},icon:'🥕', color:'#2d7a3e', image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'crafts',  name:{ar:'صناعات يدويّة',en:'Handicrafts',fr:'Artisanat'},              icon:'🧺', color:'#8b5cf6', image: 'https://images.unsplash.com/photo-1489367874814-f5d040621dd8?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'oil',     name:{ar:'زيت وزيتون',en:'Oil & olives',fr:'Huile & olives'},           icon:'🫒', color:'#558b2f', image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'honey',   name:{ar:'عسل ومعجّنات',en:'Honey & pastries',fr:'Miel & pâtisseries'},  icon:'🍯', color:'#f59e0b', image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'plants',  name:{ar:'نباتات',en:'Plants',fr:'Plantes'},                            icon:'🌿', color:'#16a34a', image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600&h=600&fit=crop&auto=format&q=75'},
+  {id:'other',   name:{ar:'أخرى',en:'Other',fr:'Autre'},                                 icon:'📦', color:'#1a6eb5', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=600&h=600&fit=crop&auto=format&q=75'}
 ];
+
+async function reloadCategoriesFromDB(){
+  if(!sb) return;
+  try{
+    const {data,error}=await sb.from('coop_categories').select('*').order('sort_order',{ascending:true,nullsFirst:false});
+    if(error||!data||!data.length) return;
+    CATEGORIES = data.map(r=>({
+      id: r.id,
+      name: r.name_i18n || {ar:r.label||r.id,en:r.label||r.id,fr:r.label||r.id},
+      icon: r.icon || '📦',
+      color: r.color || '#1a6eb5',
+      image: r.image_url || null,
+      sort_order: r.sort_order || 999
+    }));
+  }catch(e){/* silent, keep fallback */}
+}
 
 /* ═══════ INIT ═══════ */
 document.addEventListener('DOMContentLoaded',async function(){
@@ -1901,6 +1917,9 @@ document.addEventListener('DOMContentLoaded',async function(){
 
   // Hydrate identity from welcome modal
   hydrateIdentityToProfile();
+
+  // Load categories from DB (falls back to hardcoded on failure) before first render
+  await reloadCategoriesFromDB();
 
   // Render UI
   renderHomeCategories();
@@ -1969,11 +1988,12 @@ function renderHomeCategories(){
     const el=document.createElement('div');
     el.className='cat-card';
     // White background — colored stripe on top + colored icon for category identity
-    // Photo when available (with onerror fallback to the emoji), otherwise the big emoji
+    // Photo (with onerror emoji fallback) or big-emoji fallback tile
+    const nm = escapeHtml((typeof cat.name==="object"?pickLang(cat.name):cat.name));
     const photoHtml = cat.image
-      ? `<div class="cat-photo" style="width:100%;height:88px;overflow:hidden;border-radius:12px 12px 0 0;margin:-14px -14px 8px;background:${cat.color}20"><img src="${cat.image}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.parentNode.outerHTML='<div class=&quot;cat-icon&quot; style=&quot;font-size:38px;line-height:1;margin:6px 0&quot;>${cat.icon}</div>'"></div>`
-      : `<div class="cat-icon">${cat.icon}</div>`;
-    el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div>${photoHtml}<div class="cat-name">${escapeHtml((typeof cat.name==="object"?pickLang(cat.name):cat.name))}</div>`;
+      ? `<div class="cat-photo"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`
+      : `<div class="cat-photo"><div class="cat-photo-fallback">${cat.icon}</div></div>`;
+    el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div>${photoHtml}<div class="cat-name">${nm}</div>`;
     el.onclick=()=>{currentShopTab='cat';currentShopFilter=cat.id;switchTab('shop');};
     grid.appendChild(el);
   });
