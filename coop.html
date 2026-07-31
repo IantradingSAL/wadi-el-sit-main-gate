@@ -993,9 +993,11 @@ input,textarea,select{font-family:var(--font);outline:none}
 .cat-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--r2);display:flex;flex-direction:column;align-items:stretch;color:var(--text);text-align:center;cursor:pointer;transition:.2s;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;padding:0}
 .cat-card:active{transform:scale(.96);border-color:var(--primary)}
 .cat-card:hover{border-color:var(--primary3);box-shadow:var(--shadow)}
-.cat-photo{width:100%;aspect-ratio:1/1;background:#f0f2f7;overflow:hidden;position:relative}
-.cat-photo img{width:100%;height:100%;object-fit:cover;display:block}
-.cat-photo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:44px;line-height:1}
+.cat-photo{width:100%;aspect-ratio:1/1;background:linear-gradient(135deg,var(--cat-c,#f0f2f7) 0%,#ffffff 100%);overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.cat-photo img{max-width:70%;max-height:70%;width:auto;height:auto;object-fit:contain;display:block;filter:drop-shadow(0 3px 6px rgba(15,23,42,.18))}
+/* When the image itself is a real photo (heuristic: not svg), let it fill the tile */
+.cat-photo img[data-fill="1"]{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:cover;filter:none}
+.cat-photo-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px;line-height:1;filter:drop-shadow(0 3px 6px rgba(15,23,42,.15))}
 .cat-icon{font-size:32px;padding:14px 0 4px;line-height:1;position:relative;z-index:1}
 .cat-name{font-size:12.5px;font-weight:800;line-height:1.25;padding:8px 6px 10px;color:var(--text)}
 .cat-stripe{position:absolute;top:0;left:0;right:0;height:4px;z-index:2}
@@ -2160,11 +2162,16 @@ function renderHomeCategories(){
     const el=document.createElement('div');
     el.className='cat-card';
     // White background — colored stripe on top + colored icon for category identity
-    // Photo (with onerror emoji fallback) or big-emoji fallback tile
+    // Photo (with onerror emoji fallback) or big-emoji fallback tile.
+    // Real photos (jpg/jpeg/png/webp) fill the tile edge-to-edge; SVG
+    // illustrations (Twemoji icons) sit centered with padding + a soft
+    // gradient in the category color for a clean tile look.
     const nm = escapeHtml((typeof cat.name==="object"?pickLang(cat.name):cat.name));
+    const isPhoto = cat.image && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(cat.image);
+    const tileBg = cat.color ? `--cat-c:${cat.color}22` : '';
     const photoHtml = cat.image
-      ? `<div class="cat-photo"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`
-      : `<div class="cat-photo"><div class="cat-photo-fallback">${cat.icon}</div></div>`;
+      ? `<div class="cat-photo" style="${tileBg}"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async"${isPhoto?' data-fill="1"':''} onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`
+      : `<div class="cat-photo" style="${tileBg}"><div class="cat-photo-fallback">${cat.icon}</div></div>`;
     el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div>${photoHtml}<div class="cat-name">${nm}</div>`;
     el.onclick=()=>{currentShopTab='cat';currentShopFilter=cat.id;switchTab('shop');};
     grid.appendChild(el);
