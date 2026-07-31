@@ -2167,7 +2167,10 @@ function renderHomeCategories(){
     // illustrations (Twemoji icons) sit centered with padding + a soft
     // gradient in the category color for a clean tile look.
     const nm = escapeHtml((typeof cat.name==="object"?pickLang(cat.name):cat.name));
-    const isPhoto = cat.image && /\.(jpe?g|png|webp|avif)(\?|$)/i.test(cat.image);
+    const isPhoto = cat.image && (
+      /\.(jpe?g|png|webp|avif)(\?|$)/i.test(cat.image) ||
+      /loremflickr\.com|source\.unsplash\.com|images\.unsplash\.com|images\.pexels\.com|upload\.wikimedia\.org/i.test(cat.image)
+    );
     const tileBg = cat.color ? `--cat-c:${cat.color}22` : '';
     const photoHtml = cat.image
       ? `<div class="cat-photo" style="${tileBg}"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async"${isPhoto?' data-fill="1"':''} onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`
