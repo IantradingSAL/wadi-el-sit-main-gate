@@ -399,20 +399,23 @@ function showStats(id){
     <div class="stat-grid">
       <div class="stat-tile">
         <div class="stat-tile-n" style="color:var(--blue2)">${a.view_count||0}</div>
-        <div class="stat-tile-l">👁️ مشاهدة</div>
+        <div class="stat-tile-l">👁️ زيارة إجمالية</div>
+      </div>
+      <div class="stat-tile" style="background:linear-gradient(135deg,#eef5fc,#fff);border-color:#bcd7f0">
+        <div class="stat-tile-n" style="color:var(--blue2)" id="STAT_UNIQUE_N">…</div>
+        <div class="stat-tile-l">👤 قارئ مسجَّل</div>
       </div>
       <div class="stat-tile" style="background:linear-gradient(135deg,#dcfce7,#fff);border-color:#a7f3d0">
         <div class="stat-tile-n" style="color:var(--green)">${a.push_sent?'✅':'—'}</div>
         <div class="stat-tile-l">🔔 إشعار أُرسِل</div>
       </div>
-      <div class="stat-tile" style="background:linear-gradient(135deg,${a.is_pinned?'#fef3c7':'#f5f7fa'},#fff);border-color:${a.is_pinned?'#fbbf24':'var(--border)'}">
-        <div class="stat-tile-n" style="color:${a.is_pinned?'var(--warn)':'var(--text3)'}">${a.is_pinned?'📌':'—'}</div>
-        <div class="stat-tile-l">مثبَّت</div>
-      </div>
       <div class="stat-tile" style="background:linear-gradient(135deg,${a.is_published?'#dcfce7':'#fee2e2'},#fff);border-color:${a.is_published?'#a7f3d0':'#fecaca'}">
         <div class="stat-tile-n" style="color:${a.is_published?'var(--green)':'var(--danger)'};font-size:14px">${a.is_published?'منشور':'مسوّدة'}</div>
         <div class="stat-tile-l">الحالة</div>
       </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin:-4px 2px 12px;line-height:1.7">
+      💡 <strong>الزيارة الإجمالية</strong> تُحصي كلّ فتح للخبر (زوّار غير مسجّلين + زيارات متكرّرة). <strong>القارئ المسجَّل</strong> يُحصي المستخدمين المسجّلين الدخول مرّة واحدة فقط لكلّ خبر.
     </div>
 
     <div style="background:var(--bg);border-radius:11px;padding:13px 15px;margin-bottom:12px;font-size:12.5px;line-height:1.9">
@@ -426,8 +429,11 @@ function showStats(id){
     </div>
 
     <div style="margin-bottom:12px">
-      <button class="btn btn-out btn-sm" onclick="loadViewers(${a.id})" id="LOAD_VIEWERS_BTN">👥 عرض مَن شاهد الخبر</button>
-      <div id="VIEWERS_LIST" style="margin-top:10px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:800;color:var(--blue2)">👥 القرّاء المسجَّلون</div>
+        <button class="btn btn-out btn-sm" onclick="loadViewers(${a.id})" id="LOAD_VIEWERS_BTN" style="padding:5px 10px;font-size:11.5px">🔄</button>
+      </div>
+      <div id="VIEWERS_LIST"><div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">⏳ جاري التحميل…</div></div>
     </div>
 
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -437,30 +443,35 @@ function showStats(id){
     </div>
   `;
   document.getElementById('STATS_MODAL').classList.add('on');
+  loadViewers(a.id);
 }
 
 async function loadViewers(id){
   const btn = document.getElementById('LOAD_VIEWERS_BTN');
   const box = document.getElementById('VIEWERS_LIST');
+  const tile = document.getElementById('STAT_UNIQUE_N');
   if (!box) return;
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التحميل…'; }
-  box.innerHTML = '';
+  if (btn) { btn.disabled = true; }
+  box.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">⏳ جاري التحميل…</div>';
   try {
     const {data, error} = await sb.rpc('get_news_viewers', {article_id: parseInt(id)});
     if (error) throw error;
-    if (!data || !data.length) {
-      box.innerHTML = '<div class="alert info" style="font-size:11.5px">لا يوجد مستخدمون مسجّلون شاهدوا هذا الخبر بعد. (عدد المشاهدات الإجمالي يشمل الزوّار غير المسجّلين أيضاً.)</div>';
+    const rows = data || [];
+    if (tile) tile.textContent = rows.length;
+    if (!rows.length) {
+      box.innerHTML = '<div class="alert info" style="font-size:11.5px">لم يفتح الخبر أي مستخدم مسجَّل بعد. (الزيارات الإجمالية أعلاه تشمل الزوّار غير المسجّلين.)</div>';
     } else {
-      const rows = data.map(v => {
+      const rowsHtml = rows.map(v => {
         const d = v.viewed_at ? formatFull(v.viewed_at) : '—';
         return `<div style="display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12.5px"><span style="direction:ltr;color:var(--text)">${esc(v.email||'—')}</span><span style="color:var(--text3);white-space:nowrap">${d}</span></div>`;
       }).join('');
-      box.innerHTML = `<div style="background:var(--bg);border-radius:10px;padding:6px 8px 2px;max-height:260px;overflow:auto"><div style="padding:6px 10px;font-weight:800;font-size:12px;color:var(--text2)">👥 ${data.length} مستخدم شاهد الخبر</div>${rows}</div>`;
+      box.innerHTML = `<div style="background:var(--bg);border-radius:10px;padding:2px 8px;max-height:260px;overflow:auto">${rowsHtml}</div>`;
     }
   } catch(ex) {
+    if (tile) tile.textContent = '?';
     box.innerHTML = `<div class="alert err" style="font-size:11.5px">⚠️ ${esc(ex.message||String(ex))}</div>`;
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '🔄 تحديث القائمة'; }
+    if (btn) { btn.disabled = false; }
   }
 }
 
