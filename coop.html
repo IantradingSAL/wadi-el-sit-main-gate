@@ -3585,13 +3585,14 @@ async function loadAdminPanel(){
   const c=document.getElementById('admin-content');
   c.innerHTML='<div class="spinner"></div>';
   try{
-    const [s,o,p,da]=await Promise.all([
+    const [s,o,p,da,tx]=await Promise.all([
       sb.from('coop_sellers').select('*').order('created_at',{ascending:false}),
-      sb.from('coop_orders').select('*').order('created_at',{ascending:false}).limit(50),
+      sb.from('coop_orders').select('*').order('created_at',{ascending:false}).limit(500),
       sb.from('coop_products').select('*').order('created_at',{ascending:false}),
-      sb.from('coop_delivery_agents').select('*').order('created_at',{ascending:false})
+      sb.from('coop_delivery_agents').select('*').order('created_at',{ascending:false}),
+      sb.from('coop_transactions').select('*').order('created_at',{ascending:false}).limit(500)
     ]);
-    const sellers=s.data||[],orders=o.data||[],products=p.data||[],agents=da.data||[];
+    const sellers=s.data||[],orders=o.data||[],products=p.data||[],agents=da.data||[],transactions=tx.data||[];
     const pendingSellers=sellers.filter(x=>x.status==='pending').length;
     const pendingOrders=orders.filter(x=>x.status==='pending').length;
     const pendingAgents=agents.filter(x=>x.status==='pending').length;
@@ -3625,6 +3626,18 @@ async function loadAdminPanel(){
         <div class="section-title mt-3 mb-1">🚚 عمّال توصيل منتظرون ${pendingAgents>0?`<span style="background:var(--red);color:#fff;font-size:11px;padding:2px 8px;border-radius:999px;margin-right:6px">${pendingAgents}</span>`:''}</div>
         <div id="admin-pending-agents"></div>
         
+        <div class="section-title mt-3 mb-1">📊 لوحة الإدارة الشاملة</div>
+        <div id="admin-analytics"></div>
+
+        <div class="section-title mt-3 mb-1">💰 الأرباح والتحويلات لكل بائع</div>
+        <div id="admin-seller-earnings"></div>
+
+        <div class="section-title mt-3 mb-1">🏆 أفضل المنتجات مبيعاً</div>
+        <div id="admin-top-products"></div>
+
+        <div class="section-title mt-3 mb-1">👤 أفضل الزبائن</div>
+        <div id="admin-top-customers"></div>
+
         <div class="section-title mt-3 mb-1">👥 الباعة النشطون</div>
         <div id="admin-active-sellers"></div>
 
@@ -3655,6 +3668,155 @@ async function loadAdminPanel(){
     `;
     
     populateCurrencyAdmin();
+
+    // ─── ANALYTICS: aggregate delivered orders into per-seller + per-product + per-customer numbers ───
+    const paidOrders = orders.filter(o => o.status === 'delivered');
+    const sellerName = {}; sellers.forEach(s => { sellerName[s.id] = s.display_name || s.phone || '—'; });
+    const productById = {}; products.forEach(p => { productById[p.id] = p; });
+    const gross = {}, count = {};      // per-seller
+    const prodStat = {};                // per-product-id : {name, seller, qty, revenue}
+    const custStat = {};                // per-customer key (phone|name) : {name, phone, orders, spent}
+    paidOrders.forEach(o => {
+      // per-seller: prefer explicit seller_id; else attribute to the first item's product's seller
+      let sid = o.seller_id;
+      if(!sid && Array.isArray(o.items) && o.items[0] && o.items[0].product_id) {
+        const p = productById[o.items[0].product_id]; if(p) sid = p.seller_id;
+      }
+      if(sid){ gross[sid] = (gross[sid]||0) + Number(o.total||0); count[sid] = (count[sid]||0) + 1; }
+      // per-product from items[]
+      (o.items||[]).forEach(it => {
+        const pid = it.product_id || it.id;
+        if(!pid) return;
+        if(!prodStat[pid]) prodStat[pid] = { name: it.name || (productById[pid] && productById[pid].name) || '—', seller: sellerName[(productById[pid]||{}).seller_id] || '—', qty: 0, revenue: 0 };
+        const q = Number(it.quantity || it.qty || 1);
+        const price = Number(it.price || 0);
+        prodStat[pid].qty += q;
+        prodStat[pid].revenue += q * price;
+      });
+      // per-customer
+      const key = ((o.customer_phone||o.buyer_phone||'').trim()) || ('name:' + (o.customer_name||o.buyer_name||''));
+      if(key){
+        if(!custStat[key]) custStat[key] = { name: o.customer_name||o.buyer_name||'—', phone: o.customer_phone||o.buyer_phone||'', orders: 0, spent: 0 };
+        custStat[key].orders += 1;
+        custStat[key].spent += Number(o.total||0);
+      }
+    });
+    // per-seller payouts already recorded in coop_transactions (type='withdrawal')
+    const paidOut = {};
+    transactions.forEach(t => {
+      if(t.type === 'withdrawal' && t.seller_id) paidOut[t.seller_id] = (paidOut[t.seller_id]||0) + Number(t.amount||0);
+    });
+
+    // Top-level KPIs
+    const totalGross = Object.values(gross).reduce((a,b)=>a+b,0);
+    const totalPaidOut = Object.values(paidOut).reduce((a,b)=>a+b,0);
+    const balanceOwed = totalGross - totalPaidOut;
+    document.getElementById('admin-analytics').innerHTML = `
+      <div class="row-2 mb-2">
+        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center;background:linear-gradient(135deg,#dcfce7,#fff);border-color:#a7f3d0">
+          <div style="font-size:20px;font-weight:900;color:#1f7a45">${formatPrice(totalGross)}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:700">إجمالي المبيعات (طلبات مسلَّمة)</div>
+        </div>
+        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center;background:linear-gradient(135deg,#fef3c7,#fff);border-color:#fbbf24">
+          <div style="font-size:20px;font-weight:900;color:#b45309">${formatPrice(balanceOwed)}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:700">مستحق للتحويل للباعة</div>
+        </div>
+      </div>
+      <div class="row-2 mb-2">
+        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:#4338ca">${formatPrice(totalPaidOut)}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:700">إجمالي المدفوعات</div>
+        </div>
+        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:var(--primary)">${paidOrders.length}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:700">طلبات مسلَّمة</div>
+        </div>
+      </div>
+    `;
+
+    // Per-seller earnings + payout button
+    const se = document.getElementById('admin-seller-earnings');
+    const activeSellersForEarnings = sellers.filter(s => s.status !== 'pending');
+    if(activeSellersForEarnings.length === 0){
+      se.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد بائع بعد</div>`;
+    } else {
+      se.innerHTML = '';
+      activeSellersForEarnings
+        .map(s => ({s, g:gross[s.id]||0, po:paidOut[s.id]||0, n:count[s.id]||0}))
+        .sort((a,b) => (b.g-b.po) - (a.g-a.po) || b.g - a.g)
+        .forEach(({s,g,po,n}) => {
+          const bal = g - po;
+          const el = document.createElement('div');
+          el.className = 'order-card';
+          el.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">
+              <div style="font-size:14px;font-weight:800">${escapeHtml(s.display_name||s.phone||'—')}</div>
+              <div style="font-size:11px;color:var(--text3)">${n} طلب مسلَّم</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;margin-bottom:8px">
+              <div style="text-align:center;background:#f4f8fd;border-radius:8px;padding:8px 4px">
+                <div style="font-weight:800;color:#1f7a45">${formatPrice(g)}</div>
+                <div style="color:var(--text3);font-size:10px">مبيعات</div>
+              </div>
+              <div style="text-align:center;background:#f4f8fd;border-radius:8px;padding:8px 4px">
+                <div style="font-weight:800;color:#4338ca">${formatPrice(po)}</div>
+                <div style="color:var(--text3);font-size:10px">مدفوع</div>
+              </div>
+              <div style="text-align:center;background:${bal>0?'#fef3c7':'#dcfce7'};border-radius:8px;padding:8px 4px">
+                <div style="font-weight:800;color:${bal>0?'#b45309':'#1f7a45'}">${formatPrice(bal)}</div>
+                <div style="color:var(--text3);font-size:10px">${bal>0?'مستحق':'مسدَّد'}</div>
+              </div>
+            </div>
+            ${bal>0?`<button class="btn btn-primary btn-sm" data-sid="${escapeAttr(s.id)}" data-sname="${escapeAttr(s.display_name||'')}" data-max="${bal}" data-act="record-payout" style="width:100%">💸 تسجيل تحويل / دفعة</button>`:''}
+          `;
+          const btn = el.querySelector('button[data-act="record-payout"]');
+          if(btn){
+            btn.onclick = async () => {
+              const suggest = btn.dataset.max;
+              const raw = window.prompt(`المبلغ المُحوَّل إلى ${btn.dataset.sname} (المستحق ${suggest}):`, suggest);
+              if(raw === null) return;
+              const amt = Number(raw);
+              if(!(amt>0)){ toast('⚠️ مبلغ غير صحيح','err'); return; }
+              const note = window.prompt('ملاحظة (اختياري) — مثال: تحويل بنكي / حوالة / نقداً:','')||'';
+              const { error } = await sb.from('coop_transactions').insert({
+                seller_id: btn.dataset.sid,
+                type: 'withdrawal',
+                amount: amt,
+                note: note || null,
+                description: 'admin payout',
+                created_by: (currentAdmin && currentAdmin.email) || 'admin'
+              });
+              if(error){ toast('⚠️ '+error.message,'err'); return; }
+              toast('✓ تم تسجيل التحويل','ok');
+              loadAdminPanel();
+            };
+          }
+          se.appendChild(el);
+        });
+    }
+
+    // Top products
+    const tp = document.getElementById('admin-top-products');
+    const topProducts = Object.entries(prodStat).map(([id,v])=>({id,...v})).sort((a,b)=>b.revenue-a.revenue||b.qty-a.qty).slice(0,10);
+    if(topProducts.length===0){
+      tp.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا توجد مبيعات مسلَّمة بعد</div>`;
+    } else {
+      tp.innerHTML = `<div class="order-card" style="padding:0"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><thead><tr style="background:#f4f8fd"><th style="text-align:right;padding:9px 10px;font-weight:800">#</th><th style="text-align:right;padding:9px 10px;font-weight:800">المنتج</th><th style="text-align:right;padding:9px 10px;font-weight:800">البائع</th><th style="text-align:right;padding:9px 10px;font-weight:800">الكميّة</th><th style="text-align:right;padding:9px 10px;font-weight:800">الإيراد</th></tr></thead><tbody>${
+        topProducts.map((p,i)=>`<tr style="border-top:1px solid #eef2f7"><td style="padding:8px 10px;color:var(--text3)">${i+1}</td><td style="padding:8px 10px;font-weight:700">${escapeHtml(p.name)}</td><td style="padding:8px 10px;color:var(--text3);font-size:11.5px">${escapeHtml(p.seller)}</td><td style="padding:8px 10px;font-weight:700">${p.qty}</td><td style="padding:8px 10px;font-weight:800;color:#1f7a45">${formatPrice(p.revenue)}</td></tr>`).join('')
+      }</tbody></table></div>`;
+    }
+
+    // Top customers
+    const tc = document.getElementById('admin-top-customers');
+    const topCustomers = Object.values(custStat).sort((a,b)=>b.spent-a.spent||b.orders-a.orders).slice(0,10);
+    if(topCustomers.length===0){
+      tc.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد زبائن بعد</div>`;
+    } else {
+      tc.innerHTML = `<div class="order-card" style="padding:0"><table style="width:100%;font-size:12.5px;border-collapse:collapse"><thead><tr style="background:#f4f8fd"><th style="text-align:right;padding:9px 10px;font-weight:800">#</th><th style="text-align:right;padding:9px 10px;font-weight:800">الزبون</th><th style="text-align:right;padding:9px 10px;font-weight:800">الهاتف</th><th style="text-align:right;padding:9px 10px;font-weight:800">طلبات</th><th style="text-align:right;padding:9px 10px;font-weight:800">إنفاق</th></tr></thead><tbody>${
+        topCustomers.map((c,i)=>`<tr style="border-top:1px solid #eef2f7"><td style="padding:8px 10px;color:var(--text3)">${i+1}</td><td style="padding:8px 10px;font-weight:700">${escapeHtml(c.name)}</td><td style="padding:8px 10px;color:var(--text3);font-size:11.5px;direction:ltr">${escapeHtml(c.phone||'—')}</td><td style="padding:8px 10px;font-weight:700">${c.orders}</td><td style="padding:8px 10px;font-weight:800;color:#1f7a45">${formatPrice(c.spent)}</td></tr>`).join('')
+      }</tbody></table></div>`;
+    }
+
     // Pending sellers
     const ps=document.getElementById('admin-pending-sellers');
     const pendingS=sellers.filter(x=>x.status==='pending');
