@@ -103,10 +103,14 @@
       (function (emInput, feedback) {
         link.addEventListener('click', function (e) { e.preventDefault(); handleClick(emInput, feedback); });
       })(em, fb);
-      var host = pw.closest('.fg') || pw.parentElement;
-      if (host && host.parentNode) {
-        host.parentNode.insertBefore(link, host.nextSibling);
-        host.parentNode.insertBefore(fb, link.nextSibling);
+      // Always insert the link inside the password input's own parent so it
+      // stays in the same container as the input. Anchoring higher (e.g. the
+      // outer .fg) risked landing outside the login card on pages where the
+      // input sits directly inside a flex-centered card, leaving the link
+      // floating in mid-air next to the card.
+      if (pw.parentNode) {
+        pw.parentNode.insertBefore(link, pw.nextSibling);
+        pw.parentNode.insertBefore(fb, link.nextSibling);
       }
     }
   }
