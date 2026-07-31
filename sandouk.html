@@ -6,6 +6,7 @@
 <title>صندوق البلدية — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -420,14 +421,37 @@ async function bfLoad(){
   ]);
   if(fin.error){toast('⚠️ خطأ في تحميل الصندوق: '+fin.error.message,'err');return;}
   bfEntries=fin.data||[];
-  bfPhonebookEntries=(pb.data||[])
-    .map(r=>({
+
+  // Merge the municipal citizen registry (loaded from contacts-registry.js
+  // as window.__CONTACTS — same source the phonebook page uses) with the
+  // dynamic phonebook_entries rows. Registry entries are wadi-el-sit
+  // citizens by default. DB entries win over registry on duplicate
+  // normalised names because the DB reflects user edits (and captures the
+  // explicit is_wadi_citizen flag).
+  const registry=(typeof window!=='undefined' && Array.isArray(window.__CONTACTS)) ? window.__CONTACTS : [];
+  const bag=new Map();
+  const keyOf=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
+  registry.forEach(r=>{
+    const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
+    if(!name) return;
+    bag.set(keyOf(name),{
+      id:'reg:'+(r.id||name),
+      name:name,
+      phone:r.phone||'',
+      is_wadi:true // registry entries are the wadi el sit citizen directory
+    });
+  });
+  (pb.data||[]).forEach(r=>{
+    const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
+    if(!name) return;
+    bag.set(keyOf(name),{
       id:r.id,
-      name:(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim(),
+      name:name,
       phone:r.phone||'',
       is_wadi:!!r.is_wadi_citizen
-    }))
-    .filter(r=>r.name);
+    });
+  });
+  bfPhonebookEntries=Array.from(bag.values());
   bfRefresh();
 }
 function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();}
