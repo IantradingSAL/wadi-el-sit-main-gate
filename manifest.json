@@ -18,7 +18,6 @@
   "edge_side_panel": { "preferred_width": 480 },
   "iarc_rating_id": "e58c174a-81d2-5c3c-32cc-34308ef2b16e",
   "scope_extensions": [
-    { "origin": "*.github.io" },
     { "origin": "https://iantradingsal.github.io" }
   ],
   "note_taking": {
@@ -51,19 +50,18 @@
       "short_name": "الأخبار",
       "description": "آخر الأخبار والإعلانات من بلدية وادي الست",
       "tag": "wadi-news",
-      "template": "wadi-news-template",
-      "ms_ac_template": "widget/news.template.json",
-      "data": "widget/news.data.json",
+      "ms_ac_template": "https://iantradingsal.github.io/wadi-el-sit-main-gate/widget/news.template.json",
+      "data": "https://iantradingsal.github.io/wadi-el-sit-main-gate/widget/news.data.json",
       "type": "application/json",
       "screenshots": [
-        { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "label": "أخبار البلدية" }
+        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "label": "أخبار البلدية" }
       ],
       "icons": [
-        { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
       ],
       "backgrounds": [
-        { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
       ],
       "auth": false,
       "update": 3600,
