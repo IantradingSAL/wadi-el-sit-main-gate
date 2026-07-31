@@ -1,0 +1,50 @@
+{
+  "type": "AdaptiveCard",
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.5",
+  "body": [
+    {
+      "type": "TextBlock",
+      "text": "📰 أخبار بلدية وادي الست",
+      "wrap": true,
+      "weight": "Bolder",
+      "size": "Medium",
+      "color": "Accent"
+    },
+    {
+      "type": "Container",
+      "$data": "${items}",
+      "items": [
+        {
+          "type": "TextBlock",
+          "text": "${title}",
+          "wrap": true,
+          "weight": "Bolder",
+          "spacing": "Small"
+        },
+        {
+          "type": "TextBlock",
+          "text": "${summary}",
+          "wrap": true,
+          "isSubtle": true,
+          "size": "Small",
+          "spacing": "None"
+        },
+        {
+          "type": "TextBlock",
+          "text": "${date}",
+          "isSubtle": true,
+          "size": "Small",
+          "spacing": "None"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "كل الأخبار · All news",
+      "url": "https://iantradingsal.github.io/wadi-el-sit-main-gate/news.html"
+    }
+  ]
+}

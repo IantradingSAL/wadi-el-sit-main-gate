@@ -15,16 +15,34 @@
   "handle_links": "preferred",
   "launch_handler": { "client_mode": ["navigate-existing", "auto"] },
   "categories": ["utilities", "social", "government", "news", "shopping"],
-  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "edge_side_panel": { "preferred_width": 480 },
+  "scope_extensions": [
+    { "origin": "https://iantradingsal.github.io" }
+  ],
+  "note_taking": {
+    "new_note_url": "./citizen.html?new=1"
+  },
   "protocol_handlers": [
-    { "protocol": "web+wadi", "url": "./?deep=%s" }
+    { "protocol": "web+wadi", "url": "./?deep=%s" },
+    { "protocol": "mailto", "url": "./citizen.html?email=%s" }
   ],
   "share_target": {
     "action": "./citizen.html",
     "method": "GET",
     "params": { "title": "title", "text": "text", "url": "url" }
   },
+  "file_handlers": [
+    {
+      "action": "./news-detail.html",
+      "accept": {
+        "application/pdf": [".pdf"],
+        "image/*": [".png", ".jpg", ".jpeg", ".webp"]
+      },
+      "icons": [
+        { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }
+      ]
+    }
+  ],
   "widgets": [
     {
       "name": "أخبار البلدية",
@@ -44,7 +62,6 @@
       "update": 3600
     }
   ],
-  "file_handlers": [],
   "icons": [
     { "src": "icons/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
@@ -94,5 +111,10 @@
     }
   ],
   "prefer_related_applications": false,
-  "related_applications": []
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://iantradingsal.github.io/wadi-el-sit-main-gate/manifest.json"
+    }
+  ]
 }
