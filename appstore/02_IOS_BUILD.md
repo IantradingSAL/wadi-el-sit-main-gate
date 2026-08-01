@@ -18,6 +18,7 @@ Apple's **App Review Guideline 4.2** rejects apps that are "just a repackaged we
 - ✅ Government/official app status (Apple has a soft-approval bias for municipal apps)
 - ✅ Coop store with orders (transactional)
 - ✅ File attachment on citizen cases
+- ✅ Custom government domain — served from `app.municipality-wadi-el-sitt.org`, subdomain of the mayor's official `.org` (matches the email `management@municipality-wadi-el-sitt.org`)
 
 **What to add if Apple rejects on 4.2:**
 - Attach the mayor authorization letter (proof this is the official app of a real government body)
@@ -39,13 +40,13 @@ PWABuilder generates a Swift/Xcode project **and** offers a Cloud Build service 
 
 ### Steps
 1. Go to <https://www.pwabuilder.com>.
-2. Paste `https://iantradingsal.github.io/wadi-el-sit-main-gate/` → **Start**.
+2. Paste `https://app.municipality-wadi-el-sitt.org/` → **Start**.
 3. Click **Package for Stores** → **iOS**.
 4. Fill in:
    - **App name:** `بلدية وادي الست`
    - **Bundle ID:** `lb.wadielset.gate`
-   - **URL:** `https://iantradingsal.github.io/wadi-el-sit-main-gate/`
-   - **Image URL for splash icon:** `https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png`
+   - **URL:** `https://app.municipality-wadi-el-sitt.org/`
+   - **Image URL for splash icon:** `https://app.municipality-wadi-el-sitt.org/icons/icon-512.png`
    - **Status bar color:** `#1a6eb5`
    - **Splash color:** `#f5f7fa`
 5. Download the ZIP → contains a full Xcode project.
@@ -88,7 +89,7 @@ npx cap init "Wadi El Sit" lb.wadielset.gate --web-dir=./
   "appId": "lb.wadielset.gate",
   "appName": "بلدية وادي الست",
   "server": {
-    "url": "https://iantradingsal.github.io/wadi-el-sit-main-gate/",
+    "url": "https://app.municipality-wadi-el-sitt.org/",
     "cleartext": false
   }
 }
