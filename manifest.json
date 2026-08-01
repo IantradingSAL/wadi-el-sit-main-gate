@@ -1,5 +1,5 @@
 {
-  "id": "/wadi-el-sit-main-gate/",
+  "id": "/",
   "name": "بلدية وادي الست",
   "short_name": "وادي الست",
   "description": "البوابة الإلكترونية لبلدية وادي الست — دليل صفحات صفراء، خدمات المواطن، بوابة الري، صندوق البلدية، والتعاونية. Wadi El Sit municipality portal — yellow pages, citizen services, irrigation, treasury, cooperative.",
@@ -50,18 +50,18 @@
       "short_name": "الأخبار",
       "description": "آخر الأخبار والإعلانات من بلدية وادي الست",
       "tag": "wadi-news",
-      "ms_ac_template": "https://iantradingsal.github.io/wadi-el-sit-main-gate/widget/news.template.json",
-      "data": "https://iantradingsal.github.io/wadi-el-sit-main-gate/widget/news.data.json",
+      "ms_ac_template": "https://app.municipality-wadi-el-sitt.org/widget/news.template.json",
+      "data": "https://app.municipality-wadi-el-sitt.org/widget/news.data.json",
       "type": "application/json",
       "screenshots": [
-        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "label": "أخبار البلدية" }
+        { "src": "https://app.municipality-wadi-el-sitt.org/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "label": "أخبار البلدية" }
       ],
       "icons": [
-        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+        { "src": "https://app.municipality-wadi-el-sitt.org/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "https://app.municipality-wadi-el-sitt.org/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
       ],
       "backgrounds": [
-        { "src": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+        { "src": "https://app.municipality-wadi-el-sitt.org/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
       ],
       "auth": false,
       "update": 3600,
@@ -120,7 +120,7 @@
   "related_applications": [
     {
       "platform": "webapp",
-      "url": "https://iantradingsal.github.io/wadi-el-sit-main-gate/manifest.json"
+      "url": "https://app.municipality-wadi-el-sitt.org/manifest.json"
     }
   ]
 }

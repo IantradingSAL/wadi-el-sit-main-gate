@@ -1,0 +1,11 @@
+[
+  {
+    "_comment_": "LIVE at https://app.municipality-wadi-el-sitt.org/.well-known/assetlinks.json (origin root — matches the TWA host in twa-manifest.json). Replace the sha256_cert_fingerprints value with the SHA-256 printed by Bubblewrap after your first .aab build, then re-deploy so Google's TWA verification passes.",
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "lb.wadielset.gate",
+      "sha256_cert_fingerprints": ["REPLACE:WITH:SHA256:FROM:BUBBLEWRAP:BUILD:OUTPUT"]
+    }
+  }
+]

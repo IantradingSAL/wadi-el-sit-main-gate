@@ -1,0 +1,42 @@
+{
+  "_comment_": "Bubblewrap TWA config for Wadi El Sit Municipality. Host is now the custom domain root — assetlinks.json served at https://app.municipality-wadi-el-sitt.org/.well-known/assetlinks.json (origin root, no subpath hack needed). See playstore/06_DOMAIN_SWITCH.md.",
+  "packageId": "lb.wadielset.gate",
+  "host": "app.municipality-wadi-el-sitt.org",
+  "name": "بلدية وادي الست",
+  "launcherName": "وادي الست",
+  "display": "standalone",
+  "themeColor": "#1a6eb5",
+  "navigationColor": "#1a6eb5",
+  "navigationColorDark": "#0b4a80",
+  "navigationDividerColor": "#1a6eb5",
+  "navigationDividerColorDark": "#0b4a80",
+  "backgroundColor": "#f5f7fa",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://app.municipality-wadi-el-sitt.org/icons/icon-512.png",
+  "maskableIconUrl": "https://app.municipality-wadi-el-sitt.org/icons/icon-maskable-512.png",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    { "name": "دليل البلدة",   "shortName": "الدليل",     "url": "/phonebook.html", "chosenIconUrl": "https://app.municipality-wadi-el-sitt.org/icons/icon-192.png" },
+    { "name": "بوابة المواطن", "shortName": "خدمات",     "url": "/citizen.html",   "chosenIconUrl": "https://app.municipality-wadi-el-sitt.org/icons/icon-192.png" },
+    { "name": "بوابة الري",    "shortName": "الري",       "url": "/water.html",     "chosenIconUrl": "https://app.municipality-wadi-el-sitt.org/icons/icon-192.png" },
+    { "name": "التعاونية",     "shortName": "التعاونية", "url": "/coop.html",      "chosenIconUrl": "https://app.municipality-wadi-el-sitt.org/icons/icon-192.png" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://app.municipality-wadi-el-sitt.org/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  }
+}
