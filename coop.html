@@ -3453,7 +3453,9 @@ async function deleteSellerProduct(productId){
     if(res.error){toast('فشل الحذف: '+res.error.message,'err');return;}
     toast('✅ تمّ حذف المنتج','ok');
     loadSellerStats();
-    loadProducts(); // refresh shop
+    await loadAllData();
+    if(currentTab==='shop') renderShopPage();
+    else if(currentTab==='home') renderHomePage();
   }catch(e){console.error(e);toast('حدث خطأ','err');}
 }
 
@@ -3616,7 +3618,9 @@ async function saveProduct(){
     
     toast(editingProductId ? ((window.__wadi_t&&window.__wadi_t('productUpdated'))||'✅ تمّ تحديث المنتج') : ((window.__wadi_t&&window.__wadi_t('productAdded'))||'✅ تمّ إضافة المنتج'),'ok');
     closeProductModal();
-    await loadProducts(); // refresh shop products
+    await loadAllData(); // refresh shop products cache
+    if(currentTab==='shop') renderShopPage();
+    else if(currentTab==='home') renderHomePage();
     loadSellerStats(); // refresh seller dashboard
   }catch(e){
     console.error('saveSellerProduct exception:', e);
