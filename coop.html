@@ -4592,8 +4592,13 @@ async function saveCurrencyRate(){
 function openCatEditor(cat){
   const dashT = (k) => (L() && L()[k]) || k;
   const isNew = !cat;
-  let ov = document.getElementById('admin-cat-editor-ov');
-  if(!ov){
+  // Always rebuild the modal so any older cached DOM (e.g. from a
+  // previously-loaded version of this page that lacked the photo/video
+  // upload button) is replaced by the current markup on every open.
+  const oldOv = document.getElementById('admin-cat-editor-ov');
+  if(oldOv) oldOv.remove();
+  let ov;
+  {
     ov = document.createElement('div');
     ov.id = 'admin-cat-editor-ov';
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,40,70,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999';
