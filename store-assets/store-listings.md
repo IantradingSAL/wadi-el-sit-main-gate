@@ -146,15 +146,16 @@ Fonctionne hors ligne (après le premier chargement) — parfait pour les connex
 
 ## 📞 App support URL
 
-`https://iantradingsal.github.io/wadi-el-sit-main-gate/`
+`https://app.municipality-wadi-el-sitt.org/`
 
 ## 🔒 Privacy policy URL
 
-`https://iantradingsal.github.io/wadi-el-sit-main-gate/privacy.html`
+`https://app.municipality-wadi-el-sitt.org/privacy.html`
 
 ## 📧 Contact email (developer)
 
-`imadaehn@gmail.com` (or the municipality's official email once you have it)
+`management@municipality-wadi-el-sitt.org` (official municipality email)
+Backup: `imadaehn@gmail.com`
 
 ---
 
@@ -174,8 +175,8 @@ Fonctionne hors ligne (après le premier chargement) — parfait pour les connex
 
 ## 🖼️ Assets checklist (need to prepare)
 
-- [ ] **App icon 512×512 PNG** — use `icons/icon-512.png` ✅ (already in repo)
-- [ ] **Feature graphic 1024×500 PNG** (Google Play mandatory) — I can generate one from your logo
+- [x] **App icon 512×512 PNG** — `icons/icon-512.png` ✅
+- [x] **Feature graphic 1024×500 PNG** — `store-assets/feature-graphic-1024x500.png` ✅
 - [ ] **Phone screenshots** (both stores) — take 5-8 in-app captures on your phone:
   - Home page
   - Phonebook
