@@ -43,7 +43,7 @@ App Store doesn't use a separate keywords field for AR/FR — search there is po
 ## Support URL
 
 ```
-https://iantradingsal.github.io/wadi-el-sit-main-gate/
+https://app.municipality-wadi-el-sitt.org/
 ```
 
 ## Marketing URL (optional)
@@ -53,7 +53,7 @@ Leave blank until you have a dedicated marketing page. The support URL is fine a
 ## Privacy Policy URL
 
 ```
-https://iantradingsal.github.io/wadi-el-sit-main-gate/privacy.html
+https://app.municipality-wadi-el-sitt.org/privacy.html
 ```
 
 ---
@@ -131,10 +131,10 @@ This lets App Store Connect skip the annual export declaration for TLS-only apps
 
 | Field | Value |
 |---|---|
-| **First name** | *(your first name)* |
-| **Last name** | *(your last name)* |
-| **Phone number** | *(a real number Apple can reach — used only if their reviewer has a question)* |
-| **Email** | `imadaehn@gmail.com` |
+| **First name** | `Imad` |
+| **Last name** | `Abi El Hessen` |
+| **Phone number** | `+961 3 649 694` *(municipality line — used only if Apple's reviewer has a question)* |
+| **Email** | `management@municipality-wadi-el-sitt.org` *(primary)*; backup: `imadaehn@gmail.com` |
 | **Sign-in required?** | **Yes** — admin panels are login-gated |
 | **Demo account username** | `google-reviewer@wadielset.local` *(same reviewer accounts as Google — create both)* |
 | **Demo account password** | *(the password you set)* |
@@ -150,12 +150,14 @@ toggles in the top bar.
 To review admin/mayor features, please sign in on citizen.html with the admin
 demo account above. Public browse (news, coop, phonebook) works without login.
 
-Government-app documentation: a signed authorization letter from the mayor
-of Wadi El Sit is available on request — please email us if App Review
-requires it.
+Government-app documentation: a signed authorization letter from the Mayor of
+Wadi El Sit (Jihad Maksoud) is available on request — please email
+management@municipality-wadi-el-sitt.org if App Review requires it.
 
 Web push notifications require the user to install the app to their home
 screen first (iOS 16.4+) — this is standard iOS behavior for web push.
+
+App homepage: https://app.municipality-wadi-el-sitt.org
 ```
 
 ---
