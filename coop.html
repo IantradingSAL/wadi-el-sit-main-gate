@@ -579,6 +579,9 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     catColor:'اللون',
     catImage:'رابط الصورة (URL)',
     catImageHint:'يظهر تلقائياً في الصفحة الرئيسية للمتجر — 600×600px مستحسن',
+    catImageUpload:'📷 اختر صورة من الجهاز',
+    catImageUploading:'⏳ جاري رفع الصورة…',
+    catImageUploadErr:'⚠️ تعذّر رفع الصورة',
     catSort:'ترتيب العرض',
     catSave:'💾 حفظ',
     catDelete:'🗑️ حذف',
@@ -635,6 +638,9 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     catColor:'Color',
     catImage:'Image URL',
     catImageHint:'Shown on the store home page — 600×600px recommended',
+    catImageUpload:'📷 Upload from device',
+    catImageUploading:'⏳ Uploading photo…',
+    catImageUploadErr:'⚠️ Photo upload failed',
     catSort:'Sort order',
     catSave:'💾 Save',
     catDelete:'🗑️ Delete',
@@ -691,6 +697,9 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     catColor:'Couleur',
     catImage:'URL de l\'image',
     catImageHint:'Affichée sur la page d\'accueil de la boutique — 600×600px recommandé',
+    catImageUpload:'📷 Depuis l\'appareil',
+    catImageUploading:'⏳ Téléchargement…',
+    catImageUploadErr:'⚠️ Échec du téléchargement',
     catSort:'Ordre d\'affichage',
     catSave:'💾 Enregistrer',
     catDelete:'🗑️ Supprimer',
@@ -3516,6 +3525,23 @@ async function uploadProductPhoto(file){
   return data.publicUrl;
 }
 
+async function uploadCategoryPhoto(file){
+  // Admin upload for category tiles. Uses the admin's auth uid as the
+  // path prefix so it satisfies any per-user storage RLS the sellers'
+  // uploads rely on.
+  if(!file) throw new Error('no file');
+  const uid = (currentAdmin && currentAdmin.user_id)
+    || (await sb.auth.getSession()).data?.session?.user?.id;
+  if(!uid) throw new Error('not signed in');
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const safeExt = ['jpg','jpeg','png','webp','gif','svg'].includes(ext) ? ext : 'jpg';
+  const fname = `${uid}/categories/${Date.now()}_${Math.random().toString(36).slice(2,9)}.${safeExt}`;
+  const up = await sb.storage.from('coop-photos').upload(fname, file, {cacheControl:'3600', upsert:false});
+  if(up.error){ console.error('Category upload error:', up.error); throw up.error; }
+  const {data} = sb.storage.from('coop-photos').getPublicUrl(fname);
+  return data.publicUrl;
+}
+
 function onCurrencyChange(){
   const isUSD = document.getElementById('prod-cur-usd')?.checked;
   const label = document.getElementById('prod-price-label');
@@ -4485,6 +4511,11 @@ function openCatEditor(cat){
         <label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-img"></label>
         <input id="cat-ed-img" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:12px;direction:ltr" placeholder="https://…">
         <div id="cat-ed-imghint" style="font-size:10.5px;color:#94a3b8;margin-top:3px"></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+          <button type="button" id="cat-ed-img-pick" class="btn btn-ghost" style="font-size:12px;padding:8px 12px;flex:0 0 auto"></button>
+          <div id="cat-ed-img-status" style="font-size:11.5px;color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        </div>
+        <input id="cat-ed-img-file" type="file" accept="image/*" style="display:none">
       </div>
       <div style="margin-bottom:12px"><label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-sort"></label><input id="cat-ed-sort" type="number" min="0" step="1" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:ltr"></div>
       <div id="cat-ed-preview" style="display:flex;gap:10px;align-items:center;padding:10px;background:#f8fafc;border-radius:10px;margin-bottom:12px">
@@ -4512,6 +4543,8 @@ function openCatEditor(cat){
   document.getElementById('cat-ed-l-fr').textContent = dashT('catNameFr');
   document.getElementById('cat-ed-l-img').textContent = dashT('catImage');
   document.getElementById('cat-ed-imghint').textContent = dashT('catImageHint');
+  document.getElementById('cat-ed-img-pick').textContent = dashT('catImageUpload');
+  document.getElementById('cat-ed-img-status').textContent = '';
   document.getElementById('cat-ed-l-sort').textContent = dashT('catSort');
   document.getElementById('cat-ed-save').textContent = dashT('catSave');
   // Fill values
@@ -4543,6 +4576,32 @@ function openCatEditor(cat){
     const el = document.getElementById(id); el.oninput = updatePreview;
   });
   updatePreview();
+  // Photo picker → upload → fills URL field
+  const pickBtn = document.getElementById('cat-ed-img-pick');
+  const fileInput = document.getElementById('cat-ed-img-file');
+  const statusEl = document.getElementById('cat-ed-img-status');
+  pickBtn.onclick = () => fileInput.click();
+  fileInput.onchange = async () => {
+    const file = fileInput.files && fileInput.files[0];
+    if(!file) return;
+    statusEl.style.color = '#64748b';
+    statusEl.textContent = dashT('catImageUploading');
+    pickBtn.disabled = true;
+    try {
+      const url = await uploadCategoryPhoto(file);
+      const imgInput = document.getElementById('cat-ed-img');
+      imgInput.value = url;
+      updatePreview();
+      statusEl.textContent = '✓ ' + file.name;
+    } catch(e) {
+      console.error('category photo upload failed:', e);
+      statusEl.style.color = '#bf2424';
+      statusEl.textContent = dashT('catImageUploadErr') + ': ' + ((e && e.message) || e);
+    } finally {
+      pickBtn.disabled = false;
+      fileInput.value = '';
+    }
+  };
   // Save handler
   const saveBtn = document.getElementById('cat-ed-save');
   saveBtn.onclick = async () => {
