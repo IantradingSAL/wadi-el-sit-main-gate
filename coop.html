@@ -2226,13 +2226,33 @@ function renderHomeCategories(){
     if(!cat.image){
       photoHtml = `<div class="cat-photo" style="${tileBg}"><div class="cat-photo-fallback">${cat.icon}</div></div>`;
     } else if(isVideo){
-      photoHtml = `<div class="cat-photo" style="${tileBg}" data-fill="1"><video src="${escapeAttr(cat.image)}" muted autoplay loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video></div>`;
+      photoHtml = `<div class="cat-photo" style="${tileBg}" data-fill="1"><video src="${escapeAttr(cat.image)}" muted autoplay loop playsinline webkit-playsinline disableRemotePlayback preload="auto" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none"></video></div>`;
     } else {
       photoHtml = `<div class="cat-photo" style="${tileBg}"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async"${isPhoto?' data-fill="1"':''} onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`;
     }
     el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div>${photoHtml}<div class="cat-name">${nm}</div>`;
     el.onclick=()=>{currentShopTab='cat';currentShopFilter=cat.id;switchTab('shop');};
     grid.appendChild(el);
+  });
+  // iOS Safari sometimes ignores the autoplay attribute on the first
+  // paint (poster-with-play-button appears). Re-assert muted + call
+  // play() on every category video once it's in the DOM.
+  primeCategoryVideos(grid);
+}
+
+function primeCategoryVideos(root){
+  const videos = (root || document).querySelectorAll('.cat-photo video');
+  videos.forEach(v => {
+    try {
+      v.muted = true;
+      v.defaultMuted = true;
+      v.setAttribute('muted','');
+      v.playsInline = true;
+      const kick = () => v.play().catch(() => {});
+      kick();
+      v.addEventListener('canplay', kick, { once: true });
+      v.addEventListener('loadeddata', kick, { once: true });
+    } catch(e) { /* silent */ }
   });
 }
 
