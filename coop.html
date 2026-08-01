@@ -106,6 +106,18 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     priceLBP: 'السعر (ل.ل.) *',
     unit: 'الوحدة *',
     unitPh: 'كغ / لتر / قطعة',
+    unit_pcs: 'قطعة',
+    unit_kg: 'كيلوغرام',
+    unit_g: 'غرام',
+    unit_liter: 'لتر',
+    unit_ml: 'مل',
+    unit_box: 'صندوق',
+    unit_pack: 'علبة',
+    unit_bunch: 'حزمة',
+    unit_dozen: 'دزينة',
+    unit_meter: 'متر',
+    unit_bag: 'كيس',
+    unit_bottle: 'قنينة',
     qtyAvailable: 'الكمية المتوفّرة *',
     descLabel: 'الوصف',
     prodDescPh: 'معلومات عن المنتج، طريقة الإنتاج، إلخ...',
@@ -224,6 +236,18 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     priceLBP: 'Price (LBP) *',
     unit: 'Unit *',
     unitPh: 'kg / L / piece',
+    unit_pcs: 'piece',
+    unit_kg: 'kilogram',
+    unit_g: 'gram',
+    unit_liter: 'liter',
+    unit_ml: 'ml',
+    unit_box: 'box',
+    unit_pack: 'pack',
+    unit_bunch: 'bunch',
+    unit_dozen: 'dozen',
+    unit_meter: 'meter',
+    unit_bag: 'bag',
+    unit_bottle: 'bottle',
     qtyAvailable: 'Quantity available *',
     descLabel: 'Description',
     prodDescPh: 'Information about the product, production method, etc...',
@@ -341,6 +365,18 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     priceLBP: 'Prix (LL) *',
     unit: 'Unité *',
     unitPh: 'kg / L / pièce',
+    unit_pcs: 'pièce',
+    unit_kg: 'kilogramme',
+    unit_g: 'gramme',
+    unit_liter: 'litre',
+    unit_ml: 'ml',
+    unit_box: 'boîte',
+    unit_pack: 'paquet',
+    unit_bunch: 'botte',
+    unit_dozen: 'douzaine',
+    unit_meter: 'mètre',
+    unit_bag: 'sac',
+    unit_bottle: 'bouteille',
     qtyAvailable: 'Quantité disponible *',
     descLabel: 'Description',
     prodDescPh: 'Informations sur le produit, méthode de production, etc...',
@@ -1864,7 +1900,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
         </div>
         <div class="field">
           <label class="field-label" data-i18n="unit">الوحدة *</label>
-          <input class="field-input" id="prod-unit" placeholder="كغ / لتر / قطعة" data-i18n-placeholder="unitPh">
+          <select class="field-select" id="prod-unit"></select>
         </div>
       </div>
       <div class="field">
@@ -3398,6 +3434,41 @@ function requestPayout(){
 let pendingPhotos = []; // {file, preview, uploaded_url}
 let editingProductId = null;
 
+// Canonical unit keys — each renders in the seller's current language
+// via the unit_* i18n keys. Stored value is the localized label so
+// downstream views (cart, orders) that display .unit as-is keep
+// working without a data migration.
+const UNIT_KEYS = ['pcs','kg','g','liter','ml','box','pack','bunch','dozen','meter','bag','bottle'];
+
+function unitLabelFor(key){
+  const t = (typeof L === 'function' ? L() : {}) || {};
+  return t['unit_' + key] || key;
+}
+
+function populateUnitSelect(currentValue){
+  const sel = document.getElementById('prod-unit');
+  if(!sel) return;
+  sel.innerHTML = '';
+  const labels = UNIT_KEYS.map(unitLabelFor);
+  UNIT_KEYS.forEach((k, i) => {
+    const opt = document.createElement('option');
+    opt.value = labels[i];
+    opt.textContent = labels[i];
+    sel.appendChild(opt);
+  });
+  // Preserve any legacy or custom value that doesn't match a preset,
+  // so editing an existing product never silently changes its unit.
+  if(currentValue && labels.indexOf(currentValue) === -1){
+    const opt = document.createElement('option');
+    opt.value = currentValue;
+    opt.textContent = currentValue;
+    sel.appendChild(opt);
+    sel.value = currentValue;
+  } else {
+    sel.value = currentValue || unitLabelFor('kg');
+  }
+}
+
 function addSellerProduct(){
   if(!currentSeller){toast('يجب تسجيل الدخول كبائع','err');return;}
   if(currentSeller.status!=='approved' && currentSeller.status!=='active'){
@@ -3415,7 +3486,7 @@ function addSellerProduct(){
   if (lbpRadio) { lbpRadio.checked = true; onCurrencyChange(); }
   const convEl = document.getElementById('prod-price-converted');
   if (convEl) convEl.textContent = '';
-  document.getElementById('prod-unit').value = 'كغ';
+  populateUnitSelect('');
   document.getElementById('prod-stock').value = '1';
   document.getElementById('prod-desc').value = '';
   document.getElementById('prod-photos').value = '';
@@ -3446,7 +3517,7 @@ function editSellerProduct(productId){
   // Set currency radio
   const curRadio = document.getElementById('prod-cur-' + (prod.currency === 'USD' ? 'usd' : 'lbp'));
   if (curRadio) { curRadio.checked = true; onCurrencyChange(); }
-  document.getElementById('prod-unit').value = prod.unit||'';
+  populateUnitSelect(prod.unit || '');
   document.getElementById('prod-stock').value = prod.stock||0;
   document.getElementById('prod-desc').value = prod.description||'';
   document.getElementById('prod-photos').value = '';
@@ -3470,11 +3541,23 @@ async function deleteSellerProduct(productId){
     const res = await sb.from('coop_products').delete().eq('id', productId);
     if(res.error){toast('فشل الحذف: '+res.error.message,'err');return;}
     toast('✅ تمّ حذف المنتج','ok');
-    loadSellerStats();
-    await loadAllData();
-    if(currentTab==='shop') renderShopPage();
-    else if(currentTab==='home') renderHomePage();
+    refreshAfterProductChange();
   }catch(e){console.error(e);toast('حدث خطأ','err');}
+}
+
+// Reload the shop cache + re-render the visible page + refresh the
+// seller dashboard. Every step is guarded so a single missing
+// function or transient error can never bubble up and be reported
+// as a save/delete failure — the write has already succeeded.
+async function refreshAfterProductChange(){
+  try { if(typeof loadAllData === 'function') await loadAllData(); }
+  catch(e){ console.warn('refreshAfterProductChange: loadAllData failed', e); }
+  try {
+    if(currentTab === 'shop' && typeof renderShopPage === 'function') renderShopPage();
+    else if(currentTab === 'home' && typeof renderHomePage === 'function') renderHomePage();
+  } catch(e){ console.warn('refreshAfterProductChange: re-render failed', e); }
+  try { if(typeof loadSellerStats === 'function') loadSellerStats(); }
+  catch(e){ console.warn('refreshAfterProductChange: loadSellerStats failed', e); }
 }
 
 function closeProductModal(){
@@ -3671,10 +3754,10 @@ async function saveProduct(){
     
     toast(editingProductId ? ((window.__wadi_t&&window.__wadi_t('productUpdated'))||'✅ تمّ تحديث المنتج') : ((window.__wadi_t&&window.__wadi_t('productAdded'))||'✅ تمّ إضافة المنتج'),'ok');
     closeProductModal();
-    await loadAllData(); // refresh shop products cache
-    if(currentTab==='shop') renderShopPage();
-    else if(currentTab==='home') renderHomePage();
-    loadSellerStats(); // refresh seller dashboard
+    // Refresh caches / UI outside the save try so ANY refresh error
+    // cannot surface as a spurious "Save error" — the row is already
+    // in the DB by this point.
+    refreshAfterProductChange();
   }catch(e){
     console.error('saveSellerProduct exception:', e);
     var msg = e && e.message ? e.message : String(e);
