@@ -2245,20 +2245,56 @@ function renderHomeCategories(){
   primeCategoryVideos(grid);
 }
 
+// Track every category <video> we've seen so the fallback listeners
+// (first user gesture, IntersectionObserver) can kick them all.
+window.__wadi_catVids = window.__wadi_catVids || new Set();
+
 function primeCategoryVideos(root){
   const videos = (root || document).querySelectorAll('.cat-photo video');
   videos.forEach(v => {
     try {
+      window.__wadi_catVids.add(v);
       v.muted = true;
       v.defaultMuted = true;
       v.setAttribute('muted','');
+      v.setAttribute('playsinline','');
+      v.setAttribute('webkit-playsinline','');
+      v.setAttribute('autoplay','');
       v.playsInline = true;
-      const kick = () => v.play().catch(() => {});
+      v.autoplay = true;
+      // Force the browser to actually load the first frames — iOS
+      // Safari won't autoplay a video whose media has not been
+      // fetched yet, even with preload="auto".
+      try { v.load(); } catch(_){}
+      const kick = () => { try { const p = v.play(); if(p && p.catch) p.catch(()=>{}); } catch(_){} };
       kick();
-      v.addEventListener('canplay', kick, { once: true });
-      v.addEventListener('loadeddata', kick, { once: true });
+      ['loadedmetadata','loadeddata','canplay','canplaythrough'].forEach(ev =>
+        v.addEventListener(ev, kick, { once: true })
+      );
+      // Some iOS builds also stall until the video is on-screen.
+      if('IntersectionObserver' in window){
+        const io = new IntersectionObserver((entries, obs) => {
+          entries.forEach(en => {
+            if(en.isIntersecting){ kick(); obs.unobserve(en.target); }
+          });
+        }, { threshold: 0.1 });
+        io.observe(v);
+      }
     } catch(e) { /* silent */ }
   });
+  // First user gesture (tap anywhere on the page) unlocks every
+  // pending video. Registered once, then self-detaches.
+  if(!window.__wadi_catVidsGesture){
+    window.__wadi_catVidsGesture = true;
+    const kickAll = () => {
+      window.__wadi_catVids.forEach(v => {
+        try { const p = v.play(); if(p && p.catch) p.catch(()=>{}); } catch(_){}
+      });
+    };
+    ['pointerdown','touchstart','click','scroll'].forEach(ev =>
+      document.addEventListener(ev, kickAll, { once: true, passive: true, capture: true })
+    );
+  }
 }
 
 function renderHomePage(){
