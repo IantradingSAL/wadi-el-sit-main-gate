@@ -7,22 +7,24 @@ Do both if you're launching on both stores.
 
 ## Phase 1 — Prerequisites (do NOW, before enrolling)
 
-- [ ] Confirm the app is live at `https://iantradingsal.github.io/wadi-el-sit-main-gate/`
+- [x] Confirm the app is live at `https://app.municipality-wadi-el-sitt.org/` ✅ (custom domain switch completed)
 - [ ] Confirm `manifest.json`, `sw.js`, `pwa.js`, `pwa-ios.js` load without errors (DevTools → Network)
-- [ ] Privacy policy live at `https://iantradingsal.github.io/wadi-el-sit-main-gate/privacy.html`
-- [ ] Store listing copy in `store-assets/store-listings.md` (already done — reused for App Store)
-- [ ] iOS icons in `ios-assets/icons/` (already generated)
-- [ ] iOS splash screens in `ios-assets/splash/` (already generated)
-- [ ] Mayor authorization letter signed + scanned as PDF (only if App Review challenges the government claim)
+- [ ] Privacy policy live at `https://app.municipality-wadi-el-sitt.org/privacy.html`
+- [x] Store listing copy in `store-assets/store-listings.md` (already done — reused for App Store) ✅
+- [x] iOS icons in `ios-assets/icons/` ✅
+- [x] iOS splash screens in `ios-assets/splash/` ✅
+- [ ] Mayor authorization letter signed + scanned as PDF (`.docx` template already filled with mayor's name, phone, email, and app URL — waiting on physical signature)
 - [ ] 2 reviewer test accounts in Supabase Auth (same as Play — see `../playstore/05_CONTENT_RATING_AND_DATA_SAFETY.md` §D)
 
 ## Phase 2 — Enroll in Apple Developer Program (~$99, ~24-48h approval)
 
 - [ ] Go to <https://developer.apple.com/programs/enroll/>
-- [ ] Choose **Individual** enrollment (simpler, faster) OR **Organization** (requires D-U-N-S number, more paperwork, appears as company name in the Store)
+- [ ] Choose **Organization** enrollment (required for a Municipality/Government app)
+  - Requires a **D-U-N-S number** for "Wadi El Sit Municipality" → apply at <https://developer.apple.com/enroll/duns-lookup/> (2–5 business days if the municipality doesn't already have one)
+  - Legal entity name must exactly match the D-U-N-S record
 - [ ] Pay $99 USD (annual, non-refundable)
-- [ ] Complete identity verification (passport / driver's license)
-- [ ] Wait for approval email (usually 24-48h; can take up to 7 days)
+- [ ] Complete identity verification — Apple may call the municipality phone (03/649694) to verify the mayor's authorization
+- [ ] Wait for approval email (usually 1–4 weeks for Organization accounts)
 
 Once approved, sign in at <https://appstoreconnect.apple.com>.
 
@@ -47,7 +49,7 @@ Once approved, sign in at <https://appstoreconnect.apple.com>.
 Pick a path from `02_IOS_BUILD.md`:
 
 ### A — PWABuilder + Codemagic (no Mac needed)
-- [ ] <https://www.pwabuilder.com> → paste live URL → Package → iOS → download Xcode project ZIP
+- [ ] <https://www.pwabuilder.com> → paste `https://app.municipality-wadi-el-sitt.org/` → Package → iOS → download Xcode project ZIP
 - [ ] Push the Xcode project to a new GitHub repo
 - [ ] Sign up at <https://codemagic.io> → import that repo
 - [ ] Add Apple credentials (Team ID + app-specific password)
@@ -97,7 +99,7 @@ Pick a path from `02_IOS_BUILD.md`:
 
 | Rejection | Fix |
 |---|---|
-| **Guideline 4.2** "Minimum functionality — repackaged website" | Reply pointing out: push, share_target, offline, login. Attach mayor letter as gov proof. Usually resolved in 1 round. |
+| **Guideline 4.2** "Minimum functionality — repackaged website" | Reply pointing out: push, share_target, offline, login, custom government domain. Attach mayor letter as gov proof. Usually resolved in 1 round. |
 | **Guideline 5.1.1(v)** "Data collection without justification" | Update App Privacy → mark all data as "App Functionality" purpose (not "Analytics") |
 | **Guideline 2.1** "App crashes at launch" | Test on TestFlight first — reproduce, fix, re-upload |
 | **Guideline 2.3.7** "Metadata references other platforms" | Search description for "Android" or "Google Play" — remove any mention |
@@ -121,6 +123,7 @@ Pick a path from `02_IOS_BUILD.md`:
 - App-specific password for Xcode uploads
 - Encryption exemption declaration in Info.plist
 - Reviewer notes text (Google accepts sparse notes)
+- **D-U-N-S number** (for Organization accounts — required for a Municipality app)
 
 ---
 
