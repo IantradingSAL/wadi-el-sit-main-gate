@@ -77,7 +77,7 @@ App Store Connect → App Information → Age Rating → Edit.
 
 If Apple sees the app can load any URL (e.g. links open a browser widget with the full internet), rating jumps to **17+**. In your PWA-wrapper:
 
-- ✅ Both PWABuilder iOS and Capacitor default to **scope-restricted WebKit** — only `iantradingsal.github.io/wadi-el-sit-main-gate/*` (and origins listed in `scope_extensions`) load inside the app.
+- ✅ Both PWABuilder iOS and Capacitor default to **scope-restricted WebKit** — only `app.municipality-wadi-el-sitt.org/*` (and origins listed in `scope_extensions`) load inside the app.
 - ✅ External links (news article external URLs, Supabase console links from admin) should open in the OS default browser via `window.open` or `<a target="_blank">`, NOT inside the app view.
 
 If your app opens ANY external URL inside its own WebView, mark "Unrestricted Web Access" as **YES** and accept the 17+ rating.
@@ -90,10 +90,10 @@ App Store Connect → your version → App Review Information.
 
 | Field | Value |
 |---|---|
-| **Contact — First name** | *(your first name)* |
-| **Contact — Last name** | *(your last name)* |
-| **Contact — Phone** | *(a real number, only used by App Review if needed)* |
-| **Contact — Email** | `imadaehn@gmail.com` *(will receive rejection/approval notices)* |
+| **Contact — First name** | `Imad` |
+| **Contact — Last name** | `Abi El Hessen` |
+| **Contact — Phone** | `+961 3 649 694` |
+| **Contact — Email** | `management@municipality-wadi-el-sitt.org` *(primary — will receive rejection/approval notices)*; backup: `imadaehn@gmail.com` |
 | **Sign-in required?** | ✅ **Yes** |
 | **Demo account — Username** | `google-reviewer-admin@wadielset.local` |
 | **Demo account — Password** | *(set a strong password, share only with Apple)* |
@@ -105,32 +105,35 @@ App Store Connect → your version → App Review Information.
 Wadi El Sit is the official municipal services app of the village of Wadi El Sit
 in Chouf, Lebanon. Interface is Arabic-first with English and French toggles.
 
+App homepage: https://app.municipality-wadi-el-sitt.org
+
 FEATURES TO TEST:
 
 1. Public browse (no login required)
    - Home page — 5 service tiles
-   - News feed (news.html)
-   - Cooperative store (coop.html) — browse products
-   - Phonebook (phonebook.html) — village directory
+   - News feed (/news.html)
+   - Cooperative store (/coop.html) — browse products
+   - Phonebook (/phonebook.html) — village directory
 
 2. Authenticated features (use the demo account above)
-   - Submit a citizen request (citizen.html) — includes photo attachment
+   - Submit a citizen request (/citizen.html) — includes photo attachment
    - Admin panel (mayor role) — view submitted cases, respond, publish news
    - Coop admin panel — manage products
    - Water portal — irrigation schedule for the account
 
 3. Web push notifications (iOS 16.4+)
    - After installing to home screen, users can opt in via the 🔔 button
-   - Test broadcasts sent through admin-push.html
+   - Test broadcasts sent through /admin-push.html
 
 APP CATEGORY:
 Municipality / Government app for a single village in Lebanon. Available to
-residents, staff, and the mayor. Not intended for general-public use outside
-the village but does not restrict downloads.
+residents, staff, and the Mayor (Jihad Maksoud). Not intended for general-public
+use outside the village but does not restrict downloads.
 
 GOVERNMENT AFFILIATION:
-A signed authorization letter from the mayor of Wadi El Sit is available
-on request. Please email imadaehn@gmail.com if App Review requires it.
+A signed authorization letter from the Mayor of Wadi El Sit is available
+on request. Please email management@municipality-wadi-el-sitt.org if App
+Review requires it.
 
 WHY IT IS NOT JUST A WEBSITE:
 - Push notifications (municipal alerts, iOS 16.4+ web-push)
@@ -138,11 +141,12 @@ WHY IT IS NOT JUST A WEBSITE:
 - Home-screen shortcuts (directly to phonebook, water, coop)
 - Offline mode (service worker caches app shell)
 - Login-gated staff/admin flows
+- Served from official government domain (app.municipality-wadi-el-sitt.org)
 
 CONTENT MODERATION:
 User-generated content (coop listings, citizen requests, comments) is
 reviewed by the municipality's admins before it becomes visible to other
-users. Report abuse: users can email imadaehn@gmail.com.
+users. Report abuse: users can email management@municipality-wadi-el-sitt.org.
 ```
 
 ---
@@ -175,6 +179,6 @@ Apple doesn't have a formal "government app" category like Google does, but if A
 
 - Email `appreview@apple.com` with your case ID
 - Attach the signed mayor authorization letter (from `store-assets/mayor-authorization-letter.md` after signing + scanning)
-- Reference in your reply: "Wadi El Sit is a real municipality in the Chouf district, Lebanon (verifiable via Lebanon's Ministry of Interior)."
+- Reference in your reply: "Wadi El Sit is a real municipality in the Chouf district, Lebanon (verifiable via Lebanon's Ministry of Interior). The app is served from the municipality's official domain, app.municipality-wadi-el-sitt.org."
 
 Response typically arrives within 24-48h. Most municipality apps clear without needing this step.
