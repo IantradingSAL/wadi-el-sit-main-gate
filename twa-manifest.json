@@ -1,0 +1,42 @@
+{
+  "_comment_": "Bubblewrap TWA config for Wadi El Sit Municipality. See playstore/04_TWA_BUILD.md for the two hosting options and how to fill host/startUrl correctly.",
+  "packageId": "lb.wadielset.gate",
+  "host": "iantradingsal.github.io",
+  "name": "بلدية وادي الست",
+  "launcherName": "وادي الست",
+  "display": "standalone",
+  "themeColor": "#1a6eb5",
+  "navigationColor": "#1a6eb5",
+  "navigationColorDark": "#0b4a80",
+  "navigationDividerColor": "#1a6eb5",
+  "navigationDividerColorDark": "#0b4a80",
+  "backgroundColor": "#f5f7fa",
+  "enableNotifications": true,
+  "startUrl": "/wadi-el-sit-main-gate/",
+  "iconUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-512.png",
+  "maskableIconUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-maskable-512.png",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [
+    { "name": "دليل البلدة",   "shortName": "الدليل",     "url": "/wadi-el-sit-main-gate/phonebook.html", "chosenIconUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-192.png" },
+    { "name": "بوابة المواطن", "shortName": "خدمات",     "url": "/wadi-el-sit-main-gate/citizen.html",   "chosenIconUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-192.png" },
+    { "name": "بوابة الري",    "shortName": "الري",       "url": "/wadi-el-sit-main-gate/water.html",     "chosenIconUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-192.png" },
+    { "name": "التعاونية",     "shortName": "التعاونية", "url": "/wadi-el-sit-main-gate/coop.html",      "chosenIconUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/icons/icon-192.png" }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://iantradingsal.github.io/wadi-el-sit-main-gate/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "orientation": "any",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  }
+}

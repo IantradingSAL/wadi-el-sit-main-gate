@@ -1,0 +1,11 @@
+[
+  {
+    "_comment_": "IMPORTANT: This file is here for reference only. TWA requires assetlinks.json at the ORIGIN ROOT, not under the /wadi-el-sit-main-gate/ subpath. See playstore/04_TWA_BUILD.md 'assetlinks placement' section. Replace the sha256_cert_fingerprints with the value printed by Bubblewrap after your first build.",
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "lb.wadielset.gate",
+      "sha256_cert_fingerprints": ["REPLACE:WITH:SHA256:FROM:BUBBLEWRAP:BUILD:OUTPUT"]
+    }
+  }
+]
