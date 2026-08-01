@@ -106,6 +106,18 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     priceLBP: 'السعر (ل.ل.) *',
     unit: 'الوحدة *',
     unitPh: 'كغ / لتر / قطعة',
+    unit_pcs: 'قطعة',
+    unit_kg: 'كيلوغرام',
+    unit_g: 'غرام',
+    unit_liter: 'لتر',
+    unit_ml: 'مل',
+    unit_box: 'صندوق',
+    unit_pack: 'علبة',
+    unit_bunch: 'حزمة',
+    unit_dozen: 'دزينة',
+    unit_meter: 'متر',
+    unit_bag: 'كيس',
+    unit_bottle: 'قنينة',
     qtyAvailable: 'الكمية المتوفّرة *',
     descLabel: 'الوصف',
     prodDescPh: 'معلومات عن المنتج، طريقة الإنتاج، إلخ...',
@@ -224,6 +236,18 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     priceLBP: 'Price (LBP) *',
     unit: 'Unit *',
     unitPh: 'kg / L / piece',
+    unit_pcs: 'piece',
+    unit_kg: 'kilogram',
+    unit_g: 'gram',
+    unit_liter: 'liter',
+    unit_ml: 'ml',
+    unit_box: 'box',
+    unit_pack: 'pack',
+    unit_bunch: 'bunch',
+    unit_dozen: 'dozen',
+    unit_meter: 'meter',
+    unit_bag: 'bag',
+    unit_bottle: 'bottle',
     qtyAvailable: 'Quantity available *',
     descLabel: 'Description',
     prodDescPh: 'Information about the product, production method, etc...',
@@ -341,6 +365,18 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     priceLBP: 'Prix (LL) *',
     unit: 'Unité *',
     unitPh: 'kg / L / pièce',
+    unit_pcs: 'pièce',
+    unit_kg: 'kilogramme',
+    unit_g: 'gramme',
+    unit_liter: 'litre',
+    unit_ml: 'ml',
+    unit_box: 'boîte',
+    unit_pack: 'paquet',
+    unit_bunch: 'botte',
+    unit_dozen: 'douzaine',
+    unit_meter: 'mètre',
+    unit_bag: 'sac',
+    unit_bottle: 'bouteille',
     qtyAvailable: 'Quantité disponible *',
     descLabel: 'Description',
     prodDescPh: 'Informations sur le produit, méthode de production, etc...',
@@ -579,6 +615,10 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     catColor:'اللون',
     catImage:'رابط الصورة (URL)',
     catImageHint:'يظهر تلقائياً في الصفحة الرئيسية للمتجر — 600×600px مستحسن',
+    catImageUpload:'📷 صورة أو فيديو من الجهاز',
+    catImageUploading:'⏳ جاري رفع الملف…',
+    catImageUploadErr:'⚠️ تعذّر رفع الملف',
+    catVideoTooBig:'⚠️ الفيديو أكبر من 15 ميغابايت — استخدم مقطعاً أقصر',
     catSort:'ترتيب العرض',
     catSave:'💾 حفظ',
     catDelete:'🗑️ حذف',
@@ -635,6 +675,10 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     catColor:'Color',
     catImage:'Image URL',
     catImageHint:'Shown on the store home page — 600×600px recommended',
+    catImageUpload:'📷 Photo or video from device',
+    catImageUploading:'⏳ Uploading…',
+    catImageUploadErr:'⚠️ Upload failed',
+    catVideoTooBig:'⚠️ Video is larger than 15 MB — pick a shorter clip',
     catSort:'Sort order',
     catSave:'💾 Save',
     catDelete:'🗑️ Delete',
@@ -691,6 +735,10 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     catColor:'Couleur',
     catImage:'URL de l\'image',
     catImageHint:'Affichée sur la page d\'accueil de la boutique — 600×600px recommandé',
+    catImageUpload:'📷 Photo ou vidéo (appareil)',
+    catImageUploading:'⏳ Téléchargement…',
+    catImageUploadErr:'⚠️ Échec du téléchargement',
+    catVideoTooBig:'⚠️ Vidéo > 15 Mo — choisissez un extrait plus court',
     catSort:'Ordre d\'affichage',
     catSave:'💾 Enregistrer',
     catDelete:'🗑️ Supprimer',
@@ -1852,7 +1900,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
         </div>
         <div class="field">
           <label class="field-label" data-i18n="unit">الوحدة *</label>
-          <input class="field-input" id="prod-unit" placeholder="كغ / لتر / قطعة" data-i18n-placeholder="unitPh">
+          <select class="field-select" id="prod-unit"></select>
         </div>
       </div>
       <div class="field">
@@ -2168,14 +2216,20 @@ function renderHomeCategories(){
     // illustrations (Twemoji icons) sit centered with padding + a soft
     // gradient in the category color for a clean tile look.
     const nm = escapeHtml((typeof cat.name==="object"?pickLang(cat.name):cat.name));
-    const isPhoto = cat.image && (
+    const isVideo = isVideoUrl(cat.image);
+    const isPhoto = cat.image && !isVideo && (
       /\.(jpe?g|png|webp|avif)(\?|$)/i.test(cat.image) ||
       /loremflickr\.com|source\.unsplash\.com|images\.unsplash\.com|images\.pexels\.com|upload\.wikimedia\.org/i.test(cat.image)
     );
     const tileBg = cat.color ? `--cat-c:${cat.color}22` : '';
-    const photoHtml = cat.image
-      ? `<div class="cat-photo" style="${tileBg}"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async"${isPhoto?' data-fill="1"':''} onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`
-      : `<div class="cat-photo" style="${tileBg}"><div class="cat-photo-fallback">${cat.icon}</div></div>`;
+    let photoHtml;
+    if(!cat.image){
+      photoHtml = `<div class="cat-photo" style="${tileBg}"><div class="cat-photo-fallback">${cat.icon}</div></div>`;
+    } else if(isVideo){
+      photoHtml = `<div class="cat-photo" style="${tileBg}" data-fill="1"><video src="${escapeAttr(cat.image)}" muted autoplay loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video></div>`;
+    } else {
+      photoHtml = `<div class="cat-photo" style="${tileBg}"><img src="${escapeAttr(cat.image)}" alt="${nm}" loading="lazy" decoding="async"${isPhoto?' data-fill="1"':''} onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cat-photo-fallback',textContent:'${cat.icon}'}))"></div>`;
+    }
     el.innerHTML=`<div class="cat-stripe" style="background:${cat.color}"></div>${photoHtml}<div class="cat-name">${nm}</div>`;
     el.onclick=()=>{currentShopTab='cat';currentShopFilter=cat.id;switchTab('shop');};
     grid.appendChild(el);
@@ -3380,6 +3434,41 @@ function requestPayout(){
 let pendingPhotos = []; // {file, preview, uploaded_url}
 let editingProductId = null;
 
+// Canonical unit keys — each renders in the seller's current language
+// via the unit_* i18n keys. Stored value is the localized label so
+// downstream views (cart, orders) that display .unit as-is keep
+// working without a data migration.
+const UNIT_KEYS = ['pcs','kg','g','liter','ml','box','pack','bunch','dozen','meter','bag','bottle'];
+
+function unitLabelFor(key){
+  const t = (typeof L === 'function' ? L() : {}) || {};
+  return t['unit_' + key] || key;
+}
+
+function populateUnitSelect(currentValue){
+  const sel = document.getElementById('prod-unit');
+  if(!sel) return;
+  sel.innerHTML = '';
+  const labels = UNIT_KEYS.map(unitLabelFor);
+  UNIT_KEYS.forEach((k, i) => {
+    const opt = document.createElement('option');
+    opt.value = labels[i];
+    opt.textContent = labels[i];
+    sel.appendChild(opt);
+  });
+  // Preserve any legacy or custom value that doesn't match a preset,
+  // so editing an existing product never silently changes its unit.
+  if(currentValue && labels.indexOf(currentValue) === -1){
+    const opt = document.createElement('option');
+    opt.value = currentValue;
+    opt.textContent = currentValue;
+    sel.appendChild(opt);
+    sel.value = currentValue;
+  } else {
+    sel.value = currentValue || unitLabelFor('kg');
+  }
+}
+
 function addSellerProduct(){
   if(!currentSeller){toast('يجب تسجيل الدخول كبائع','err');return;}
   if(currentSeller.status!=='approved' && currentSeller.status!=='active'){
@@ -3397,7 +3486,7 @@ function addSellerProduct(){
   if (lbpRadio) { lbpRadio.checked = true; onCurrencyChange(); }
   const convEl = document.getElementById('prod-price-converted');
   if (convEl) convEl.textContent = '';
-  document.getElementById('prod-unit').value = 'كغ';
+  populateUnitSelect('');
   document.getElementById('prod-stock').value = '1';
   document.getElementById('prod-desc').value = '';
   document.getElementById('prod-photos').value = '';
@@ -3428,7 +3517,7 @@ function editSellerProduct(productId){
   // Set currency radio
   const curRadio = document.getElementById('prod-cur-' + (prod.currency === 'USD' ? 'usd' : 'lbp'));
   if (curRadio) { curRadio.checked = true; onCurrencyChange(); }
-  document.getElementById('prod-unit').value = prod.unit||'';
+  populateUnitSelect(prod.unit || '');
   document.getElementById('prod-stock').value = prod.stock||0;
   document.getElementById('prod-desc').value = prod.description||'';
   document.getElementById('prod-photos').value = '';
@@ -3452,9 +3541,23 @@ async function deleteSellerProduct(productId){
     const res = await sb.from('coop_products').delete().eq('id', productId);
     if(res.error){toast('فشل الحذف: '+res.error.message,'err');return;}
     toast('✅ تمّ حذف المنتج','ok');
-    loadSellerStats();
-    loadProducts(); // refresh shop
+    refreshAfterProductChange();
   }catch(e){console.error(e);toast('حدث خطأ','err');}
+}
+
+// Reload the shop cache + re-render the visible page + refresh the
+// seller dashboard. Every step is guarded so a single missing
+// function or transient error can never bubble up and be reported
+// as a save/delete failure — the write has already succeeded.
+async function refreshAfterProductChange(){
+  try { if(typeof loadAllData === 'function') await loadAllData(); }
+  catch(e){ console.warn('refreshAfterProductChange: loadAllData failed', e); }
+  try {
+    if(currentTab === 'shop' && typeof renderShopPage === 'function') renderShopPage();
+    else if(currentTab === 'home' && typeof renderHomePage === 'function') renderHomePage();
+  } catch(e){ console.warn('refreshAfterProductChange: re-render failed', e); }
+  try { if(typeof loadSellerStats === 'function') loadSellerStats(); }
+  catch(e){ console.warn('refreshAfterProductChange: loadSellerStats failed', e); }
 }
 
 function closeProductModal(){
@@ -3510,6 +3613,41 @@ async function uploadProductPhoto(file){
     console.error('Upload error:', up.error);
     throw up.error;
   }
+  const {data} = sb.storage.from('coop-photos').getPublicUrl(fname);
+  return data.publicUrl;
+}
+
+function isVideoUrl(u){
+  return !!u && /\.(mp4|webm|mov|m4v|ogg|ogv)(\?|#|$)/i.test(u);
+}
+
+async function uploadCategoryPhoto(file){
+  // Admin upload for category tiles. Accepts image or small video.
+  // Uses the admin's auth uid as the path prefix so it satisfies any
+  // per-user storage RLS the sellers' uploads rely on.
+  if(!file) throw new Error('no file');
+  const isVideo = (file.type || '').startsWith('video/');
+  if(isVideo && file.size > 15 * 1024 * 1024){
+    const err = new Error((L()||{}).catVideoTooBig || 'Video too big (max 15 MB)');
+    err.tooBig = true;
+    throw err;
+  }
+  const uid = (currentAdmin && currentAdmin.user_id)
+    || (await sb.auth.getSession()).data?.session?.user?.id;
+  if(!uid) throw new Error('not signed in');
+  const ext = (file.name.split('.').pop() || (isVideo ? 'mp4' : 'jpg')).toLowerCase();
+  const imgExts = ['jpg','jpeg','png','webp','gif','svg'];
+  const vidExts = ['mp4','webm','mov','m4v','ogg','ogv'];
+  const safeExt = (isVideo ? vidExts : imgExts).includes(ext)
+    ? ext
+    : (isVideo ? 'mp4' : 'jpg');
+  const fname = `${uid}/categories/${Date.now()}_${Math.random().toString(36).slice(2,9)}.${safeExt}`;
+  const up = await sb.storage.from('coop-photos').upload(fname, file, {
+    cacheControl:'3600',
+    upsert:false,
+    contentType: file.type || (isVideo ? 'video/mp4' : 'image/jpeg')
+  });
+  if(up.error){ console.error('Category upload error:', up.error); throw up.error; }
   const {data} = sb.storage.from('coop-photos').getPublicUrl(fname);
   return data.publicUrl;
 }
@@ -3616,8 +3754,10 @@ async function saveProduct(){
     
     toast(editingProductId ? ((window.__wadi_t&&window.__wadi_t('productUpdated'))||'✅ تمّ تحديث المنتج') : ((window.__wadi_t&&window.__wadi_t('productAdded'))||'✅ تمّ إضافة المنتج'),'ok');
     closeProductModal();
-    await loadProducts(); // refresh shop products
-    loadSellerStats(); // refresh seller dashboard
+    // Refresh caches / UI outside the save try so ANY refresh error
+    // cannot surface as a spurious "Save error" — the row is already
+    // in the DB by this point.
+    refreshAfterProductChange();
   }catch(e){
     console.error('saveSellerProduct exception:', e);
     var msg = e && e.message ? e.message : String(e);
@@ -4481,6 +4621,11 @@ function openCatEditor(cat){
         <label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-img"></label>
         <input id="cat-ed-img" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:12px;direction:ltr" placeholder="https://…">
         <div id="cat-ed-imghint" style="font-size:10.5px;color:#94a3b8;margin-top:3px"></div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+          <button type="button" id="cat-ed-img-pick" class="btn btn-ghost" style="font-size:12px;padding:8px 12px;flex:0 0 auto"></button>
+          <div id="cat-ed-img-status" style="font-size:11.5px;color:#64748b;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        </div>
+        <input id="cat-ed-img-file" type="file" accept="image/*,video/*" style="display:none">
       </div>
       <div style="margin-bottom:12px"><label style="font-size:11.5px;font-weight:800;color:#475569;display:block;margin-bottom:4px" id="cat-ed-l-sort"></label><input id="cat-ed-sort" type="number" min="0" step="1" style="width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:9px;font-size:13px;direction:ltr"></div>
       <div id="cat-ed-preview" style="display:flex;gap:10px;align-items:center;padding:10px;background:#f8fafc;border-radius:10px;margin-bottom:12px">
@@ -4508,6 +4653,8 @@ function openCatEditor(cat){
   document.getElementById('cat-ed-l-fr').textContent = dashT('catNameFr');
   document.getElementById('cat-ed-l-img').textContent = dashT('catImage');
   document.getElementById('cat-ed-imghint').textContent = dashT('catImageHint');
+  document.getElementById('cat-ed-img-pick').textContent = dashT('catImageUpload');
+  document.getElementById('cat-ed-img-status').textContent = '';
   document.getElementById('cat-ed-l-sort').textContent = dashT('catSort');
   document.getElementById('cat-ed-save').textContent = dashT('catSave');
   // Fill values
@@ -4531,14 +4678,46 @@ function openCatEditor(cat){
     const emoji = document.getElementById('cat-ed-emoji').value || '📦';
     const color = document.getElementById('cat-ed-color').value;
     tile.style.borderColor = color;
-    tile.innerHTML = url
-      ? `<img src="${url.replace(/"/g,'&quot;')}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'${emoji}',style:'font-size:24px;display:flex;align-items:center;justify-content:center;width:100%;height:100%'}))">`
-      : `<div style="font-size:24px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${emoji}</div>`;
+    const safeUrl = url.replace(/"/g,'&quot;');
+    const fallback = `<div style="font-size:24px;display:flex;align-items:center;justify-content:center;width:100%;height:100%">${emoji}</div>`;
+    if(!url){
+      tile.innerHTML = fallback;
+    } else if(isVideoUrl(url)){
+      tile.innerHTML = `<video src="${safeUrl}" muted autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;display:block"></video>`;
+    } else {
+      tile.innerHTML = `<img src="${safeUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.replaceWith(Object.assign(document.createElement('div'),{textContent:'${emoji}',style:'font-size:24px;display:flex;align-items:center;justify-content:center;width:100%;height:100%'}))">`;
+    }
   };
   ['cat-ed-img','cat-ed-emoji','cat-ed-color'].forEach(id => {
     const el = document.getElementById(id); el.oninput = updatePreview;
   });
   updatePreview();
+  // Photo picker → upload → fills URL field
+  const pickBtn = document.getElementById('cat-ed-img-pick');
+  const fileInput = document.getElementById('cat-ed-img-file');
+  const statusEl = document.getElementById('cat-ed-img-status');
+  pickBtn.onclick = () => fileInput.click();
+  fileInput.onchange = async () => {
+    const file = fileInput.files && fileInput.files[0];
+    if(!file) return;
+    statusEl.style.color = '#64748b';
+    statusEl.textContent = dashT('catImageUploading');
+    pickBtn.disabled = true;
+    try {
+      const url = await uploadCategoryPhoto(file);
+      const imgInput = document.getElementById('cat-ed-img');
+      imgInput.value = url;
+      updatePreview();
+      statusEl.textContent = '✓ ' + file.name;
+    } catch(e) {
+      console.error('category photo upload failed:', e);
+      statusEl.style.color = '#bf2424';
+      statusEl.textContent = dashT('catImageUploadErr') + ': ' + ((e && e.message) || e);
+    } finally {
+      pickBtn.disabled = false;
+      fileInput.value = '';
+    }
+  };
   // Save handler
   const saveBtn = document.getElementById('cat-ed-save');
   saveBtn.onclick = async () => {
