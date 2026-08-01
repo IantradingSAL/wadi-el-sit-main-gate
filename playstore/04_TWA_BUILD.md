@@ -2,70 +2,44 @@
 
 This turns the Wadi El Sit web app into a signed `.aab` file you upload to Play Console.
 
-## 🚨 Read this FIRST — assetlinks placement (subpath vs. custom domain)
+## ✅ Custom domain — already in place
 
-The Wadi app lives at `https://iantradingsal.github.io/wadi-el-sit-main-gate/` — a **subpath** under a GitHub-owned host. This affects how Android verifies the app links.
+The app now serves at **`https://app.municipality-wadi-el-sitt.org/`** (origin root), so Digital Asset Links "just work":
 
-Android reads `assetlinks.json` **only from the origin root**, i.e.:
-```
-https://iantradingsal.github.io/.well-known/assetlinks.json
-```
-It does **NOT** read it from `.../wadi-el-sit-main-gate/.well-known/assetlinks.json`.
+- `assetlinks.json` is served at `https://app.municipality-wadi-el-sitt.org/.well-known/assetlinks.json`
+- `twa-manifest.json` uses `"host": "app.municipality-wadi-el-sitt.org"` and `"startUrl": "/"`
+- No subpath hacks needed
 
-You have two options — pick one before you build.
+See `playstore/06_DOMAIN_SWITCH.md` for the DNS/config history if you need to migrate again later.
 
-### Option A — Publish `assetlinks.json` at the origin root (fastest, free)
-
-You need to serve `assetlinks.json` from `https://iantradingsal.github.io/.well-known/assetlinks.json`.
-
-Because GitHub Pages serves that URL from the `iantradingsal.github.io` **repository** (not this one), you must:
-
-1. Create a repo called **`iantradingsal.github.io`** if it doesn't exist (or open it if it does).
-2. Add the file at path `.well-known/assetlinks.json` with the same content as `/.well-known/assetlinks.json` in this repo.
-3. Commit and push — GitHub Pages will serve it at the correct URL automatically.
-4. Verify: `curl -sI https://iantradingsal.github.io/.well-known/assetlinks.json` → 200
-
-**Downside:** the TWA verifies the whole `iantradingsal.github.io` origin, so any OTHER project you host at `iantradingsal.github.io/*` is also delegated to the app. Fine for a personal account.
-
-### Option B — Use a custom domain (recommended for a real launch, ~$10-15/yr)
-
-1. Buy `wadielset.lb` or `wadielset.com` (or similar).
-2. Point it to GitHub Pages: repo Settings → Pages → Custom domain.
-3. Move the site so it serves at `https://wadielset.lb/` (root, not a subpath).
-4. `assetlinks.json` then lives at `https://wadielset.lb/.well-known/assetlinks.json` — cleaner, exclusive to this app.
-
-Also update:
-- `twa-manifest.json` → `"host": "wadielset.lb"`, `"startUrl": "/"`, all icon URLs
-- `manifest.json` → `"scope": "/"`, `"start_url": "/"`, `scope_extensions` entries
-
-**Recommendation:** Go with **Option A** now to publish quickly; migrate to Option B later once the app is live.
+The old URL `https://iantradingsal.github.io/wadi-el-sit-main-gate/` 301-redirects to the new domain — old bookmarks stay alive.
 
 ---
 
-## Prerequisites (both paths)
+## Prerequisites
 
-1. Your web app is deployed and reachable at `https://iantradingsal.github.io/wadi-el-sit-main-gate/`  ✅ (already done)
-2. `manifest.json`, `sw.js`, `icons/*` are served — ✅ (already in repo root)
-3. You have chosen a **package name**. Recommended: `lb.wadielset.gate` — permanent once uploaded.
+1. Site reachable at `https://app.municipality-wadi-el-sitt.org/` ✅
+2. `manifest.json`, `sw.js`, `icons/*` served from origin root ✅
+3. Package name chosen: **`lb.wadielset.gate`** (permanent once uploaded)
 
 ---
 
 ## Path 1 — PWABuilder (browser only, ~10 min)
 
 1. Go to <https://www.pwabuilder.com>.
-2. Paste: `https://iantradingsal.github.io/wadi-el-sit-main-gate/` → **Start**.
-3. Fix any red items in the PWA report (should be none — your manifest is already very complete).
+2. Paste: `https://app.municipality-wadi-el-sitt.org/` → **Start**.
+3. Fix any red items in the PWA report (should be none — manifest is already very complete).
 4. Click **Package for Stores** → **Android**.
 5. Fill in:
    - **Package ID:** `lb.wadielset.gate`
    - **App name:** `بلدية وادي الست`
    - **Launcher name:** `وادي الست`
    - **Signing key:** *"Create new"* — **DOWNLOAD AND KEEP the `.keystore` file forever.**
-   - **Host:** `iantradingsal.github.io`
-   - **Start URL:** `/wadi-el-sit-main-gate/`
+   - **Host:** `app.municipality-wadi-el-sitt.org`
+   - **Start URL:** `/`
 6. Download the ZIP. It contains:
    - `app-release-signed.aab` ← upload this to Play Console
-   - `assetlinks.json` ← host per Option A or B above
+   - `assetlinks.json` ← **replace** the placeholder in the repo at `.well-known/assetlinks.json` with this real one (has the correct SHA-256 fingerprint), then push
    - `signing.keystore` ← **BACK THIS UP TO A PASSWORD MANAGER + SECONDARY LOCATION**
 
 ---
@@ -80,26 +54,52 @@ npm i -g @bubblewrap/cli
 
 ### Initialize
 ```bash
-bubblewrap init --manifest=https://iantradingsal.github.io/wadi-el-sit-main-gate/manifest.json
+bubblewrap init --manifest=https://app.municipality-wadi-el-sitt.org/manifest.json
 ```
 When it asks — accept the defaults but confirm:
 - Package name: `lb.wadielset.gate`
 - App name: `بلدية وادي الست`
 - Launcher name: `وادي الست`
-- Start URL: `/wadi-el-sit-main-gate/`
+- Start URL: `/`
 - Display mode: `standalone`
 
 ### Build
 ```bash
 bubblewrap build
 ```
-Produces `app-release-signed.aab` in the working directory. Also prints the SHA-256 fingerprint you need for `assetlinks.json`.
+Produces `app-release-signed.aab` in the working directory. **Copy the printed SHA-256 fingerprint** — you paste it into `.well-known/assetlinks.json` (replacing the `REPLACE:WITH:SHA256:...` placeholder), commit, push. GitHub Pages redeploys within 2 minutes and Google's TWA link verifier picks it up on next check.
 
 ### Update later (bump version)
 ```bash
 # 1) Edit twa-manifest.json: appVersionCode +1, appVersionName as needed
 bubblewrap update
 bubblewrap build
+```
+
+---
+
+## Update assetlinks.json with the real fingerprint
+
+After your first Bubblewrap or PWABuilder build, replace the placeholder in `.well-known/assetlinks.json`:
+
+```json
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "lb.wadielset.gate",
+      "sha256_cert_fingerprints": ["AA:BB:CC:...:99"]
+    }
+  }
+]
+```
+
+Commit + push → GitHub Pages redeploy → Google verifies within minutes.
+
+Verify manually:
+```bash
+curl -s https://app.municipality-wadi-el-sitt.org/.well-known/assetlinks.json | jq .
 ```
 
 ---
