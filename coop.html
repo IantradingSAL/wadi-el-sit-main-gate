@@ -1851,7 +1851,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
         <label class="field-label" data-i18n="deliveryMethod">طريقة التسليم *</label>
         <div class="dlv-options">
           <label class="dlv-option">
-            <input type="radio" name="ck-delivery" value="pickup" checked>
+            <input type="radio" name="ck-delivery" value="pickup" checked onchange="updateCheckoutTotals()">
             <div class="dlv-option-card">
               <div class="dlv-option-icon">🏪</div>
               <div class="dlv-option-info">
@@ -1862,7 +1862,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
             </div>
           </label>
           <label class="dlv-option">
-            <input type="radio" name="ck-delivery" value="delivery">
+            <input type="radio" name="ck-delivery" value="delivery" onchange="updateCheckoutTotals()">
             <div class="dlv-option-card">
               <div class="dlv-option-icon">🚗</div>
               <div class="dlv-option-info">
@@ -1873,7 +1873,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
             </div>
           </label>
           <label class="dlv-option">
-            <input type="radio" name="ck-delivery" value="meeting">
+            <input type="radio" name="ck-delivery" value="meeting" onchange="updateCheckoutTotals()">
             <div class="dlv-option-card">
               <div class="dlv-option-icon">📍</div>
               <div class="dlv-option-info">
@@ -1884,6 +1884,11 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
             </div>
           </label>
         </div>
+      </div>
+      <div id="ck-totals" style="background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin:0 0 12px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);margin-bottom:4px"><span>المنتجات</span><span id="ck-items-total">0 ل.ل.</span></div>
+        <div id="ck-fee-row" style="display:none;justify-content:space-between;font-size:13px;color:var(--text2);margin-bottom:4px"><span>🚚 رسوم التوصيل</span><span id="ck-fee">0 ل.ل.</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:900;color:var(--primary);border-top:1.5px dashed var(--border);padding-top:8px;margin-top:6px"><span>الإجمالي</span><span id="ck-grand-total">0 ل.ل.</span></div>
       </div>
       <div class="field">
         <label class="field-label" data-i18n="notesOptional">ملاحظات (اختياري)</label>
@@ -2208,6 +2213,7 @@ document.addEventListener('DOMContentLoaded',async function(){
 
   // Load categories from DB (falls back to hardcoded on failure) before first render
   await reloadCategoriesFromDB();
+  await loadDeliveryFee();
 
   // Render UI
   renderHomeCategories();
@@ -2743,6 +2749,27 @@ function renderCart(){
 }
 
 /* ═══════ CHECKOUT ═══════ */
+window._deliveryFeeLbp = 50000;
+async function loadDeliveryFee(){
+  try {
+    const { data } = await sb.from('system_settings').select('value').eq('key','coop_delivery_fee_lbp').maybeSingle();
+    window._deliveryFeeLbp = parseInt((data && data.value) || '50000', 10) || 0;
+    // Update the delivery-option subtitle so customer sees the fee up-front
+    const subs = document.querySelectorAll('[data-i18n="dlvHomeSub"]');
+    subs.forEach(s => { s.textContent = '🚚 رسوم التوصيل: ' + formatPrice(window._deliveryFeeLbp); });
+  } catch(e){ /* silent */ }
+}
+
+function updateCheckoutTotals(){
+  const items = cart.reduce((s,c) => s + c.price * c.qty, 0);
+  const isDelivery = (document.querySelector('input[name="ck-delivery"]:checked')?.value) === 'delivery';
+  const fee = isDelivery ? (window._deliveryFeeLbp || 0) : 0;
+  const it = document.getElementById('ck-items-total'); if(it) it.textContent = formatPrice(items);
+  const fr = document.getElementById('ck-fee-row');     if(fr) fr.style.display = isDelivery ? 'flex' : 'none';
+  const fe = document.getElementById('ck-fee');         if(fe) fe.textContent = formatPrice(fee);
+  const gt = document.getElementById('ck-grand-total'); if(gt) gt.textContent = formatPrice(items + fee);
+}
+
 function openCheckout(){
   if(cart.length===0){toast(L().cartEmpty,'err');return;}
   closeCart();
@@ -2754,6 +2781,7 @@ function openCheckout(){
     if(u.address) document.getElementById('ck-addr').value=document.getElementById('ck-addr').value||u.address;
   }catch(e){}
   document.getElementById('modal-checkout').classList.add('on');
+  updateCheckoutTotals();
 }
 
 function closeCheckout(){
@@ -2788,18 +2816,24 @@ async function placeOrder(){
     bySeller[c.seller_id].items.push(c);
   });
 
-  const orders=Object.values(bySeller).map(g=>({
-    seller_id:g.seller_id,
-    customer_name:name,
-    customer_phone:phone,
-    customer_address:addr||null,
-    items:g.items,
-    total:g.items.reduce((s,c)=>s+c.price*c.qty,0),
-    delivery_method:delivery,
-    status:'pending',
-    notes:notes||null,
-    lang:(function(){try{var l=localStorage.getItem('wadi_lang');return (l==='en'||l==='fr'||l==='ar')?l:'ar';}catch(e){return 'ar';}})()
-  }));
+  const fee = delivery === 'delivery' ? (window._deliveryFeeLbp || 0) : 0;
+  const orders=Object.values(bySeller).map(g=>{
+    const items_total = g.items.reduce((s,c)=>s+c.price*c.qty,0);
+    return {
+      seller_id:g.seller_id,
+      customer_name:name,
+      customer_phone:phone,
+      customer_address:addr||null,
+      items:g.items,
+      total: items_total + fee,
+      delivery_method:delivery,
+      delivery_fee_lbp: fee,
+      delivery_status: delivery === 'delivery' ? 'unassigned' : null,
+      status:'pending',
+      notes:notes||null,
+      lang:(function(){try{var l=localStorage.getItem('wadi_lang');return (l==='en'||l==='fr'||l==='ar')?l:'ar';}catch(e){return 'ar';}})()
+    };
+  });
 
   try{
     const res=await sb.from('coop_orders').insert(orders).select();
@@ -3296,16 +3330,7 @@ async function renderAgentPage(){
       const now = new Date().toISOString();
       if(act==='accept')    patch = { delivery_agent_id: currentAgent.id, delivery_status: 'assigned', delivery_assigned_at: now };
       else if(act==='pickup')    patch = { delivery_status: 'picked_up', delivery_picked_up_at: now, status: 'out_for_delivery' };
-      else if(act==='delivered') {
-        // Snapshot the current delivery fee onto this order so a later
-        // rate change doesn't retroactively repay it.
-        let fee = 0;
-        try {
-          const { data } = await sb.from('system_settings').select('value').eq('key','coop_delivery_fee_lbp').maybeSingle();
-          fee = parseInt((data && data.value) || '0', 10) || 0;
-        } catch(_) {}
-        patch = { delivery_status: 'delivered', delivery_delivered_at: now, status: 'delivered', delivery_fee_lbp: fee };
-      }
+      else if(act==='delivered') patch = { delivery_status: 'delivered', delivery_delivered_at: now, status: 'delivered' };
       else if(act==='release')   patch = { delivery_agent_id: null, delivery_status: 'unassigned', delivery_assigned_at: null };
       if(!patch){ b.disabled = false; b.textContent = oldText; return; }
       const { error } = await sb.from('coop_orders').update(patch).eq('id', oid);
@@ -3372,6 +3397,58 @@ async function doAgentLogin(){
     err.textContent = 'خطأ في الاتصال';
     err.style.display = 'block';
   }
+}
+
+async function openAssignAgentModal(orderId){
+  // Lightweight overlay: list all approved agents; tap one to assign.
+  const { data: agents, error } = await sb.from('coop_delivery_agents')
+    .select('id, name, phone, area, vehicle')
+    .eq('status','approved')
+    .order('name',{ascending:true});
+  if(error){ toast('⚠️ '+error.message,'err'); return; }
+  if(!agents || !agents.length){ toast('لا يوجد عامل توصيل مفعّل حالياً','err'); return; }
+  let ov = document.getElementById('assign-agent-ov');
+  if(ov) ov.remove();
+  ov = document.createElement('div');
+  ov.id = 'assign-agent-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,40,70,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10000';
+  const vehMap = { motorcycle:'🏍️', car:'🚗', van:'🚐', bike:'🚲' };
+  ov.innerHTML = `<div style="background:#fff;border-radius:14px;padding:18px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:900;color:#0f4d82">🚚 اختر عامل التوصيل</div>
+      <button class="drawer-close" style="background:#eef2f7">×</button>
+    </div>
+    ${agents.map(a => `<button class="order-card" data-aid="${escapeAttr(a.id)}" data-aname="${escapeAttr(a.name||'')}" style="width:100%;text-align:start;display:flex;align-items:center;gap:10px;cursor:pointer;border:1px solid var(--border);margin-bottom:8px">
+      <div style="font-size:22px">${vehMap[a.vehicle]||'🚚'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800">${escapeHtml(a.name||'')}</div>
+        <div style="font-size:11.5px;color:var(--text3)">${escapeHtml(a.phone||'')} · ${escapeHtml(a.area||'')}</div>
+      </div>
+      <div style="font-size:14px;color:var(--primary)">←</div>
+    </button>`).join('')}
+  </div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.querySelector('.drawer-close').onclick = close;
+  ov.addEventListener('click', ev => { if(ev.target === ov) close(); });
+  ov.querySelectorAll('button[data-aid]').forEach(b => {
+    b.onclick = async () => {
+      const aid = b.dataset.aid, aname = b.dataset.aname;
+      b.disabled = true;
+      const now = new Date().toISOString();
+      const { error: e } = await sb.from('coop_orders').update({
+        delivery_agent_id: aid,
+        delivery_status: 'assigned',
+        delivery_assigned_at: now,
+      }).eq('id', orderId);
+      if(e){ b.disabled = false; toast('⚠️ '+e.message,'err'); return; }
+      toast('✅ تمّ تعيين '+aname,'ok');
+      close();
+      // Refresh the caller's view
+      if(typeof loadSellerStats === 'function') loadSellerStats();
+      if(typeof loadAdminPanel === 'function' && document.getElementById('page-admin')?.classList.contains('active')) loadAdminPanel();
+    };
+  });
 }
 
 function requestAgentPayout(amount, count){
@@ -3801,6 +3878,8 @@ async function loadSellerStats(){
             ${o.status === 'pending' ? `<button class="oc-btn oc-btn-ok" onclick="updateOrderStatus('${o.id}','confirmed')">✓ تأكيد</button>` : ''}
             ${o.status === 'confirmed' ? `<button class="oc-btn oc-btn-ok" onclick="updateOrderStatus('${o.id}','delivered')">📦 تمّ التسليم</button>` : ''}
             ${(o.status === 'pending' || o.status === 'confirmed') ? `<button class="oc-btn oc-btn-cancel" onclick="updateOrderStatus('${o.id}','cancelled')">✗ إلغاء</button>` : ''}
+            ${o.delivery_method === 'delivery' && !o.delivery_agent_id ? `<button class="oc-btn oc-btn-ok" onclick="openAssignAgentModal('${o.id}')">🚚 تعيين عامل توصيل</button>` : ''}
+            ${o.delivery_agent_id ? `<span class="oc-btn" style="background:#e6f4ea;color:#1f7a45">🚚 مُعيَّن</span>` : ''}
             ${o.customer_phone ? `<button class="oc-btn oc-btn-wa" onclick="contactCustomerWA('${escapeAttr(o.customer_phone)}','${escapeAttr(o.customer_name||'')}','${escapeAttr(itemsTxt)}',${parseFloat(o.total)||0})">💬 واتساب</button>` : ''}
           </div>
         `;
