@@ -961,14 +961,26 @@ const REQUIRED_DOCS = {
 
 function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show '+t;setTimeout(()=>el.className='toast',3000);}
 function getCats() {
+  var cats = null;
   try {
-    const stored = localStorage.getItem('wadi_cats');
+    var stored = localStorage.getItem('wadi_cats');
     if (stored) {
       var parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) cats = parsed;
     }
   } catch(e) {}
-  return WADI_CATS_DEFAULT;
+  if (!cats) cats = WADI_CATS_DEFAULT.slice();
+  // Migration: guarantee the two urgent types are always at the top
+  // even if the user's cached wadi_cats predates them.
+  var ensure = [
+    {id:'fire',      icon:'🔥', label:'تبليغ عن حريق', labelI18n:{ar:'🔥 تبليغ عن حريق',en:'🔥 Report a fire',fr:'🔥 Signaler un incendie'}},
+    {id:'emergency', icon:'🚨', label:'حالة طوارئ',    labelI18n:{ar:'🚨 حالة طوارئ',en:'🚨 Emergency',fr:'🚨 Urgence'}}
+  ];
+  var have = {};
+  cats.forEach(function(c){ if (c && c.id) have[c.id] = true; });
+  var missing = ensure.filter(function(e){ return !have[e.id]; });
+  if (missing.length) cats = missing.concat(cats);
+  return cats;
 }
 async function saveCats(c) {
   // Save to localStorage immediately (for fast UI)
