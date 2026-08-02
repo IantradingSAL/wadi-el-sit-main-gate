@@ -3097,6 +3097,9 @@ function showDeliveryAgentStatus(agent){
     rejected:{cls:'warn',icon:'❌',title:'تمّ رفض الطلب',text:'يمكنك التواصل مع البلدية لمعرفة الأسباب.'}
   };
   const s=statusMap[agent.status]||statusMap.pending;
+  const loginBtn = agent.status === 'approved'
+    ? `<button class="btn btn-primary btn-block" style="margin-top:14px" onclick="document.getElementById('da-status').innerHTML='';showAgentLogin();document.getElementById('dl-phone').value='${escapeAttr(agent.phone||'')}';setTimeout(()=>document.getElementById('dl-pin').focus(),50);">🔑 دخول لوحة عامل التوصيل</button>`
+    : '';
   status.innerHTML=`
     <div class="banner ${s.cls}">
       <span class="banner-icon">${s.icon}</span>
@@ -3105,6 +3108,7 @@ function showDeliveryAgentStatus(agent){
         <div>${s.text}</div>
       </div>
     </div>
+    ${loginBtn}
     <div class="pdetail-section" style="margin-top:14px">
       <div class="pdetail-section-title">${((window.__wadi_t&&window.__wadi_t('myInfo'))||'معلوماتك')}</div>
       <div style="font-size:13px;line-height:1.8">
