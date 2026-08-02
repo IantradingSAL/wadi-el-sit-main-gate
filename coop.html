@@ -4402,12 +4402,12 @@ async function loadAdminPanel(){
           const id = b.dataset.catId;
           if(b.dataset.act === 'del-cat'){
             if(!confirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
+            b.disabled = true; b.textContent = '⏳';
             const { error } = await sb.from('coop_categories').delete().eq('id', id);
-            if(error){ toast('⚠️ '+error.message,'err'); return; }
+            if(error){ b.disabled=false; b.textContent='🗑️'; toast('⚠️ '+error.message,'err'); return; }
             toast(dashT('catDeleted'),'ok');
-            await reloadCategoriesFromDB();
-            if(typeof renderHomeCategories==='function') renderHomeCategories();
-            loadAdminPanel();
+            b.closest('.order-card')?.remove();
+            reloadCategoriesFromDB().then(()=>{ if(typeof renderHomeCategories==='function') renderHomeCategories(); });
           } else {
             const cat = adminCats.find(c => c.id === id);
             openCatEditor(cat || null);
@@ -4522,16 +4522,21 @@ async function loadAdminPanel(){
             const act=b.dataset.act,id=b.dataset.id;
             if(act==='delete-seller'){
               if(!confirm('حذف البائع "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له منتجات أو طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              b.disabled=true; b.textContent='⏳';
               const{error}=await sb.from('coop_sellers').delete().eq('id',id);
-              if(error){toast('⚠️ '+error.message,'err');return;}
+              if(error){b.disabled=false;b.textContent='🗑️ حذف';toast('⚠️ '+error.message,'err');return;}
               toast('🗑️ تم حذف البائع','ok');
+              el.remove();
+              return;
             } else {
+              b.disabled=true;
               const newStatus=act==='block-seller'?'suspended':'approved';
               const{error}=await sb.from('coop_sellers').update({status:newStatus}).eq('id',id);
+              b.disabled=false;
               if(error){toast('⚠️ '+error.message,'err');return;}
               toast(act==='block-seller'?'🚫 تم حظر البائع':'✅ تم إلغاء الحظر','ok');
+              loadAdminPanel();
             }
-            loadAdminPanel();
           };
         });
         asl.appendChild(el);
@@ -4566,18 +4571,25 @@ async function loadAdminPanel(){
           b.onclick=async(e)=>{
             e.stopPropagation();
             const act=b.dataset.act,id=b.dataset.id;
+            const busy=(txt)=>{b.disabled=true;b.dataset._t=b.textContent;b.textContent=txt||'⏳';};
+            const done=()=>{b.disabled=false;if(b.dataset._t){b.textContent=b.dataset._t;delete b.dataset._t;}};
             if(act==='delete-agent'){
               if(!confirm('حذف عامل التوصيل "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              busy('⏳ حذف');
               const{error}=await sb.from('coop_delivery_agents').delete().eq('id',id);
-              if(error){toast('⚠️ '+error.message,'err');return;}
+              if(error){done();toast('⚠️ '+error.message,'err');return;}
               toast('🗑️ تم حذف العامل','ok');
+              el.remove();
+              return;
             } else {
+              busy();
               const newStatus=act==='block-agent'?'suspended':'approved';
               const{error}=await sb.from('coop_delivery_agents').update({status:newStatus}).eq('id',id);
+              done();
               if(error){toast('⚠️ '+error.message,'err');return;}
               toast(act==='block-agent'?'🚫 تم حظر العامل':'✅ تم إلغاء الحظر','ok');
+              loadAdminPanel();
             }
-            loadAdminPanel();
           };
         });
         aa.appendChild(el);
@@ -4610,10 +4622,11 @@ async function loadAdminPanel(){
           b.onclick=async(e)=>{
             e.stopPropagation();
             if(!confirm('حذف المنتج "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات مرتبطة.'))return;
+            b.disabled=true; b.textContent='⏳ حذف';
             const{error}=await sb.from('coop_products').delete().eq('id',b.dataset.id);
-            if(error){toast('⚠️ '+error.message,'err');return;}
+            if(error){b.disabled=false;b.textContent='🗑️ حذف المنتج';toast('⚠️ '+error.message,'err');return;}
             toast('🗑️ تم حذف المنتج','ok');
-            loadAdminPanel();
+            el.remove();
           };
         });
         ap.appendChild(el);
@@ -4652,16 +4665,21 @@ async function loadAdminPanel(){
             const act=b.dataset.act,id=b.dataset.id;
             if(act==='delete-order'){
               if(!confirm('حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع.'))return;
+              b.disabled=true; b.textContent='⏳ حذف';
               const{error}=await sb.from('coop_orders').delete().eq('id',id);
-              if(error){toast('⚠️ '+error.message,'err');return;}
+              if(error){b.disabled=false;b.textContent='🗑️ حذف نهائي';toast('⚠️ '+error.message,'err');return;}
               toast('🗑️ تم حذف الطلب','ok');
+              el.remove();
+              return;
             } else {
               if(!confirm('إلغاء الطلب؟'))return;
+              b.disabled=true;
               const{error}=await sb.from('coop_orders').update({status:'cancelled'}).eq('id',id);
+              b.disabled=false;
               if(error){toast('⚠️ '+error.message,'err');return;}
               toast('🚫 تم إلغاء الطلب','ok');
+              loadAdminPanel();
             }
-            loadAdminPanel();
           };
         });
         ro.appendChild(el);
