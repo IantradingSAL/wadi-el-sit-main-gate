@@ -736,8 +736,14 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
       <div style="display:flex;align-items:center;gap:6px;margin-top:5px;margin-bottom:2px;font-size:12px;color:var(--green2)" data-i18n="emailNotice">📧 سيتم إرسال إشعار إلكتروني إلى بريدك لتأكيد استلام طلبك</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px">
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="requestType">نوع الطلب *</div>
-          <select id="c-type" class="fi" style="appearance:none;-webkit-appearance:none" onchange="showRequiredDocs(this.value)"></select></div>
+          <select id="c-type" class="fi" style="appearance:none;-webkit-appearance:none" onchange="showRequiredDocs(this.value);onCitTypeChange(this.value)"></select></div>
       <div id="required-docs-box" style="display:none;margin:4px 0 12px;border-radius:10px;overflow:hidden;font-size:13px"></div>
+      <div id="emergency-box" style="display:none;grid-column:1/-1;margin:4px 0 6px;padding:14px;border-radius:12px;background:#fff5f5;border:1.5px solid #f2c0c0">
+        <div style="font-size:13.5px;font-weight:800;color:#a83232;margin-bottom:8px">📍 شارك موقعك بضغطة واحدة</div>
+        <div style="font-size:12px;color:#7a3535;margin-bottom:10px;line-height:1.5">لمساعدة فريق الطوارئ في الوصول بأسرع وقت. يتم إرفاق الموقع مع طلبك تلقائياً.</div>
+        <button type="button" id="c-loc-btn" onclick="captureCitLocation()" style="width:100%;padding:12px;background:#dc2626;color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:800;cursor:pointer">📍 مشاركة موقعي الآن</button>
+        <div id="c-loc-status" style="font-size:12px;color:#7a3535;margin-top:8px;text-align:center;min-height:16px"></div>
+      </div>
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="address">العنوان</div>
           <input type="text" id="c-addr" class="fi" placeholder="حارة، منطقة…" data-i18n-placeholder="addressPh"></div>
       </div>
@@ -836,6 +842,8 @@ const MUN_ID='00000000-0000-0000-0000-000000000001';
 let sb=null,dbR=false,citUser=null,citFiles=[],_cats=null;
 
 const WADI_CATS_DEFAULT = [
+  {id:'fire',      icon:'🔥', label:'تبليغ عن حريق',   labelI18n:{ar:'🔥 تبليغ عن حريق',en:'🔥 Report a fire',fr:'🔥 Signaler un incendie'}},
+  {id:'emergency', icon:'🚨', label:'حالة طوارئ',      labelI18n:{ar:'🚨 حالة طوارئ',en:'🚨 Emergency',fr:'🚨 Urgence'}},
   {id:'complaint', icon:'⚠️', label:'شكوى',           labelI18n:{ar:'شكوى',en:'Complaint',fr:'Plainte'}},
   {id:'welfare',   icon:'🤝', label:'رعاية اجتماعية', labelI18n:{ar:'رعاية اجتماعية',en:'Social welfare',fr:'Aide sociale'}},
   {id:'permit',    icon:'🏗️', label:'ترخيص',          labelI18n:{ar:'ترخيص',en:'Building permit',fr:'Permis'}},
@@ -1276,10 +1284,16 @@ async function doSubmitCit(){
   btn.disabled=true;btn.textContent='⏳ جاري الإرسال…';
   const today=new Date().toISOString().slice(0,10);
   const na=['permit','welfare'].includes(type);
-  const nc={name,phone,email,address:addr,type:type,description:desc,priority:'medium',
+  const isEmergency = (typeRaw === 'fire' || typeRaw === 'emergency' || type === 'fire' || type === 'emergency');
+  const loc = window._citLocation;
+  const descWithLoc = loc
+    ? (desc + '\n\n📍 الموقع: ' + loc.url + '\n(الإحداثيات: ' + loc.lat + ', ' + loc.lng + ' — دقة ' + loc.accuracy + 'م)')
+    : desc;
+  const priority = isEmergency ? 'urgent' : 'medium';
+  const nc={name,phone,email,address:addr,type:type,description:descWithLoc,priority,
     assigned:'',status:na?'pending-approval':'new',
     approval_state:na?'pending':null,approval_by:null,approval_date:null,
-    timeline:[{a:'تم تقديم الطلب عبر الموقع الإلكتروني',by:name,d:today,cls:''}],
+    timeline:[{a: isEmergency ? '🚨 تبليغ طوارئ عبر الموقع' : 'تم تقديم الطلب عبر الموقع الإلكتروني',by:name,d:today,cls: isEmergency?'urgent':''}],
     documents:[],source:'website',lang:_currentLang()};
   try{
     const{data,error}=await sb.from('cases').insert([nc]).select().single();
@@ -1288,6 +1302,21 @@ async function doSubmitCit(){
     document.getElementById('c-ref').textContent = newCaseId;
     // Link push subscription to this phone (so they get personalized notifications)
     linkPushToPhone(phone, name);
+
+    // Emergency reports also fire a pre-filled WhatsApp to the
+    // municipality so someone sees it in real time — the DB record
+    // still exists for the audit trail.
+    if (isEmergency) {
+      const kind = (typeRaw === 'fire' || type === 'fire') ? '🔥 تبليغ عن حريق' : '🚨 حالة طوارئ';
+      const waMsg = kind + ' — بلدية وادي الست\n\n'+
+                    'المُبلِّغ: ' + name + '\n'+
+                    'الهاتف: ' + phone + '\n'+
+                    (addr ? 'العنوان المذكور: ' + addr + '\n' : '') +
+                    (loc ? '📍 الموقع (اضغط للفتح على الخرائط): ' + loc.url + '\n' : '⚠️ لم يُشارَك الموقع\n') +
+                    '\nالوصف:\n' + desc + '\n\n'+
+                    'رقم الطلب: #' + newCaseId;
+      try { window.open('https://wa.me/96176789039?text=' + encodeURIComponent(waMsg), '_blank'); } catch(_){}
+    }
 
     // Notify all staff that a new case was submitted
     if (window.PWA && window.PWA.sendPush) {
@@ -1374,6 +1403,54 @@ function renderCitFiles() {
     +'</div>'
   ).join('');
 }
+// Show/hide the emergency location box based on the request type.
+// Called from the c-type onchange in addition to showRequiredDocs.
+window._citLocation = null;
+function onCitTypeChange(typeId){
+  var box = document.getElementById('emergency-box');
+  if (!box) return;
+  var dbType = (typeof getDbType === 'function') ? getDbType(typeId) : typeId;
+  var isEmergency = (typeId === 'fire' || typeId === 'emergency' || dbType === 'fire' || dbType === 'emergency');
+  box.style.display = isEmergency ? 'block' : 'none';
+  if (!isEmergency) {
+    window._citLocation = null;
+    var s = document.getElementById('c-loc-status');
+    if (s) s.textContent = '';
+  }
+}
+
+// One-tap GPS capture. On success, stores lat/lng globally and prints
+// the map link into the status area. doSubmitCit picks it up and both
+// appends the link to the description AND fires a WhatsApp to the
+// municipality with the pre-filled emergency message.
+function captureCitLocation(){
+  var btn = document.getElementById('c-loc-btn');
+  var status = document.getElementById('c-loc-status');
+  if (!navigator.geolocation){
+    status.textContent = '⚠️ المتصفح لا يدعم تحديد الموقع';
+    return;
+  }
+  btn.disabled = true;
+  var oldTxt = btn.textContent;
+  btn.textContent = '⏳ جاري تحديد الموقع…';
+  status.textContent = '';
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat = pos.coords.latitude.toFixed(6);
+    var lng = pos.coords.longitude.toFixed(6);
+    var acc = Math.round(pos.coords.accuracy);
+    var url = 'https://maps.google.com/?q=' + lat + ',' + lng;
+    window._citLocation = { lat: lat, lng: lng, accuracy: acc, url: url };
+    btn.textContent = '✅ تمّ تحديد الموقع — اضغط لتحديثه';
+    btn.disabled = false;
+    status.innerHTML = '📍 <a href="' + url + '" target="_blank" style="color:#dc2626;font-weight:800">' + lat + ', ' + lng + '</a> (دقة ' + acc + 'م)';
+  }, function(err){
+    btn.disabled = false;
+    btn.textContent = oldTxt;
+    var msg = err.code === 1 ? '⚠️ تمّ رفض الإذن بالموقع' : err.code === 3 ? '⚠️ انتهت مهلة تحديد الموقع' : '⚠️ تعذّر تحديد الموقع';
+    status.textContent = msg;
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+}
+
 function showRequiredDocs(typeId) {
   var el = document.getElementById('required-docs-box');
   if (!el) return;
