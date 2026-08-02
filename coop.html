@@ -57,7 +57,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     sellerLogin: 'دخول البائع',
     sellerSignup: 'إنشاء حساب بائع',
     deliveryAgent: 'عامل توصيل',
-    deliveryAgentSub: 'انضمّ كمندوب توصيل',
+    deliveryAgentSub: 'دخول عامل التوصيل أو تسجيل جديد',
     notifs: 'الإشعارات',
     notifsEnable: 'فعّل التنبيهات',
     adminPanel: 'لوحة الإدارة',
@@ -187,7 +187,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     sellerLogin: 'Seller login',
     sellerSignup: 'Create a seller account',
     deliveryAgent: 'Delivery agent',
-    deliveryAgentSub: 'Join as a delivery agent',
+    deliveryAgentSub: 'Log in or register as delivery agent',
     notifs: 'Notifications',
     notifsEnable: 'Enable alerts',
     adminPanel: 'Admin panel',
@@ -316,7 +316,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     sellerLogin: 'Connexion vendeur',
     sellerSignup: 'Créer un compte vendeur',
     deliveryAgent: 'Livreur',
-    deliveryAgentSub: 'Rejoignez-nous comme livreur',
+    deliveryAgentSub: 'Se connecter ou s\'inscrire comme livreur',
     notifs: 'Notifications',
     notifsEnable: 'Activer les alertes',
     adminPanel: 'Panneau admin',
@@ -2033,7 +2033,9 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
     <div class="modal-body">
       <div id="da-status"></div>
       <div id="da-form">
-        <p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:14px">سجّل كعامل توصيل لمساعدة باعة وادي الست في توصيل طلباتهم. ستتلقّى إشعاراً عند توفّر طلب توصيل في منطقتك.</p>
+        <button class="btn btn-primary btn-block" onclick="showAgentLogin()" style="margin-bottom:14px;font-size:15px;padding:14px">🔑 لديك حساب؟ سجّل دخول عامل التوصيل</button>
+        <div style="text-align:center;color:var(--text3);font-size:11px;margin-bottom:10px">— أو —</div>
+        <p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:14px">سجّل كعامل توصيل جديد لمساعدة باعة وادي الست في توصيل طلباتهم.</p>
         <div class="field">
           <label class="field-label">الاسم الكامل *</label>
           <input class="field-input" id="da-name" placeholder="اسمك الكامل">
