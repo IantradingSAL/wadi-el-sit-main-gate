@@ -3,8 +3,8 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v50';
-const RUNTIME_NAME = 'wadi-elsit-runtime-v9';
+const CACHE_NAME   = 'wadi-elsit-v51';
+const RUNTIME_NAME = 'wadi-elsit-runtime-v10';
 
 // Push tracking config — used by notificationclick to mark opens.
 const PUSH_SUPABASE_URL = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
