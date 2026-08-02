@@ -1637,6 +1637,15 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div id="sell-content"></div>
 </div>
 
+<!-- ═══════════════════════ DELIVERY AGENT PAGE ═══════════════════════ -->
+<div class="page" id="page-agent">
+  <div class="appbar">
+    <div class="appbar-title">🚚 لوحة عامل التوصيل</div>
+    <div class="appbar-sub" id="agent-sub">الطلبات المتاحة وطلباتي</div>
+  </div>
+  <div id="agent-content"></div>
+</div>
+
 <!-- ═══════════════════════ SETTINGS PAGE ═══════════════════════ -->
 <div class="page" id="page-settings">
   <div class="appbar">
@@ -1788,6 +1797,10 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <button class="nav-item" data-tab="sell" onclick="switchTab('sell')">
     <div class="nav-icon-bg"><span class="nav-icon">🏪</span></div>
     <span data-i18n="navSeller">بائع</span>
+  </button>
+  <button class="nav-item" data-tab="agent" onclick="switchTab('agent')" id="nav-agent" style="display:none">
+    <div class="nav-icon-bg"><span class="nav-icon">🚚</span><div class="nav-dot" id="agent-nav-dot" style="display:none"></div></div>
+    <span>توصيل</span>
   </button>
   <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
     <div class="nav-icon-bg"><span class="nav-icon">⚙️</span></div>
@@ -2048,12 +2061,36 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
           </select>
         </div>
         <div class="field">
+          <label class="field-label">رمز PIN (4 أرقام) *</label>
+          <input class="field-input" id="da-pin" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="1234" style="direction:ltr;text-align:center;letter-spacing:6px;font-size:18px;font-weight:800">
+          <div class="field-hint">🔒 ستستخدمه لتسجيل الدخول لاحقاً</div>
+        </div>
+        <div class="field">
           <label class="field-label">ملاحظات (اختياري)</label>
           <textarea class="field-textarea" id="da-notes" placeholder="ساعات العمل المفضّلة، خبرة سابقة، إلخ..."></textarea>
         </div>
         <div class="banner info">
           <span class="banner-icon">ℹ️</span>
           <div class="banner-content">سيراجع طلبك من قبل البلدية، وسيتمّ التواصل معك خلال 24-48 ساعة.</div>
+        </div>
+        <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
+          لديك حساب عامل توصيل؟ <a onclick="showAgentLogin()" style="color:var(--primary);font-weight:700;cursor:pointer">سجّل دخول ←</a>
+        </div>
+      </div>
+      <div id="da-login" style="display:none">
+        <p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:14px">أدخل رقم هاتفك ورمز PIN للوصول إلى طلبات التوصيل.</p>
+        <div class="field">
+          <label class="field-label">رقم الهاتف</label>
+          <input class="field-input" id="dl-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
+        </div>
+        <div class="field">
+          <label class="field-label">رمز PIN</label>
+          <input class="field-input" id="dl-pin" type="tel" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" style="direction:ltr;text-align:center;letter-spacing:8px;font-size:20px;font-weight:800" onkeydown="if(event.key==='Enter')doAgentLogin()">
+        </div>
+        <div id="dl-err" style="color:var(--red);font-size:12px;text-align:center;display:none;margin-bottom:8px"></div>
+        <button class="btn btn-primary btn-block" onclick="doAgentLogin()">دخول ←</button>
+        <div style="text-align:center;margin-top:12px;font-size:13px;color:var(--text3)">
+          لست عامل توصيل؟ <a onclick="showAgentRegister()" style="color:var(--primary);font-weight:700;cursor:pointer">سجّل جديد ←</a>
         </div>
       </div>
     </div>
@@ -2175,6 +2212,7 @@ document.addEventListener('DOMContentLoaded',async function(){
   updateCartBadge();
   updateProfileCard();
   updateNotifsStatus();
+  updateAgentNav();
 
   // Start loading data in background
   await loadAllData();
@@ -2214,6 +2252,7 @@ function switchTab(tab){
   else if(tab==='shop') renderShopPage();
   else if(tab==='orders') renderOrdersPage();
   else if(tab==='sell') renderSellPage();
+  else if(tab==='agent') renderAgentPage();
   else if(tab==='settings') renderSettingsPage();
 
   // Update floating cart total bar visibility
@@ -2897,6 +2936,9 @@ function showOrderDetail(o){
         <div>📞 ${escapeHtml(o.customer_phone)}</div>
         ${o.customer_address?`<div>📍 ${escapeHtml(o.customer_address)}</div>`:''}
         <div>🚗 ${o.delivery_method==='pickup'?((window.__wadi_t&&window.__wadi_t('pickupShort'))||'استلام شخصي'):((window.__wadi_t&&window.__wadi_t('homeDelivery'))||'توصيل')}</div>
+        ${o.delivery_agent_id && o.delivery_method==='delivery'
+          ? `<div style="margin-top:6px;padding:8px 10px;background:#e6f4ea;border:1px solid #b6dfc2;border-radius:8px;font-size:12.5px;font-weight:700;color:#1f7a45">🚚 تمّ تعيين عامل توصيل — سيصلك قريباً</div>`
+          : (o.delivery_method==='delivery' ? `<div style="margin-top:6px;padding:6px 10px;background:#fff7e6;border:1px solid #f3d38a;border-radius:8px;font-size:12px;color:#8a5a00">⏳ بانتظار عامل توصيل</div>` : '')}
         ${o.notes?`<div style="margin-top:6px;color:var(--text3)">📝 ${escapeHtml(o.notes)}</div>`:''}
       </div>
     </div>
@@ -3077,7 +3119,170 @@ function closeDeliveryAgent(){
   document.getElementById('modal-delivery-agent').classList.remove('on');
   document.getElementById('da-status').innerHTML='';
   document.getElementById('da-form').style.display='block';
+  const dl = document.getElementById('da-login');
+  if(dl) dl.style.display='none';
   document.getElementById('da-foot').style.display='flex';
+}
+
+// ═══════════════════════ DELIVERY AGENT DASHBOARD ═══════════════════════
+async function renderAgentPage(){
+  const c = document.getElementById('agent-content');
+  if(!currentAgent){
+    c.innerHTML = `<div style="padding:20px"><div class="banner warn"><span class="banner-icon">🔒</span><div class="banner-content">سجّل دخولك كعامل توصيل للمتابعة</div></div><button class="btn btn-primary btn-block" style="margin-top:14px" onclick="document.getElementById('modal-delivery-agent').classList.add('on');showAgentLogin();">دخول عامل التوصيل ←</button></div>`;
+    return;
+  }
+  c.innerHTML = `<div style="padding:16px"><div class="spinner"></div></div>`;
+  // Load both queues: mine + available in my area
+  const [mine, avail] = await Promise.all([
+    sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
+      .eq('delivery_agent_id', currentAgent.id)
+      .not('delivery_status','eq','delivered')
+      .order('delivery_assigned_at',{ascending:false}),
+    sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
+      .eq('delivery_method','delivery')
+      .in('status',['pending','confirmed'])
+      .is('delivery_agent_id', null)
+      .order('created_at',{ascending:false}),
+  ]);
+  const mineRows = mine.data || [];
+  const availRows = avail.data || [];
+  // Update tab dot
+  const dot = document.getElementById('agent-nav-dot');
+  if(dot) dot.style.display = (mineRows.length + availRows.length) > 0 ? '' : 'none';
+
+  const orderCard = (o, mode) => {
+    const st = o.delivery_status || 'unassigned';
+    const total = formatPrice(o.total);
+    const items = (o.items||[]).map(i=>`• ${escapeHtml(i.name)} × ${i.qty}`).join('<br>');
+    const addr = o.customer_address ? `<div style="font-size:12px;color:var(--text3);margin-top:4px">📍 ${escapeHtml(o.customer_address)}</div>` : '';
+    const seller = o.coop_sellers ? `<div style="font-size:11.5px;color:var(--text3);margin-top:3px">🏪 ${escapeHtml(o.coop_sellers.display_name||'')} · ${escapeHtml(o.coop_sellers.phone||'')}</div>` : '';
+    let actions = '';
+    if(mode==='avail'){
+      actions = `<button class="btn btn-primary btn-sm" data-oid="${escapeAttr(o.id)}" data-act="accept" style="flex:1">🚚 قبول الطلب</button>`;
+    } else {
+      if(st==='assigned'){
+        actions = `<button class="btn btn-primary btn-sm" data-oid="${escapeAttr(o.id)}" data-act="pickup" style="flex:1">📦 استلمت الطلب</button>`;
+      } else if(st==='picked_up'){
+        actions = `<button class="btn btn-green btn-sm" data-oid="${escapeAttr(o.id)}" data-act="delivered" style="flex:1">✅ تمّ التسليم</button>`;
+      }
+      actions += `<button class="btn btn-red btn-sm" data-oid="${escapeAttr(o.id)}" data-act="release">↩️ إلغاء</button>`;
+    }
+    const stBadge = st==='assigned' ? '⏳ مُعيّن' : st==='picked_up' ? '📦 في الطريق' : st==='delivered' ? '✅ سُلّم' : '';
+    const waLink = o.customer_phone ? `<a href="https://wa.me/${escapeAttr(o.customer_phone.replace(/^\+?/,'').replace(/[^\d]/g,''))}" target="_blank" class="btn btn-ghost btn-sm">💬 عميل</a>` : '';
+    return `<div class="order-card">
+      <div class="order-row">
+        <span class="order-id">#${(''+o.id).slice(0,8).toUpperCase()}</span>
+        <span class="order-status os-${o.status}">${stBadge || statusBadge(o.status)}</span>
+      </div>
+      <div style="font-size:13.5px;font-weight:700;margin-top:4px">${escapeHtml(o.customer_name||'-')}</div>
+      <div style="font-size:11.5px;color:var(--text3)">${escapeHtml(o.customer_phone||'')}</div>
+      ${addr}${seller}
+      <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6">${items}</div>
+      <div class="order-foot" style="margin-top:6px"><span class="order-date">${formatDate(o.created_at)}</span><span class="order-total">${total}</span></div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${waLink}${actions}</div>
+    </div>`;
+  };
+
+  c.innerHTML = `
+    <div style="padding:14px 16px">
+      <div class="banner info" style="margin-bottom:14px">
+        <span class="banner-icon">👤</span>
+        <div class="banner-content"><div style="font-weight:800">${escapeHtml(currentAgent.name)}</div><div style="font-size:12px;color:var(--text3)">🏘️ ${escapeHtml(currentAgent.area)} · ${escapeHtml(currentAgent.phone)}</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="logoutAgent()" style="align-self:center;flex-shrink:0">خروج</button>
+      </div>
+
+      <div class="section-title mb-1">📥 طلباتي (${mineRows.length})</div>
+      ${mineRows.length ? mineRows.map(o=>orderCard(o,'mine')).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا توجد طلبات نشطة</div>'}
+
+      <div class="section-title mt-3 mb-1">🌍 طلبات متاحة في منطقتك (${availRows.length})</div>
+      ${availRows.length ? availRows.map(o=>orderCard(o,'avail')).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا توجد طلبات متاحة حالياً</div>'}
+    </div>`;
+
+  c.querySelectorAll('button[data-act]').forEach(b => {
+    b.onclick = async () => {
+      const oid = b.dataset.oid, act = b.dataset.act;
+      b.disabled = true;
+      const oldText = b.textContent;
+      b.textContent = '⏳';
+      let patch = null;
+      const now = new Date().toISOString();
+      if(act==='accept')    patch = { delivery_agent_id: currentAgent.id, delivery_status: 'assigned', delivery_assigned_at: now };
+      else if(act==='pickup')    patch = { delivery_status: 'picked_up', delivery_picked_up_at: now, status: 'out_for_delivery' };
+      else if(act==='delivered') patch = { delivery_status: 'delivered', delivery_delivered_at: now, status: 'delivered' };
+      else if(act==='release')   patch = { delivery_agent_id: null, delivery_status: 'unassigned', delivery_assigned_at: null };
+      if(!patch){ b.disabled = false; b.textContent = oldText; return; }
+      const { error } = await sb.from('coop_orders').update(patch).eq('id', oid);
+      if(error){ b.disabled = false; b.textContent = oldText; toast('⚠️ '+error.message,'err'); return; }
+      toast('✅ تمّ التحديث','ok');
+      renderAgentPage();
+    };
+  });
+}
+
+async function sha256hex(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function showAgentLogin(){
+  document.getElementById('da-form').style.display='none';
+  document.getElementById('da-login').style.display='block';
+  document.getElementById('da-foot').style.display='none';
+}
+function showAgentRegister(){
+  document.getElementById('da-login').style.display='none';
+  document.getElementById('da-form').style.display='block';
+  document.getElementById('da-foot').style.display='flex';
+}
+
+let currentAgent = null;
+try {
+  const stored = localStorage.getItem('coop_agent');
+  if (stored) currentAgent = JSON.parse(stored);
+} catch(e){}
+
+function updateAgentNav(){
+  const nav = document.getElementById('nav-agent');
+  if(nav) nav.style.display = currentAgent ? '' : 'none';
+}
+
+async function doAgentLogin(){
+  const phone = document.getElementById('dl-phone').value.trim();
+  const pin = document.getElementById('dl-pin').value.trim();
+  const err = document.getElementById('dl-err');
+  err.style.display = 'none';
+  if(!phone || !/^\d{4}$/.test(pin)){
+    err.textContent = 'أدخل رقم هاتفك ورمز PIN صحيحاً (4 أرقام)';
+    err.style.display = 'block';
+    return;
+  }
+  try {
+    const { data, error } = await sb.rpc('coop_agent_verify_pin', { p_phone: phone, p_pin: pin });
+    if(error || !data || !data.length){
+      err.textContent = 'بيانات الدخول غير صحيحة أو الحساب غير مفعّل';
+      err.style.display = 'block';
+      return;
+    }
+    const row = data[0];
+    currentAgent = { id: row.agent_id, name: row.name, phone, area: row.area, vehicle: row.vehicle, status: row.status };
+    localStorage.setItem('coop_agent', JSON.stringify(currentAgent));
+    updateAgentNav();
+    closeDeliveryAgent();
+    switchTab('agent');
+    toast('✅ مرحباً '+currentAgent.name, 'ok');
+  } catch(e){
+    console.error(e);
+    err.textContent = 'خطأ في الاتصال';
+    err.style.display = 'block';
+  }
+}
+
+function logoutAgent(){
+  if(!confirm('تسجيل خروج عامل التوصيل؟')) return;
+  currentAgent = null;
+  localStorage.removeItem('coop_agent');
+  updateAgentNav();
+  switchTab('home');
 }
 
 async function submitDeliveryAgent(){
@@ -3086,17 +3291,20 @@ async function submitDeliveryAgent(){
   const wa=document.getElementById('da-wa').value.trim();
   const area=document.getElementById('da-area').value.trim();
   const vehicle=document.getElementById('da-vehicle').value;
+  const pin=document.getElementById('da-pin').value.trim();
   const notes=document.getElementById('da-notes').value.trim();
-  
+
   if(!name){toast(((window.__wadi_t&&window.__wadi_t('nameRequired'))||'الاسم مطلوب'),'err');return;}
   if(!phone||phone.length<7){toast(((window.__wadi_t&&window.__wadi_t('phoneInvalid'))||'الهاتف غير صحيح'),'err');return;}
   if(!wa||wa.length<7){toast(L().errWaInvalid,'err');return;}
   if(!area){toast(L().errAreaReq,'err');return;}
   if(!vehicle){toast(L().errVehicleReq,'err');return;}
+  if(!/^\d{4}$/.test(pin)){toast('رمز PIN يجب أن يكون 4 أرقام','err');return;}
 
   try{
+    const pin_hash = await sha256hex(pin);
     const res=await sb.from('coop_delivery_agents').insert([{
-      name,phone,whatsapp:wa,area,vehicle,notes:notes||null,status:'pending'
+      name,phone,whatsapp:wa,area,vehicle,notes:notes||null,status:'pending',pin_hash
     }]).select().single();
     if(res.error){
       console.error(res.error);
