@@ -2516,6 +2516,25 @@ function addPill(parent,id,label,active){
 }
 
 /* ═══════ WHATSAPP CONTACT ═══════ */
+// window.open() often returns null inside an installed PWA (standalone
+// mode) so nothing happens. A real anchor click hands off to the OS's
+// url router — which knows to open WhatsApp for wa.me links.
+function openWhatsApp(url){
+  try {
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch(e){
+    // Last-resort: navigate the current window; iOS in-app PWA
+    // handles this and comes back after WhatsApp closes.
+    try { window.location.href = url; } catch(_){}
+  }
+}
+
 function contactSellerWA(p){
   const wa=p.coop_sellers?.whatsapp||p.coop_sellers?.phone||'';
   if(!wa){toast(L().sellerNoWA,'err');return;}
@@ -2530,7 +2549,7 @@ function contactSellerWA(p){
   if(cleanWa.startsWith('961')){/*ok*/}
   else if(cleanWa.startsWith('0')) cleanWa='961'+cleanWa.substring(1);
   else cleanWa='961'+cleanWa;
-  window.open('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg),'_blank');
+  openWhatsApp('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg));
 }
 
 function onSearchInput(){
@@ -3460,7 +3479,7 @@ function requestAgentPayout(amount, count){
               `عدد التسليمات: ${count}\n`+
               `المبلغ المستحق: ${formatPrice(amount)}\n\n`+
               `يرجى التواصل لتنسيق الصرف. شكراً.`;
-  window.open('https://wa.me/96176789039?text='+encodeURIComponent(msg),'_blank');
+  openWhatsApp('https://wa.me/96176789039?text='+encodeURIComponent(msg));
   toast('✅ تمّ إرسال طلب الصرف','ok');
 }
 
@@ -3913,7 +3932,7 @@ function contactCustomerWA(phone, name, item, total){
   if(cleanWa.startsWith('961')){/*ok*/}
   else if(cleanWa.startsWith('0')) cleanWa='961'+cleanWa.substring(1);
   else cleanWa='961'+cleanWa;
-  window.open('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg),'_blank');
+  openWhatsApp('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg));
 }
 
 function requestPayout(){
@@ -3929,7 +3948,7 @@ function requestPayout(){
               `الهاتف: ${currentSeller.phone}\n`+
               `المبلغ المطلوب سحبه: ${formatPrice(due)} ل.ل.\n\n`+
               `يرجى التواصل لتنسيق التسليم. شكراً.`;
-  window.open('https://wa.me/96176789039?text='+encodeURIComponent(msg),'_blank');
+  openWhatsApp('https://wa.me/96176789039?text='+encodeURIComponent(msg));
   toast('✅ تمّ إرسال طلب السحب','ok');
 }
 
