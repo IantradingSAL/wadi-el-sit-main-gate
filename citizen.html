@@ -1039,6 +1039,11 @@ function updateCitizenTypeSelect() {
   sel.innerHTML = cats.map(function(c) {
     return '<option value="' + c.id + '">' + c.icon + ' ' + pickLang(c.labelI18n||c.label) + '</option>';
   }).join('');
+  // Sync the emergency-location box + required-docs box to whatever
+  // option is now selected. onchange doesn't fire when JS repopulates
+  // the options — so kick both handlers manually.
+  if (typeof onCitTypeChange === 'function') onCitTypeChange(sel.value);
+  if (typeof showRequiredDocs === 'function') showRequiredDocs(sel.value);
 }
 function showCitizenHero(){
   // Show main citizen portal (track + submit form always visible)
