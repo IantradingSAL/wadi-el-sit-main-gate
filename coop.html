@@ -3154,13 +3154,17 @@ async function renderAgentPage(){
   const mineRows = mine.data || [];
   const doneRows = done.data || [];
   const availRows = avail.data || [];
-  // Stats: this month + all-time
+  // Stats: this month + all-time (order values) + unpaid earnings
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
   const doneThisMonth = doneRows.filter(o => new Date(o.delivery_delivered_at || o.created_at).getTime() >= monthStart);
   const sumTotals = arr => arr.reduce((s,o) => s + (Number(o.total)||0), 0);
+  const sumFees   = arr => arr.reduce((s,o) => s + (Number(o.delivery_fee_lbp)||0), 0);
   const totalMonth = sumTotals(doneThisMonth);
   const totalAll   = sumTotals(doneRows);
+  const unpaidRows = doneRows.filter(o => !o.delivery_paid_at);
+  const unpaidSum  = sumFees(unpaidRows);
+  const paidSum    = sumFees(doneRows.filter(o => o.delivery_paid_at));
   // Update tab dot
   const dot = document.getElementById('agent-nav-dot');
   if(dot) dot.style.display = (mineRows.length + availRows.length) > 0 ? '' : 'none';
@@ -3202,10 +3206,15 @@ async function renderAgentPage(){
     const total = formatPrice(o.total);
     const items = (o.items||[]).map(i=>`${escapeHtml(i.name)} × ${i.qty}`).join(', ');
     const when = o.delivery_delivered_at ? formatDate(o.delivery_delivered_at) : formatDate(o.created_at);
+    const fee = Number(o.delivery_fee_lbp || 0);
+    const paid = !!o.delivery_paid_at;
+    const feeBadge = fee > 0
+      ? `<span style="margin-inline-start:6px;font-size:11px;padding:2px 8px;border-radius:8px;background:${paid?'#e6f4ea':'#fff7e6'};color:${paid?'#1f7a45':'#8a5a00'};font-weight:800">💵 ${paid?'مدفوع':'غير مدفوع'}: ${formatPrice(fee)}</span>`
+      : '';
     return `<div class="order-card">
       <div class="order-row">
         <span class="order-id">#${(''+o.id).slice(0,8).toUpperCase()}</span>
-        <span class="order-status os-delivered">✅ سُلّم</span>
+        <span class="order-status os-delivered">✅ سُلّم${feeBadge}</span>
       </div>
       <div style="font-size:13px;font-weight:700;margin-top:4px">${escapeHtml(o.customer_name||'-')}</div>
       <div style="font-size:11.5px;color:var(--text3);margin-top:2px">${items}</div>
@@ -3231,6 +3240,17 @@ async function renderAgentPage(){
           <div style="font-size:22px;font-weight:900;color:var(--accent)">${doneRows.length}</div>
           <div style="font-size:11px;color:var(--text3);font-weight:700">إجمالي التسليمات</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${formatPrice(totalAll)}</div>
+        </div>
+      </div>
+
+      <div class="settings-item" style="cursor:default;flex-direction:column;align-items:stretch;padding:14px;margin-bottom:10px;background:#f0fdf4;border-color:#b6dfc2">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:11.5px;color:#1f7a45;font-weight:800">💰 مستحقّاتي غير المدفوعة</div>
+            <div style="font-size:22px;font-weight:900;color:#1f7a45;margin-top:2px">${formatPrice(unpaidSum)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">${unpaidRows.length} تسليم · مدفوع سابقاً: ${formatPrice(paidSum)}</div>
+          </div>
+          <button class="btn btn-green btn-sm" ${unpaidSum>0?'':'disabled'} onclick="requestAgentPayout(${unpaidSum},${unpaidRows.length})">💵 طلب صرف</button>
         </div>
       </div>
 
@@ -3272,7 +3292,16 @@ async function renderAgentPage(){
       const now = new Date().toISOString();
       if(act==='accept')    patch = { delivery_agent_id: currentAgent.id, delivery_status: 'assigned', delivery_assigned_at: now };
       else if(act==='pickup')    patch = { delivery_status: 'picked_up', delivery_picked_up_at: now, status: 'out_for_delivery' };
-      else if(act==='delivered') patch = { delivery_status: 'delivered', delivery_delivered_at: now, status: 'delivered' };
+      else if(act==='delivered') {
+        // Snapshot the current delivery fee onto this order so a later
+        // rate change doesn't retroactively repay it.
+        let fee = 0;
+        try {
+          const { data } = await sb.from('system_settings').select('value').eq('key','coop_delivery_fee_lbp').maybeSingle();
+          fee = parseInt((data && data.value) || '0', 10) || 0;
+        } catch(_) {}
+        patch = { delivery_status: 'delivered', delivery_delivered_at: now, status: 'delivered', delivery_fee_lbp: fee };
+      }
       else if(act==='release')   patch = { delivery_agent_id: null, delivery_status: 'unassigned', delivery_assigned_at: null };
       if(!patch){ b.disabled = false; b.textContent = oldText; return; }
       const { error } = await sb.from('coop_orders').update(patch).eq('id', oid);
@@ -3339,6 +3368,19 @@ async function doAgentLogin(){
     err.textContent = 'خطأ في الاتصال';
     err.style.display = 'block';
   }
+}
+
+function requestAgentPayout(amount, count){
+  if(!currentAgent) return;
+  if(!(amount > 0)){ toast('لا يوجد مستحقّات لصرفها','err'); return; }
+  const msg = `💵 طلب صرف مستحقّات — تعاونيّة بلدية وادي الست\n\n`+
+              `العامل: ${currentAgent.name}\n`+
+              `الهاتف: ${currentAgent.phone}\n`+
+              `عدد التسليمات: ${count}\n`+
+              `المبلغ المستحق: ${formatPrice(amount)}\n\n`+
+              `يرجى التواصل لتنسيق الصرف. شكراً.`;
+  window.open('https://wa.me/96176789039?text='+encodeURIComponent(msg),'_blank');
+  toast('✅ تمّ إرسال طلب الصرف','ok');
 }
 
 function logoutAgent(){
@@ -4373,12 +4415,29 @@ async function loadAdminPanel(){
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px" data-i18n="rateHint">يُطبَّق فوراً على كل الأسعار المعروضة في المتجر</div>
         </div>
-        
+
+        <div class="section-title mt-3 mb-1">🚚 رسوم التوصيل</div>
+        <div class="settings-item" style="cursor:default;flex-direction:column;align-items:stretch;padding:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:13px;color:var(--text3);font-weight:700">أجرة التوصيل لكل طلب (ل.ل.)</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:stretch">
+            <input class="field-input" id="dfee-input" type="number" step="1000" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="50000">
+            <button class="btn btn-primary" onclick="saveDeliveryFee()">حفظ ✓</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">هذه الأجرة يحصل عليها عامل التوصيل بعد كل تسليم. تعديلها يؤثّر فقط على الطلبات المقبلة.</div>
+        </div>
+
+        <div class="section-title mt-3 mb-1">💰 مستحقّات عمّال التوصيل</div>
+        <div id="admin-agent-payouts"></div>
+
         <button class="btn btn-ghost btn-block mt-3" onclick="logoutAdmin()">تسجيل خروج الإدارة</button>
       </div>
     `;
     
     populateCurrencyAdmin();
+    populateDeliveryFeeAdmin();
+    renderAgentPayouts(agents);
 
     // ─── ANALYTICS: aggregate delivered orders into per-seller + per-product + per-customer numbers ───
     const dashT = (k) => (L() && L()[k]) || k;
@@ -4836,6 +4895,7 @@ async function loadAdminPanel(){
             ${blocked
               ? `<button class="btn btn-green btn-sm" data-id="${escapeAttr(agent.id)}" data-act="unblock-agent">✅ إلغاء الحظر</button>`
               : `<button class="btn btn-ghost btn-sm" data-id="${escapeAttr(agent.id)}" data-act="block-agent" style="border-color:#e5b73b;color:#8a6200">🚫 حظر</button>`}
+            <button class="btn btn-out btn-sm" data-id="${escapeAttr(agent.id)}" data-name="${escapeAttr(agent.name||'')}" data-act="set-pin">🔑 تعيين PIN</button>
             <button class="btn btn-red btn-sm" data-id="${escapeAttr(agent.id)}" data-name="${escapeAttr(agent.name||'')}" data-act="delete-agent">🗑️ حذف</button>
           </div>
         `;
@@ -4852,6 +4912,17 @@ async function loadAdminPanel(){
               if(error){done();toast('⚠️ '+error.message,'err');return;}
               toast('🗑️ تم حذف العامل','ok');
               el.remove();
+              return;
+            } else if(act==='set-pin'){
+              const pin = prompt('أدخل رمز PIN جديد (4 أرقام) للعامل "'+(b.dataset.name||'')+'":');
+              if(!pin) return;
+              if(!/^\d{4}$/.test(pin)){ toast('رمز PIN يجب أن يكون 4 أرقام','err'); return; }
+              busy('⏳ حفظ');
+              const pin_hash = await sha256hex(pin);
+              const{error}=await sb.from('coop_delivery_agents').update({pin_hash}).eq('id',id);
+              done();
+              if(error){toast('⚠️ '+error.message,'err');return;}
+              toast('🔑 تمّ حفظ الرمز — أعطه للعامل','ok');
               return;
             } else {
               busy();
@@ -4963,6 +5034,79 @@ async function loadAdminPanel(){
   }
 }
 
+
+async function populateDeliveryFeeAdmin(){
+  const inp = document.getElementById('dfee-input');
+  if(!inp) return;
+  const { data } = await sb.from('system_settings').select('value').eq('key','coop_delivery_fee_lbp').maybeSingle();
+  inp.value = parseInt((data && data.value) || '50000', 10);
+}
+
+async function saveDeliveryFee(){
+  if (!currentAdmin || !['mayor','admin','super_admin'].includes(currentAdmin.role)) {
+    toast(L().notAdmin || 'Not authorized','err'); return;
+  }
+  const v = parseInt(document.getElementById('dfee-input').value, 10);
+  if(!(v >= 0)){ toast('قيمة غير صحيحة','err'); return; }
+  const { error } = await sb.from('system_settings')
+    .update({ value: String(v), updated_at: new Date().toISOString() })
+    .eq('key','coop_delivery_fee_lbp');
+  if(error){ toast('⚠️ '+error.message,'err'); return; }
+  toast('✅ تمّ حفظ رسوم التوصيل','ok');
+}
+
+// Admin: list agents with unpaid delivery earnings + "mark paid"
+async function renderAgentPayouts(agents){
+  const box = document.getElementById('admin-agent-payouts');
+  if(!box) return;
+  box.innerHTML = '<div style="text-align:center;color:var(--text3);font-size:12px;padding:10px">…</div>';
+  const { data: unpaid, error } = await sb.from('coop_orders')
+    .select('delivery_agent_id, delivery_fee_lbp')
+    .eq('delivery_status','delivered')
+    .is('delivery_paid_at', null)
+    .not('delivery_agent_id','is', null);
+  if(error){ box.innerHTML = `<div style="color:var(--red);font-size:12px;padding:10px">⚠️ ${escapeHtml(error.message)}</div>`; return; }
+  if(!unpaid || !unpaid.length){
+    box.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد مستحقّات معلّقة</div>`;
+    return;
+  }
+  const agg = {};
+  unpaid.forEach(r => {
+    const a = agg[r.delivery_agent_id] = agg[r.delivery_agent_id] || { count:0, sum:0 };
+    a.count += 1;
+    a.sum += Number(r.delivery_fee_lbp || 0);
+  });
+  const agentById = {}; (agents||[]).forEach(a => { agentById[a.id] = a; });
+  box.innerHTML = Object.entries(agg).map(([id, s]) => {
+    const a = agentById[id] || { name:'(محذوف)', phone:'' };
+    return `<div class="order-card" style="display:flex;align-items:center;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800">${escapeHtml(a.name)}</div>
+        <div style="font-size:11.5px;color:var(--text3)">${escapeHtml(a.phone||'')} · ${s.count} تسليم</div>
+      </div>
+      <div style="font-size:14px;font-weight:900;color:#1f7a45;white-space:nowrap">${formatPrice(s.sum)}</div>
+      <button class="btn btn-green btn-sm" data-agent-id="${escapeAttr(id)}" data-act="mark-paid">💵 دفع</button>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('button[data-act="mark-paid"]').forEach(btn => {
+    btn.onclick = async () => {
+      if(!confirm('تأكيد صرف جميع المستحقّات المعلّقة لهذا العامل؟')) return;
+      btn.disabled = true; btn.textContent = '⏳';
+      const now = new Date().toISOString();
+      const { error } = await sb.from('coop_orders')
+        .update({ delivery_paid_at: now })
+        .eq('delivery_agent_id', btn.dataset.agentId)
+        .eq('delivery_status','delivered')
+        .is('delivery_paid_at', null);
+      if(error){ btn.disabled=false; btn.textContent='💵 دفع'; toast('⚠️ '+error.message,'err'); return; }
+      toast('✅ تمّ تسجيل الدفعة','ok');
+      btn.closest('.order-card')?.remove();
+      if(!box.querySelector('.order-card')){
+        box.innerHTML = `<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا يوجد مستحقّات معلّقة</div>`;
+      }
+    };
+  });
+}
 
 async function saveCurrencyRate(){
   if (!currentAdmin || !['mayor','admin','super_admin'].includes(currentAdmin.role)) {
