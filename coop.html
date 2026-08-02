@@ -3134,12 +3134,17 @@ async function renderAgentPage(){
     return;
   }
   c.innerHTML = `<div style="padding:16px"><div class="spinner"></div></div>`;
-  // Load both queues: mine + available in my area
-  const [mine, avail] = await Promise.all([
+  // Load three queues: active mine, delivered history, available in area
+  const [mine, done, avail] = await Promise.all([
     sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
       .eq('delivery_agent_id', currentAgent.id)
       .not('delivery_status','eq','delivered')
       .order('delivery_assigned_at',{ascending:false}),
+    sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
+      .eq('delivery_agent_id', currentAgent.id)
+      .eq('delivery_status','delivered')
+      .order('delivery_delivered_at',{ascending:false})
+      .limit(100),
     sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
       .eq('delivery_method','delivery')
       .in('status',['pending','confirmed'])
@@ -3147,7 +3152,15 @@ async function renderAgentPage(){
       .order('created_at',{ascending:false}),
   ]);
   const mineRows = mine.data || [];
+  const doneRows = done.data || [];
   const availRows = avail.data || [];
+  // Stats: this month + all-time
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const doneThisMonth = doneRows.filter(o => new Date(o.delivery_delivered_at || o.created_at).getTime() >= monthStart);
+  const sumTotals = arr => arr.reduce((s,o) => s + (Number(o.total)||0), 0);
+  const totalMonth = sumTotals(doneThisMonth);
+  const totalAll   = sumTotals(doneRows);
   // Update tab dot
   const dot = document.getElementById('agent-nav-dot');
   if(dot) dot.style.display = (mineRows.length + availRows.length) > 0 ? '' : 'none';
@@ -3185,6 +3198,21 @@ async function renderAgentPage(){
     </div>`;
   };
 
+  const historyCard = (o) => {
+    const total = formatPrice(o.total);
+    const items = (o.items||[]).map(i=>`${escapeHtml(i.name)} × ${i.qty}`).join(', ');
+    const when = o.delivery_delivered_at ? formatDate(o.delivery_delivered_at) : formatDate(o.created_at);
+    return `<div class="order-card">
+      <div class="order-row">
+        <span class="order-id">#${(''+o.id).slice(0,8).toUpperCase()}</span>
+        <span class="order-status os-delivered">✅ سُلّم</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-top:4px">${escapeHtml(o.customer_name||'-')}</div>
+      <div style="font-size:11.5px;color:var(--text3);margin-top:2px">${items}</div>
+      <div class="order-foot" style="margin-top:6px"><span class="order-date">🗓️ ${when}</span><span class="order-total">${total}</span></div>
+    </div>`;
+  };
+
   c.innerHTML = `
     <div style="padding:14px 16px">
       <div class="banner info" style="margin-bottom:14px">
@@ -3193,12 +3221,46 @@ async function renderAgentPage(){
         <button class="btn btn-ghost btn-sm" onclick="logoutAgent()" style="align-self:center;flex-shrink:0">خروج</button>
       </div>
 
-      <div class="section-title mb-1">📥 طلباتي (${mineRows.length})</div>
-      ${mineRows.length ? mineRows.map(o=>orderCard(o,'mine')).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا توجد طلبات نشطة</div>'}
+      <div class="row-2 mb-2">
+        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--primary)">${doneThisMonth.length}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:700">طلب هذا الشهر</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${formatPrice(totalMonth)}</div>
+        </div>
+        <div class="settings-item" style="cursor:default;flex-direction:column;text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--accent)">${doneRows.length}</div>
+          <div style="font-size:11px;color:var(--text3);font-weight:700">إجمالي التسليمات</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${formatPrice(totalAll)}</div>
+        </div>
+      </div>
 
-      <div class="section-title mt-3 mb-1">🌍 طلبات متاحة في منطقتك (${availRows.length})</div>
-      ${availRows.length ? availRows.map(o=>orderCard(o,'avail')).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:14px">لا توجد طلبات متاحة حالياً</div>'}
+      <div class="tab-bar" style="margin:0 0 12px" role="tablist">
+        <button class="tab-pill active" data-agent-tab="active">🚚 نشطة (${mineRows.length})</button>
+        <button class="tab-pill" data-agent-tab="available">🌍 متاحة (${availRows.length})</button>
+        <button class="tab-pill" data-agent-tab="history">📜 السجل (${doneRows.length})</button>
+      </div>
+
+      <div id="agent-tab-active">
+        ${mineRows.length ? mineRows.map(o=>orderCard(o,'mine')).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:18px">لا توجد طلبات نشطة</div>'}
+      </div>
+      <div id="agent-tab-available" style="display:none">
+        ${availRows.length ? availRows.map(o=>orderCard(o,'avail')).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:18px">لا توجد طلبات متاحة حالياً</div>'}
+      </div>
+      <div id="agent-tab-history" style="display:none">
+        ${doneRows.length ? doneRows.map(o=>historyCard(o)).join('') : '<div style="text-align:center;color:var(--text3);font-size:12px;padding:18px">لا يوجد سجل توصيل بعد</div>'}
+      </div>
     </div>`;
+
+  // Sub-tab switching
+  c.querySelectorAll('button[data-agent-tab]').forEach(btn => {
+    btn.onclick = () => {
+      const which = btn.dataset.agentTab;
+      c.querySelectorAll('button[data-agent-tab]').forEach(b => b.classList.toggle('active', b === btn));
+      c.querySelector('#agent-tab-active').style.display    = which === 'active'    ? '' : 'none';
+      c.querySelector('#agent-tab-available').style.display = which === 'available' ? '' : 'none';
+      c.querySelector('#agent-tab-history').style.display   = which === 'history'   ? '' : 'none';
+    };
+  });
 
   c.querySelectorAll('button[data-act]').forEach(b => {
     b.onclick = async () => {
