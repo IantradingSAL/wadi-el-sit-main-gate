@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>404 — بلدية وادي الست</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+(function(){
+  try {
+    var path = window.location.pathname || '';
+    // Short-link redirect: /r/<code> → Supabase edge function.
+    // GitHub Pages serves this 404.html for any unknown path, so we
+    // handle the redirect client-side here since GitHub Pages does
+    // not support rewrites or server-side redirects.
+    var m = path.match(/^\/r\/([^\/\?#]+)/);
+    if (m && m[1]) {
+      var code = decodeURIComponent(m[1]);
+      window.location.replace('https://onjbwhkmmtqnymhjnplw.supabase.co/functions/v1/r/' + encodeURIComponent(code));
+      return;
+    }
+  } catch(e) {}
+  // Otherwise: reveal the normal 404 UI (no redirect).
+  document.addEventListener('DOMContentLoaded', function(){
+    var el = document.getElementById('nf');
+    if (el) el.style.display = 'block';
+  });
+})();
+</script>
+<style>
+body{font-family:system-ui,'Tajawal',sans-serif;background:#f7f8fb;color:#1a1a2e;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px;text-align:center}
+#nf{max-width:440px;display:none}
+h1{font-size:72px;margin:0 0 8px;color:#dc2626;font-weight:900}
+h2{font-size:18px;margin:0 0 12px;color:#1a1a2e}
+p{font-size:14px;color:#555;line-height:1.7;margin:8px 0}
+a{display:inline-block;margin-top:14px;padding:10px 18px;background:#0f4d82;color:#fff;text-decoration:none;border-radius:10px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="nf">
+  <h1>404</h1>
+  <h2>الصفحة غير موجودة</h2>
+  <p>الرابط الذي تحاول فتحه غير متوفّر أو انتهت صلاحيته.<br>The page you are trying to open is not available or has expired.</p>
+  <a href="/">🏠 الرئيسية / Home</a>
+</div>
+</body>
+</html>
