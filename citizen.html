@@ -1447,8 +1447,20 @@ async function doSubmitCit(){
       try {
         const { error: ue } = await sb.storage.from('case-documents').upload(path, f, {upsert: true});
         if (!ue) {
-          const { data: pd } = sb.storage.from('case-documents').getPublicUrl(path);
-          _emergencyUploadedDocs.push({ name: f.name, path: path, url: pd.publicUrl, type: ext, size: f.size });
+          // case-documents is a private bucket, so getPublicUrl() returns
+          // a URL that 404s. Use a signed URL with a long expiry (30 days)
+          // so the municipality can open it from WhatsApp.
+          let fileUrl = '';
+          try {
+            const { data: sd, error: se } = await sb.storage.from('case-documents')
+              .createSignedUrl(path, 60 * 60 * 24 * 30);
+            if (!se && sd && sd.signedUrl) fileUrl = sd.signedUrl;
+          } catch(se) { console.error('sign url error:', se); }
+          if (!fileUrl) {
+            const { data: pd } = sb.storage.from('case-documents').getPublicUrl(path);
+            fileUrl = pd.publicUrl;
+          }
+          _emergencyUploadedDocs.push({ name: f.name, path: path, url: fileUrl, type: ext, size: f.size });
         }
       } catch (fe) { console.error('emergency upload error:', fe); }
     }
