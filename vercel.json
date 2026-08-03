@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/r/:code",
-      "destination": "https://onjbwhkmmtqnymhjnplw.supabase.co/functions/v1/r/:code"
-    }
-  ]
-}
