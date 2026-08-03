@@ -598,6 +598,21 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
       showRequiredDocs(sel.value);
     }
   } catch(e){}
+  /* Re-render push notification toggle so its button/hint pick up the new language */
+  try {
+    if (window.PWA && window.PWA.renderToggle && window.PWA.canPush && window.PWA.canPush()) {
+      window.PWA.renderToggle('cit-push-toggle', {
+        topics: ['general', 'cases'],
+        role: 'citizen'
+      });
+    } else {
+      var _pFallback = document.getElementById('cit-push-fallback-btn');
+      if (_pFallback){
+        var _L2 = (typeof L === 'function') ? L() : {};
+        _pFallback.textContent = _L2.pushEnableBtn || '🔔 تفعيل الإشعارات';
+      }
+    }
+  } catch(e){}
 }); }catch(e){} }
 </script>
 
