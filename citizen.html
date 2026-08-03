@@ -338,6 +338,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     waNoLocation: '⚠️ لم يُشارَك الموقع',
     waDescLbl: 'الوصف',
     waAttachmentsLbl: '📎 المرفقات',
+    waCaseRefLbl: 'رقم الطلب',
     /* Description-appended location block */
     descLocLbl: '📍 الموقع',
     descCoordsLbl: 'الإحداثيات',
@@ -425,6 +426,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     waNoLocation: '⚠️ Location was not shared',
     waDescLbl: 'Description',
     waAttachmentsLbl: '📎 Attachments',
+    waCaseRefLbl: 'Request #',
     /* Description-appended location block */
     descLocLbl: '📍 Location',
     descCoordsLbl: 'Coordinates',
@@ -512,6 +514,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
     waNoLocation: '⚠️ Position non partagée',
     waDescLbl: 'Description',
     waAttachmentsLbl: '📎 Pièces jointes',
+    waCaseRefLbl: 'Demande n°',
     /* Description-appended location block */
     descLocLbl: '📍 Position',
     descCoordsLbl: 'Coordonnées',
@@ -1430,82 +1433,6 @@ async function doSubmitCit(){
     btn.textContent = _LS.submitBtnBusy || '⏳ جاري الإرسال…';
   }
 
-  // For emergency reports with attached files: upload them BEFORE firing
-  // WhatsApp so we can include their public URLs in the message. wa.me
-  // only carries text, so URLs are the only way to hand photos over.
-  // The upload folder is reused later so we don't re-upload on the case
-  // insert step.
-  var _emergencyUploadedDocs = [];
-  var _emergencyUploadFolder = null;
-  if (isEmergency && citFiles.length > 0 && dbR && sb) {
-    btn.textContent = _LS.submitBtnUploading || '📤 جاري رفع الملفات…';
-    _emergencyUploadFolder = 'emergency_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-    for (let fi = 0; fi < citFiles.length; fi++) {
-      const f = citFiles[fi];
-      const ext = f.name.split('.').pop().toLowerCase();
-      const path = _emergencyUploadFolder + '/' + Date.now() + '_' + fi + '.' + ext;
-      try {
-        const { error: ue } = await sb.storage.from('case-documents').upload(path, f, {upsert: true});
-        if (!ue) {
-          // case-documents is a private bucket, so getPublicUrl() returns
-          // a URL that 404s. Use a signed URL with a long expiry (30 days)
-          // so the municipality can open it from WhatsApp.
-          let fileUrl = '';
-          try {
-            const { data: sd, error: se } = await sb.storage.from('case-documents')
-              .createSignedUrl(path, 60 * 60 * 24 * 30);
-            if (!se && sd && sd.signedUrl) fileUrl = sd.signedUrl;
-          } catch(se) { console.error('sign url error:', se); }
-          if (!fileUrl) {
-            const { data: pd } = sb.storage.from('case-documents').getPublicUrl(path);
-            fileUrl = pd.publicUrl;
-          }
-          _emergencyUploadedDocs.push({ name: f.name, path: path, url: fileUrl, type: ext, size: f.size });
-        }
-      } catch (fe) { console.error('emergency upload error:', fe); }
-    }
-    btn.textContent = _LS.submitBtnBusy || '⏳ جاري الإرسال…';
-  }
-
-  // Fire WhatsApp FIRST for emergency reports so the municipality is
-  // notified even if the DB insert lags or fails. DB save still runs
-  // right after for the audit trail.
-  if (isEmergency) {
-    const _kind = (typeRaw === 'fire' || type === 'fire') ? (_LS.waFireKind || '🔥 تبليغ عن حريق') : (_LS.waEmergencyKind || '🚨 حالة طوارئ');
-    const _mun = _LS.waMunSuffix || 'بلدية وادي الست';
-    const _reporterLbl = _LS.waReporter || 'المُبلِّغ';
-    const _phoneLbl = _LS.waPhoneLbl || 'الهاتف';
-    const _addrLbl = _LS.waAddressLbl || 'العنوان المذكور';
-    const _locLbl = _LS.waLocationLbl || '📍 الموقع (اضغط للفتح على الخرائط)';
-    const _noLoc = _LS.waNoLocation || '⚠️ لم يُشارَك الموقع';
-    const _descLbl = _LS.waDescLbl || 'الوصف';
-    const _attLbl = _LS.waAttachmentsLbl || '📎 المرفقات';
-    const _loc  = window._citLocation;
-    var _attSection = '';
-    if (_emergencyUploadedDocs.length > 0) {
-      _attSection = '\n' + _attLbl + ' (' + _emergencyUploadedDocs.length + '):\n' +
-        _emergencyUploadedDocs.map(function(d, i){ return (i+1) + '. ' + d.url; }).join('\n') + '\n';
-    }
-    const _waMsg = _kind + ' — ' + _mun + '\n\n' +
-                   _reporterLbl + ': ' + name + '\n' +
-                   _phoneLbl + ': ' + phone + '\n' +
-                   (addr ? _addrLbl + ': ' + addr + '\n' : '') +
-                   (_loc ? _locLbl + ': ' + _loc.url + '\n' : _noLoc + '\n') +
-                   _attSection +
-                   '\n' + _descLbl + ':\n' + desc;
-    try {
-      var _wa0 = document.createElement('a');
-      _wa0.href = 'https://wa.me/96176789039?text=' + encodeURIComponent(_waMsg);
-      _wa0.target = '_blank';
-      _wa0.rel = 'noopener noreferrer';
-      document.body.appendChild(_wa0);
-      _wa0.click();
-      document.body.removeChild(_wa0);
-    } catch(_) {
-      try { window.location.href = _wa0.href; } catch(__){}
-    }
-  }
-
   const loc = window._citLocation;
   const _descLocLbl = _LS.descLocLbl || '📍 الموقع';
   const _descCoordsLbl = _LS.descCoordsLbl || 'الإحداثيات';
@@ -1528,8 +1455,91 @@ async function doSubmitCit(){
     // Link push subscription to this phone (so they get personalized notifications)
     linkPushToPhone(phone, name);
 
-    // (Emergency WhatsApp already fired above, before the DB insert,
-    // so the municipality gets it even if this insert lags.)
+    // Emergency uploads happen AFTER the case insert so we can embed the
+    // real case number in the short-link code (e.g. /r/1042-1). Files are
+    // uploaded, signed, shortened, then a WhatsApp draft is opened.
+    var _emergencyUploadedDocs = [];
+    if (isEmergency && citFiles.length > 0 && dbR && sb) {
+      btn.textContent = _LS.submitBtnUploading || '📤 جاري رفع الملفات…';
+      for (let fi = 0; fi < citFiles.length; fi++) {
+        const f = citFiles[fi];
+        const ext = f.name.split('.').pop().toLowerCase();
+        const path = newCaseId + '/' + Date.now() + '_' + fi + '.' + ext;
+        try {
+          const { error: ue } = await sb.storage.from('case-documents').upload(path, f, {upsert: true});
+          if (ue) { console.error('emergency upload error:', ue); continue; }
+          // Private bucket → sign the URL so it actually opens.
+          let signedUrl = '';
+          try {
+            const { data: sd, error: se } = await sb.storage.from('case-documents')
+              .createSignedUrl(path, 60 * 60 * 24 * 30);
+            if (!se && sd && sd.signedUrl) signedUrl = sd.signedUrl;
+          } catch(se) { console.error('sign url error:', se); }
+          if (!signedUrl) {
+            const { data: pd } = sb.storage.from('case-documents').getPublicUrl(path);
+            signedUrl = pd.publicUrl;
+          }
+          // Insert a short-link row so the URL sent to WhatsApp is compact
+          // and readable (case-number-index). Falls back to the raw signed
+          // URL if the shortener insert fails.
+          let shortUrl = signedUrl;
+          try {
+            const code = String(newCaseId) + '-' + (fi + 1);
+            const { error: sle } = await sb.from('short_links').insert([{
+              code: code,
+              url: signedUrl,
+              expires_at: new Date(Date.now() + 60*60*24*30*1000).toISOString(),
+              created_by: 'citizen-emergency'
+            }]);
+            if (!sle) {
+              shortUrl = (window.location && window.location.origin ? window.location.origin : 'https://app.municipality-wadi-el-sitt.org') + '/r/' + code;
+            }
+          } catch(sle) { console.error('shortener error:', sle); }
+          _emergencyUploadedDocs.push({ name: f.name, path: path, url: shortUrl, signed_url: signedUrl, type: ext, size: f.size });
+        } catch (fe) { console.error('emergency upload error:', fe); }
+      }
+      btn.textContent = _LS.submitBtnBusy || '⏳ جاري الإرسال…';
+    }
+
+    // Fire the WhatsApp draft (emergency only). Includes the case ref,
+    // location, and the short photo links.
+    if (isEmergency) {
+      const _kind = (typeRaw === 'fire' || type === 'fire') ? (_LS.waFireKind || '🔥 تبليغ عن حريق') : (_LS.waEmergencyKind || '🚨 حالة طوارئ');
+      const _mun = _LS.waMunSuffix || 'بلدية وادي الست';
+      const _refLbl = _LS.waCaseRefLbl || 'رقم الطلب';
+      const _reporterLbl = _LS.waReporter || 'المُبلِّغ';
+      const _phoneLbl = _LS.waPhoneLbl || 'الهاتف';
+      const _addrLbl = _LS.waAddressLbl || 'العنوان المذكور';
+      const _locLbl = _LS.waLocationLbl || '📍 الموقع (اضغط للفتح على الخرائط)';
+      const _noLoc = _LS.waNoLocation || '⚠️ لم يُشارَك الموقع';
+      const _descLbl = _LS.waDescLbl || 'الوصف';
+      const _attLbl = _LS.waAttachmentsLbl || '📎 المرفقات';
+      const _loc = window._citLocation;
+      var _attSection = '';
+      if (_emergencyUploadedDocs.length > 0) {
+        _attSection = '\n' + _attLbl + ' (' + _emergencyUploadedDocs.length + '):\n' +
+          _emergencyUploadedDocs.map(function(d, i){ return (i+1) + '. ' + d.url; }).join('\n') + '\n';
+      }
+      const _waMsg = _kind + ' — ' + _mun + '\n\n' +
+                     _refLbl + ': #' + newCaseId + '\n' +
+                     _reporterLbl + ': ' + name + '\n' +
+                     _phoneLbl + ': ' + phone + '\n' +
+                     (addr ? _addrLbl + ': ' + addr + '\n' : '') +
+                     (_loc ? _locLbl + ': ' + _loc.url + '\n' : _noLoc + '\n') +
+                     _attSection +
+                     '\n' + _descLbl + ':\n' + desc;
+      try {
+        var _wa0 = document.createElement('a');
+        _wa0.href = 'https://wa.me/96176789039?text=' + encodeURIComponent(_waMsg);
+        _wa0.target = '_blank';
+        _wa0.rel = 'noopener noreferrer';
+        document.body.appendChild(_wa0);
+        _wa0.click();
+        document.body.removeChild(_wa0);
+      } catch(_) {
+        try { window.location.href = _wa0.href; } catch(__){}
+      }
+    }
 
     // Notify all staff that a new case was submitted
     if (window.PWA && window.PWA.sendPush) {
@@ -1550,10 +1560,14 @@ async function doSubmitCit(){
       sendBrevoEmail(citEmail, citName, '[بلدية وادي الست] تم استلام طلبكم رقم #'+newCaseId, buildCitizenEmail(newCaseId, citName, citTypeVal, 'new'));
     }, 100);
     if (_emergencyUploadedDocs.length > 0) {
-      // Emergency case: files were uploaded before WhatsApp; just attach
-      // them to the case record so they show up in the dashboard.
+      // Emergency case: files uploaded above already. Store the signed URL
+      // (not the short one) on the case record so the dashboard can render
+      // images without an extra redirect.
       try {
-        await sb.from('cases').update({documents:_emergencyUploadedDocs}).eq('id',newCaseId);
+        const _docsForCase = _emergencyUploadedDocs.map(function(d){
+          return { name: d.name, path: d.path, url: d.signed_url || d.url, type: d.type, size: d.size };
+        });
+        await sb.from('cases').update({documents:_docsForCase}).eq('id',newCaseId);
       } catch(fe) { console.error('attach emergency docs error:', fe); }
     } else if (citFiles.length > 0) {
       const pw=document.getElementById('c-prog-wrap');
@@ -1570,8 +1584,13 @@ async function doSubmitCit(){
         try{
           const{error:ue}=await sb.storage.from('case-documents').upload(path,f,{upsert:true});
           if(!ue){
-            const{data:pd}=sb.storage.from('case-documents').getPublicUrl(path);
-            uploadedDocs.push({name:f.name,path,url:pd.publicUrl,type:ext,size:f.size});
+            let _u='';
+            try{
+              const{data:sd,error:se}=await sb.storage.from('case-documents').createSignedUrl(path,60*60*24*30);
+              if(!se && sd && sd.signedUrl) _u=sd.signedUrl;
+            }catch(_){}
+            if(!_u){ const{data:pd}=sb.storage.from('case-documents').getPublicUrl(path); _u=pd.publicUrl; }
+            uploadedDocs.push({name:f.name,path,url:_u,type:ext,size:f.size});
           }
         }catch(fe){console.error('upload error:',fe);}
       }
