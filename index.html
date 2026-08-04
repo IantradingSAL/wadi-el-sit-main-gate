@@ -909,6 +909,18 @@ const WN_DEFAULT = [
 
 const WN_VERSIONS = [
   {
+    version: '5.1',
+    date: {ar:'آب 2026', en:'August 2026', fr:'Ao\u00fbt 2026'},
+    color: '#eef4fb', badgeColor: '#1a6eb5',
+    features: [
+      {icon:'\ud83d\udcca',
+        title:{ar:'قياس استخدام التطبيق لتحسين الخدمة', en:'Usage Measurement to Improve the Service', fr:'Mesure d\u2019usage pour am\u00e9liorer le service'},
+        desc:{ar:'أضفنا نظام قياس يوضح للبلدية أي الخدمات يستخدمها الأهالي أكثر وأين تحصل الصعوبات، لتطوير الصفحات الأكثر حاجة. لا يتم تسجيل الشاشات ولا محتوى صفحات الصندوق والمياه والأرشيف، ولا تُجمع بيانات شخصية من صفحات المواطنين',
+              en:'Added a measurement system so the municipality can see which services residents use most and where they run into difficulty, to prioritise improvements. No screen recording and no capture of content on the treasury, water or archive pages, and no personal data is collected from citizen pages',
+              fr:'Ajout d\u2019un syst\u00e8me de mesure permettant \u00e0 la municipalit\u00e9 de voir quels services sont les plus utilis\u00e9s et o\u00f9 surviennent les difficult\u00e9s. Aucun enregistrement d\u2019\u00e9cran ni capture du contenu des pages tr\u00e9sorerie, eau ou archives, et aucune donn\u00e9e personnelle collect\u00e9e sur les pages citoyens'}},
+    ]
+  },
+  {
     version: '5.0',
     date: {ar:'آب 2026', en:'August 2026', fr:'Août 2026'},
     color: '#e8f5ea', badgeColor: '#1a6eb5',
@@ -1562,5 +1574,6 @@ async function welcomeSubmit(withInfo){
   }
 }
 </script>
+  <script src="analytics.js?v=1" data-site="wadi-el-sit"></script>
 </body>
 </html>
