@@ -19,7 +19,8 @@
   var IGNORE = ['imadaehn@gmail.com'];
   // Pages that display citizen / customer / financial data:
   // no session replay, no autocapture of text. Custom events only.
-  var SENSITIVE_RE = /(sandouk|mrs|mrs-update|mrs-import|water-admin|water-finance|citizen|warranty|si-cloud|employee|user)/i;
+  // Pages showing citizen / customer / staff data: no replay, no autocapture at all.
+  var SENSITIVE_RE = /(sandouk|mrs|water-admin|water-finance|citizen|phonebook|dashboard|admin|super-admin|bus-trip|coop|chat|feedback|settings|warranty|service|si-cloud|si_|contract|vehicle|employee|user|reset-password)/i;
   // ------------------------------------------------------
 
   var S      = document.currentScript;
@@ -76,7 +77,7 @@
         capture_pageleave: true,
         autocapture: !SENSITIVE,                 // no blind click-text capture on data pages
         mask_all_element_attributes: true,
-        mask_all_text: SENSITIVE,
+        mask_all_text: true,           // never send element text — names leak through autocapture
         disable_session_recording: SENSITIVE,    // never record receipts, signatures, taxpayer data
         session_recording: {
           maskAllInputs: true,
