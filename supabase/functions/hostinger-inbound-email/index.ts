@@ -1,14 +1,20 @@
 // supabase/functions/hostinger-inbound-email/index.ts
-// Receives message.received webhooks from Hostinger Mail, triages, stores,
-// pushes to admins, and sends a bilingual auto-acknowledgement.
+// Receives message.received webhooks from Hostinger Mail (any registered
+// mailbox), triages, stores, pushes to admins, and sends a bilingual
+// auto-acknowledgement from the same mailbox.
 //
-// Required Supabase secrets:
-//   HOSTINGER_WEBHOOK_SECRET  - one-time secret returned by createWebhook
-//   HOSTINGER_API_TOKEN       - bearer for api.mail.hostinger.com (mailbox scope)
-//   HOSTINGER_MAILBOX_ID      - resourceId of the mailbox (e.g. AC89d79...)
-//   HOSTINGER_MAILBOX_ADDR    - display address (e.g. name@municipality-wadi-el-sitt.org)
-//   SUPABASE_URL              - auto-provided
-//   SUPABASE_SERVICE_ROLE_KEY - auto-provided
+// Required Supabase secret:
+//   HOSTINGER_MAILBOXES = JSON array; one entry per mailbox that has a
+//   webhook pointing at this function. Each entry is:
+//     { addr: string, id: string, apiToken: string, webhookSecret: string }
+//   Example:
+//     [
+//       {"addr":"a@example.com","id":"AC...","apiToken":"e5c...","webhookSecret":"9805..."},
+//       {"addr":"b@example.com","id":"AC...","apiToken":"42a...","webhookSecret":"b708..."}
+//     ]
+//
+// Auto-provided:
+//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 //
 // Deploy with verify_jwt: false so Hostinger can call it without a Supabase JWT.
 
@@ -147,28 +153,43 @@ function escapeHtml(s: string): string {
   ));
 }
 
+type MailboxConfig = {
+  addr: string;
+  id: string;
+  apiToken: string;
+  webhookSecret: string;
+};
+
+function loadMailboxes(): MailboxConfig[] {
+  const raw = Deno.env.get("HOSTINGER_MAILBOXES") ?? "";
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((m) =>
+      m && typeof m.addr === "string" && typeof m.id === "string" &&
+      typeof m.apiToken === "string" && typeof m.webhookSecret === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  const secret = Deno.env.get("HOSTINGER_WEBHOOK_SECRET") ?? "";
-  const apiToken = Deno.env.get("HOSTINGER_API_TOKEN") ?? "";
-  const mailboxId = Deno.env.get("HOSTINGER_MAILBOX_ID") ?? "";
-  const mailboxAddr = Deno.env.get("HOSTINGER_MAILBOX_ADDR") ?? "";
-
-  if (!secret || !apiToken || !mailboxId || !mailboxAddr) {
-    return json({ error: "missing required secrets" }, 500);
+  const mailboxes = loadMailboxes();
+  if (mailboxes.length === 0) {
+    return json({ error: "HOSTINGER_MAILBOXES not configured" }, 500);
   }
 
   const auth = req.headers.get("authorization") ?? "";
-  const expected = `Bearer ${secret}`;
-  if (auth.length !== expected.length ||
-      !crypto.subtle) {
-    // fall through to constant-time compare below
-  }
-  if (!constantTimeEqual(auth, expected)) {
+  const mb = mailboxes.find((m) => constantTimeEqual(auth, `Bearer ${m.webhookSecret}`));
+  if (!mb) {
     return json({ error: "unauthorized" }, 401);
   }
+  const { addr: mailboxAddr, id: mailboxId, apiToken } = mb;
 
   let payload: any;
   try {
