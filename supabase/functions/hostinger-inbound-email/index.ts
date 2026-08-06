@@ -117,9 +117,9 @@ function buildAutoReply(opts: {
 
   const text =
     `مرحباً ${salutation}،\n\n` +
-    `شكراً لتواصلكم مع بلدية وادي السط. تم تسجيل رسالتكم برقم المرجع: ${opts.ticketId}.\n` +
+    `شكراً لتواصلكم مع بلدية وادي الست. تم تسجيل رسالتكم برقم المرجع: ${opts.ticketId}.\n` +
     `سيتم الرد عليكم في أقرب فرصة ممكنة.\n\n` +
-    `— بلدية وادي السط\n\n` +
+    `— بلدية وادي الست\n\n` +
     `----\n\n` +
     `Hello ${salutation},\n\n` +
     `Thank you for contacting the Wadi El Sit Municipality. Your message has been logged under reference: ${opts.ticketId}.\n` +
@@ -129,9 +129,9 @@ function buildAutoReply(opts: {
   const html =
     `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;font-size:14px;line-height:1.6">` +
     `<p>مرحباً ${escapeHtml(salutation)}،</p>` +
-    `<p>شكراً لتواصلكم مع <strong>بلدية وادي السط</strong>. تم تسجيل رسالتكم برقم المرجع: <strong>${opts.ticketId}</strong>.</p>` +
+    `<p>شكراً لتواصلكم مع <strong>بلدية وادي الست</strong>. تم تسجيل رسالتكم برقم المرجع: <strong>${opts.ticketId}</strong>.</p>` +
     `<p>سيتم الرد عليكم في أقرب فرصة ممكنة.</p>` +
-    `<p>— بلدية وادي السط</p>` +
+    `<p>— بلدية وادي الست</p>` +
     `</div>` +
     `<hr>` +
     `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6">` +
