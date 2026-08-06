@@ -198,50 +198,61 @@ serve(async (req: Request) => {
     return json({ error: "invalid json" }, 400);
   }
 
-  // Hostinger's message.received payload shape isn't in the OpenAPI spec —
-  // extract defensively.
-  const uid: number | undefined =
-    payload?.data?.uid ?? payload?.uid ?? payload?.message?.uid ?? payload?.messageUid;
-  const folder: string =
-    payload?.data?.folder ?? payload?.folder ?? payload?.data?.path ?? payload?.path ?? "INBOX";
-  const eventType: string =
-    payload?.event ?? payload?.type ?? payload?.data?.event ?? "message.received";
+  // Debug: capture every real Hostinger payload so we can learn its shape.
+  const sbEarly = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+  );
+  const headersObj: Record<string, string> = {};
+  req.headers.forEach((v, k) => { headersObj[k] = v; });
+  await sbEarly.from("webhook_debug").insert({
+    mailbox: mailboxAddr,
+    payload,
+    headers: headersObj,
+  });
+
+  // Hostinger's real payload puts everything under `data` — no `uid` field.
+  const data = payload?.data ?? {};
+  const eventType: string = payload?.event ?? payload?.type ?? "message.received";
 
   if (eventType !== "message.received") {
     return json({ ok: true, skipped: `event ${eventType}` });
   }
-  if (!uid) {
-    return json({ ok: true, skipped: "no uid in payload" });
+
+  const messageId = String(data.messageId ?? data["message-id"] ?? "").trim();
+  if (!messageId) {
+    return json({ ok: true, skipped: "no messageId in payload" });
   }
 
-  // Fetch full message metadata.
-  const msgRes = await hostingerGet(
-    `/api/v1/mailboxes/${encodeURIComponent(mailboxId)}/folders/${encodeURIComponent(folder)}/messages/${uid}`,
-    apiToken,
-  );
-  if (!msgRes.ok) {
-    return json({ error: "fetch message failed", status: msgRes.status }, 502);
+  // Skip Hostinger's built-in test-delivery payload — otherwise we'd try to
+  // auto-reply to sender@example.com on every /test call.
+  if (messageId.includes("test-message-id@example.com")) {
+    return json({ ok: true, skipped: "hostinger test payload" });
   }
-  const msg: Message = (await msgRes.json()).data;
 
-  const subject = msg.subject ?? "";
-  const fromAddr = msg.from?.address ?? "unknown@unknown";
-  const fromName = msg.from?.name ?? "";
-  const toAddrs = (msg.to || []).map((t) => t.address);
+  // Parse "Name <email@x>" or a bare email into name + address.
+  const rawFrom = String(data.from ?? "").trim();
+  let fromName = "", fromAddr = "unknown@unknown";
+  const nameEmail = rawFrom.match(/^\s*(.*?)\s*<\s*([^>]+)\s*>\s*$/);
+  if (nameEmail) {
+    fromName = nameEmail[1].replace(/^"|"$/g, "").trim();
+    fromAddr = nameEmail[2].trim();
+  } else if (rawFrom.includes("@")) {
+    fromAddr = rawFrom;
+  }
 
-  // Fetch text snippet (best-effort).
-  let snippet = "";
-  try {
-    const txtRes = await hostingerGet(
-      `/api/v1/mailboxes/${encodeURIComponent(mailboxId)}/folders/${encodeURIComponent(folder)}/messages/${uid}/text`,
-      apiToken,
-    );
-    if (txtRes.ok) {
-      const body = await txtRes.json();
-      const txt = body?.data?.text ?? body?.data?.plain ?? body?.text ?? body?.plain ?? "";
-      snippet = String(txt).replace(/\s+/g, " ").trim().slice(0, 280);
-    }
-  } catch (_) { /* snippet is optional */ }
+  const toAddrs: string[] = Array.isArray(data.to)
+    ? data.to.map((v: unknown) => String(v))
+    : (typeof data.to === "string" ? [data.to] : []);
+  const subject: string = String(data.subject ?? "");
+  const receivedAt: string = data.date
+    ? new Date(String(data.date)).toISOString()
+    : new Date().toISOString();
+  const plainBody: string = String(data.plainBody ?? "");
+  const snippet = plainBody.replace(/\s+/g, " ").trim().slice(0, 280);
+  const folder = "INBOX";
+  // Use messageId as our unique key (guaranteed unique per email by RFC 5322).
+  const uidKey = messageId;
 
   const autoReply = isAutoReply(subject, fromAddr);
   const category = triage(subject, fromAddr, mailboxAddr);
@@ -265,14 +276,14 @@ serve(async (req: Request) => {
       mun_id: MUN_ID,
       mailbox: mailboxAddr,
       folder,
-      message_uid: String(uid),
-      message_id: msg.messageId,
+      message_uid: uidKey,
+      message_id: messageId,
       from_email: fromAddr,
       from_name: fromName,
       to_emails: toAddrs,
       subject,
       snippet,
-      received_at: msg.date,
+      received_at: receivedAt,
       category,
       ticket_id: ticketId,
       is_auto_reply: autoReply,
@@ -285,7 +296,7 @@ serve(async (req: Request) => {
 
   // Nothing more to do for auto-replies / bounces.
   if (autoReply) {
-    return json({ ok: true, uid, category, action: "logged_as_auto_reply" });
+    return json({ ok: true, messageId, category, action: "logged_as_auto_reply" });
   }
 
   // Fire push to admins (best-effort).
@@ -319,6 +330,8 @@ serve(async (req: Request) => {
     });
 
     try {
+      // Threading via inReplyTo requires a UID we don't have from the webhook,
+      // so we send a fresh reply (still shows as "Re:" thanks to subject).
       const sendRes = await hostingerPost(
         `/api/v1/mailboxes/${encodeURIComponent(mailboxId)}/send`,
         apiToken,
@@ -328,7 +341,6 @@ serve(async (req: Request) => {
           text: reply.text,
           html: reply.html,
           displayName: reply.displayName,
-          inReplyTo: { folder, uid },
         },
       );
       if (sendRes.ok || sendRes.status === 204) {
@@ -336,12 +348,12 @@ serve(async (req: Request) => {
           .update({ replied: true })
           .eq("mailbox", mailboxAddr)
           .eq("folder", folder)
-          .eq("message_uid", String(uid));
+          .eq("message_uid", uidKey);
       }
     } catch (_) { /* auto-reply failure is non-fatal */ }
   }
 
-  return json({ ok: true, uid, category, ticket: ticketId });
+  return json({ ok: true, messageId, category, ticket: ticketId });
 });
 
 function constantTimeEqual(a: string, b: string): boolean {
