@@ -154,10 +154,10 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 
   <div class="bf-wrap">
     <div class="bf-kpis">
-      <div class="bf-kpi bal"><div class="v" id="bf-k-bal">—</div><div class="l">الرصيد الحالي</div></div>
-      <div class="bf-kpi inc"><div class="v" id="bf-k-inc">—</div><div class="l">إجمالي المقبوضات</div></div>
-      <div class="bf-kpi exp"><div class="v" id="bf-k-exp">—</div><div class="l">إجمالي المصروفات</div></div>
-      <div class="bf-kpi"><div class="v" id="bf-k-cnt" style="color:#555">—</div><div class="l">عدد الحركات</div></div>
+      <div class="bf-kpi bal" style="cursor:pointer" title="عرض كل الحركات" onclick="bfKpiClick('all')"><div class="v" id="bf-k-bal">—</div><div class="l">الرصيد الحالي</div></div>
+      <div class="bf-kpi inc" style="cursor:pointer" title="عرض المقبوضات فقط" onclick="bfKpiClick('income')"><div class="v" id="bf-k-inc">—</div><div class="l">إجمالي المقبوضات</div></div>
+      <div class="bf-kpi exp" style="cursor:pointer" title="عرض المصروفات فقط" onclick="bfKpiClick('expense')"><div class="v" id="bf-k-exp">—</div><div class="l">إجمالي المصروفات</div></div>
+      <div class="bf-kpi" style="cursor:pointer" title="عرض السجل" onclick="bfKpiClick('all')"><div class="v" id="bf-k-cnt" style="color:#555">—</div><div class="l">عدد الحركات</div></div>
     </div>
 
     <div class="bf-tabs">
@@ -1058,10 +1058,11 @@ function bfGroup(list,keyFn){
 function bfRenderReports(){
   const incs=bfEntries.filter(e=>e.entry_type!=='expense');
   const exps=bfEntries.filter(e=>e.entry_type==='expense');
-  const row=(k,v,cls)=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">'+bfSumTxt(v)+'</td></tr>';
+  const esc=s=>String(s).replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+  const rowCat=(k,v,cls,t)=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({type:\''+t+'\',cat:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">'+bfSumTxt(v)+'</td></tr>';
   const empty='<tr><td colspan="4" style="color:#999;text-align:center">—</td></tr>';
-  document.getElementById('bf-rep-inc').innerHTML=bfGroup(incs,e=>e.category).map(([k,v])=>row(k,v,'bf-pos')).join('')||empty;
-  document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>row(k,v,'bf-neg')).join('')||empty;
+  document.getElementById('bf-rep-inc').innerHTML=bfGroup(incs,e=>e.category).map(([k,v])=>rowCat(k,v,'bf-pos','income')).join('')||empty;
+  document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>rowCat(k,v,'bf-neg','expense')).join('')||empty;
   const pm={};
   bfEntries.forEach(e=>{
     if(e.voided)return;
@@ -1071,7 +1072,30 @@ function bfRenderReports(){
   });
   document.getElementById('bf-rep-person').innerHTML=Object.entries(pm)
     .sort((a,b)=>((b[1].inc.usd+b[1].exp.usd)-(a[1].inc.usd+a[1].exp.usd)))
-    .map(([k,v])=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
+    .map(([k,v])=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({person:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
+}
+
+// ── 🔽 CLICKABLE DRILL-DOWN (KPIs, reports, ledger amounts) ──
+function bfDrill(f){
+  f=f||{};
+  // Reset top filters first
+  ['q','type','cat','cur','pay','from','to'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
+  if(f.type==='__voided'||f.type==='income'||f.type==='expense')document.getElementById('bf-f-type').value=f.type;
+  if(f.cat){
+    const catSel=document.getElementById('bf-f-cat');
+    if(catSel&&Array.from(catSel.options).some(o=>o.value===f.cat))catSel.value=f.cat;
+    else document.getElementById('bf-f-q').value=f.cat;
+  }
+  if(f.cur)document.getElementById('bf-f-cur').value=f.cur;
+  if(f.pay)document.getElementById('bf-f-pay').value=f.pay;
+  if(f.person)document.getElementById('bf-f-q').value=f.person;
+  bfShowTab('ledger');
+  bfRenderLedger();
+}
+function bfKpiClick(kind){
+  if(kind==='all')bfDrill({});
+  else if(kind==='income')bfDrill({type:'income'});
+  else if(kind==='expense')bfDrill({type:'expense'});
 }
 function bfExportCSV(){
   let balU=0,balL=0;
