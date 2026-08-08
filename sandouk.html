@@ -125,6 +125,20 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 .bf-share-box{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:20px;max-height:92vh;overflow-y:auto}
 .bf-share-btn{display:flex;align-items:center;gap:10px;width:100%;padding:12px 14px;border:1.5px solid #e0e6ef;border-radius:12px;background:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;color:#1a1a2e}
 .bf-share-btn:hover{background:#f5f8fc;border-color:#1a6eb5}
+.bf-views{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#f4f8fd;border:1.5px solid #d5dfec;border-radius:10px;padding:8px 10px;margin-bottom:10px}
+.bf-views select{padding:6px 8px;border:1.5px solid #d5dfec;border-radius:8px;font-family:inherit;font-size:13px;font-weight:700;color:#0f4d82;background:#fff;min-width:170px}
+.bf-vbtn{padding:6px 10px;border:1.5px solid #d5dfec;border-radius:8px;background:#fff;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;color:#0f4d82;white-space:nowrap}
+.bf-vbtn:hover{background:#eaf2fb;border-color:#1a6eb5}
+.bf-vbtn.primary{background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border-color:transparent}
+.bf-vbtn.primary:hover{filter:brightness(1.08)}
+.bf-vbtn.danger{color:#a83232}
+.bf-colfilter{width:100%;padding:4px 6px;border:1px solid #d5dfec;border-radius:6px;font-family:inherit;font-size:12px;background:#fff;box-sizing:border-box}
+.bf-colfilter:focus{outline:none;border-color:#1a6eb5;box-shadow:0 0 0 2px rgba(26,110,181,.15)}
+.bf-colmenu-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f4f8fd;border:1.5px solid var(--border,#d5dfec);border-radius:8px;margin-bottom:6px;font-size:13px}
+.bf-colmenu-item input[type=checkbox]{transform:scale(1.15);margin:0}
+.bf-colmenu-item .lbl{flex:1;font-weight:700;color:#0f4d82}
+.bf-colmenu-item .mv{padding:2px 8px;border:1px solid #d5dfec;border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;font-weight:800;color:#0f4d82}
+.bf-colmenu-item .mv:disabled{opacity:.35;cursor:not-allowed}
 </style>
 
 <div id="bf-screen">
@@ -140,10 +154,10 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 
   <div class="bf-wrap">
     <div class="bf-kpis">
-      <div class="bf-kpi bal"><div class="v" id="bf-k-bal">—</div><div class="l">الرصيد الحالي</div></div>
-      <div class="bf-kpi inc"><div class="v" id="bf-k-inc">—</div><div class="l">إجمالي المقبوضات</div></div>
-      <div class="bf-kpi exp"><div class="v" id="bf-k-exp">—</div><div class="l">إجمالي المصروفات</div></div>
-      <div class="bf-kpi"><div class="v" id="bf-k-cnt" style="color:#555">—</div><div class="l">عدد الحركات</div></div>
+      <div class="bf-kpi bal" style="cursor:pointer" title="عرض كل الحركات" onclick="bfKpiClick('all')"><div class="v" id="bf-k-bal">—</div><div class="l">الرصيد الحالي</div></div>
+      <div class="bf-kpi inc" style="cursor:pointer" title="عرض المقبوضات فقط" onclick="bfKpiClick('income')"><div class="v" id="bf-k-inc">—</div><div class="l">إجمالي المقبوضات</div></div>
+      <div class="bf-kpi exp" style="cursor:pointer" title="عرض المصروفات فقط" onclick="bfKpiClick('expense')"><div class="v" id="bf-k-exp">—</div><div class="l">إجمالي المصروفات</div></div>
+      <div class="bf-kpi" style="cursor:pointer" title="عرض السجل" onclick="bfKpiClick('all')"><div class="v" id="bf-k-cnt" style="color:#555">—</div><div class="l">عدد الحركات</div></div>
     </div>
 
     <div class="bf-tabs">
@@ -155,6 +169,16 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 
     <!-- LEDGER -->
     <div id="bf-pane-ledger" class="bf-card">
+      <div class="bf-views">
+        <span style="font-size:12px;font-weight:800;color:#0f4d82">👁️ العرض:</span>
+        <select id="bf-view-select" onchange="bfViewLoad(this.value)"><option value="">— افتراضي —</option></select>
+        <button class="bf-vbtn primary" onclick="bfViewSaveNew()">💾 حفظ كعرض جديد</button>
+        <button class="bf-vbtn" onclick="bfViewSaveOver()">💾 تحديث الحالي</button>
+        <button class="bf-vbtn" onclick="bfViewRename()">✏️ إعادة تسمية</button>
+        <button class="bf-vbtn danger" onclick="bfViewDelete()">🗑️ حذف</button>
+        <button class="bf-vbtn" onclick="bfColsOpen()">⚙️ الأعمدة</button>
+        <button class="bf-vbtn" onclick="bfViewReset()">↺ إعادة التعيين</button>
+      </div>
       <div class="bf-filters">
         <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
         <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option></select></div>
@@ -164,10 +188,23 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
         <div><label class="fl">من تاريخ</label><input type="date" class="fi" id="bf-f-from" onchange="bfRenderLedger()"></div>
         <div><label class="fl">إلى تاريخ</label><input type="date" class="fi" id="bf-f-to" onchange="bfRenderLedger()"></div>
       </div>
-      <div class="bf-tblwrap"><table>
-        <thead><tr><th>التاريخ</th><th>السند</th><th>النوع</th><th>الفئة</th><th>الدفع</th><th>البيان</th><th>الجهة</th><th>المبلغ</th><th>الرصيد</th><th></th></tr></thead>
-        <tbody id="bf-ledger-body"><tr><td colspan="10" style="text-align:center;color:#999;padding:20px">⏳ جاري التحميل…</td></tr></tbody>
+      <div class="bf-tblwrap"><table id="bf-ledger-tbl">
+        <thead id="bf-ledger-head"></thead>
+        <tbody id="bf-ledger-body"><tr><td style="text-align:center;color:#999;padding:20px">⏳ جاري التحميل…</td></tr></tbody>
       </table></div>
+    </div>
+
+    <!-- COLUMNS MENU MODAL -->
+    <div class="bf-share-ov" id="bf-cols-ov" onclick="if(event.target===this)bfColsClose()">
+      <div class="bf-share-box" style="max-width:440px">
+        <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">⚙️ الأعمدة — إظهار وترتيب</div>
+        <div style="font-size:12px;color:#8a95a3;margin-bottom:12px">فعّل الأعمدة التي تريد رؤيتها، واستخدم ▲ ▼ لتغيير ترتيبها. اضغط "تطبيق" للحفظ.</div>
+        <div id="bf-cols-list"></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#1f7a45,#2a9c5a);color:#fff;border:none;margin-bottom:0" onclick="bfColsApply()">✓ تطبيق</button>
+          <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfColsClose()">إلغاء</button>
+        </div>
+      </div>
     </div>
 
     <!-- INCOME ENTRY -->
@@ -179,8 +216,8 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
           <div style="display:flex;gap:8px">
             <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1">
             <select class="fi" id="bf-i-cur" style="flex:0 0 118px">
+              <option value="LBP" selected>ل.ل. ليرة</option>
               <option value="USD">$ دولار</option>
-              <option value="LBP">ل.ل. ليرة</option>
             </select>
           </div>
         </div>
@@ -218,8 +255,8 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
           <div style="display:flex;gap:8px">
             <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1">
             <select class="fi" id="bf-e-cur" style="flex:0 0 118px">
+              <option value="LBP" selected>ل.ل. ليرة</option>
               <option value="USD">$ دولار</option>
-              <option value="LBP">ل.ل. ليرة</option>
             </select>
           </div>
         </div>
@@ -500,6 +537,7 @@ async function bfLoad(){
   });
   bfPhonebookEntries=Array.from(bag.values());
   bfRefresh();
+  bfViewsInit();
 }
 function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();}
 function bfKPIs(){
@@ -714,12 +752,44 @@ function bfShowTab(t){
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
 }
+// ── 🧱 COLUMN DEFINITIONS ──
+const BF_COLS=[
+  {key:'entry_date',label:'التاريخ',filter:'text',val:e=>e.entry_date||'',search:e=>e.entry_date||'',cell:e=>'<td>'+(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')+'</td>'},
+  {key:'receipt_no',label:'السند',filter:'text',val:e=>e.receipt_no||'',search:e=>String(e.receipt_no||''),cell:e=>'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' ✍️'+bfSigCount(e):'')+'</td>'},
+  {key:'entry_type',label:'النوع',filter:'select',opts:[['income','مقبوضات'],['expense','مصروفات'],['opening','رصيد افتتاحي']],val:e=>e.entry_type||'',search:e=>e.entry_type||'',cell:e=>'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type||'')+(e.voided?' <span class="bf-badge" style="background:#fdecec;color:#c22">⛔ ملغى</span>':'')+'</td>'},
+  {key:'category',label:'الفئة',filter:'text',val:e=>e.category||'',search:e=>e.category||'',cell:e=>'<td style="font-size:12px">'+(e.category||'')+'</td>'},
+  {key:'payment_method',label:'الدفع',filter:'select',opts:[['cash','نقداً'],['transfer','حوالة'],['whish','Whish']],val:e=>e.payment_method||'cash',search:e=>bfPay(e),cell:e=>'<td style="font-size:12px">'+bfPay(e)+'</td>'},
+  {key:'description',label:'البيان',filter:'text',val:e=>e.description||'',search:e=>e.description||'',cell:e=>'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'},
+  {key:'person',label:'الجهة',filter:'text',val:e=>e.person||'',search:e=>e.person||'',cell:e=>'<td>'+(e.person||'')+'</td>'},
+  {key:'handled_by',label:'المستلم/المسلّم',filter:'text',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
+  {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
+  {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
+  {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
+  {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
+  {key:'amount',label:'المبلغ',filter:'text',val:e=>String(e.amount||''),search:e=>String(e.amount||''),cell:e=>'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'},
+  {key:'balance',label:'الرصيد',filter:'none',val:e=>String(e.bal||''),search:e=>'',cell:e=>'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'},
+  {key:'created_by',label:'أدخلت بواسطة',filter:'text',val:e=>e.created_by||'',search:e=>e.created_by||'',cell:e=>'<td style="font-size:11px;color:#666">'+(e.created_by||'')+'</td>'},
+  {key:'actions',label:'',filter:'none',val:e=>'',search:e=>'',cell:e=>'<td style="white-space:nowrap" onclick="event.stopPropagation()">'
+      +((e.documents&&e.documents.length)?'<button class="bf-actbtn" title="المرفقات" onclick="bfDocsById(\''+e.id+'\')">📎'+e.documents.length+'</button>':'')
+      +'<button class="bf-actbtn" title="توقيع" onclick="bfOpenSign(\''+e.id+'\')">✍️</button>'
+      +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
+      +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
+      +(bfCanDel()?'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>':'')
+    +'</td>'}
+];
+const BF_COL_DEFAULT_VISIBLE=['entry_date','receipt_no','entry_type','category','payment_method','description','person','amount','balance','actions'];
+const BF_COL_DEFAULT_ORDER=BF_COLS.map(c=>c.key);
+let bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{}};
+function bfCol(key){return BF_COLS.find(c=>c.key===key);}
+function bfVisibleCols(){return bfColState.order.map(bfCol).filter(c=>c&&bfColState.hidden.indexOf(c.key)<0);}
+
 function bfFiltered(){
   const ft=document.getElementById('bf-f-type').value, fc=document.getElementById('bf-f-cat').value,
         fcur=document.getElementById('bf-f-cur').value,
         fpay=document.getElementById('bf-f-pay').value,
         fq=(document.getElementById('bf-f-q').value||'').trim().toLowerCase(),
         from=document.getElementById('bf-f-from').value, to=document.getElementById('bf-f-to').value;
+  const cf=bfColState.filters||{};
   let balU=0,balL=0; const out=[];
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
@@ -731,32 +801,199 @@ function bfFiltered(){
     if(fpay&&(e.payment_method||'cash')!==fpay)return;
     if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
     if(fq){
-      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason].join(' ').toLowerCase();
+      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number].join(' ').toLowerCase();
       if(hay.indexOf(fq)<0)return;
     }
-    out.push(Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)}));
+    const enriched=Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)});
+    // Per-column filters
+    let keep=true;
+    for(const k in cf){
+      const v=(cf[k]||'').trim().toLowerCase(); if(!v)continue;
+      const col=bfCol(k); if(!col)continue;
+      const s=String(col.search(enriched)||'').toLowerCase();
+      if(col.filter==='select'){ if(s!==v)keep=false; }
+      else if(s.indexOf(v)<0)keep=false;
+      if(!keep)break;
+    }
+    if(keep)out.push(enriched);
   });
   return out;
 }
-function bfRenderLedger(){
+
+function bfRenderLedgerHead(){
+  const cols=bfVisibleCols();
+  const cf=bfColState.filters||{};
+  const th=cols.map(c=>'<th>'+c.label+'</th>').join('');
+  const fh=cols.map(c=>{
+    if(c.filter==='none')return '<th></th>';
+    if(c.filter==='select'){
+      const cur=cf[c.key]||'';
+      const opts='<option value="">—</option>'+c.opts.map(o=>'<option value="'+o[0]+'"'+(cur===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
+      return '<th><select class="bf-colfilter" data-cf="'+c.key+'" onchange="bfColFilter(this)">'+opts+'</select></th>';
+    }
+    return '<th><input class="bf-colfilter" data-cf="'+c.key+'" value="'+String(cf[c.key]||'').replace(/"/g,'&quot;')+'" oninput="bfColFilter(this)" placeholder="تصفية"></th>';
+  }).join('');
+  document.getElementById('bf-ledger-head').innerHTML='<tr>'+th+'</tr><tr>'+fh+'</tr>';
+}
+function bfColFilter(el){
+  bfColState.filters=bfColState.filters||{};
+  bfColState.filters[el.getAttribute('data-cf')]=el.value;
+  bfRenderLedgerBody();
+}
+function bfRenderLedgerBody(){
+  const cols=bfVisibleCols();
   const rows=bfFiltered().map(e=>'<tr'+(e.voided?' class="bf-void"':'')+' onclick="bfOpenCase(\''+e.id+'\')">'
-    +'<td>'+e.entry_date.split('-').reverse().join('/')+'</td>'
-    +'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' ✍️'+bfSigCount(e):'')+'</td>'
-    +'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type)+(e.voided?' <span class="bf-badge" style="background:#fdecec;color:#c22">⛔ ملغى</span>':'')+'</td>'
-    +'<td style="font-size:12px">'+(e.category||'')+'</td>'
-    +'<td style="font-size:12px">'+bfPay(e)+'</td>'
-    +'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'
-    +'<td>'+(e.person||'')+'</td>'
-    +'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'
-    +'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'
-    +'<td style="white-space:nowrap" onclick="event.stopPropagation()">'
-      +((e.documents&&e.documents.length)?'<button class="bf-actbtn" title="المرفقات" onclick="bfDocsById(\''+e.id+'\')">📎'+e.documents.length+'</button>':'')
-      +'<button class="bf-actbtn" title="توقيع" onclick="bfOpenSign(\''+e.id+'\')">✍️</button>'
-      +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
-      +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
-      +(bfCanDel()?'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>':'')
-    +'</td></tr>').join('');
-  document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="10" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
+    +cols.map(c=>c.cell(e)).join('')+'</tr>').join('');
+  const cs=cols.length||1;
+  document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="'+cs+'" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
+}
+function bfRenderLedger(){bfRenderLedgerHead();bfRenderLedgerBody();}
+
+// ── ⚙️ COLUMNS MENU ──
+let bfColsDraft=null;
+function bfColsOpen(){
+  bfColsDraft={order:bfColState.order.slice(),hidden:bfColState.hidden.slice()};
+  bfColsRender();
+  document.getElementById('bf-cols-ov').style.display='flex';
+}
+function bfColsClose(){document.getElementById('bf-cols-ov').style.display='none';bfColsDraft=null;}
+function bfColsRender(){
+  const list=document.getElementById('bf-cols-list');
+  list.innerHTML=bfColsDraft.order.map((k,idx)=>{
+    const c=bfCol(k); if(!c)return '';
+    const shown=bfColsDraft.hidden.indexOf(k)<0;
+    const label=c.label||'(بدون عنوان)';
+    return '<div class="bf-colmenu-item">'
+      +'<input type="checkbox" '+(shown?'checked':'')+' onchange="bfColsToggle(\''+k+'\')">'
+      +'<div class="lbl">'+label+'</div>'
+      +'<button class="mv" onclick="bfColsMove(\''+k+'\',-1)" '+(idx===0?'disabled':'')+'>▲</button>'
+      +'<button class="mv" onclick="bfColsMove(\''+k+'\',1)" '+(idx===bfColsDraft.order.length-1?'disabled':'')+'>▼</button>'
+      +'</div>';
+  }).join('');
+}
+function bfColsToggle(k){
+  const i=bfColsDraft.hidden.indexOf(k);
+  if(i<0)bfColsDraft.hidden.push(k); else bfColsDraft.hidden.splice(i,1);
+  bfColsRender();
+}
+function bfColsMove(k,dir){
+  const i=bfColsDraft.order.indexOf(k); const j=i+dir;
+  if(i<0||j<0||j>=bfColsDraft.order.length)return;
+  const tmp=bfColsDraft.order[i]; bfColsDraft.order[i]=bfColsDraft.order[j]; bfColsDraft.order[j]=tmp;
+  bfColsRender();
+}
+function bfColsApply(){
+  if(!bfColsDraft)return;
+  bfColState.order=bfColsDraft.order.slice();
+  bfColState.hidden=bfColsDraft.hidden.slice();
+  bfColsClose();
+  bfRenderLedger();
+}
+
+// ── 👁️ VIEWS ──
+let bfViews=[]; let bfCurrentViewId='';
+function bfCollectState(){
+  return {
+    top:{
+      q:document.getElementById('bf-f-q').value||'',
+      type:document.getElementById('bf-f-type').value||'',
+      cat:document.getElementById('bf-f-cat').value||'',
+      cur:document.getElementById('bf-f-cur').value||'',
+      pay:document.getElementById('bf-f-pay').value||'',
+      from:document.getElementById('bf-f-from').value||'',
+      to:document.getElementById('bf-f-to').value||''
+    },
+    cols:{order:bfColState.order.slice(),hidden:bfColState.hidden.slice(),filters:Object.assign({},bfColState.filters||{})}
+  };
+}
+function bfApplyState(s){
+  s=s||{};
+  const t=s.top||{};
+  document.getElementById('bf-f-q').value=t.q||'';
+  document.getElementById('bf-f-type').value=t.type||'';
+  document.getElementById('bf-f-cat').value=t.cat||'';
+  document.getElementById('bf-f-cur').value=t.cur||'';
+  document.getElementById('bf-f-pay').value=t.pay||'';
+  document.getElementById('bf-f-from').value=t.from||'';
+  document.getElementById('bf-f-to').value=t.to||'';
+  const c=s.cols||{};
+  // Reconcile order with current BF_COLS in case columns were added since save
+  const knownKeys=BF_COLS.map(x=>x.key);
+  const savedOrder=(c.order||[]).filter(k=>knownKeys.indexOf(k)>=0);
+  const missing=knownKeys.filter(k=>savedOrder.indexOf(k)<0);
+  bfColState.order=savedOrder.concat(missing);
+  bfColState.hidden=(c.hidden||[]).filter(k=>knownKeys.indexOf(k)>=0);
+  bfColState.filters=c.filters||{};
+  bfRenderLedger();
+}
+async function bfViewsInit(){
+  if(!bfUser){bfViewsRender();return;}
+  try{
+    const{data,error}=await sb.from('sandouk_views').select('*').order('name',{ascending:true});
+    if(error){console.warn('views load error',error);return;}
+    bfViews=data||[];
+    bfViewsRender();
+    const def=bfViews.find(v=>v.is_default);
+    if(def){bfCurrentViewId=def.id;document.getElementById('bf-view-select').value=def.id;bfApplyState(def.state);}
+  }catch(e){console.warn(e);}
+}
+function bfViewsRender(){
+  const sel=document.getElementById('bf-view-select');
+  sel.innerHTML='<option value="">— افتراضي —</option>'+bfViews.map(v=>'<option value="'+v.id+'"'+(v.id===bfCurrentViewId?' selected':'')+'>'+(v.is_default?'⭐ ':'')+v.name+'</option>').join('');
+}
+function bfViewLoad(id){
+  bfCurrentViewId=id||'';
+  if(!id){bfViewReset(true);return;}
+  const v=bfViews.find(x=>x.id===id);
+  if(!v){toast('⚠️ عرض غير موجود','err');return;}
+  bfApplyState(v.state);
+  toast('✓ تم تحميل العرض: '+v.name);
+}
+async function bfViewSaveNew(){
+  if(!bfUser){toast('🚫 يجب تسجيل الدخول','err');return;}
+  const name=prompt('اسم العرض الجديد:',''); if(!name||!name.trim())return;
+  const state=bfCollectState();
+  const{data,error}=await sb.from('sandouk_views').insert({name:name.trim(),state:state}).select();
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  const nv=(data&&data[0]); if(nv){bfViews.push(nv);bfCurrentViewId=nv.id;bfViewsRender();document.getElementById('bf-view-select').value=nv.id;}
+  toast('✓ تم حفظ العرض: '+name);
+}
+async function bfViewSaveOver(){
+  if(!bfCurrentViewId){toast('⚠️ لا يوجد عرض محدد — استخدم "حفظ كعرض جديد"','err');return;}
+  const state=bfCollectState();
+  const{data,error}=await sb.from('sandouk_views').update({state:state,updated_at:new Date().toISOString()}).eq('id',bfCurrentViewId).select();
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  const nv=(data&&data[0]); if(nv){const i=bfViews.findIndex(v=>v.id===nv.id); if(i>=0)bfViews[i]=nv;}
+  toast('✓ تم تحديث العرض');
+}
+async function bfViewRename(){
+  if(!bfCurrentViewId){toast('⚠️ اختر عرضاً أولاً','err');return;}
+  const v=bfViews.find(x=>x.id===bfCurrentViewId); if(!v)return;
+  const name=prompt('الاسم الجديد:',v.name); if(!name||!name.trim()||name.trim()===v.name)return;
+  const{data,error}=await sb.from('sandouk_views').update({name:name.trim(),updated_at:new Date().toISOString()}).eq('id',v.id).select();
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  const nv=(data&&data[0]); if(nv){const i=bfViews.findIndex(x=>x.id===nv.id); if(i>=0)bfViews[i]=nv;}
+  bfViewsRender();
+  toast('✓ أُعيدت التسمية');
+}
+async function bfViewDelete(){
+  if(!bfCurrentViewId){toast('⚠️ اختر عرضاً أولاً','err');return;}
+  const v=bfViews.find(x=>x.id===bfCurrentViewId); if(!v)return;
+  if(!confirm('حذف العرض "'+v.name+'"؟'))return;
+  const{error}=await sb.from('sandouk_views').delete().eq('id',v.id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  bfViews=bfViews.filter(x=>x.id!==v.id);
+  bfCurrentViewId='';
+  bfViewsRender();
+  toast('✓ تم الحذف');
+}
+function bfViewReset(silent){
+  ['q','type','cat','cur','pay','from','to'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
+  bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{}};
+  bfCurrentViewId='';
+  document.getElementById('bf-view-select').value='';
+  bfRenderLedger();
+  if(!silent)toast('✓ تمت إعادة التعيين');
 }
 async function bfDel(id){
   if(!bfCanDel()){toast('🚫 صلاحية الحذف محصورة بالمشرف العام','err');return;}
@@ -821,10 +1058,11 @@ function bfGroup(list,keyFn){
 function bfRenderReports(){
   const incs=bfEntries.filter(e=>e.entry_type!=='expense');
   const exps=bfEntries.filter(e=>e.entry_type==='expense');
-  const row=(k,v,cls)=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">'+bfSumTxt(v)+'</td></tr>';
+  const esc=s=>String(s).replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+  const rowCat=(k,v,cls,t)=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({type:\''+t+'\',cat:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">'+bfSumTxt(v)+'</td></tr>';
   const empty='<tr><td colspan="4" style="color:#999;text-align:center">—</td></tr>';
-  document.getElementById('bf-rep-inc').innerHTML=bfGroup(incs,e=>e.category).map(([k,v])=>row(k,v,'bf-pos')).join('')||empty;
-  document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>row(k,v,'bf-neg')).join('')||empty;
+  document.getElementById('bf-rep-inc').innerHTML=bfGroup(incs,e=>e.category).map(([k,v])=>rowCat(k,v,'bf-pos','income')).join('')||empty;
+  document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>rowCat(k,v,'bf-neg','expense')).join('')||empty;
   const pm={};
   bfEntries.forEach(e=>{
     if(e.voided)return;
@@ -834,7 +1072,30 @@ function bfRenderReports(){
   });
   document.getElementById('bf-rep-person').innerHTML=Object.entries(pm)
     .sort((a,b)=>((b[1].inc.usd+b[1].exp.usd)-(a[1].inc.usd+a[1].exp.usd)))
-    .map(([k,v])=>'<tr><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
+    .map(([k,v])=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({person:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
+}
+
+// ── 🔽 CLICKABLE DRILL-DOWN (KPIs, reports, ledger amounts) ──
+function bfDrill(f){
+  f=f||{};
+  // Reset top filters first
+  ['q','type','cat','cur','pay','from','to'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
+  if(f.type==='__voided'||f.type==='income'||f.type==='expense')document.getElementById('bf-f-type').value=f.type;
+  if(f.cat){
+    const catSel=document.getElementById('bf-f-cat');
+    if(catSel&&Array.from(catSel.options).some(o=>o.value===f.cat))catSel.value=f.cat;
+    else document.getElementById('bf-f-q').value=f.cat;
+  }
+  if(f.cur)document.getElementById('bf-f-cur').value=f.cur;
+  if(f.pay)document.getElementById('bf-f-pay').value=f.pay;
+  if(f.person)document.getElementById('bf-f-q').value=f.person;
+  bfShowTab('ledger');
+  bfRenderLedger();
+}
+function bfKpiClick(kind){
+  if(kind==='all')bfDrill({});
+  else if(kind==='income')bfDrill({type:'income'});
+  else if(kind==='expense')bfDrill({type:'expense'});
 }
 function bfExportCSV(){
   let balU=0,balL=0;
