@@ -195,7 +195,10 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
         <div><label class="fl">الدافع / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
         <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
       </div>
-      <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
+      <div class="bf-g2">
+        <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-i-property" placeholder="اختياري — مثال: 1245/شوف" style="direction:ltr"></div>
+        <div><label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري"></div>
+      </div>
       <label class="fl">📎 مستندات مرفقة (اختياري — صور أو PDF)</label>
       <input type="file" class="fi" id="bf-i-files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
       <div id="bf-i-upl" style="display:none;font-size:12px;color:#0f4d82;font-weight:700;margin-bottom:8px"></div>
@@ -231,8 +234,9 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
         <div><label class="fl">المدفوع له / الجهة</label><div class="bf-picker" data-picker-for="bf-e-person"><input type="text" class="fi" id="bf-e-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-e-person-dd"></div></div></div>
         <div><label class="fl">المسلّم (أمين الصندوق)</label><input type="text" class="fi" id="bf-e-handled" list="bf-dl-handlers" placeholder="اسم المسلّم"></div>
       </div>
+      <label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-e-karar" placeholder="مثال: 2026/145" style="direction:ltr">
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-e-notes" placeholder="اختياري">
-      <label class="fl">📎 مستندات مرفقة (اختياري — صور أو PDF)</label>
+      <label class="fl">📎 مستندات مرفقة — القرار / فواتير (اختياري — صور أو PDF)</label>
       <input type="file" class="fi" id="bf-e-files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
       <div id="bf-e-upl" style="display:none;font-size:12px;color:#0f4d82;font-weight:700;margin-bottom:8px"></div>
       <div class="bf-err" id="bf-e-err"></div>
@@ -322,11 +326,53 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
       <button class="bf-share-btn" style="flex:1;justify-content:center;margin-bottom:0" onclick="bfCasePrint()">🖨️ طباعة</button>
       <button class="bf-share-btn" style="flex:1;justify-content:center;margin-bottom:0" onclick="bfCaseSign()">✍️ توقيع</button>
     </div>
+    <div id="bf-case-editrow" style="display:none;gap:8px;margin-top:8px">
+      <button class="bf-share-btn" style="flex:1;justify-content:center;color:#0f4d82;border-color:#c8d9ea;margin-bottom:0" onclick="bfCaseEdit()">✏️ تعديل الحركة (مشرف)</button>
+    </div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="bf-share-btn" id="bf-case-delbtn" style="flex:1;justify-content:center;color:#a83232;margin-bottom:0" onclick="bfCaseDel()">🗑️ حذف الحركة</button>
       <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfCloseCase()">إغلاق</button>
     </div>
     <div id="bf-case-voidrow" style="display:flex;gap:8px;margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- EDIT MODAL (admin only) -->
+<div class="bf-share-ov" id="bf-edit-ov" onclick="if(event.target===this)bfCloseEdit()">
+  <div class="bf-share-box" style="max-width:560px;max-height:92vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">✏️ تعديل الحركة</div>
+    <div id="bf-edit-sub" style="font-size:12px;color:#666;margin-bottom:12px"></div>
+    <div class="bf-g2">
+      <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-ed-date"></div>
+      <div><label class="fl">النوع *</label><select class="fi" id="bf-ed-type" onchange="bfEditRefreshCats()"><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="opening">رصيد افتتاحي</option></select></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">المبلغ *</label><input type="number" class="fi" id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
+      <div><label class="fl">العملة</label><select class="fi" id="bf-ed-cur"><option value="USD">$ دولار</option><option value="LBP">ل.ل. ليرة</option></select></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">الفئة</label><select class="fi" id="bf-ed-cat"></select></div>
+      <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-ed-pay"><option value="cash">💵 نقداً</option><option value="transfer">🏦 حوالة</option><option value="whish">📱 Whish</option></select></div>
+    </div>
+    <div id="bf-ed-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-ed-cat-other"></div>
+    <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc">
+    <div class="bf-g2">
+      <div><label class="fl">رقم السند</label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
+      <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">الجهة (الدافع/المستفيد)</label><input type="text" class="fi" id="bf-ed-person"></div>
+      <div><label class="fl">المسلّم/المستلم</label><input type="text" class="fi" id="bf-ed-handled"></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
+      <div><label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-ed-notes"></div>
+    </div>
+    <div class="bf-err" id="bf-ed-err" style="margin-top:6px"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#1f7a45,#2a9c5a);color:#fff;border:none;margin-bottom:0" onclick="bfEditSave()">💾 حفظ التعديلات</button>
+      <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfCloseEdit()">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -744,6 +790,8 @@ async function bfSave(type){
   if(cat==='أخرى'){const o=document.getElementById('bf-'+p+'-cat-other').value.trim();if(o)cat=o;}
   const err=document.getElementById('bf-'+p+'-err');err.textContent='';
   if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة التاريخ والفئة والبيان والمبلغ';return;}
+  const kararEl=document.getElementById('bf-'+p+'-karar');
+  const propEl=document.getElementById('bf-'+p+'-property');
   const rec={entry_date:date,entry_type:type,category:cat,description:desc,amount:amount,
     currency:(document.getElementById('bf-'+p+'-cur')||{}).value||'USD',
     payment_method:(document.getElementById('bf-'+p+'-pay')||{}).value||'cash',
@@ -751,11 +799,15 @@ async function bfSave(type){
     handled_by:document.getElementById('bf-'+p+'-handled').value.trim()||null,
     receipt_no:bfNextNo(type,date),
     notes:document.getElementById('bf-'+p+'-notes').value.trim()||null,
+    karar_number:(kararEl&&kararEl.value.trim())||null,
+    property_number:(propEl&&propEl.value.trim())||null,
     created_by:bfUser?bfUser.email:null};
   const{data,error}=await sb.from('baladieh_finance').insert(rec).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم الحفظ — السند رقم '+rec.receipt_no);
   ['amount','desc','person','notes'].forEach(f=>document.getElementById('bf-'+p+'-'+f).value='');
+  if(kararEl)kararEl.value='';
+  if(propEl)propEl.value='';
   let saved=(data&&data[0])?data[0]:null;
   if(saved) saved=await bfUploadDocs(saved,p);
   await bfLoad();
@@ -786,13 +838,13 @@ function bfRenderReports(){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,النوع,الفئة,طريقة الدفع,البيان,الجهة,المستلم,المبلغ,العملة,الرصيد,ملغى,سبب الإلغاء'];
+  const lines=['التاريخ,رقم السند,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,المبلغ,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     const lbp=e.currency==='LBP';
     if(!e.voided){ if(lbp)balL+=signed; else balU+=signed; }
-    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
+    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
@@ -839,6 +891,8 @@ function bfReceiptHTML(e){
       +row(isIn?'وصلنا من السيد/ة':'دُفع إلى السيد/ة',e.person)
       +row(isIn?'المستلم':'المسلّم',e.handled_by)
       +row('طريقة الدفع',bfPay(e))
+      +row('رقم القرار',e.karar_number)
+      +row('رقم العقار',e.property_number)
       +row('ملاحظات',e.notes)
       +((e.documents&&e.documents.length)?row('المرفقات',e.documents.length+' مستند — '+e.documents.map(d=>d.name).join('، ')):'')
     +'</div>'
@@ -1186,12 +1240,15 @@ function bfOpenCase(id){
     +dr('البيان',e.description)
     +dr(e.entry_type==='income'?'الدافع':'المستفيد',e.person)
     +dr(e.entry_type==='income'?'المستلم':'المسلّم',e.handled_by)
+    +dr('رقم القرار',e.karar_number)
+    +dr('رقم العقار',e.property_number)
     +dr('ملاحظات',e.notes)
     +dr('التواقيع',(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k)+' ✓');return L.length?L.join(' · '):'';})())
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
       +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
   document.getElementById('bf-case-delbtn').style.display = bfCanDel() ? '' : 'none';
+  document.getElementById('bf-case-editrow').style.display = bfCanDel() ? 'flex' : 'none';
   document.getElementById('bf-case-voidrow').innerHTML = e.voided
     ? (bfCanDel()
         ? '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#1f7a45;margin-bottom:0" onclick="bfCaseUnvoid()">↩️ استعادة السند (إلغاء الـ Void)</button>'
@@ -1203,6 +1260,75 @@ function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none
 function bfCaseShare(){const id=bfCaseId;bfCloseCase();if(id)bfReceiptById(id);}
 function bfCasePrint(){const id=bfCaseId;bfCloseCase();if(id)bfPrintById(id);}
 function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
+
+// ── ✏️ EDIT (admin only) ──
+let bfEditId=null;
+function bfEditRefreshCats(){
+  const type=document.getElementById('bf-ed-type').value;
+  const sel=document.getElementById('bf-ed-cat');
+  const cur=sel.value;
+  const list=(type==='expense'?BF_CATS.expense:BF_CATS.income).concat(['أخرى']);
+  sel.innerHTML='<option value="">—</option>'+list.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
+  if(cur&&Array.from(sel.options).some(o=>o.value===cur))sel.value=cur;
+  sel.onchange=function(){document.getElementById('bf-ed-cat-other-w').style.display=(sel.value==='أخرى')?'':'none';};
+  sel.onchange();
+}
+function bfCaseEdit(){
+  if(!bfCanDel()){toast('🚫 التعديل محصور بالمشرف العام','err');return;}
+  const id=bfCaseId; bfCloseCase(); if(id)bfOpenEdit(id);
+}
+function bfOpenEdit(id){
+  const e=bfEntries.find(x=>String(x.id)===String(id)); if(!e)return;
+  bfEditId=e.id;
+  document.getElementById('bf-edit-sub').textContent=bfKind(e).replace(/<[^>]+>/g,'')+' '+(e.receipt_no||'')+' — '+bfMoney(e.amount,e.currency);
+  document.getElementById('bf-ed-date').value=e.entry_date||'';
+  document.getElementById('bf-ed-type').value=e.entry_type||'income';
+  document.getElementById('bf-ed-amount').value=e.amount||'';
+  document.getElementById('bf-ed-cur').value=e.currency||'USD';
+  document.getElementById('bf-ed-pay').value=e.payment_method||'cash';
+  bfEditRefreshCats();
+  const sel=document.getElementById('bf-ed-cat');
+  const known=Array.from(sel.options).some(o=>o.value===e.category);
+  if(known){sel.value=e.category||'';document.getElementById('bf-ed-cat-other-w').style.display='none';document.getElementById('bf-ed-cat-other').value='';}
+  else if(e.category){sel.value='أخرى';document.getElementById('bf-ed-cat-other-w').style.display='';document.getElementById('bf-ed-cat-other').value=e.category;}
+  document.getElementById('bf-ed-desc').value=e.description||'';
+  document.getElementById('bf-ed-receipt').value=e.receipt_no||'';
+  document.getElementById('bf-ed-karar').value=e.karar_number||'';
+  document.getElementById('bf-ed-person').value=e.person||'';
+  document.getElementById('bf-ed-handled').value=e.handled_by||'';
+  document.getElementById('bf-ed-property').value=e.property_number||'';
+  document.getElementById('bf-ed-notes').value=e.notes||'';
+  document.getElementById('bf-ed-err').textContent='';
+  document.getElementById('bf-edit-ov').style.display='flex';
+}
+function bfCloseEdit(){document.getElementById('bf-edit-ov').style.display='none';bfEditId=null;}
+async function bfEditSave(){
+  if(!bfEditId)return;
+  if(!bfCanDel()){toast('🚫 التعديل محصور بالمشرف العام','err');return;}
+  const err=document.getElementById('bf-ed-err');err.textContent='';
+  const date=document.getElementById('bf-ed-date').value;
+  const type=document.getElementById('bf-ed-type').value;
+  const amount=parseFloat(document.getElementById('bf-ed-amount').value);
+  const desc=document.getElementById('bf-ed-desc').value.trim();
+  let cat=document.getElementById('bf-ed-cat').value;
+  if(cat==='أخرى'){const o=document.getElementById('bf-ed-cat-other').value.trim();if(o)cat=o;else cat=null;}
+  if(!date||!desc||!(amount>0)){err.textContent='⚠️ التاريخ والبيان والمبلغ إلزامية';return;}
+  const patch={entry_date:date,entry_type:type,amount:amount,description:desc,
+    currency:document.getElementById('bf-ed-cur').value||'USD',
+    payment_method:document.getElementById('bf-ed-pay').value||'cash',
+    category:cat||null,
+    receipt_no:document.getElementById('bf-ed-receipt').value.trim()||null,
+    karar_number:document.getElementById('bf-ed-karar').value.trim()||null,
+    property_number:document.getElementById('bf-ed-property').value.trim()||null,
+    person:document.getElementById('bf-ed-person').value.trim()||null,
+    handled_by:document.getElementById('bf-ed-handled').value.trim()||null,
+    notes:document.getElementById('bf-ed-notes').value.trim()||null};
+  const{error}=await sb.from('baladieh_finance').update(patch).eq('id',bfEditId).select();
+  if(error){err.textContent='⚠️ '+error.message;return;}
+  toast('✓ تم حفظ التعديلات');
+  bfCloseEdit();
+  await bfLoad();
+}
 
 // ── ⛔ VOID (إلغاء دون حذف) ──
 let bfVoidId=null;
