@@ -543,9 +543,10 @@ async function bfLoad(){
   bfViewsInit();
 }
 function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();}
-function bfKPIs(){
+function bfKPIs(rowsArg){
+  const rows=rowsArg||(typeof bfFiltered==='function'?bfFiltered():bfEntries);
   let iU=0,eU=0,iL=0,eL=0;
-  bfEntries.forEach(e=>{
+  rows.forEach(e=>{
     if(e.voided)return;
     const l=e.currency==='LBP';
     if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
@@ -556,7 +557,16 @@ function bfKPIs(){
   document.getElementById('bf-k-bal').innerHTML=two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.');
   document.getElementById('bf-k-inc').innerHTML=two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.');
   document.getElementById('bf-k-exp').innerHTML=two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.');
-  document.getElementById('bf-k-cnt').textContent=bfEntries.length;
+  document.getElementById('bf-k-cnt').textContent=rows.length;
+  const filtered=(rows!==bfEntries)&&(rows.length!==bfEntries.length);
+  ['bf-k-bal','bf-k-inc','bf-k-exp','bf-k-cnt'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const card=el.closest('.bf-kpi'); if(!card)return;
+    let badge=card.querySelector('.bf-kpi-filt');
+    if(filtered){
+      if(!badge){badge=document.createElement('div');badge.className='bf-kpi-filt';badge.style.cssText='font-size:10px;color:#c9a227;font-weight:800;margin-top:4px';badge.textContent='● مُصفّى';card.appendChild(badge);}
+    } else if(badge){badge.remove();}
+  });
 }
 function bfBuildFilters(){
   const cats=[...new Set(bfEntries.map(e=>e.category).filter(Boolean))].sort();
@@ -842,6 +852,7 @@ function bfColFilter(el){
   bfColState.filters=bfColState.filters||{};
   bfColState.filters[el.getAttribute('data-cf')]=el.value;
   bfRenderLedgerBody();
+  bfKPIs();
 }
 function bfRenderLedgerBody(){
   const cols=bfVisibleCols();
@@ -850,7 +861,7 @@ function bfRenderLedgerBody(){
   const cs=cols.length||1;
   document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="'+cs+'" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
 }
-function bfRenderLedger(){bfRenderLedgerHead();bfRenderLedgerBody();}
+function bfRenderLedger(){bfRenderLedgerHead();bfRenderLedgerBody();bfKPIs();}
 
 // ── ⚙️ COLUMNS MENU ──
 let bfColsDraft=null;
