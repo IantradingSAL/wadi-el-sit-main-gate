@@ -20,7 +20,7 @@ Do both if you're launching on both stores.
 
 - [ ] Go to <https://developer.apple.com/programs/enroll/>
 - [ ] Choose **Organization** enrollment (required for a Municipality/Government app)
-  - Requires a **D-U-N-S number** for "Wadi El Sit Municipality" → apply at <https://developer.apple.com/enroll/duns-lookup/> (2–5 business days if the municipality doesn't already have one)
+  - [x] **D-U-N-S number:** `55-792-3248` ✅ (resolved for "Wadi El Sit Municipality")
   - Legal entity name must exactly match the D-U-N-S record
 - [ ] Pay $99 USD (annual, non-refundable)
 - [ ] Complete identity verification — Apple may call the municipality phone (03/649694) to verify the mayor's authorization
