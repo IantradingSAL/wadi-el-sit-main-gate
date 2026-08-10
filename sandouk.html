@@ -174,7 +174,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <div id="bf-pane-ledger" class="bf-card">
       <div class="bf-views">
         <span style="font-size:12px;font-weight:800;color:#0f4d82">👁️ العرض:</span>
-        <select id="bf-view-select" onchange="bfViewLoad(this.value)"><option value="">— افتراضي —</option></select>
+        <select id="bf-view-select" onchange="bfViewLoad(this.value)"><option value="">— Main —</option></select>
         <button class="bf-vbtn primary" onclick="bfViewSaveNew()">💾 حفظ كعرض جديد</button>
         <button class="bf-vbtn" onclick="bfViewSaveOver()">💾 تحديث الحالي</button>
         <button class="bf-vbtn" onclick="bfViewRename()">✏️ إعادة تسمية</button>
@@ -991,7 +991,7 @@ async function bfViewsInit(){
 }
 function bfViewsRender(){
   const sel=document.getElementById('bf-view-select');
-  sel.innerHTML='<option value="">— افتراضي —</option>'+bfViews.map(v=>'<option value="'+v.id+'"'+(v.id===bfCurrentViewId?' selected':'')+'>'+(v.is_default?'⭐ ':'')+v.name+'</option>').join('');
+  sel.innerHTML='<option value="">— Main —</option>'+bfViews.map(v=>'<option value="'+v.id+'"'+(v.id===bfCurrentViewId?' selected':'')+'>'+(v.is_default?'⭐ ':'')+v.name+'</option>').join('');
 }
 function bfViewLoad(id){
   bfCurrentViewId=id||'';
