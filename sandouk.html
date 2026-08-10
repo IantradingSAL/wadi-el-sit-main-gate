@@ -215,15 +215,19 @@ select.bf-colfilter{padding-inline-end:22px}
       <div class="bf-sumtitle">🟢 تسجيل مقبوضات — سند قبض</div>
       <div class="bf-g2">
         <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-i-date"></div>
-        <div><label class="fl">المبلغ *</label>
+        <div><label class="fl">قيمة الإجراءات *</label>
           <div style="display:flex;gap:8px">
-            <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1">
-            <select class="fi" id="bf-i-cur" style="flex:0 0 118px">
+            <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
+            <select class="fi" id="bf-i-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('i')">
               <option value="LBP" selected>ل.ل. ليرة</option>
               <option value="USD">$ دولار</option>
             </select>
           </div>
         </div>
+      </div>
+      <div class="bf-g2">
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
+        <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-i-total" readonly style="direction:ltr;background:#f0f7ff;font-weight:800;color:#0f4d82" value="0.00"></div>
       </div>
       <div class="bf-g2">
         <div><label class="fl">الفئة *</label><select class="fi" id="bf-i-cat" onchange="bfCatOther('i')"></select></div>
@@ -254,15 +258,19 @@ select.bf-colfilter{padding-inline-end:22px}
       <div class="bf-sumtitle">🔴 تسجيل مصروف — سند صرف</div>
       <div class="bf-g2">
         <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-e-date"></div>
-        <div><label class="fl">المبلغ *</label>
+        <div><label class="fl">قيمة الإجراءات *</label>
           <div style="display:flex;gap:8px">
-            <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1">
-            <select class="fi" id="bf-e-cur" style="flex:0 0 118px">
+            <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
+            <select class="fi" id="bf-e-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('e')">
               <option value="LBP" selected>ل.ل. ليرة</option>
               <option value="USD">$ دولار</option>
             </select>
           </div>
         </div>
+      </div>
+      <div class="bf-g2">
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
+        <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-e-total" readonly style="direction:ltr;background:#fdf1f1;font-weight:800;color:#a83232" value="0.00"></div>
       </div>
       <div class="bf-g2">
         <div><label class="fl">الفئة *</label><select class="fi" id="bf-e-cat" onchange="bfCatOther('e')"></select></div>
@@ -300,6 +308,14 @@ select.bf-colfilter{padding-inline-end:22px}
         <div class="bf-card"><div class="bf-sumtitle">🔴 المصروفات حسب الفئة</div><div class="bf-tblwrap"><table><thead><tr><th>الفئة</th><th>عدد</th><th>المجموع</th></tr></thead><tbody id="bf-rep-exp"></tbody></table></div></div>
       </div>
       <div class="bf-card"><div class="bf-sumtitle">👥 حسب الجهة</div><div class="bf-tblwrap"><table><thead><tr><th>الجهة</th><th>عدد الحركات</th><th>مقبوضات</th><th>مصروفات</th></tr></thead><tbody id="bf-rep-person"></tbody></table></div></div>
+      <div class="bf-card">
+        <div class="bf-sumtitle">🏷️ تقرير الطوابع المستعملة (سند قيمة الطوابع)</div>
+        <div id="bf-rep-stamp-tot" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px"></div>
+        <div class="bf-tblwrap"><table>
+          <thead><tr><th>التاريخ</th><th>السند</th><th>النوع</th><th>الجهة</th><th>البيان</th><th>قيمة الطوابع</th></tr></thead>
+          <tbody id="bf-rep-stamps"></tbody>
+        </table></div>
+      </div>
     </div>
   </div>
 
@@ -387,8 +403,12 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">النوع *</label><select class="fi" id="bf-ed-type" onchange="bfEditRefreshCats()"><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="opening">رصيد افتتاحي</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">المبلغ *</label><input type="number" class="fi" id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
+      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
       <div><label class="fl">العملة</label><select class="fi" id="bf-ed-cur"><option value="USD">$ دولار</option><option value="LBP">ل.ل. ليرة</option></select></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
+      <div style="font-size:11px;color:#8a95a3;align-self:end;padding-bottom:12px">قيمة الطوابع محسوبة ضمن "المبلغ الإجمالي" أعلاه.</div>
     </div>
     <div class="bf-g2">
       <div><label class="fl">الفئة</label><select class="fi" id="bf-ed-cat"></select></div>
@@ -460,6 +480,14 @@ function bfCanDel(){
   if(String(bfUser.email||'').toLowerCase()===BF_SUPER)return true;
   return !!(bfUser.user_metadata&&bfUser.user_metadata.sandouk_delete===true);
 }
+function bfCanEdit(){
+  if(!bfUser)return false;
+  if(bfCanDel())return true;
+  const md=bfUser.user_metadata||{};
+  if(md.sandouk_edit===true)return true;
+  const role=String(md.role||'').toLowerCase();
+  return role==='finance' || role==='mayor' || role==='admin';
+}
 function bfSigs(e){
   const s=(e.signatures&&typeof e.signatures==='object')?e.signatures:{};
   if(e.signature&&!(s.person&&s.person.img))return Object.assign({person:{img:e.signature,at:e.signed_at}},s);
@@ -496,6 +524,15 @@ function bfInitForms(){
   const fill=(id,list)=>document.getElementById(id).innerHTML=list.map(c=>'<option>'+c+'</option>').join('');
   fill('bf-i-cat',BF_CATS.income); fill('bf-e-cat',BF_CATS.expense);
   bfWirePickers();
+  bfUpdateTotal('i'); bfUpdateTotal('e');
+}
+function bfUpdateTotal(p){
+  const a=parseFloat((document.getElementById('bf-'+p+'-amount')||{}).value)||0;
+  const s=parseFloat((document.getElementById('bf-'+p+'-stamp')||{}).value)||0;
+  const cur=(document.getElementById('bf-'+p+'-cur')||{}).value||'USD';
+  const t=a+s;
+  const el=document.getElementById('bf-'+p+'-total'); if(!el)return;
+  el.value=(cur==='LBP'?bfFmt(t)+' ل.ل.':'$'+bfFmt(t));
 }
 function bfCatOther(p){
   const v=document.getElementById('bf-'+p+'-cat').value;
@@ -779,6 +816,7 @@ const BF_COLS=[
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
+  {key:'stamp_value',label:'قيمة الطوابع',filter:'text',val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
   {key:'amount',label:'المبلغ',filter:'text',val:e=>String(e.amount||''),search:e=>String(e.amount||''),cell:e=>'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'},
   {key:'balance',label:'الرصيد',filter:'none',val:e=>String(e.bal||''),search:e=>'',cell:e=>'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'},
   {key:'created_by',label:'أدخلت بواسطة',filter:'text',val:e=>e.created_by||'',search:e=>e.created_by||'',cell:e=>'<td style="font-size:11px;color:#666">'+(e.created_by||'')+'</td>'},
@@ -1036,6 +1074,7 @@ async function bfSave(type){
   const p=type==='income'?'i':'e';
   const date=document.getElementById('bf-'+p+'-date').value;
   const amount=parseFloat(document.getElementById('bf-'+p+'-amount').value);
+  const stamp=parseFloat((document.getElementById('bf-'+p+'-stamp')||{}).value)||0;
   const desc=document.getElementById('bf-'+p+'-desc').value.trim();
   let cat=document.getElementById('bf-'+p+'-cat').value;
   if(cat==='أخرى'){const o=document.getElementById('bf-'+p+'-cat-other').value.trim();if(o)cat=o;}
@@ -1043,7 +1082,8 @@ async function bfSave(type){
   if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة التاريخ والفئة والبيان والمبلغ';return;}
   const kararEl=document.getElementById('bf-'+p+'-karar');
   const propEl=document.getElementById('bf-'+p+'-property');
-  const rec={entry_date:date,entry_type:type,category:cat,description:desc,amount:amount,
+  const rec={entry_date:date,entry_type:type,category:cat,description:desc,amount:amount+stamp,
+    stamp_value:stamp,
     currency:(document.getElementById('bf-'+p+'-cur')||{}).value||'USD',
     payment_method:(document.getElementById('bf-'+p+'-pay')||{}).value||'cash',
     person:document.getElementById('bf-'+p+'-person').value.trim()||null,
@@ -1056,7 +1096,8 @@ async function bfSave(type){
   const{data,error}=await sb.from('baladieh_finance').insert(rec).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم الحفظ — السند رقم '+rec.receipt_no);
-  ['amount','desc','person','notes'].forEach(f=>document.getElementById('bf-'+p+'-'+f).value='');
+  ['amount','stamp','desc','person','notes'].forEach(f=>{const el=document.getElementById('bf-'+p+'-'+f); if(el)el.value='';});
+  bfUpdateTotal(p);
   if(kararEl)kararEl.value='';
   if(propEl)propEl.value='';
   let saved=(data&&data[0])?data[0]:null;
@@ -1087,6 +1128,33 @@ function bfRenderReports(){
   document.getElementById('bf-rep-person').innerHTML=Object.entries(pm)
     .sort((a,b)=>((b[1].inc.usd+b[1].exp.usd)-(a[1].inc.usd+a[1].exp.usd)))
     .map(([k,v])=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({person:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
+
+  // 🏷️ Stamps usage report
+  const stEntries=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
+  const stTot={usd:0,lbp:0,n:0};
+  stEntries.forEach(e=>{stTot.n++; if(e.currency==='LBP')stTot.lbp+=+e.stamp_value; else stTot.usd+=+e.stamp_value;});
+  const tot=document.getElementById('bf-rep-stamp-tot');
+  if(tot){
+    tot.innerHTML=stEntries.length
+      ? '<div class="bf-kpi" style="flex:1;min-width:150px;border-top-color:#c9a227"><div class="v" style="color:#8a6d1a">'+bfSumTxt(stTot)+'</div><div class="l">إجمالي قيمة الطوابع</div></div>'
+        +'<div class="bf-kpi" style="flex:1;min-width:150px"><div class="v" style="color:#0f4d82">'+stTot.n+'</div><div class="l">عدد السندات ذات طوابع</div></div>'
+      : '<div style="font-size:12.5px;color:#8a95a3">لا توجد سندات مسجّل عليها قيمة طوابع بعد</div>';
+  }
+  const body=document.getElementById('bf-rep-stamps');
+  if(body){
+    const TYPE_AR={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'};
+    body.innerHTML=stEntries.length
+      ? stEntries.sort((a,b)=>String(b.entry_date||'').localeCompare(String(a.entry_date||''))).map(e=>
+        '<tr style="cursor:pointer" onclick="bfOpenCase(\''+e.id+'\')">'
+        +'<td>'+(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')+'</td>'
+        +'<td style="font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+'</td>'
+        +'<td>'+(TYPE_AR[e.entry_type]||e.entry_type||'')+'</td>'
+        +'<td>'+(e.person||'')+'</td>'
+        +'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'
+        +'<td style="font-weight:800;color:#8a6d1a">'+bfMoney(+e.stamp_value,e.currency)+'</td>'
+        +'</tr>').join('')
+      : '<tr><td colspan="6" style="color:#999;text-align:center;padding:10px">—</td></tr>';
+  }
 }
 
 // ── 🔽 CLICKABLE DRILL-DOWN (KPIs, reports, ledger amounts) ──
@@ -1113,13 +1181,15 @@ function bfKpiClick(kind){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,المبلغ,العملة,الرصيد,ملغى,سبب الإلغاء'];
+  const lines=['التاريخ,رقم السند,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     const lbp=e.currency==='LBP';
+    const sv=Number(e.stamp_value)||0;
+    const base=Math.max(0,(+e.amount||0)-sv);
     if(!e.voided){ if(lbp)balL+=signed; else balU+=signed; }
-    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
+    lines.push([e.entry_date,q(e.receipt_no),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
@@ -1171,10 +1241,23 @@ function bfReceiptHTML(e){
       +row('ملاحظات',e.notes)
       +((e.documents&&e.documents.length)?row('المرفقات',e.documents.length+' مستند — '+e.documents.map(d=>d.name).join('، ')):'')
     +'</div>'
-    +'<div style="margin:16px 0 6px;text-align:center;background:linear-gradient(135deg,'+(isIn?'#f0faf3':'#fdf1f1')+',#fff);border:2px solid '+c+';border-radius:14px;padding:13px;position:relative">'
-      +'<div style="font-size:12px;color:#8a8f9c;font-weight:700">المبلغ — '+bfCurWord(e.currency)+'</div>'
-      +'<div style="font-size:33px;font-weight:800;color:'+(e.voided?'#999':c)+';direction:ltr;unicode-bidi:embed">'+(e.voided?'<s>':'')+(e.currency==='LBP'?bfFmt(e.amount)+' ل.ل.':'$'+bfFmt(e.amount))+(e.voided?'</s>':'')+'</div>'
-    +'</div>'
+    +(function(){
+      const sv=Number(e.stamp_value)||0;
+      const total=Number(e.amount)||0;
+      const base=Math.max(0,total-sv);
+      const money=v=>e.currency==='LBP'?bfFmt(v)+' ل.ل.':'$'+bfFmt(v);
+      const breakdown=sv>0
+        ? '<div style="display:flex;justify-content:space-around;gap:10px;margin-bottom:8px;font-size:12px;font-weight:700;color:#555;direction:rtl">'
+            +'<div>قيمة الإجراءات:<br><span style="font-size:15px;color:#1a1a2e;direction:ltr;unicode-bidi:embed">'+money(base)+'</span></div>'
+            +'<div style="border-right:1.5px dashed #d5dfec;padding-right:10px">🏷️ سند قيمة الطوابع:<br><span style="font-size:15px;color:#8a6d1a;direction:ltr;unicode-bidi:embed">'+money(sv)+'</span></div>'
+          +'</div>'
+        : '';
+      return '<div style="margin:16px 0 6px;text-align:center;background:linear-gradient(135deg,'+(isIn?'#f0faf3':'#fdf1f1')+',#fff);border:2px solid '+c+';border-radius:14px;padding:13px;position:relative">'
+        +breakdown
+        +'<div style="font-size:12px;color:#8a8f9c;font-weight:700">'+(sv>0?'المجموع (إجراءات + طوابع)':'المبلغ')+' — '+bfCurWord(e.currency)+'</div>'
+        +'<div style="font-size:33px;font-weight:800;color:'+(e.voided?'#999':c)+';direction:ltr;unicode-bidi:embed">'+(e.voided?'<s>':'')+money(total)+(e.voided?'</s>':'')+'</div>'
+      +'</div>';
+    })()
     +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
       +sigBlock(isIn?'توقيع الدافع':'توقيع المستفيد','person')
       +sigBlock('أمين الصندوق','cashier')
@@ -1283,6 +1366,23 @@ function bfBuildReportEl(){
     +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'))
     +secT('🔴 المصروفات حسب الفئة')
     +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'))
+    +(function(){
+      const st=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
+      if(!st.length) return '';
+      const TYPE_AR2={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'};
+      let sU=0,sL=0; st.forEach(e=>{if(e.currency==='LBP')sL+=+e.stamp_value;else sU+=+e.stamp_value;});
+      const totalTxt=[sU?'$'+bfFmt(sU):'',sL?bfFmt(sL)+' ل.ل.':''].filter(Boolean).join(' + ')||'—';
+      const rows=st.sort((a,b)=>String(a.entry_date||'').localeCompare(String(b.entry_date||''))).map(e=>'<tr style="page-break-inside:avoid">'
+        +td(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')
+        +td(e.receipt_no||'')
+        +td(TYPE_AR2[e.entry_type]||e.entry_type||'')
+        +td(e.person||'')
+        +td(e.description||'','font-size:10px')
+        +td(bfMoney(+e.stamp_value,e.currency),'font-weight:800;color:#8a6d1a')
+      +'</tr>').join('');
+      return secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+st.length)
+        +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows);
+    })()
     +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
     +'<div>أمين الصندوق: ________________</div><div>رئيس البلدية: ________________</div><div>أُنشئ بواسطة: '+(bfUser?bfUser.email:'')+'</div></div>';
   return el;
@@ -1523,7 +1623,7 @@ function bfOpenCase(id){
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
       +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
   document.getElementById('bf-case-delbtn').style.display = bfCanDel() ? '' : 'none';
-  document.getElementById('bf-case-editrow').style.display = bfCanDel() ? 'flex' : 'none';
+  document.getElementById('bf-case-editrow').style.display = bfCanEdit() ? 'flex' : 'none';
   document.getElementById('bf-case-voidrow').innerHTML = e.voided
     ? (bfCanDel()
         ? '<button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#1f7a45;margin-bottom:0" onclick="bfCaseUnvoid()">↩️ استعادة السند (إلغاء الـ Void)</button>'
@@ -1549,7 +1649,7 @@ function bfEditRefreshCats(){
   sel.onchange();
 }
 function bfCaseEdit(){
-  if(!bfCanDel()){toast('🚫 التعديل محصور بالمشرف العام','err');return;}
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل السندات','err');return;}
   const id=bfCaseId; bfCloseCase(); if(id)bfOpenEdit(id);
 }
 function bfOpenEdit(id){
@@ -1559,6 +1659,7 @@ function bfOpenEdit(id){
   document.getElementById('bf-ed-date').value=e.entry_date||'';
   document.getElementById('bf-ed-type').value=e.entry_type||'income';
   document.getElementById('bf-ed-amount').value=e.amount||'';
+  document.getElementById('bf-ed-stamp').value=Number(e.stamp_value)||'';
   document.getElementById('bf-ed-cur').value=e.currency||'USD';
   document.getElementById('bf-ed-pay').value=e.payment_method||'cash';
   bfEditRefreshCats();
@@ -1579,7 +1680,7 @@ function bfOpenEdit(id){
 function bfCloseEdit(){document.getElementById('bf-edit-ov').style.display='none';bfEditId=null;}
 async function bfEditSave(){
   if(!bfEditId)return;
-  if(!bfCanDel()){toast('🚫 التعديل محصور بالمشرف العام','err');return;}
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل السندات','err');return;}
   const err=document.getElementById('bf-ed-err');err.textContent='';
   const date=document.getElementById('bf-ed-date').value;
   const type=document.getElementById('bf-ed-type').value;
@@ -1589,6 +1690,7 @@ async function bfEditSave(){
   if(cat==='أخرى'){const o=document.getElementById('bf-ed-cat-other').value.trim();if(o)cat=o;else cat=null;}
   if(!date||!desc||!(amount>0)){err.textContent='⚠️ التاريخ والبيان والمبلغ إلزامية';return;}
   const patch={entry_date:date,entry_type:type,amount:amount,description:desc,
+    stamp_value:parseFloat(document.getElementById('bf-ed-stamp').value)||0,
     currency:document.getElementById('bf-ed-cur').value||'USD',
     payment_method:document.getElementById('bf-ed-pay').value||'cash',
     category:cat||null,
@@ -1754,7 +1856,7 @@ async function bfSignSave(){
 }
 
 // ── 🔐 AUTH (standalone) ──
-const BF_ALLOWED=['mayor','admin','sandouk'];
+const BF_ALLOWED=['mayor','admin','sandouk','finance'];
 function bfGate(user){
   const role=(user.user_metadata&&user.user_metadata.role)||'';
   if(BF_ALLOWED.indexOf(role)<0){
