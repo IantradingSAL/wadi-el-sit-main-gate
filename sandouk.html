@@ -146,7 +146,7 @@ select.bf-colfilter{padding-inline-end:22px}
 
 <div id="bf-screen">
   <div class="bf-top">
-    <img id="bf-logo-img" alt="شعار">
+    <img id="bf-logo-img" alt="شعار بلدية وادي الست" src="icons/apple-touch-icon.png" style="width:40px;height:40px;object-fit:contain">
     <div style="flex:1">
       <div style="font-size:16px;font-weight:800">💰 صندوق البلدية</div>
       <div style="font-size:11px;opacity:.75">بلدية وادي الست · قضاء الشوف — جبل لبنان · <span id="bf-user-email" style="direction:ltr;unicode-bidi:embed"></span></div>
@@ -464,7 +464,10 @@ let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null
 // custom typeahead picker (bfMakePicker) on the الدافع/الجهة inputs.
 let bfPhonebookEntries=[];
 const BF_MUN_ID='00000000-0000-0000-0000-000000000001';
-const BF_LOGO=(function(){try{return document.querySelector('.sb-logo').src;}catch(e){return '';}})();
+const BF_LOGO=(function(){
+  try{const s=document.querySelector('.sb-logo'); if(s&&s.src)return s.src;}catch(e){}
+  try{return new URL('icons/apple-touch-icon.png', location.href).href;}catch(e){return 'icons/apple-touch-icon.png';}
+})();
 const BF_CATS={
   income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
   expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
