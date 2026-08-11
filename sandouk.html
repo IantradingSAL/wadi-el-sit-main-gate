@@ -240,7 +240,7 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">طريقة الدفع *</label><select class="fi" id="bf-i-pay"><option value="cash">💵 نقداً (كاش)</option><option value="transfer">🏦 حوالة مصرفية</option><option value="whish">📱 Whish</option></select></div>
       </div>
       <div id="bf-i-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-i-cat-other" placeholder="فئة أخرى…"></div>
-      <label class="fl">البيان *</label><input type="text" class="fi" id="bf-i-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
+      <label class="fl">البيان * <span style="color:#8a95a3;font-weight:700">(اختَر من القائمة أو اكتب بياناً جديداً)</span></label><input type="text" class="fi" id="bf-i-desc" list="bf-dl-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
       <div class="bf-g2">
         <div><label class="fl">الدافع / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
         <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
@@ -290,7 +290,7 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">طريقة الدفع *</label><select class="fi" id="bf-e-pay"><option value="cash">💵 نقداً (كاش)</option><option value="transfer">🏦 حوالة مصرفية</option><option value="whish">📱 Whish</option></select></div>
       </div>
       <div id="bf-e-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-e-cat-other" placeholder="فئة أخرى…"></div>
-      <label class="fl">البيان *</label><input type="text" class="fi" id="bf-e-desc" placeholder="مثال: صيانة إنارة الشارع الرئيسي">
+      <label class="fl">البيان * <span style="color:#8a95a3;font-weight:700">(اختَر من القائمة أو اكتب بياناً جديداً)</span></label><input type="text" class="fi" id="bf-e-desc" list="bf-dl-desc" placeholder="مثال: صيانة إنارة الشارع الرئيسي">
       <div class="bf-g2">
         <div><label class="fl">المدفوع له / الجهة</label><div class="bf-picker" data-picker-for="bf-e-person"><input type="text" class="fi" id="bf-e-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-e-person-dd"></div></div></div>
         <div><label class="fl">المسلّم (أمين الصندوق)</label><input type="text" class="fi" id="bf-e-handled" list="bf-dl-handlers" placeholder="اسم المسلّم"></div>
@@ -334,6 +334,7 @@ select.bf-colfilter{padding-inline-end:22px}
 
   <datalist id="bf-dl-persons"></datalist>
   <datalist id="bf-dl-handlers"></datalist>
+  <datalist id="bf-dl-desc"></datalist>
 </div>
 
 <!-- SHARE MODAL -->
@@ -428,7 +429,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-ed-pay"><option value="cash">💵 نقداً</option><option value="transfer">🏦 حوالة</option><option value="whish">📱 Whish</option></select></div>
     </div>
     <div id="bf-ed-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-ed-cat-other"></div>
-    <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc">
+    <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc" list="bf-dl-desc">
     <div class="bf-g2">
       <div><label class="fl">🧾 رقم السند <span id="bf-ed-recnote" style="color:#8a95a3;font-weight:700">(مقفل)</span></label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
       <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
@@ -693,6 +694,15 @@ function bfDatalists(){
   // bfPhonebookEntries directly and offers an inline "add to directory".
   const uniq=a=>[...new Set(a.filter(Boolean))].sort();
   document.getElementById('bf-dl-handlers').innerHTML=uniq(bfEntries.map(e=>e.handled_by)).map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
+  // 📝 البيان suggestions — unique descriptions from past entries, ranked by
+  // how often they've been used so the top match sits at the top of the
+  // browser's <datalist> popup. Free-text is still allowed: typing a new
+  // description just saves it, and it joins this list on the next reload.
+  const descFreq={};
+  bfEntries.forEach(e=>{const d=(e.description||'').trim(); if(d)descFreq[d]=(descFreq[d]||0)+1;});
+  const descOrdered=Object.keys(descFreq).sort((a,b)=>(descFreq[b]-descFreq[a])||a.localeCompare(b,'ar'));
+  const dl=document.getElementById('bf-dl-desc');
+  if(dl)dl.innerHTML=descOrdered.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
 }
 
 // ───────────────────────────────────────────────────────────────────────────
