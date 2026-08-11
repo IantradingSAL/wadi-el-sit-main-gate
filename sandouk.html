@@ -1733,13 +1733,20 @@ function bfOpenCase(id){
       const wn=(e.wassel_number||'').replace(/"/g,'&quot;');
       const wd=e.wassel_date||'';
       return '<div style="background:#fff8e1;border:1.5px solid #f0c88a;border-radius:12px;padding:10px 12px;margin-top:10px">'
-        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:8px">📄 الوصل (يُضاف لاحقاً — منفصل عن السند)</div>'
+        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:4px">📄 الوصل (يُضاف لاحقاً — منفصل عن السند)</div>'
+        +'<div style="font-size:11.5px;color:#8a6d1a;margin-bottom:8px;line-height:1.55">'
+          +'يمكن أن يكون تاريخ الوصل قبل تاريخ السند (حتى لو بأسبوع أو أكثر) — التاريخ متاح بدون قيود. '
+          +'أدخل رقم الوصل يدوياً من الوصل الورقي، وارفق صورته أو ملفه أدناه؛ سيُحفظ في مرفقات السند بتسمية «الوصل — رقم …»'
+        +'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الوصل</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً" style="direction:ltr"></div>'
+        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الوصل (يُدخل يدوياً)</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>'
         +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الوصل</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
         +'</div>'
+        +'<div style="margin-top:8px"><label class="fl">📎 مستند الوصل (اختياري — صورة أو PDF)</label>'
+          +'<input type="file" class="fi" id="bf-case-wassel-file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"></div>'
+        +'<div id="bf-case-wassel-upl" style="display:none;font-size:12px;color:#8a6d1a;font-weight:700;margin-top:4px"></div>'
         +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-        +'<button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الوصل</button>'
+        +'<button class="bf-share-btn" id="bf-case-wassel-save" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الوصل</button>'
         +((e.wassel_number||e.wassel_date)?'<button class="bf-share-btn" style="flex:0 0 auto;color:#a83232;border-color:#eec2c2;margin-bottom:0" onclick="bfClearWasselFromCase()">🗑️ مسح</button>':'')
         +'</div>'
         +'<div id="bf-case-wassel-err" style="color:#a83232;font-size:12px;min-height:14px;margin-top:4px"></div>'
@@ -1766,10 +1773,43 @@ async function bfSaveWasselFromCase(){
   const wn=(document.getElementById('bf-case-wassel-no').value||'').trim();
   const wd=document.getElementById('bf-case-wassel-date').value||null;
   const err=document.getElementById('bf-case-wassel-err');
+  const btn=document.getElementById('bf-case-wassel-save');
+  const upl=document.getElementById('bf-case-wassel-upl');
+  const fileInp=document.getElementById('bf-case-wassel-file');
   if(err)err.textContent='';
-  const{error}=await sb.from('baladieh_finance').update({wassel_number:wn||null,wassel_date:wd}).eq('id',bfCaseId);
-  if(error){if(err)err.textContent='⚠️ '+error.message;return;}
-  toast('✓ تم حفظ الوصل');
+  if(btn)btn.disabled=true;
+  try{
+    // 1) Persist the number + date first so the entry has the wassel metadata even
+    //    if file uploads fail later.
+    const{error:e1}=await sb.from('baladieh_finance').update({wassel_number:wn||null,wassel_date:wd}).eq('id',bfCaseId);
+    if(e1){if(err)err.textContent='⚠️ '+e1.message;return;}
+    // 2) If a file was chosen, upload it and append to the entry's documents array.
+    //    Naming follows the user's instruction: the wassel's manually-entered
+    //    number becomes the human-readable label on the attachment ("الوصل — رقم <N>").
+    const files=(fileInp&&fileInp.files)?Array.from(fileInp.files):[];
+    if(files.length){
+      const{data:cur,error:eCur}=await sb.from('baladieh_finance').select('documents').eq('id',bfCaseId).single();
+      if(eCur){if(err)err.textContent='⚠️ '+eCur.message;return;}
+      const docs=Array.isArray(cur&&cur.documents)?cur.documents.slice():[];
+      for(let i=0;i<files.length;i++){
+        const f=files[i];
+        if(upl){upl.style.display='block';upl.textContent='⏳ رفع مستند الوصل '+(i+1)+' من '+files.length+': '+f.name;}
+        const ext=(f.name.split('.').pop()||'bin').toLowerCase();
+        const path=bfCaseId+'/wassel_'+Date.now()+'_'+i+'.'+ext;
+        const{error:eUp}=await sb.storage.from('sandouk-docs').upload(path,f);
+        if(eUp){toast('⚠️ فشل رفع '+f.name+': '+eUp.message,'err');continue;}
+        const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
+        const label='📄 الوصل'+(wn?' — رقم '+wn:'')+' — '+f.name;
+        docs.push({name:label,path:path,url:pd.publicUrl,type:ext,size:f.size,kind:'wassel',wassel_number:wn||null,wassel_date:wd||null});
+      }
+      const{error:eUpd}=await sb.from('baladieh_finance').update({documents:docs}).eq('id',bfCaseId);
+      if(eUpd){if(err)err.textContent='⚠️ '+eUpd.message;return;}
+    }
+    toast('✓ تم حفظ الوصل'+(files.length?' مع '+files.length+' مستند':''));
+  } finally {
+    if(upl)upl.style.display='none';
+    if(btn)btn.disabled=false;
+  }
   const id=bfCaseId;
   bfCloseCase();
   await bfLoad();
