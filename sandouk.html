@@ -184,7 +184,7 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <div class="bf-filters">
         <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
-        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option></select></div>
+        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option><option value="__no_wassel">📄 بدون رقم وصل</option></select></div>
         <div><label class="fl">الفئة</label><select class="fi" id="bf-f-cat" onchange="bfRenderLedger()"><option value="">الكل</option></select></div>
         <div><label class="fl">العملة</label><select class="fi" id="bf-f-cur" onchange="bfRenderLedger()"><option value="">الكل</option><option value="USD">دولار $</option><option value="LBP">ليرة ل.ل.</option></select></div>
         <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-f-pay" onchange="bfRenderLedger()"><option value="">الكل</option><option value="cash">نقداً</option><option value="transfer">حوالة</option><option value="whish">Whish</option></select></div>
@@ -213,17 +213,23 @@ select.bf-colfilter{padding-inline-end:22px}
     <!-- INCOME ENTRY -->
     <div id="bf-pane-income" class="bf-card" style="display:none">
       <div class="bf-sumtitle">🟢 تسجيل مقبوضات — سند قبض</div>
-      <div class="bf-g2">
-        <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-i-date"></div>
-        <div><label class="fl">قيمة الإجراءات *</label>
-          <div style="display:flex;gap:8px">
-            <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
-            <select class="fi" id="bf-i-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('i')">
-              <option value="LBP" selected>ل.ل. ليرة</option>
-              <option value="USD">$ دولار</option>
-            </select>
-          </div>
+      <div class="bf-locked-hdr" id="bf-i-lockhdr" style="background:#eef3fa;border:1.5px solid #c8d9ea;border-radius:12px;padding:10px 12px;margin-bottom:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:150px"><label class="fl">🧾 رقم السند <span id="bf-i-locknote" style="color:#8a95a3;font-weight:700">(تلقائي — مقفل)</span></label><input type="text" class="fi" id="bf-i-receipt" readonly style="direction:ltr;background:#f5f8fc;color:#0f4d82;font-weight:800"></div>
+          <div style="flex:1;min-width:150px"><label class="fl">📅 تاريخ الإدخال <span id="bf-i-datenote" style="color:#8a95a3;font-weight:700">(اليوم — مقفل)</span></label><input type="date" class="fi" id="bf-i-date" readonly style="background:#f5f8fc;color:#0f4d82;font-weight:800"></div>
         </div>
+      </div>
+      <div class="bf-g2">
+        <div><label class="fl">📄 رقم الوصل <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-i-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+        <div><label class="fl">📅 تاريخ الوصل <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-i-wassel-date"></div>
+      </div>
+      <label class="fl">قيمة الإجراءات *</label>
+      <div style="display:flex;gap:8px">
+        <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
+        <select class="fi" id="bf-i-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('i')">
+          <option value="LBP" selected>ل.ل. ليرة</option>
+          <option value="USD">$ دولار</option>
+        </select>
       </div>
       <div class="bf-g2">
         <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
@@ -257,17 +263,23 @@ select.bf-colfilter{padding-inline-end:22px}
     <!-- EXPENSE ENTRY -->
     <div id="bf-pane-expense" class="bf-card" style="display:none">
       <div class="bf-sumtitle">🔴 تسجيل مصروف — سند صرف</div>
-      <div class="bf-g2">
-        <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-e-date"></div>
-        <div><label class="fl">قيمة الإجراءات *</label>
-          <div style="display:flex;gap:8px">
-            <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
-            <select class="fi" id="bf-e-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('e')">
-              <option value="LBP" selected>ل.ل. ليرة</option>
-              <option value="USD">$ دولار</option>
-            </select>
-          </div>
+      <div class="bf-locked-hdr" id="bf-e-lockhdr" style="background:#fdf1f1;border:1.5px solid #eec2c2;border-radius:12px;padding:10px 12px;margin-bottom:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:150px"><label class="fl">🧾 رقم السند <span id="bf-e-locknote" style="color:#8a95a3;font-weight:700">(تلقائي — مقفل)</span></label><input type="text" class="fi" id="bf-e-receipt" readonly style="direction:ltr;background:#fbf5f5;color:#a83232;font-weight:800"></div>
+          <div style="flex:1;min-width:150px"><label class="fl">📅 تاريخ الإدخال <span id="bf-e-datenote" style="color:#8a95a3;font-weight:700">(اليوم — مقفل)</span></label><input type="date" class="fi" id="bf-e-date" readonly style="background:#fbf5f5;color:#a83232;font-weight:800"></div>
         </div>
+      </div>
+      <div class="bf-g2">
+        <div><label class="fl">📄 رقم الوصل <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-e-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+        <div><label class="fl">📅 تاريخ الوصل <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-e-wassel-date"></div>
+      </div>
+      <label class="fl">قيمة الإجراءات *</label>
+      <div style="display:flex;gap:8px">
+        <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
+        <select class="fi" id="bf-e-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('e')">
+          <option value="LBP" selected>ل.ل. ليرة</option>
+          <option value="USD">$ دولار</option>
+        </select>
       </div>
       <div class="bf-g2">
         <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
@@ -400,7 +412,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">✏️ تعديل الحركة</div>
     <div id="bf-edit-sub" style="font-size:12px;color:#666;margin-bottom:12px"></div>
     <div class="bf-g2">
-      <div><label class="fl">التاريخ *</label><input type="date" class="fi" id="bf-ed-date"></div>
+      <div><label class="fl">📅 تاريخ الإدخال <span id="bf-ed-datenote" style="color:#8a95a3;font-weight:700">(مقفل)</span></label><input type="date" class="fi" id="bf-ed-date"></div>
       <div><label class="fl">النوع *</label><select class="fi" id="bf-ed-type" onchange="bfEditRefreshCats()"><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="opening">رصيد افتتاحي</option></select></div>
     </div>
     <div class="bf-g2">
@@ -418,8 +430,12 @@ select.bf-colfilter{padding-inline-end:22px}
     <div id="bf-ed-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-ed-cat-other"></div>
     <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc">
     <div class="bf-g2">
-      <div><label class="fl">رقم السند</label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
+      <div><label class="fl">🧾 رقم السند <span id="bf-ed-recnote" style="color:#8a95a3;font-weight:700">(مقفل)</span></label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
       <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">📄 رقم الوصل</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+      <div><label class="fl">📅 تاريخ الوصل</label><input type="date" class="fi" id="bf-ed-wassel-date"></div>
     </div>
     <div class="bf-g2">
       <div><label class="fl">الجهة (الدافع/المستفيد)</label><input type="text" class="fi" id="bf-ed-person"></div>
@@ -480,9 +496,10 @@ function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار
 const BF_PAY={cash:'نقداً',transfer:'حوالة مصرفية',whish:'Whish'};
 const BF_SIGN_ROLES=['person','cashier','mayor'];
 const BF_SUPER='imadaehn@gmail.com';
+function bfIsSuper(){return !!bfUser && String(bfUser.email||'').toLowerCase()===BF_SUPER;}
 function bfCanDel(){
   if(!bfUser)return false;
-  if(String(bfUser.email||'').toLowerCase()===BF_SUPER)return true;
+  if(bfIsSuper())return true;
   return !!(bfUser.user_metadata&&bfUser.user_metadata.sandouk_delete===true);
 }
 function bfCanEdit(){
@@ -522,6 +539,7 @@ function bfStart(user){
   document.getElementById('bf-screen').style.display='flex';
   document.getElementById('bf-logo-img').src=BF_LOGO;
   if(!bfLoaded){bfLoaded=true;bfInitForms();bfLoad();}
+  else{bfApplyLocks();}
 }
 function bfInitForms(){
   document.getElementById('bf-i-date').value=bfToday();
@@ -530,6 +548,59 @@ function bfInitForms(){
   fill('bf-i-cat',BF_CATS.income); fill('bf-e-cat',BF_CATS.expense);
   bfWirePickers();
   bfUpdateTotal('i'); bfUpdateTotal('e');
+  bfApplyLocks();
+}
+function bfApplyLocks(){
+  const superOn=bfIsSuper();
+  ['i','e'].forEach(p=>{
+    const dt=document.getElementById('bf-'+p+'-date');
+    const rc=document.getElementById('bf-'+p+'-receipt');
+    const dn=document.getElementById('bf-'+p+'-datenote');
+    const rn=document.getElementById('bf-'+p+'-locknote');
+    if(dt){
+      dt.readOnly=!superOn;
+      dt.style.background=superOn?'#fff':(p==='i'?'#f5f8fc':'#fbf5f5');
+      dt.style.cursor=superOn?'auto':'not-allowed';
+    }
+    if(rc){
+      rc.readOnly=!superOn;
+      rc.style.background=superOn?'#fff':(p==='i'?'#f5f8fc':'#fbf5f5');
+      rc.style.cursor=superOn?'auto':'not-allowed';
+    }
+    if(dn) dn.textContent=superOn?'🔓 (المشرف العام — يمكن التعديل)':'(اليوم — مقفل)';
+    if(rn) rn.textContent=superOn?'🔓 (المشرف العام — يمكن التعديل)':'(تلقائي — مقفل)';
+    if(dt && !dt._bfSnap){
+      dt._bfSnap=true;
+      dt.addEventListener('change',function(){
+        if(bfIsSuper())return;
+        if(dt.value!==bfToday()){
+          dt.value=bfToday();
+          toast('🔒 تاريخ الإدخال مقفل على اليوم — لا يمكن تعديله','err');
+        }
+      });
+    }
+    if(rc && !rc._bfSnap){
+      rc._bfSnap=true;
+      rc.addEventListener('input',function(){
+        if(bfIsSuper())return;
+        // Recompute the auto-serial in case someone tried to override it
+        rc.value=bfNextNo(p==='i'?'income':'expense',bfToday());
+        toast('🔒 رقم السند تلقائي ومقفل — لا يمكن تعديله','err');
+      });
+    }
+  });
+  bfRefreshAutoReceiptNos();
+}
+function bfRefreshAutoReceiptNos(){
+  const superOn=bfIsSuper();
+  ['i','e'].forEach(p=>{
+    const rc=document.getElementById('bf-'+p+'-receipt');
+    if(!rc)return;
+    // Only auto-fill for non-super, or when super hasn't typed anything yet
+    if(!superOn || !rc.value){
+      rc.value=bfNextNo(p==='i'?'income':'expense',bfToday());
+    }
+  });
 }
 function bfUpdateTotal(p){
   const a=parseFloat((document.getElementById('bf-'+p+'-amount')||{}).value)||0;
@@ -584,7 +655,7 @@ async function bfLoad(){
   bfRefresh();
   bfViewsInit();
 }
-function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();}
+function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();bfRefreshAutoReceiptNos();}
 function bfKPIs(rowsArg){
   const rows=rowsArg||(typeof bfFiltered==='function'?bfFiltered():bfEntries);
   let iU=0,eU=0,iL=0,eL=0;
@@ -806,6 +877,14 @@ function bfShowTab(t){
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
+  if(t==='income'||t==='expense'){
+    // Ensure date + serial are fresh whenever the entry form opens
+    const p=t==='income'?'i':'e';
+    if(!bfIsSuper()){
+      const dt=document.getElementById('bf-'+p+'-date'); if(dt)dt.value=bfToday();
+    }
+    bfRefreshAutoReceiptNos();
+  }
 }
 // ── 🧱 COLUMN DEFINITIONS ──
 const BF_COLS=[
@@ -820,6 +899,8 @@ const BF_COLS=[
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'manual_receipt_no',label:'رقم الإيصال (يدوي)',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
+  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>e.wassel_number||'',search:e=>e.wassel_number||'',cell:e=>{const wn=(e.wassel_number||'').trim();return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
+  {key:'wassel_date',label:'تاريخ الوصل',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
   {key:'stamp_value',label:'قيمة الطوابع',filter:'text',val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
@@ -834,7 +915,7 @@ const BF_COLS=[
       +(bfCanDel()?'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>':'')
     +'</td>'}
 ];
-const BF_COL_DEFAULT_VISIBLE=['entry_date','receipt_no','entry_type','category','payment_method','description','person','amount','balance','actions'];
+const BF_COL_DEFAULT_VISIBLE=['entry_date','receipt_no','wassel_number','entry_type','category','payment_method','description','person','amount','balance','actions'];
 const BF_COL_DEFAULT_ORDER=BF_COLS.map(c=>c.key);
 let bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{}};
 function bfCol(key){return BF_COLS.find(c=>c.key===key);}
@@ -852,13 +933,14 @@ function bfFiltered(){
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     if(!e.voided){ if(e.currency==='LBP')balL+=signed; else balU+=signed; }
     if(ft==='__voided'){ if(!e.voided)return; }
+    else if(ft==='__no_wassel'){ if(e.voided)return; if(String(e.wassel_number||'').trim())return; }
     else if(ft&&e.entry_type!==ft)return;
     if(fc&&e.category!==fc)return;
     if(fcur&&(e.currency||'USD')!==fcur)return;
     if(fpay&&(e.payment_method||'cash')!==fpay)return;
     if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
     if(fq){
-      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number,e.manual_receipt_no].join(' ').toLowerCase();
+      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number,e.manual_receipt_no,e.wassel_number,e.wassel_date].join(' ').toLowerCase();
       if(hay.indexOf(fq)<0)return;
     }
     const enriched=Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)});
@@ -1078,32 +1160,42 @@ function bfNextNo(type,dateStr){
 }
 async function bfSave(type){
   const p=type==='income'?'i':'e';
-  const date=document.getElementById('bf-'+p+'-date').value;
+  const superOn=bfIsSuper();
+  // ✳️ For non-super users: entry_date is ALWAYS today and receipt_no is ALWAYS
+  // the next auto-serial. Any tampering with the DOM inputs is ignored here.
+  const dateInputVal=document.getElementById('bf-'+p+'-date').value;
+  const date=superOn?(dateInputVal||bfToday()):bfToday();
+  const recInputVal=(document.getElementById('bf-'+p+'-receipt')||{}).value||'';
+  const receiptNo=(superOn && recInputVal.trim()) ? recInputVal.trim() : bfNextNo(type,date);
   const amount=parseFloat(document.getElementById('bf-'+p+'-amount').value);
   const stamp=parseFloat((document.getElementById('bf-'+p+'-stamp')||{}).value)||0;
   const desc=document.getElementById('bf-'+p+'-desc').value.trim();
   let cat=document.getElementById('bf-'+p+'-cat').value;
   if(cat==='أخرى'){const o=document.getElementById('bf-'+p+'-cat-other').value.trim();if(o)cat=o;}
   const err=document.getElementById('bf-'+p+'-err');err.textContent='';
-  if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة التاريخ والفئة والبيان والمبلغ';return;}
+  if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة الفئة والبيان والمبلغ';return;}
   const kararEl=document.getElementById('bf-'+p+'-karar');
   const propEl=document.getElementById('bf-'+p+'-property');
+  const wnEl=document.getElementById('bf-'+p+'-wassel-no');
+  const wdEl=document.getElementById('bf-'+p+'-wassel-date');
   const rec={entry_date:date,entry_type:type,category:cat,description:desc,amount:amount+stamp,
     stamp_value:stamp,
     currency:(document.getElementById('bf-'+p+'-cur')||{}).value||'USD',
     payment_method:(document.getElementById('bf-'+p+'-pay')||{}).value||'cash',
     person:document.getElementById('bf-'+p+'-person').value.trim()||null,
     handled_by:document.getElementById('bf-'+p+'-handled').value.trim()||null,
-    receipt_no:bfNextNo(type,date),
+    receipt_no:receiptNo,
     notes:document.getElementById('bf-'+p+'-notes').value.trim()||null,
     karar_number:(kararEl&&kararEl.value.trim())||null,
     property_number:(propEl&&propEl.value.trim())||null,
     manual_receipt_no:(function(){const el=document.getElementById('bf-'+p+'-manual');return (el&&el.value.trim())||null;})(),
+    wassel_number:(wnEl&&wnEl.value.trim())||null,
+    wassel_date:(wdEl&&wdEl.value)||null,
     created_by:bfUser?bfUser.email:null};
   const{data,error}=await sb.from('baladieh_finance').insert(rec).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم الحفظ — السند رقم '+rec.receipt_no);
-  ['amount','stamp','desc','person','notes','manual'].forEach(f=>{const el=document.getElementById('bf-'+p+'-'+f); if(el)el.value='';});
+  ['amount','stamp','desc','person','notes','manual','wassel-no','wassel-date'].forEach(f=>{const el=document.getElementById('bf-'+p+'-'+f); if(el)el.value='';});
   bfUpdateTotal(p);
   if(kararEl)kararEl.value='';
   if(propEl)propEl.value='';
@@ -1188,7 +1280,7 @@ function bfKpiClick(kind){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,رقم الإيصال (يدوي),النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
+  const lines=['التاريخ,رقم السند,رقم الوصل,تاريخ الوصل,رقم الإيصال (يدوي),النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
@@ -1196,7 +1288,7 @@ function bfExportCSV(){
     const sv=Number(e.stamp_value)||0;
     const base=Math.max(0,(+e.amount||0)-sv);
     if(!e.voided){ if(lbp)balL+=signed; else balU+=signed; }
-    lines.push([e.entry_date,q(e.receipt_no),q(e.manual_receipt_no),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
+    lines.push([e.entry_date,q(e.receipt_no),q(e.wassel_number),q(e.wassel_date),q(e.manual_receipt_no),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
@@ -1246,6 +1338,8 @@ function bfReceiptHTML(e){
       +row('رقم القرار',e.karar_number)
       +row('رقم العقار',e.property_number)
       +row('رقم الإيصال (يدوي)',e.manual_receipt_no)
+      +row('رقم الوصل',e.wassel_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_number+'</span>':'<span style="color:#c22;font-weight:800">— بلا وصل —</span>')
+      +row('تاريخ الوصل',e.wassel_date?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>':'')
       +row('ملاحظات',e.notes)
       +((e.documents&&e.documents.length)?row('المرفقات',e.documents.length+' مستند — '+e.documents.map(d=>d.name).join('، ')):'')
     +'</div>'
@@ -1346,7 +1440,9 @@ function bfBuildReportEl(){
     +'</tr></thead><tbody>'+r+'</tbody></table>';
   const secT=t=>'<div style="font-size:14px;font-weight:800;color:#0f4d82;margin:14px 0 6px">'+t+'</div>';
   const rows=bfFiltered().map(e=>'<tr style="page-break-inside:avoid">'
-    +td(e.entry_date.split('-').reverse().join('/'))+td(e.receipt_no)+td(TYPE_AR[e.entry_type]||e.entry_type)
+    +td(e.entry_date.split('-').reverse().join('/'))+td(e.receipt_no)
+    +td(e.wassel_number?e.wassel_number:'<span style="color:#c22;font-weight:800">بلا وصل</span>','font-size:10px')
+    +td(TYPE_AR[e.entry_type]||e.entry_type)
     +td(e.category,'font-size:10px')+td(bfPay(e),'font-size:10px')
     +td((e.description||'')+(e.voided?' — ⛔ ملغى'+(e.void_reason?': '+e.void_reason:''):''),e.voided?'color:#c22':'')
     +td(e.person)
@@ -1369,7 +1465,7 @@ function bfBuildReportEl(){
      ].map(x=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
     +'</div>'
     +secT('📒 سجل الحركات')
-    +tbl(['التاريخ','السند','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],rows||'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>')
+    +tbl(['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],rows||'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>')
     +secT('🟢 المقبوضات حسب الفئة')
     +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'))
     +secT('🔴 المصروفات حسب الفئة')
@@ -1470,6 +1566,7 @@ function bfShareText(){
       +((e.documents&&e.documents.length)?('المرفقات: '+e.documents.length+' مستند\n'):'')
       +(e.person?((e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
       +(e.handled_by?((e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'')
+      +(e.wassel_number?('رقم الوصل: '+e.wassel_number+(e.wassel_date?(' — '+e.wassel_date.split('-').reverse().join('/')):'')+'\n'):'⚠️ لا يوجد رقم وصل بعد\n')
       +(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k));return L.length?('موقّع إلكترونياً ✓ ('+L.join('، ')+')\n'):'';})()
       +SEP;
   }
@@ -1626,6 +1723,28 @@ function bfOpenCase(id){
     +dr('رقم القرار',e.karar_number)
     +dr('رقم العقار',e.property_number)
     +dr('رقم الإيصال (يدوي)',e.manual_receipt_no)
+    +(function(){
+      // 📄 Yellow الوصل box — anyone with edit rights can add/update the wassel
+      // number & date later (the wassel is often issued after the sanad).
+      if(!bfCanEdit()){
+        return dr('رقم الوصل',e.wassel_number||'<span style="color:#c22">— بلا وصل —</span>')
+          +(e.wassel_date?dr('تاريخ الوصل','<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>'):'');
+      }
+      const wn=(e.wassel_number||'').replace(/"/g,'&quot;');
+      const wd=e.wassel_date||'';
+      return '<div style="background:#fff8e1;border:1.5px solid #f0c88a;border-radius:12px;padding:10px 12px;margin-top:10px">'
+        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:8px">📄 الوصل (يُضاف لاحقاً — منفصل عن السند)</div>'
+        +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الوصل</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً" style="direction:ltr"></div>'
+        +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الوصل</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
+        +'<button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الوصل</button>'
+        +((e.wassel_number||e.wassel_date)?'<button class="bf-share-btn" style="flex:0 0 auto;color:#a83232;border-color:#eec2c2;margin-bottom:0" onclick="bfClearWasselFromCase()">🗑️ مسح</button>':'')
+        +'</div>'
+        +'<div id="bf-case-wassel-err" style="color:#a83232;font-size:12px;min-height:14px;margin-top:4px"></div>'
+        +'</div>';
+    })()
     +dr('ملاحظات',e.notes)
     +dr('التواقيع',(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k)+' ✓');return L.length?L.join(' · '):'';})())
     +dr('أُدخلت بواسطة',e.created_by)
@@ -1641,6 +1760,33 @@ function bfOpenCase(id){
   document.getElementById('bf-case-ov').style.display='flex';
 }
 function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none';bfCaseId=null;}
+async function bfSaveWasselFromCase(){
+  if(!bfCaseId)return;
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية إضافة الوصل','err');return;}
+  const wn=(document.getElementById('bf-case-wassel-no').value||'').trim();
+  const wd=document.getElementById('bf-case-wassel-date').value||null;
+  const err=document.getElementById('bf-case-wassel-err');
+  if(err)err.textContent='';
+  const{error}=await sb.from('baladieh_finance').update({wassel_number:wn||null,wassel_date:wd}).eq('id',bfCaseId);
+  if(error){if(err)err.textContent='⚠️ '+error.message;return;}
+  toast('✓ تم حفظ الوصل');
+  const id=bfCaseId;
+  bfCloseCase();
+  await bfLoad();
+  bfOpenCase(id);
+}
+async function bfClearWasselFromCase(){
+  if(!bfCaseId)return;
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل الوصل','err');return;}
+  if(!confirm('مسح رقم الوصل وتاريخه من هذا السند؟'))return;
+  const{error}=await sb.from('baladieh_finance').update({wassel_number:null,wassel_date:null}).eq('id',bfCaseId);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('✓ تم المسح');
+  const id=bfCaseId;
+  bfCloseCase();
+  await bfLoad();
+  bfOpenCase(id);
+}
 function bfCaseShare(){const id=bfCaseId;bfCloseCase();if(id)bfReceiptById(id);}
 function bfCasePrint(){const id=bfCaseId;bfCloseCase();if(id)bfPrintById(id);}
 function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
@@ -1683,8 +1829,19 @@ function bfOpenEdit(id){
   document.getElementById('bf-ed-handled').value=e.handled_by||'';
   document.getElementById('bf-ed-property').value=e.property_number||'';
   document.getElementById('bf-ed-manual').value=e.manual_receipt_no||'';
+  document.getElementById('bf-ed-wassel-no').value=e.wassel_number||'';
+  document.getElementById('bf-ed-wassel-date').value=e.wassel_date||'';
   document.getElementById('bf-ed-notes').value=e.notes||'';
   document.getElementById('bf-ed-err').textContent='';
+  // Lock date + receipt for non-super
+  const superOn=bfIsSuper();
+  const edDate=document.getElementById('bf-ed-date');
+  const edRec=document.getElementById('bf-ed-receipt');
+  edDate.readOnly=!superOn; edRec.readOnly=!superOn;
+  edDate.style.background=superOn?'#fff':'#f5f8fc';
+  edRec.style.background=superOn?'#fff':'#f5f8fc';
+  document.getElementById('bf-ed-datenote').textContent=superOn?'🔓 (المشرف العام — يمكن التعديل)':'(مقفل — المشرف العام فقط)';
+  document.getElementById('bf-ed-recnote').textContent=superOn?'🔓 (المشرف العام — يمكن التعديل)':'(مقفل — المشرف العام فقط)';
   document.getElementById('bf-edit-ov').style.display='flex';
 }
 function bfCloseEdit(){document.getElementById('bf-edit-ov').style.display='none';bfEditId=null;}
@@ -1698,19 +1855,28 @@ async function bfEditSave(){
   const desc=document.getElementById('bf-ed-desc').value.trim();
   let cat=document.getElementById('bf-ed-cat').value;
   if(cat==='أخرى'){const o=document.getElementById('bf-ed-cat-other').value.trim();if(o)cat=o;else cat=null;}
-  if(!date||!desc||!(amount>0)){err.textContent='⚠️ التاريخ والبيان والمبلغ إلزامية';return;}
-  const patch={entry_date:date,entry_type:type,amount:amount,description:desc,
+  if(!desc||!(amount>0)){err.textContent='⚠️ البيان والمبلغ إلزامية';return;}
+  if(bfIsSuper()&&!date){err.textContent='⚠️ التاريخ إلزامي';return;}
+  const patch={entry_type:type,amount:amount,description:desc,
     stamp_value:parseFloat(document.getElementById('bf-ed-stamp').value)||0,
     currency:document.getElementById('bf-ed-cur').value||'USD',
     payment_method:document.getElementById('bf-ed-pay').value||'cash',
     category:cat||null,
-    receipt_no:document.getElementById('bf-ed-receipt').value.trim()||null,
     karar_number:document.getElementById('bf-ed-karar').value.trim()||null,
     property_number:document.getElementById('bf-ed-property').value.trim()||null,
     manual_receipt_no:document.getElementById('bf-ed-manual').value.trim()||null,
+    wassel_number:document.getElementById('bf-ed-wassel-no').value.trim()||null,
+    wassel_date:document.getElementById('bf-ed-wassel-date').value||null,
     person:document.getElementById('bf-ed-person').value.trim()||null,
     handled_by:document.getElementById('bf-ed-handled').value.trim()||null,
     notes:document.getElementById('bf-ed-notes').value.trim()||null};
+  // ✳️ Only the super admin can override the auto-generated entry_date + receipt_no.
+  // Non-super edits keep the original values (fields are readonly in the modal
+  // and stripped from the payload here as a defence-in-depth).
+  if(bfIsSuper()){
+    patch.entry_date=date;
+    patch.receipt_no=document.getElementById('bf-ed-receipt').value.trim()||null;
+  }
   const{error}=await sb.from('baladieh_finance').update(patch).eq('id',bfEditId).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم حفظ التعديلات');

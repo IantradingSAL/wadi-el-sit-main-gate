@@ -909,8 +909,30 @@ const WN_DEFAULT = [
 
 const WN_VERSIONS = [
   {
+    version: '5.2',
+    date: {ar:'آب 2026', en:'August 2026', fr:'Août 2026'},
+    color: '#fdf6e3', badgeColor: '#c9a227',
+    features: [
+      {icon:'🔒',
+        title:{ar:'رقم السند وتاريخه: تلقائي ومقفل', en:'Voucher No. & Date: Auto & Locked', fr:'N° et date du reçu : auto et verrouillés'},
+        desc:{ar:'رقم السند (Q-2026-### للقبض و S-2026-### للصرف) وتاريخ الإدخال أصبحا يُعرضان في أعلى شاشة الإدخال بلونٍ رمادي — تلقائيان ومقفلان لكل الموظفين. المشرف العام فقط (imadaehn@gmail.com) يراهما بعلامة 🔓 ويستطيع تعديلهما، وأيّ محاولة تعديل من غيره تُعاد للقيمة الصحيحة تلقائياً. نفس القفل يسري في نافذة التعديل ✏️',
+              en:'The voucher number (Q-2026-### for receipts, S-2026-### for payments) and the entry date now appear at the top of the entry form greyed out — automatic and locked for all staff. Only the super admin (imadaehn@gmail.com) sees a 🔓 hint and can override both; any tampering by others is snapped back automatically. The same lock applies inside the ✏️ edit modal',
+              fr:'Le numéro de reçu (Q-2026-### pour les encaissements, S-2026-### pour les paiements) et la date de saisie apparaissent désormais en haut du formulaire, grisés — automatiques et verrouillés pour tout le personnel. Seul le super administrateur (imadaehn@gmail.com) voit un 🔓 et peut les modifier ; toute autre tentative revient automatiquement à la valeur correcte. Même verrou dans la fenêtre d’édition ✏️'}},
+      {icon:'📄',
+        title:{ar:'الوصل منفصل عن السند — رقم وتاريخ يُضافان لاحقاً', en:'Wassel Separated from Sanad — No. & Date Added Later', fr:'Wassel séparé du reçu — n° et date ajoutés plus tard'},
+        desc:{ar:'السند يُنشأ فور تسجيل الحركة، أما الوصل فيُعطى للدافع/المستفيد لاحقاً بشكل يدوي. أضفنا حقلَي «رقم الوصل» و«تاريخ الوصل» على شاشتَي القبض والصرف (اختياريان)، ويمكن إضافتهما لاحقاً من نافذة تفاصيل السند عبر صندوق أصفر بزر 💾 حفظ — دون الحاجة لصلاحية المشرف. يظهران في السجل بعمود جديد (مع شارة حمراء «بلا وصل» عند عدم توفّرهما) وفي البحث والسند المطبوع والواتساب وتصدير CSV',
+              en:'The sanad is generated the moment the entry is saved, but the wassel is often issued to the payer/beneficiary later by hand. Two new fields — «Wassel No.» and «Wassel Date» — were added to both the receipt and payment forms (optional), and both can be filled in later from the voucher detail modal via a yellow box with a 💾 save button (no super admin required). They now show in the ledger as a new column (with a red «No wassel» chip when missing) and in search, the printed voucher, WhatsApp share and CSV export',
+              fr:'Le reçu (sanad) est généré dès l’enregistrement, mais le wassel est souvent remis au payeur/bénéficiaire plus tard, à la main. Deux champs — « N° du wassel » et « Date du wassel » — ont été ajoutés aux formulaires d’encaissement et de paiement (facultatifs) ; ils peuvent être renseignés plus tard depuis la fiche du reçu via un bloc jaune et un bouton 💾 (aucun rôle super requis). Ils apparaissent dans le registre en nouvelle colonne (avec une puce rouge « sans wassel » si vide), dans la recherche, sur le reçu imprimé, le partage WhatsApp et l’export CSV'}},
+      {icon:'🔎',
+        title:{ar:'فلتر جديد: 📄 بدون رقم وصل', en:'New Filter: 📄 Without Wassel No.', fr:'Nouveau filtre : 📄 Sans n° de wassel'},
+        desc:{ar:'أُضيف خيار «📄 بدون رقم وصل» في فلتر النوع أعلى السجل — اختره ليعرض السجل والتقارير والـPDF والـCSV والواتساب تلقائياً السنداتَ التي لم يُصدَر لها وصل بعد، فيصبح تقرير المتابعة اليومية «سندات بلا وصل» جاهزاً بضغطة واحدة',
+              en:'A new «📄 Without wassel no.» option was added to the top type filter — pick it and the ledger, reports, PDF, CSV and WhatsApp share instantly become the daily «vouchers without a wassel» follow-up list',
+              fr:'Une nouvelle option « 📄 Sans n° de wassel » a été ajoutée au filtre du type — sélectionnez-la et le registre, les rapports, le PDF, le CSV et le partage WhatsApp deviennent instantanément la liste de suivi quotidienne des « reçus sans wassel »'}},
+    ]
+  },
+  {
     version: '5.1',
-    date: {ar:'آب 2026', en:'August 2026', fr:'Ao\u00fbt 2026'},
+    date: {ar:'آب 2026', en:'August 2026', fr:'Août 2026'},
     color: '#eef4fb', badgeColor: '#1a6eb5',
     features: [
       {icon:'\ud83d\udcca',
