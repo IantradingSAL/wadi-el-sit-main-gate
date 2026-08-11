@@ -909,7 +909,7 @@ const BF_COLS=[
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'manual_receipt_no',label:'رقم الإيصال (يدوي)',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
-  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>e.wassel_number||'',search:e=>e.wassel_number||'',cell:e=>{const wn=(e.wassel_number||'').trim();return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
+  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>e.wassel_number||'',search:e=>e.wassel_number||'',cell:e=>{const wn=(e.wassel_number||'').trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
   {key:'wassel_date',label:'تاريخ الوصل',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
@@ -943,7 +943,7 @@ function bfFiltered(){
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     if(!e.voided){ if(e.currency==='LBP')balL+=signed; else balU+=signed; }
     if(ft==='__voided'){ if(!e.voided)return; }
-    else if(ft==='__no_wassel'){ if(e.voided)return; if(String(e.wassel_number||'').trim())return; }
+    else if(ft==='__no_wassel'){ if(e.voided)return; if(e.entry_type==='opening')return; if(String(e.wassel_number||'').trim())return; }
     else if(ft&&e.entry_type!==ft)return;
     if(fc&&e.category!==fc)return;
     if(fcur&&(e.currency||'USD')!==fcur)return;
