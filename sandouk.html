@@ -240,7 +240,7 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">طريقة الدفع *</label><select class="fi" id="bf-i-pay"><option value="cash">💵 نقداً (كاش)</option><option value="transfer">🏦 حوالة مصرفية</option><option value="whish">📱 Whish</option></select></div>
       </div>
       <div id="bf-i-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-i-cat-other" placeholder="فئة أخرى…"></div>
-      <label class="fl">البيان *</label><input type="text" class="fi" id="bf-i-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
+      <label class="fl">البيان * <span style="color:#8a95a3;font-weight:700">(اختَر من القائمة أو اكتب بياناً جديداً)</span></label><input type="text" class="fi" id="bf-i-desc" list="bf-dl-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
       <div class="bf-g2">
         <div><label class="fl">الدافع / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
         <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
@@ -290,7 +290,7 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">طريقة الدفع *</label><select class="fi" id="bf-e-pay"><option value="cash">💵 نقداً (كاش)</option><option value="transfer">🏦 حوالة مصرفية</option><option value="whish">📱 Whish</option></select></div>
       </div>
       <div id="bf-e-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-e-cat-other" placeholder="فئة أخرى…"></div>
-      <label class="fl">البيان *</label><input type="text" class="fi" id="bf-e-desc" placeholder="مثال: صيانة إنارة الشارع الرئيسي">
+      <label class="fl">البيان * <span style="color:#8a95a3;font-weight:700">(اختَر من القائمة أو اكتب بياناً جديداً)</span></label><input type="text" class="fi" id="bf-e-desc" list="bf-dl-desc" placeholder="مثال: صيانة إنارة الشارع الرئيسي">
       <div class="bf-g2">
         <div><label class="fl">المدفوع له / الجهة</label><div class="bf-picker" data-picker-for="bf-e-person"><input type="text" class="fi" id="bf-e-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-e-person-dd"></div></div></div>
         <div><label class="fl">المسلّم (أمين الصندوق)</label><input type="text" class="fi" id="bf-e-handled" list="bf-dl-handlers" placeholder="اسم المسلّم"></div>
@@ -334,6 +334,7 @@ select.bf-colfilter{padding-inline-end:22px}
 
   <datalist id="bf-dl-persons"></datalist>
   <datalist id="bf-dl-handlers"></datalist>
+  <datalist id="bf-dl-desc"></datalist>
 </div>
 
 <!-- SHARE MODAL -->
@@ -428,7 +429,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-ed-pay"><option value="cash">💵 نقداً</option><option value="transfer">🏦 حوالة</option><option value="whish">📱 Whish</option></select></div>
     </div>
     <div id="bf-ed-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-ed-cat-other"></div>
-    <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc">
+    <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc" list="bf-dl-desc">
     <div class="bf-g2">
       <div><label class="fl">🧾 رقم السند <span id="bf-ed-recnote" style="color:#8a95a3;font-weight:700">(مقفل)</span></label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
       <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
@@ -693,6 +694,15 @@ function bfDatalists(){
   // bfPhonebookEntries directly and offers an inline "add to directory".
   const uniq=a=>[...new Set(a.filter(Boolean))].sort();
   document.getElementById('bf-dl-handlers').innerHTML=uniq(bfEntries.map(e=>e.handled_by)).map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
+  // 📝 البيان suggestions — unique descriptions from past entries, ranked by
+  // how often they've been used so the top match sits at the top of the
+  // browser's <datalist> popup. Free-text is still allowed: typing a new
+  // description just saves it, and it joins this list on the next reload.
+  const descFreq={};
+  bfEntries.forEach(e=>{const d=(e.description||'').trim(); if(d)descFreq[d]=(descFreq[d]||0)+1;});
+  const descOrdered=Object.keys(descFreq).sort((a,b)=>(descFreq[b]-descFreq[a])||a.localeCompare(b,'ar'));
+  const dl=document.getElementById('bf-dl-desc');
+  if(dl)dl.innerHTML=descOrdered.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">').join('');
 }
 
 // ───────────────────────────────────────────────────────────────────────────
@@ -899,7 +909,7 @@ const BF_COLS=[
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'manual_receipt_no',label:'رقم الإيصال (يدوي)',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
-  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>e.wassel_number||'',search:e=>e.wassel_number||'',cell:e=>{const wn=(e.wassel_number||'').trim();return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
+  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>e.wassel_number||'',search:e=>e.wassel_number||'',cell:e=>{const wn=(e.wassel_number||'').trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
   {key:'wassel_date',label:'تاريخ الوصل',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
@@ -933,7 +943,7 @@ function bfFiltered(){
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     if(!e.voided){ if(e.currency==='LBP')balL+=signed; else balU+=signed; }
     if(ft==='__voided'){ if(!e.voided)return; }
-    else if(ft==='__no_wassel'){ if(e.voided)return; if(String(e.wassel_number||'').trim())return; }
+    else if(ft==='__no_wassel'){ if(e.voided)return; if(e.entry_type==='opening')return; if(String(e.wassel_number||'').trim())return; }
     else if(ft&&e.entry_type!==ft)return;
     if(fc&&e.category!==fc)return;
     if(fcur&&(e.currency||'USD')!==fcur)return;
@@ -979,6 +989,7 @@ function bfColFilter(el){
   bfColState.filters[el.getAttribute('data-cf')]=el.value;
   bfRenderLedgerBody();
   bfKPIs();
+  bfColStatePersist();
 }
 function bfRenderLedgerBody(){
   const cols=bfVisibleCols();
@@ -1028,6 +1039,42 @@ function bfColsApply(){
   bfColState.hidden=bfColsDraft.hidden.slice();
   bfColsClose();
   bfRenderLedger();
+  bfColStatePersist();
+}
+
+// ── 💾 PER-USER COLUMN PREFS (localStorage) ──
+// Column show/hide/order and per-column filters stick between sessions so a
+// staff member's customisation survives sign-in and page refresh even without
+// saving a named view. Keyed per user email.
+function bfColStateKey(){
+  const em=(bfUser&&bfUser.email?bfUser.email:'anon').toLowerCase();
+  return 'bf_col_state:'+em;
+}
+function bfColStatePersist(){
+  try{
+    localStorage.setItem(bfColStateKey(),JSON.stringify({
+      order:bfColState.order,
+      hidden:bfColState.hidden,
+      filters:bfColState.filters||{}
+    }));
+  }catch(_e){}
+}
+function bfColStateClear(){
+  try{localStorage.removeItem(bfColStateKey());}catch(_e){}
+}
+function bfColStateRestore(){
+  try{
+    const raw=localStorage.getItem(bfColStateKey());
+    if(!raw)return false;
+    const s=JSON.parse(raw)||{};
+    const knownKeys=BF_COLS.map(x=>x.key);
+    const savedOrder=(s.order||[]).filter(k=>knownKeys.indexOf(k)>=0);
+    const missing=knownKeys.filter(k=>savedOrder.indexOf(k)<0);
+    bfColState.order=savedOrder.length?savedOrder.concat(missing):BF_COL_DEFAULT_ORDER.slice();
+    bfColState.hidden=Array.isArray(s.hidden)?s.hidden.filter(k=>knownKeys.indexOf(k)>=0):bfColState.hidden;
+    bfColState.filters=s.filters||{};
+    return true;
+  }catch(_e){return false;}
 }
 
 // ── 👁️ VIEWS ──
@@ -1067,7 +1114,7 @@ function bfApplyState(s){
   bfRenderLedger();
 }
 async function bfViewsInit(){
-  if(!bfUser){bfViewsRender();return;}
+  if(!bfUser){bfViewsRender();bfColStateRestore()&&bfRenderLedger();return;}
   try{
     const{data,error}=await sb.from('sandouk_views').select('*').order('name',{ascending:true});
     if(error){console.warn('views load error',error);return;}
@@ -1075,6 +1122,10 @@ async function bfViewsInit(){
     bfViewsRender();
     const def=bfViews.find(v=>v.is_default);
     if(def){bfCurrentViewId=def.id;document.getElementById('bf-view-select').value=def.id;bfApplyState(def.state);}
+    // Overlay any locally-persisted column customisation on top of the default
+    // view so a staff member's show/hide/order choices survive refresh + sign-in
+    // even without saving a named view.
+    if(bfColStateRestore())bfRenderLedger();
   }catch(e){console.warn(e);}
 }
 function bfViewsRender(){
@@ -1087,6 +1138,9 @@ function bfViewLoad(id){
   const v=bfViews.find(x=>x.id===id);
   if(!v){toast('⚠️ عرض غير موجود','err');return;}
   bfApplyState(v.state);
+  // The named view is now the user's active state — persist it so it survives
+  // refresh instead of being overwritten by the previously-saved localStorage.
+  bfColStatePersist();
   toast('✓ تم تحميل العرض: '+v.name);
 }
 async function bfViewSaveNew(){
@@ -1132,6 +1186,7 @@ function bfViewReset(silent){
   bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{}};
   bfCurrentViewId='';
   document.getElementById('bf-view-select').value='';
+  bfColStateClear();
   bfRenderLedger();
   if(!silent)toast('✓ تمت إعادة التعيين');
 }
