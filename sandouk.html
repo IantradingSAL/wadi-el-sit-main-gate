@@ -979,6 +979,7 @@ function bfColFilter(el){
   bfColState.filters[el.getAttribute('data-cf')]=el.value;
   bfRenderLedgerBody();
   bfKPIs();
+  bfColStatePersist();
 }
 function bfRenderLedgerBody(){
   const cols=bfVisibleCols();
@@ -1028,6 +1029,42 @@ function bfColsApply(){
   bfColState.hidden=bfColsDraft.hidden.slice();
   bfColsClose();
   bfRenderLedger();
+  bfColStatePersist();
+}
+
+// ── 💾 PER-USER COLUMN PREFS (localStorage) ──
+// Column show/hide/order and per-column filters stick between sessions so a
+// staff member's customisation survives sign-in and page refresh even without
+// saving a named view. Keyed per user email.
+function bfColStateKey(){
+  const em=(bfUser&&bfUser.email?bfUser.email:'anon').toLowerCase();
+  return 'bf_col_state:'+em;
+}
+function bfColStatePersist(){
+  try{
+    localStorage.setItem(bfColStateKey(),JSON.stringify({
+      order:bfColState.order,
+      hidden:bfColState.hidden,
+      filters:bfColState.filters||{}
+    }));
+  }catch(_e){}
+}
+function bfColStateClear(){
+  try{localStorage.removeItem(bfColStateKey());}catch(_e){}
+}
+function bfColStateRestore(){
+  try{
+    const raw=localStorage.getItem(bfColStateKey());
+    if(!raw)return false;
+    const s=JSON.parse(raw)||{};
+    const knownKeys=BF_COLS.map(x=>x.key);
+    const savedOrder=(s.order||[]).filter(k=>knownKeys.indexOf(k)>=0);
+    const missing=knownKeys.filter(k=>savedOrder.indexOf(k)<0);
+    bfColState.order=savedOrder.length?savedOrder.concat(missing):BF_COL_DEFAULT_ORDER.slice();
+    bfColState.hidden=Array.isArray(s.hidden)?s.hidden.filter(k=>knownKeys.indexOf(k)>=0):bfColState.hidden;
+    bfColState.filters=s.filters||{};
+    return true;
+  }catch(_e){return false;}
 }
 
 // ── 👁️ VIEWS ──
@@ -1067,7 +1104,7 @@ function bfApplyState(s){
   bfRenderLedger();
 }
 async function bfViewsInit(){
-  if(!bfUser){bfViewsRender();return;}
+  if(!bfUser){bfViewsRender();bfColStateRestore()&&bfRenderLedger();return;}
   try{
     const{data,error}=await sb.from('sandouk_views').select('*').order('name',{ascending:true});
     if(error){console.warn('views load error',error);return;}
@@ -1075,6 +1112,10 @@ async function bfViewsInit(){
     bfViewsRender();
     const def=bfViews.find(v=>v.is_default);
     if(def){bfCurrentViewId=def.id;document.getElementById('bf-view-select').value=def.id;bfApplyState(def.state);}
+    // Overlay any locally-persisted column customisation on top of the default
+    // view so a staff member's show/hide/order choices survive refresh + sign-in
+    // even without saving a named view.
+    if(bfColStateRestore())bfRenderLedger();
   }catch(e){console.warn(e);}
 }
 function bfViewsRender(){
@@ -1087,6 +1128,9 @@ function bfViewLoad(id){
   const v=bfViews.find(x=>x.id===id);
   if(!v){toast('⚠️ عرض غير موجود','err');return;}
   bfApplyState(v.state);
+  // The named view is now the user's active state — persist it so it survives
+  // refresh instead of being overwritten by the previously-saved localStorage.
+  bfColStatePersist();
   toast('✓ تم تحميل العرض: '+v.name);
 }
 async function bfViewSaveNew(){
@@ -1132,6 +1176,7 @@ function bfViewReset(silent){
   bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{}};
   bfCurrentViewId='';
   document.getElementById('bf-view-select').value='';
+  bfColStateClear();
   bfRenderLedger();
   if(!silent)toast('✓ تمت إعادة التعيين');
 }
