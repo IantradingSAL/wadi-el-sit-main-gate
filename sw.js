@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v61';
+const CACHE_NAME   = 'wadi-elsit-v62';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used by notificationclick to mark opens.
@@ -27,6 +27,7 @@ const APP_SHELL = [
   './mrs.html',
   './mrs-update.html',
   './news.html',
+  './wadi-el-sit-demo.html',
   './news-detail.html',
   './analytics.js',
   './manifest.json',
