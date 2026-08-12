@@ -107,6 +107,11 @@ html::-webkit-scrollbar{display:none}
 .wn-title{font-size:14px;font-weight:700;color:var(--text)}
 .wn-sub{font-size:12px;color:var(--text3)}
 .wn-icon{font-size:20px}
+.tour-btn{background:linear-gradient(135deg,#0f4d82,#1a6eb5);border-color:#0f4d82}
+.tour-btn .wn-title{color:#fff}
+.tour-btn .wn-sub{color:rgba(255,255,255,.75)}
+.tour-btn:hover{background:linear-gradient(135deg,#0d4373,#1763a3);border-color:#c9a227}
+.tour-btn span{color:rgba(255,255,255,.8)!important}
 
 /* ── FOOTER ── */
 .footer{background:var(--blue2);color:rgba(255,255,255,.6);text-align:center;padding:18px 20px;font-size:12px;margin-top:20px}
@@ -454,6 +459,18 @@ html[lang="ar"] input[type="tel"], html[lang="ar"] input[inputmode="tel"]{direct
 
 <!-- What's New -->
 <div class="wn-bar">
+  <button class="wn-btn tour-btn" onclick="window.location='wadi-el-sit-demo.html'">
+    <div class="wn-icon">🎬</div>
+    <div class="wn-text">
+      <div class="wn-title" data-i18n="tourTitle">جولة في البوابة</div>
+      <div class="wn-sub" data-i18n="tourSub">تعرّف على خدمات البلدية الاثنتي عشرة في عرض تفاعلي</div>
+    </div>
+    <span class="new-badge" data-i18n="newBadge">جديد</span>
+    <span style="color:var(--text3);font-size:18px">←</span>
+  </button>
+</div>
+
+<div class="wn-bar">
   <button class="wn-btn" onclick="openWhatsNewModal()">
     <div class="wn-icon">✨</div>
     <div class="wn-text">
@@ -547,6 +564,8 @@ const T = {
     svc6Title: 'أخبار وإعلانات البلدية',
     svc6Desc: 'آخر الأخبار، الإعلانات الرسميّة، الفعاليّات، والتنبيهات الطارئة. تابع كل مستجدّات بلدتك.',
     svc6Badge: '📢 آخر التحديثات',
+    tourTitle: 'جولة في البوابة',
+    tourSub: 'تعرّف على خدمات البلدية الاثنتي عشرة في عرض تفاعلي',
     wnTitle: 'ما الجديد في النظام؟',
     wnSub: 'آخر التحديثات والميزات المضافة',
     wnModalTitle: 'ما الجديد',
@@ -628,6 +647,8 @@ const T = {
     svc6Title: 'Municipality News & Announcements',
     svc6Desc: 'Latest news, official announcements, events, and urgent alerts. Stay updated on everything in your town.',
     svc6Badge: '📢 Latest Updates',
+    tourTitle: 'Take a tour of the portal',
+    tourSub: 'Twelve municipal services in one interactive walkthrough',
     wnTitle: "What's new in the system?",
     wnSub: 'Latest updates and added features',
     wnModalTitle: "What's new",
@@ -709,6 +730,8 @@ const T = {
     svc6Title: 'Actualités & Annonces de la Municipalité',
     svc6Desc: 'Dernières actualités, annonces officielles, événements et alertes urgentes. Restez informé de tout ce qui se passe dans votre village.',
     svc6Badge: '📢 Dernières mises à jour',
+    tourTitle: 'Visite guidée du portail',
+    tourSub: 'Les douze services municipaux en une visite interactive',
     wnTitle: 'Quoi de neuf dans le système ?',
     wnSub: 'Dernières mises à jour et fonctionnalités ajoutées',
     wnModalTitle: 'Quoi de neuf',

@@ -246,21 +246,59 @@ html[dir=rtl] #next{right:auto;left:calc(var(--panelW) + 26px)}
 .meta{margin-top:20px;color:#6f8ba5;font-size:10px;letter-spacing:1.4px}
 
 @media(max-width:1100px){:root{--panelW:388px}#prog{padding:0 76px}}
+/* ===================== MOBILE ===================== */
+#mrail{display:none}
 @media(max-width:900px){
   :root{--panelW:0px}
-  #scene{top:74px;bottom:auto;left:12px;right:12px;height:40vh}
-  #photo{height:56vh;bottom:auto}
-  #scrim{height:56vh;bottom:auto;background:linear-gradient(180deg,rgba(2,9,17,.78),rgba(2,9,17,.15) 40%,rgba(2,9,17,.86))}
-  #panel{inset:auto 0 0 0;width:auto;max-height:58vh;top:auto;clip-path:none;border-left:0;border-right:0;border-bottom:0}
-  #pHead{padding:14px 18px 11px}#pTitle{font-size:21px}#pBody{padding:14px 18px 20px}
+  #top{padding:10px 12px;gap:9px}
+  #brand img{width:34px;height:34px}#brand .b1{font-size:12.5px}
+  #brand .b2{font-size:7px;letter-spacing:1.2px;margin-top:2px}
+  #tools{gap:5px}.icon{width:32px;height:32px;font-size:14px}
+  #langs{gap:4px}.lang{padding:5px 8px;font-size:9.5px;letter-spacing:0}
+  /* station rail: scrollable chips right under the header */
+  #mrail{display:flex;position:absolute;z-index:24;top:58px;left:0;right:0;gap:7px;padding:0 12px 4px;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #mrail::-webkit-scrollbar{display:none}
+  .mchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;
+    border:1px solid rgba(88,182,255,.28);background:rgba(3,14,25,.82);color:#9fbad3;
+    font-family:var(--ar);font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;
+    backdrop-filter:blur(6px);transition:.18s}
+  .mchip i{font-style:normal;font-size:12px;opacity:.85}
+  .mchip.done{border-color:rgba(217,165,58,.4);color:#c6d9ea}
+  .mchip.cur{border-color:var(--gold2);background:#241703;color:#fff;box-shadow:0 0 16px rgba(217,165,58,.3)}
+  #scene{top:104px;bottom:auto;left:6px;right:6px;height:33vh}
+  #photo{height:calc(33vh + 120px);bottom:auto}
+  #scrim{height:calc(33vh + 130px);bottom:auto;
+    background:linear-gradient(180deg,rgba(2,9,17,.86),rgba(2,9,17,.2) 45%,rgba(2,9,17,.9))}
+  .mob #nodes circle{r:30}.mob #nodes text{font-size:27px}
+  .mob #labels text{font-size:30px;stroke-width:9px}
+  .mob #trail,.mob #route{stroke-width:5}
+  .mob #pulse circle:nth-child(1){r:24}.mob #pulse circle:nth-child(2){r:11}.mob #pulse circle:nth-child(3){r:4.5}
   #prog{display:none}
-  .arrow{bottom:auto;top:calc(50vh - 21px)}
-  #prev{left:12px}#next{right:12px}
-  html[dir=rtl] #prev{left:auto;right:12px}
-  html[dir=rtl] #next{right:auto;left:12px}
-  #top{padding:12px 14px}#brand .b1{font-size:13px}#brand .b2{font-size:8px;letter-spacing:1.6px}
-  #brand img{width:40px;height:40px}
-  .icon{width:34px;height:34px;font-size:14px}.lang{padding:6px 9px;font-size:10px}
+  /* panel = bottom sheet with a drag handle */
+  #panel{inset:auto 0 0 0;width:auto;top:auto;max-height:56vh;clip-path:none;
+    border-left:0;border-right:0;border-bottom:0;border-radius:20px 20px 0 0;
+    padding-bottom:env(safe-area-inset-bottom)}
+  #panel.min{max-height:132px}
+  #grab{display:block;width:44px;height:4px;border-radius:4px;background:#3d5c7a;margin:9px auto 2px}
+  #pHead{padding:6px 18px 11px}#pTitle{font-size:20px}#pSub{font-size:13px}
+  #pMeta{gap:8px}#pStep{font-size:9px}#pCat{font-size:9.5px;padding:3px 9px}
+  #pBody{padding:14px 18px 22px}#pText{font-size:13.6px;line-height:1.8}
+  .sec{margin-top:17px;padding-top:13px}
+  #pStatN{font-size:21px}
+  .arrow{bottom:auto;top:calc(16vh + 96px);width:38px;height:38px;font-size:20px}
+  #prev{left:8px}#next{right:8px}
+  html[dir=rtl] #prev{left:auto;right:8px}
+  html[dir=rtl] #next{right:auto;left:8px}
+  #pop{width:min(300px,calc(100vw - 24px))}
+  #set{width:min(300px,86vw)}
+  .card{padding:26px 20px}.card h2{font-size:21px}.card p{font-size:13px;line-height:1.75}
+  .card img{width:78px;height:78px}
+  .cta{padding:11px 22px;font-size:12.5px}
+  #uiInner{width:900px}
+}
+@media(max-width:900px) and (orientation:landscape){
+  #scene{height:46vh}#panel{max-height:74vh}.arrow{top:calc(23vh + 90px)}
 }
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
 :focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
@@ -354,6 +392,7 @@ html[dir=rtl] #next{right:auto;left:calc(var(--panelW) + 26px)}
     <div class="pb"><a id="popL" href="#" target="_blank" rel="noopener"></a><button id="popD"></button></div>
   </div>
   <section id="panel" aria-live="polite">
+    <div id="grab" style="display:none"></div>
     <div id="pHead">
       <div id="pMeta"><span id="pStep"></span><span id="pCat"></span></div>
       <h2 id="pTitle"></h2>
@@ -370,6 +409,7 @@ html[dir=rtl] #next{right:auto;left:calc(var(--panelW) + 26px)}
     </div>
   </section>
 
+  <div id="mrail" aria-label="stations"></div>
   <div id="prog">
     <div id="track"><div id="fill"></div><div id="dots"></div></div>
     <span id="stepText"></span>
@@ -788,6 +828,19 @@ STOPS.forEach((s,i)=>{const b=document.createElement('button');b.className='step
   b.innerHTML='<span class="dot"></span><span class="slab"></span>';
   b.setAttribute('aria-label','stop '+(i+1));b.addEventListener('click',()=>go(i));dotsWrap.appendChild(b);});
 const steps=[...dotsWrap.children];
+/* mobile: chip rail + phone-sized scene */
+const mrail=el('mrail');
+STOPS.forEach((st,i)=>{const c=document.createElement('button');c.className='mchip';
+  c.innerHTML='<i>'+st.icon+'</i><span></span>';
+  c.addEventListener('click',()=>go(i)); mrail.appendChild(c);});
+const chips=[...mrail.children];
+function syncMob(){
+  const m=innerWidth<=900;
+  document.documentElement.classList.toggle('mob',m);
+  el('grab').style.display=m?'block':'none';
+}
+addEventListener('resize',syncMob); syncMob();
+el('grab').addEventListener('click',()=>el('panel').classList.toggle('min'));
 
 function setPulse(f){const p=trail.getPointAtLength(LEN*f);
   pulse.setAttribute('transform',`translate(${p.x},${p.y})`);
@@ -897,7 +950,8 @@ function paintStatic(){
   el('prev').textContent=t.dir==='rtl'?'\u203A':'\u2039';
   el('next').textContent=t.dir==='rtl'?'\u2039':'\u203A';
   STOPS.forEach((s,i)=>{gLabels.children[i].textContent=t.s[s.key].lbl;
-    const sl=steps[i].querySelector('.slab'); sl.textContent=t.s[s.key].lbl; sl.style.direction=t.dir;});
+    const sl=steps[i].querySelector('.slab'); sl.textContent=t.s[s.key].lbl; sl.style.direction=t.dir;
+    chips[i].querySelector('span').textContent=t.s[s.key].lbl;});
   if(step>=0) paint();
 }
 function paint(){
@@ -917,6 +971,8 @@ function paint(){
   el('mockWrap').style.display=showMock?'block':'none';
   if(showMock) el('mock').innerHTML=renderMock(s.key);
   el('stepText').textContent=t.stepOf(step+1,STOPS.length);
+  chips.forEach((c,i)=>{c.classList.toggle('done',i<step);c.classList.toggle('cur',i===step)});
+  if(chips[step]&&innerWidth<=900&&chips[step].scrollIntoView) chips[step].scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   steps.forEach((st,i)=>{st.classList.toggle('done',i<step);st.classList.toggle('cur',i===step);
     const dt=st.querySelector('.dot');dt.classList.toggle('done',i<step);dt.classList.toggle('cur',i===step)});
   fill.style.width=(step/(STOPS.length-1))*100+'%';
