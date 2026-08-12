@@ -249,47 +249,63 @@ html[dir=rtl] #next{right:auto;left:calc(var(--panelW) + 26px)}
 /* ===================== MOBILE ===================== */
 #mrail{display:none}
 @media(max-width:900px){
-  :root{--panelW:0px}
-  #top{padding:10px 12px;gap:9px}
-  #brand img{width:34px;height:34px}#brand .b1{font-size:12.5px}
+  :root{--panelW:0px; --hdrH:52px; --railH:46px; --sceneH:22vh; --sceneMin:150px; --sceneMax:220px}
+  #top{padding:8px 12px;gap:9px;height:var(--hdrH)}
+  #brand img{width:32px;height:32px}#brand .b1{font-size:12px}
   #brand .b2{font-size:7px;letter-spacing:1.2px;margin-top:2px}
   #tools{gap:5px}.icon{width:32px;height:32px;font-size:14px}
   #langs{gap:4px}.lang{padding:5px 8px;font-size:9.5px;letter-spacing:0}
   /* station rail: scrollable chips right under the header */
-  #mrail{display:flex;position:absolute;z-index:24;top:58px;left:0;right:0;gap:7px;padding:0 12px 4px;
-    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #mrail{display:flex;position:absolute;z-index:24;top:var(--hdrH);left:0;right:0;gap:7px;padding:6px 12px 6px;
+    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;height:var(--railH)}
   #mrail::-webkit-scrollbar{display:none}
-  .mchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;
+  .mchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:20px;
     border:1px solid rgba(88,182,255,.28);background:rgba(3,14,25,.82);color:#9fbad3;
-    font-family:var(--ar);font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;
-    backdrop-filter:blur(6px);transition:.18s}
-  .mchip i{font-style:normal;font-size:12px;opacity:.85}
+    font-family:var(--ar);font-size:11.5px;font-weight:700;white-space:nowrap;cursor:pointer;
+    backdrop-filter:blur(6px);transition:.18s;min-height:34px}
+  .mchip i{font-style:normal;font-size:13px;opacity:.85}
   .mchip.done{border-color:rgba(217,165,58,.4);color:#c6d9ea}
   .mchip.cur{border-color:var(--gold2);background:#241703;color:#fff;box-shadow:0 0 16px rgba(217,165,58,.3)}
-  #scene{top:104px;bottom:auto;left:6px;right:6px;height:33vh}
-  #photo{height:calc(33vh + 120px);bottom:auto}
-  #scrim{height:calc(33vh + 130px);bottom:auto;
+  /* scene: compact strip so panel gets real reading room */
+  #scene{top:calc(var(--hdrH) + var(--railH));bottom:auto;left:4px;right:4px;
+    height:var(--sceneH);min-height:var(--sceneMin);max-height:var(--sceneMax)}
+  #photo{height:calc(var(--sceneH) + var(--hdrH) + var(--railH) + 12px);
+    min-height:calc(var(--sceneMin) + var(--hdrH) + var(--railH) + 12px);
+    max-height:calc(var(--sceneMax) + var(--hdrH) + var(--railH) + 12px);bottom:auto}
+  #scrim{height:calc(var(--sceneH) + var(--hdrH) + var(--railH) + 24px);
+    min-height:calc(var(--sceneMin) + var(--hdrH) + var(--railH) + 24px);
+    max-height:calc(var(--sceneMax) + var(--hdrH) + var(--railH) + 24px);bottom:auto;
     background:linear-gradient(180deg,rgba(2,9,17,.86),rgba(2,9,17,.2) 45%,rgba(2,9,17,.9))}
-  .mob #nodes circle{r:30}.mob #nodes text{font-size:27px}
-  .mob #labels text{font-size:30px;stroke-width:9px}
+  .mob #nodes circle{r:34}.mob #nodes text{font-size:30px}
+  .mob #labels text{font-size:32px;stroke-width:9px}
   .mob #trail,.mob #route{stroke-width:5}
-  .mob #pulse circle:nth-child(1){r:24}.mob #pulse circle:nth-child(2){r:11}.mob #pulse circle:nth-child(3){r:4.5}
+  .mob #pulse circle:nth-child(1){r:26}.mob #pulse circle:nth-child(2){r:12}.mob #pulse circle:nth-child(3){r:5}
   #prog{display:none}
-  /* panel = bottom sheet with a drag handle */
-  #panel{inset:auto 0 0 0;width:auto;top:auto;max-height:56vh;clip-path:none;
-    border-left:0;border-right:0;border-bottom:0;border-radius:20px 20px 0 0;
-    padding-bottom:env(safe-area-inset-bottom)}
-  #panel.min{max-height:132px}
-  #grab{display:block;width:44px;height:4px;border-radius:4px;background:#3d5c7a;margin:9px auto 2px}
-  #pHead{padding:6px 18px 11px}#pTitle{font-size:20px}#pSub{font-size:13px}
+  /* panel = bottom sheet: fill everything below the scene */
+  #panel{position:fixed;top:calc(var(--hdrH) + var(--railH) + var(--sceneH) - 4px);
+    left:0;right:0;bottom:0;width:auto;max-height:none;
+    clip-path:none;border-left:0;border-right:0;border-bottom:0;border-radius:20px 20px 0 0;
+    padding-bottom:env(safe-area-inset-bottom);opacity:1;transform:none;pointer-events:auto;
+    transition:top .28s cubic-bezier(.2,.8,.2,1),height .28s cubic-bezier(.2,.8,.2,1)}
+  #panel.min{top:auto;height:88px;overflow:hidden}
+  #panel.min #pBody{display:none}
+  #grab{display:block;width:46px;height:5px;border-radius:4px;background:#3d5c7a;margin:9px auto 4px;cursor:pointer}
+  #pHead{padding:4px 18px 12px}
+  #pTitle{font-size:20px;margin-top:8px}#pSub{font-size:13px}
   #pMeta{gap:8px}#pStep{font-size:9px}#pCat{font-size:9.5px;padding:3px 9px}
-  #pBody{padding:14px 18px 22px}#pText{font-size:13.6px;line-height:1.8}
-  .sec{margin-top:17px;padding-top:13px}
+  #pBody{padding:14px 18px 96px;-webkit-overflow-scrolling:touch}
+  #pText{font-size:13.6px;line-height:1.8}
+  .sec{margin-top:16px;padding-top:13px}
   #pStatN{font-size:21px}
-  .arrow{bottom:auto;top:calc(16vh + 96px);width:38px;height:38px;font-size:20px}
-  #prev{left:8px}#next{right:8px}
-  html[dir=rtl] #prev{left:auto;right:8px}
-  html[dir=rtl] #next{right:auto;left:8px}
+  /* Prev/Next: floating action buttons pinned to viewport bottom, always visible */
+  .arrow{position:fixed;top:auto;bottom:calc(env(safe-area-inset-bottom) + 16px);
+    width:50px;height:50px;font-size:24px;z-index:36;
+    background:linear-gradient(150deg,#1a6eb5,#0f4d82);color:#fff;border-color:var(--gold);
+    box-shadow:0 8px 22px rgba(0,0,0,.55)}
+  #prev{left:16px}#next{right:16px}
+  html[dir=rtl] #prev{left:auto;right:16px}
+  html[dir=rtl] #next{right:auto;left:16px}
+  .arrow[disabled]{opacity:.35}
   #pop{width:min(300px,calc(100vw - 24px))}
   #set{width:min(300px,86vw)}
   .card{padding:26px 20px}.card h2{font-size:21px}.card p{font-size:13px;line-height:1.75}
@@ -298,7 +314,8 @@ html[dir=rtl] #next{right:auto;left:calc(var(--panelW) + 26px)}
   #uiInner{width:900px}
 }
 @media(max-width:900px) and (orientation:landscape){
-  #scene{height:46vh}#panel{max-height:74vh}.arrow{top:calc(23vh + 90px)}
+  :root{--sceneH:32vh;--sceneMin:150px;--sceneMax:280px}
+  .arrow{bottom:calc(env(safe-area-inset-bottom) + 10px);width:44px;height:44px;font-size:22px}
 }
 @media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
 :focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
