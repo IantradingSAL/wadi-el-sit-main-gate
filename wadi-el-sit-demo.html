@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wadi El Sit Demo — بلدية وادي الست | جولة في البوابة الإلكترونية</title>
+<meta name="theme-color" content="#04101d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cinzel:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#04101d; --blue:#1a6eb5; --sky:#58b6ff;
+  --gold:#d9a53a; --gold2:#ffcf7a; --paper:#e6eef7; --muted:#8ea9c4;
+  --line:rgba(217,165,58,.55);
+  --ar:'Tajawal',system-ui,sans-serif; --lat:'Cinzel',Georgia,serif;
+  --panelW:452px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;overflow:hidden;background:#02080f;color:var(--paper);font-family:var(--ar)}
+button{font-family:inherit}
+#stage{position:fixed;inset:0;background:radial-gradient(120% 90% at 70% 15%,#0a2a49 0%,#04121f 45%,#01070d 100%)}
+
+/* photo background */
+#photo{position:absolute;inset:0;background:#02080f center/cover no-repeat;opacity:0;transition:opacity .9s ease;
+  transform:scale(1.06);animation:drift 44s ease-in-out infinite alternate}
+#photo.on{opacity:1}
+@keyframes drift{from{transform:scale(1.05) translate3d(0,0,0)}to{transform:scale(1.12) translate3d(-1.6%,-1.2%,0)}}
+#scrim{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(2,9,17,.94) 0%,rgba(2,9,17,.55) 34%,rgba(2,9,17,.18) 60%,rgba(2,9,17,.55) 100%),
+             linear-gradient(180deg,rgba(2,9,17,.72),rgba(2,9,17,.18) 32%,rgba(2,9,17,.30) 66%,rgba(2,9,17,.82))}
+#scene{position:absolute;top:172px;bottom:44px;left:calc(var(--panelW) + 10px);right:42px;width:auto;height:auto}
+#art,#topo{display:none}
+body.bg-night #art{display:block}
+body.bg-topo #topo{display:block}
+body.bg-photo #photo{opacity:1}
+/* backdrop C — the portal's own interface, enlarged and dimmed */
+#uiBg{position:absolute;inset:0;overflow:hidden;opacity:0;transition:opacity .8s ease;pointer-events:none}
+body.bg-app #uiBg{opacity:.30}
+#uiInner{position:absolute;left:50%;top:50%;width:1460px;transform:translate(-50%,-50%);
+  filter:blur(1.1px);animation:uiDrift 70s ease-in-out infinite alternate;font-family:var(--ar);direction:rtl}
+@keyframes uiDrift{from{transform:translate(-50%,-51%) scale(1.02)}to{transform:translate(-51%,-49%) scale(1.14)}}
+.uiHdr{display:flex;align-items:center;gap:14px;background:#fff;border-radius:18px;padding:16px 22px;
+  box-shadow:0 10px 40px rgba(0,0,0,.25)}
+.uiHdr .uiSeal{width:52px;height:52px;border-radius:50%;background:#0f4d82}
+.uiHdr b{color:#0f4d82;font-size:22px}
+.uiHero{text-align:center;margin:34px 0 28px;color:#0f4d82}
+.uiHero h3{font-size:44px;font-weight:900}
+.uiHero p{color:#4a5568;font-size:17px;margin-top:10px}
+.uiChips{display:flex;gap:10px;justify-content:center;margin-top:16px}
+.uiChips i{background:#daeaf8;color:#0f4d82;border-radius:20px;padding:7px 16px;font-size:13px;font-style:normal}
+.uiGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.uiCard{background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2);
+  border-top:4px solid #1a6eb5}
+.uiCard .ic{width:44px;height:44px;border-radius:12px;background:#e8f4fd;display:grid;place-items:center;font-size:22px}
+.uiCard b{display:block;color:#1a2332;font-size:18px;margin-top:12px}
+.uiCard span{display:block;color:#8a95a3;font-size:13px;margin-top:6px;line-height:1.6}
+.uiCard.g{border-top-color:#2d7a3e}.uiCard.t{border-top-color:#0891b2}.uiCard.o{border-top-color:#d88e0a}
+
+/* top bar */
+#top{position:absolute;z-index:20;top:0;left:0;right:0;display:flex;align-items:center;gap:14px;
+  padding:16px 22px;pointer-events:none}
+#brand{display:flex;align-items:center;gap:11px;pointer-events:auto}
+#brand img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--line);
+  box-shadow:0 0 18px rgba(217,165,58,.22);background:#fff}
+#brand .b1{font-size:16px;font-weight:800;letter-spacing:.3px}
+#brand .b2{font-size:9.5px;color:var(--gold);letter-spacing:2.4px;font-family:var(--lat);margin-top:4px}
+#tools{margin-inline-start:auto;display:flex;gap:8px;pointer-events:auto;align-items:center}
+.icon{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(3,14,25,.8);
+  color:var(--gold2);font-size:16px;cursor:pointer;transition:.18s;display:grid;place-items:center}
+.icon:hover{background:rgba(9,30,50,.94);box-shadow:0 0 20px rgba(217,165,58,.25)}
+.icon.on{background:#241703;border-color:var(--gold2);color:#fff}
+#langs{display:flex;gap:6px}
+.lang{padding:8px 12px;border-radius:20px;border:1px solid rgba(88,182,255,.30);background:rgba(3,14,25,.72);
+  color:#a9c6e2;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:.18s}
+.lang.on{border-color:var(--gold);color:#fff;background:#211502}
+
+/* scene labels */
+#labels text{font-family:var(--ar);font-weight:800;font-size:20px;fill:#eaf2fa;
+  paint-order:stroke;stroke:#01060c;stroke-width:6px;stroke-linejoin:round;opacity:0;transition:opacity .35s ease}
+#labels text.on{opacity:.92}
+#labels text.cur{fill:var(--gold2);opacity:1}
+
+/* panel */
+#panel{position:absolute;z-index:30;top:88px;bottom:34px;left:22px;width:calc(var(--panelW) - 44px);
+  border:1px solid rgba(217,165,58,.55);
+  background:linear-gradient(155deg,rgba(4,16,29,.95),rgba(5,22,40,.88));
+  backdrop-filter:blur(18px) saturate(120%);box-shadow:0 30px 90px rgba(0,0,0,.6),0 0 30px rgba(217,165,58,.09);
+  clip-path:polygon(0 0,96% 0,100% 3.5%,100% 100%,4% 100%,0 96.5%);
+  display:flex;flex-direction:column;opacity:0;pointer-events:none;
+  transform:translateY(12px) scale(.99);transition:opacity .3s ease,transform .4s cubic-bezier(.2,.8,.2,1)}
+#panel.show{opacity:1;pointer-events:auto;transform:none}
+#pHead{padding:20px 24px 15px;border-bottom:1px solid rgba(88,182,255,.16);flex-shrink:0}
+#pMeta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#pStep{font-size:9.5px;letter-spacing:2.4px;color:var(--gold);font-weight:800;font-family:var(--lat)}
+#pCat{font-size:10px;font-weight:800;padding:4px 11px;border-radius:16px;border:1px solid rgba(88,182,255,.4);
+  color:#9fd2ff;background:rgba(26,110,181,.14)}
+#pTitle{font-size:27px;font-weight:800;margin-top:10px;line-height:1.22}
+#pSub{color:var(--sky);font-size:14px;margin-top:5px;font-weight:500}
+#pBody{padding:18px 24px 26px;overflow:auto;flex:1;scrollbar-width:thin;scrollbar-color:#8a5c11 #061424}
+#pBody::-webkit-scrollbar{width:6px}#pBody::-webkit-scrollbar-thumb{background:#8a5c11;border-radius:6px}
+#pText{font-size:14.2px;line-height:1.85;color:#cfdcea}
+.sec{margin-top:20px;padding-top:15px;border-top:1px solid rgba(88,182,255,.15)}
+.secT{font-size:9.5px;letter-spacing:1.8px;color:#8db5d8;font-weight:800;margin-bottom:11px;font-family:var(--lat)}
+.secT b{font-family:var(--ar);letter-spacing:0;font-size:11.5px;color:#a8c8e4}
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:11px}
+.steps div{counter-increment:s;position:relative;padding-inline-start:32px;font-size:13.4px;line-height:1.6;color:#dbe7f3}
+.steps div::before{content:counter(s,decimal);position:absolute;inset-inline-start:0;top:0;width:22px;height:22px;
+  border:1px solid rgba(217,165,58,.6);color:var(--gold2);font-size:10px;font-weight:800;
+  display:grid;place-items:center;background:rgba(217,165,58,.07)}
+.feats{display:flex;flex-direction:column;gap:9px}
+.feats div{font-size:13.4px;line-height:1.55;color:#dbe7f3;padding-inline-start:16px;position:relative}
+.feats div::before{content:"";position:absolute;inset-inline-start:0;top:8px;width:7px;height:7px;
+  background:var(--gold);transform:rotate(45deg)}
+#pStat{margin-top:18px;display:flex;align-items:center;gap:13px;padding:13px 15px;
+  background:linear-gradient(120deg,rgba(26,110,181,.20),rgba(26,110,181,.05));border:1px solid rgba(88,182,255,.28)}
+#pStatN{font-size:24px;font-weight:900;color:#fff;line-height:1;white-space:nowrap}
+#pStatW{font-size:12px;color:#a9c9e6;line-height:1.5}
+.pKey{margin-top:18px;padding:12px 14px;border-inline-start:2px solid var(--gold);
+  background:rgba(217,165,58,.07);color:#f2dcb2;font-size:13.2px;line-height:1.65;font-weight:500}
+#pLink{display:inline-flex;align-items:center;gap:8px;margin-top:20px;padding:11px 20px;border-radius:26px;
+  border:1px solid var(--gold);background:#0a1929;color:#fff;font-size:12.5px;font-weight:700;
+  text-decoration:none;transition:.18s}
+#pLink:hover{background:#16283c;box-shadow:0 0 22px rgba(217,165,58,.3)}
+#mockWrap{margin-top:22px;border:1px solid rgba(88,182,255,.26);background:#020a14;padding:13px;
+  box-shadow:inset 0 0 34px rgba(0,60,120,.2)}
+#mockCap{font-size:9px;letter-spacing:1.5px;color:#7ea3c4;margin-bottom:10px;font-family:var(--lat)}
+/* mock UI */
+.mk{background:#f5f7fa;border-radius:9px;overflow:hidden;color:#1a2332;font-size:11px;direction:rtl}
+.mk .mh{background:linear-gradient(135deg,#1a6eb5,#0f4d82);color:#fff;padding:9px 11px;font-weight:800;font-size:11.5px}
+.mk .mb{padding:10px}
+.mk .row{background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;margin-bottom:6px;
+  display:flex;align-items:center;gap:7px}
+.mk .row .t{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk .row .s{color:#8a95a3;font-size:9.5px;white-space:nowrap}
+.mk .tag{font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;background:#daeaf8;color:#0f4d82;white-space:nowrap}
+.mk .tag.g{background:#dcfce7;color:#15803d}.mk .tag.o{background:#fff4e0;color:#a06700}
+.mk .tag.r{background:#fde8e8;color:#bf2424}
+.mk .fld{background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px 9px;margin-bottom:6px;color:#8a95a3;font-size:10px}
+.mk .btn{background:linear-gradient(135deg,#1a6eb5,#0f4d82);color:#fff;text-align:center;padding:8px;
+  border-radius:7px;font-weight:800;font-size:10.5px;margin-top:2px}
+.mk .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.mk .kpi{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:7px 5px;text-align:center}
+.mk .kpi b{display:block;font-size:13px;color:#0f4d82}
+.mk .kpi span{font-size:8.5px;color:#8a95a3}
+.mk .tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mk .tile{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px;text-align:center}
+.mk .tile .e{font-size:19px}.mk .tile b{display:block;font-size:10px;margin-top:3px}
+.mk .tile span{font-size:9px;color:#2d7a3e;font-weight:700}
+.mk .bar{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.mk .bar i{height:8px;border-radius:5px;background:linear-gradient(90deg,#1a6eb5,#58b6ff);display:block}
+.mk .bar u{text-decoration:none;color:#8a95a3;font-size:9px;width:30px}
+.mk .note{font-size:9.5px;color:#8a95a3;margin-top:7px;line-height:1.55}
+.mk .rcpt{background:#fff;border:1px double #c9a227;border-radius:6px;padding:10px;text-align:center}
+.mk .rcpt .h{font-family:var(--lat);font-size:8.5px;letter-spacing:1px;color:#a06700}
+.mk .rcpt .no{font-size:9.5px;color:#8a95a3;margin-top:2px}
+.mk .rcpt .amt{font-size:18px;font-weight:900;color:#0f4d82;margin:6px 0}
+.mk .rcpt .sig{border-top:1px dashed #c9a227;margin-top:9px;padding-top:6px;font-size:8.5px;color:#8a95a3}
+.mk .push{background:#fff;border-radius:9px;padding:8px 9px;margin-bottom:6px;box-shadow:0 2px 8px rgba(0,0,0,.1);
+  display:flex;gap:8px;align-items:flex-start}
+.mk .push .e{font-size:15px}.mk .push b{font-size:10.5px}.mk .push p{font-size:9.5px;color:#4a5568;line-height:1.45}
+
+/* progress */
+#prog{position:absolute;z-index:25;top:84px;bottom:auto;left:var(--panelW);right:0;padding:0 84px;
+  text-align:center;display:flex;flex-direction:column-reverse}
+#track{height:2px;background:#12314b;position:relative}
+#fill{position:absolute;inset-block:0;inset-inline-start:0;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));
+  box-shadow:0 0 12px rgba(217,165,58,.6);transition:width .5s ease}
+#dots{position:absolute;left:0;right:0;top:-5px;display:flex;justify-content:space-between;align-items:flex-end}
+.step{background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.dot{width:11px;height:11px;border-radius:50%;background:#061425;border:1px solid #2d4c69;
+  transition:.2s;padding:0;flex:0 0 auto}
+.step:hover .dot{transform:scale(1.3);border-color:var(--gold)}
+.dot.done{border-color:var(--gold);background:#2a1a02}
+.dot.cur{border-color:var(--gold2);background:#3a2503;box-shadow:0 0 14px rgba(217,165,58,.75);transform:scale(1.25)}
+.slab{margin-top:10px;width:64px;font-family:var(--ar);font-size:8.7px;line-height:1.3;font-weight:700;
+  color:#9ab5cd;text-align:center;transition:.2s;text-shadow:0 1px 4px #01060c,0 0 10px #01060c}
+.step:nth-child(even) .slab{margin-top:31px}
+.step.done .slab{color:#a0bdd6}
+.step.cur .slab{color:var(--gold2);font-weight:800;font-size:10px}
+.step:hover .slab{color:#dbe9f6}
+#stepText{display:block;margin:0 0 11px;color:#8aa7c2;font-size:10px;letter-spacing:2.4px;font-family:var(--lat);
+  text-shadow:0 1px 4px #01060c}
+@media(max-width:1024px){.slab{width:54px;font-size:8px}}
+.arrow{position:absolute;z-index:26;bottom:38px;width:42px;height:42px;border-radius:50%;
+  border:1px solid rgba(217,165,58,.7);background:rgba(4,14,24,.8);color:var(--gold2);font-size:22px;
+  cursor:pointer;display:grid;place-items:center;transition:.18s;backdrop-filter:blur(6px)}
+.arrow:hover{transform:scale(1.08);box-shadow:0 0 22px rgba(217,165,58,.4)}
+.arrow[disabled]{opacity:.22;cursor:default;transform:none;box-shadow:none}
+#prev{left:calc(var(--panelW) + 26px)}
+#next{right:26px}
+.arrow{direction:ltr}
+html[dir=rtl] #prev{left:auto;right:26px}
+html[dir=rtl] #next{right:auto;left:calc(var(--panelW) + 26px)}
+
+/* station popover */
+#pop{position:absolute;z-index:35;width:262px;padding:15px 16px 14px;
+  background:linear-gradient(150deg,rgba(4,16,29,.97),rgba(5,22,40,.93));
+  border:1px solid rgba(217,165,58,.62);backdrop-filter:blur(14px);
+  box-shadow:0 22px 60px rgba(0,0,0,.6),0 0 24px rgba(217,165,58,.12);
+  clip-path:polygon(0 0,94% 0,100% 6%,100% 100%,6% 100%,0 94%);
+  opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .22s ease,transform .28s ease}
+#pop.show{opacity:1;pointer-events:auto;transform:none}
+#pop h4{font-size:16px;font-weight:800;padding-inline-end:18px}
+#pop .ps{color:var(--sky);font-size:11.5px;margin-top:3px}
+#pop p{font-size:11.8px;line-height:1.65;color:#c6d6e6;margin-top:9px}
+#pop .pb{display:flex;gap:8px;margin-top:13px;flex-wrap:wrap}
+#pop .pb a,#pop .pb button{font-size:11px;font-weight:700;padding:8px 13px;border-radius:20px;
+  border:1px solid var(--gold);background:#0a1929;color:#fff;text-decoration:none;cursor:pointer;transition:.16s}
+#pop .pb a:hover{box-shadow:0 0 18px rgba(217,165,58,.3)}
+#pop .pb button{border-color:rgba(88,182,255,.45);color:#bcd6ee}
+#popX{position:absolute;top:7px;inset-inline-end:9px;background:none;border:0;color:#8ea9c4;font-size:17px;cursor:pointer;padding:0}
+/* settings */
+#set{position:absolute;z-index:40;inset-block:0;right:0;width:300px;padding:70px 22px 24px;
+  background:linear-gradient(180deg,rgba(3,13,24,.97),rgba(1,7,14,.98));border-left:1px solid var(--line);
+  backdrop-filter:blur(18px);transform:translateX(100%);transition:.32s ease;overflow:auto}
+#set.open{transform:none}
+#set h3{font-size:12.5px;letter-spacing:2.5px;color:var(--gold);margin-bottom:22px;font-family:var(--lat)}
+#setClose{position:absolute;top:14px;left:14px}
+.grp{margin:18px 0}
+.grp label{display:block;color:#a7bed4;font-size:11px;margin-bottom:9px;font-weight:700}
+.pills{display:flex;gap:7px;flex-wrap:wrap}
+.pill{border:1px solid #22415c;background:#06131f;color:#8fa8bf;padding:7px 11px;border-radius:18px;
+  font-size:10.5px;cursor:pointer;transition:.16s}
+.pill:hover{border-color:var(--gold)}
+.pill.on{border-color:var(--gold);color:#fff;background:#211502}
+.hint{color:#5f7c96;font-size:10px;line-height:1.65;margin-top:10px}
+
+/* veils */
+.veil{position:absolute;z-index:60;inset:0;display:grid;place-items:center;padding:20px;
+  background:radial-gradient(circle at 55% 40%,rgba(9,44,80,.32),rgba(0,0,0,.94) 62%);transition:.45s}
+.veil.hide{opacity:0;pointer-events:none}
+.card{width:min(640px,92vw);padding:36px 32px;text-align:center;border:1px solid var(--line);
+  background:rgba(2,11,20,.84);backdrop-filter:blur(16px);
+  clip-path:polygon(0 0,97% 0,100% 5%,100% 100%,3% 100%,0 95%)}
+.card img{width:100px;height:100px;border-radius:50%;object-fit:cover;border:1px solid var(--line);
+  box-shadow:0 0 34px rgba(217,165,58,.28);background:#fff}
+.card h2{font-size:27px;font-weight:800;margin-top:18px;line-height:1.3}
+.card .kicker{font-family:var(--lat);font-size:10.5px;letter-spacing:4px;color:var(--gold);margin-top:11px}
+.card p{color:#b6cade;font-size:13.8px;line-height:1.85;margin-top:17px}
+.cta{display:inline-block;margin-top:22px;padding:12px 30px;border-radius:26px;border:1px solid var(--gold);
+  background:#0a1829;color:#fff;font-size:13px;font-weight:800;letter-spacing:.6px;cursor:pointer;
+  transition:.18s;text-decoration:none}
+.cta:hover{background:#16293d;box-shadow:0 0 26px rgba(217,165,58,.32)}
+.cta.ghost{border-color:rgba(88,182,255,.45);color:#bcd6ee;margin-inline-start:8px}
+.meta{margin-top:20px;color:#6f8ba5;font-size:10px;letter-spacing:1.4px}
+
+@media(max-width:1100px){:root{--panelW:388px}#prog{padding:0 76px}}
+@media(max-width:900px){
+  :root{--panelW:0px}
+  #scene{top:74px;bottom:auto;left:12px;right:12px;height:40vh}
+  #photo{height:56vh;bottom:auto}
+  #scrim{height:56vh;bottom:auto;background:linear-gradient(180deg,rgba(2,9,17,.78),rgba(2,9,17,.15) 40%,rgba(2,9,17,.86))}
+  #panel{inset:auto 0 0 0;width:auto;max-height:58vh;top:auto;clip-path:none;border-left:0;border-right:0;border-bottom:0}
+  #pHead{padding:14px 18px 11px}#pTitle{font-size:21px}#pBody{padding:14px 18px 20px}
+  #prog{display:none}
+  .arrow{bottom:auto;top:calc(50vh - 21px)}
+  #prev{left:12px}#next{right:12px}
+  html[dir=rtl] #prev{left:auto;right:12px}
+  html[dir=rtl] #next{right:auto;left:12px}
+  #top{padding:12px 14px}#brand .b1{font-size:13px}#brand .b2{font-size:8px;letter-spacing:1.6px}
+  #brand img{width:40px;height:40px}
+  .icon{width:34px;height:34px;font-size:14px}.lang{padding:6px 9px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation:none!important}}
+:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="photo"></div>
+  <div id="uiBg"><div id="uiInner">
+    <div class="uiHdr"><div class="uiSeal"></div><b>بلدية وادي الست</b></div>
+    <div class="uiHero"><h3>بوابة الخدمات الإلكترونية</h3>
+      <p>تقديم الطلبات، متابعة الإجراءات، وخدمات القرية بين يديك</p>
+      <div class="uiChips"><i>🏛 بلدية وادي الست</i><i>📍 قضاء الشوف</i><i>🇱🇧 لبنان</i></div></div>
+    <div class="uiGrid">
+      <div class="uiCard"><div class="ic">👥</div><b>بوابة المواطن</b><span>شكاوى، طلبات، تراخيص وإفادات</span></div>
+      <div class="uiCard o"><div class="ic">🔐</div><b>دخول الموظفين</b><span>لوحة تحكم موظفي البلدية</span></div>
+      <div class="uiCard t"><div class="ic">💧</div><b>بوابة الري</b><span>اطّلع على جدول دورتك للري</span></div>
+      <div class="uiCard g"><div class="ic">🛒</div><b>تعاونية وادي الست</b><span>منتجات أهل القرية</span></div>
+      <div class="uiCard"><div class="ic">📒</div><b>دليل البلدية</b><span>أرقام، عائلات، مهن ومواقع</span></div>
+      <div class="uiCard"><div class="ic">📰</div><b>أخبار وإعلانات</b><span>آخر الأخبار والإعلانات الرسميّة</span></div>
+    </div>
+  </div></div>
+  <div id="scrim"></div>
+  <svg id="scene" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#04121f"/><stop offset=".55" stop-color="#0a2a49"/><stop offset="1" stop-color="#123a5c"/>
+      </linearGradient>
+      <linearGradient id="r1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0c2c4a"/><stop offset="1" stop-color="#071d33"/></linearGradient>
+      <linearGradient id="r2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a2740"/><stop offset="1" stop-color="#05192b"/></linearGradient>
+      <linearGradient id="r3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#071e33"/><stop offset="1" stop-color="#031120"/></linearGradient>
+      <linearGradient id="ter" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#062033"/><stop offset="1" stop-color="#020c16"/></linearGradient>
+      <linearGradient id="trailG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d9a53a"/><stop offset="1" stop-color="#ffcf7a"/></linearGradient>
+      <radialGradient id="moon"><stop offset="0" stop-color="#fff6e2"/><stop offset="1" stop-color="#ffe6b0"/></radialGradient>
+      <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
+    </defs>
+    <g id="topo"></g>
+    <g id="art">
+      <rect width="1536" height="1024" fill="url(#sky)"/>
+      <g id="stars"></g>
+      <circle cx="255" cy="165" r="42" fill="url(#moon)" opacity=".92"/>
+      <circle cx="255" cy="165" r="86" fill="#ffe6b0" opacity=".07" filter="url(#soft)"/>
+      <path d="M0 470 L150 372 L268 425 L392 330 L520 420 L640 356 L760 432 L900 350 L1040 430 L1180 362 L1320 438 L1440 380 L1536 430 L1536 1024 L0 1024Z" fill="url(#r1)"/>
+      <path d="M0 560 L120 490 L250 545 L380 470 L520 552 L660 486 L800 560 L950 492 L1100 566 L1250 500 L1400 570 L1536 520 L1536 1024 L0 1024Z" fill="url(#r2)"/>
+      <path d="M0 660 L160 610 L320 668 L480 606 L640 676 L820 616 L1000 686 L1180 622 L1360 690 L1536 640 L1536 1024 L0 1024Z" fill="url(#r3)"/>
+      <path d="M0 742 Q380 706 760 748 T1536 726 L1536 1024 L0 1024Z" fill="url(#ter)" opacity=".95"/>
+      <g stroke="rgba(122,176,222,.14)" stroke-width="2" fill="none">
+        <path d="M0 800 Q400 764 800 806 T1536 784"/>
+        <path d="M0 862 Q400 826 800 868 T1536 846"/>
+        <path d="M0 926 Q400 890 800 932 T1536 910"/>
+      </g>
+      <g id="village"></g>
+    </g>
+    <path id="route" fill="none" stroke="rgba(217,165,58,.20)" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 12"/>
+    <path id="trail" fill="none" stroke="url(#trailG)" stroke-width="3.6" stroke-linecap="round" filter="url(#glow)"/>
+    <g id="nodes"></g>
+    <g id="labels"></g>
+    <g id="pulse" filter="url(#glow)">
+      <circle r="17" fill="rgba(217,165,58,.10)" stroke="#ffcf7a" stroke-width="1.1"/>
+      <circle r="7.5" fill="#d9a53a"/><circle r="3.2" fill="#fff"/>
+    </g>
+  </svg>
+
+  <div id="top">
+    <div id="brand">
+      <img src="data:image/jpeg;base64,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" alt="شعار بلدية وادي الست">
+      <div>
+        <div class="b1" data-t="brand">بلدية وادي الست</div>
+        <div class="b2">WADI EL SIT · CHOUF · LEBANON</div>
+      </div>
+    </div>
+    <div id="tools">
+      <div id="langs">
+        <button class="lang on" data-lang="ar">AR</button>
+        <button class="lang" data-lang="en">EN</button>
+        <button class="lang" data-lang="fr">FR</button>
+      </div>
+      <button class="icon" id="bgBtn" title="الخلفية" aria-label="الخلفية">🎨</button>
+      <button class="icon" id="playBtn" title="عرض تلقائي" aria-label="عرض تلقائي">▶</button>
+      <button class="icon" id="fsBtn" title="ملء الشاشة" aria-label="ملء الشاشة">⛶</button>
+      <button class="icon" id="setBtn" title="إعدادات" aria-label="إعدادات">⚙</button>
+    </div>
+  </div>
+
+  <div id="pop" role="dialog">
+    <button id="popX" aria-label="×">×</button>
+    <h4 id="popT"></h4><div class="ps" id="popS"></div><p id="popB"></p>
+    <div class="pb"><a id="popL" href="#" target="_blank" rel="noopener"></a><button id="popD"></button></div>
+  </div>
+  <section id="panel" aria-live="polite">
+    <div id="pHead">
+      <div id="pMeta"><span id="pStep"></span><span id="pCat"></span></div>
+      <h2 id="pTitle"></h2>
+      <div id="pSub"></div>
+    </div>
+    <div id="pBody">
+      <p id="pText"></p>
+      <div id="pStat"><div id="pStatN"></div><div id="pStatW"></div></div>
+      <div class="sec"><div class="secT"><b id="tHow"></b></div><div class="steps" id="pHow"></div></div>
+      <div class="sec"><div class="secT"><b id="tFeat"></b></div><div class="feats" id="pFeat"></div></div>
+      <div class="pKey" id="pKey"></div>
+      <a id="pLink" href="#" target="_blank" rel="noopener"></a>
+      <div id="mockWrap"><div id="mockCap">LIVE MODULE PREVIEW</div><div id="mock"></div></div>
+    </div>
+  </section>
+
+  <div id="prog">
+    <div id="track"><div id="fill"></div><div id="dots"></div></div>
+    <span id="stepText"></span>
+  </div>
+  <button class="arrow" id="prev" aria-label="السابق">‹</button>
+  <button class="arrow" id="next" aria-label="التالي">›</button>
+
+  <aside id="set">
+    <button class="icon" id="setClose" aria-label="إغلاق">×</button>
+    <h3 data-t="setTitle">SETTINGS</h3>
+    <div class="grp"><label data-t="setLang">لغة العرض</label>
+      <div class="pills" id="setLangs">
+        <button class="pill on" data-lang="ar">العربية</button>
+        <button class="pill" data-lang="en">English</button>
+        <button class="pill" data-lang="fr">Français</button>
+      </div></div>
+    <div class="grp"><label data-t="setBg">خلفية العرض</label>
+      <div class="pills" id="bgModes">
+        <button class="pill" data-bg="app" data-t="bgApp">🏛 واجهة البوابة</button>
+        <button class="pill" data-bg="topo" data-t="bgTopo">🗺 خطوط الجبل</button>
+        <button class="pill" data-bg="night" data-t="bgNight">🌄 القرية ليلاً</button>
+        <button class="pill" data-bg="photo" data-t="bgPhoto">📷 صورة البلدة</button>
+      </div>
+      <div class="pills" style="margin-top:8px">
+        <button class="pill" id="bgPick" data-t="bgPick">📷 اختر صورة من جهازك</button>
+      </div>
+      <input type="file" id="bgFile" accept="image/*" hidden>
+      <p class="hint" data-t="bgHint">ضع صورة باسم wadi.jpg بجانب الملف لتُحمَّل تلقائياً، أو اختر صورة من جهازك الآن.</p>
+    </div>
+    <div class="grp"><label data-t="setSpeed">سرعة العرض التلقائي</label>
+      <div class="pills" id="speeds">
+        <button class="pill" data-sp="15000" data-t="spSlow">هادئ</button>
+        <button class="pill on" data-sp="11000" data-t="spNorm">عادي</button>
+        <button class="pill" data-sp="7000" data-t="spFast">سريع</button>
+      </div></div>
+    <div class="grp"><label data-t="setPreview">معاينة الوحدات</label>
+      <div class="pills" id="mockToggle">
+        <button class="pill on" data-mk="1" data-t="mkOn">إظهار</button>
+        <button class="pill" data-mk="0" data-t="mkOff">إخفاء</button>
+      </div></div>
+    <p class="hint" data-t="hint">← → للتنقل، المسافة للتشغيل التلقائي، Esc لإغلاق هذه اللوحة.</p>
+  </aside>
+
+  <div class="veil" id="launch">
+    <div class="card">
+      <img data-logo alt="شعار بلدية وادي الست">
+      <h2 data-t="lTitle">البوابة الإلكترونية لبلدية وادي الست</h2>
+      <div class="kicker">A GUIDED TOUR · جولة إرشادية</div>
+      <p data-t="lDesc">اثنتا عشرة محطة تشرح ما تقدّمه البوابة للمواطن وللإدارة البلدية: من تقديم الشكوى ومتابعتها، إلى جدول الري، إلى سندات الصندوق وأرشيف الجباية الرسمي — كلّها تعمل اليوم على الهاتف.</p>
+      <div class="startLangs" style="margin-top:20px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="lang on" data-lang="ar">العربية</button>
+        <button class="lang" data-lang="en">English</button>
+        <button class="lang" data-lang="fr">Français</button>
+      </div>
+      <button class="cta" id="enter" data-t="lCta">ابدأ الجولة</button>
+      <div class="meta">app.municipality-wadi-el-sitt.org</div>
+    </div>
+  </div>
+
+  <div class="veil hide" id="end">
+    <div class="card">
+      <img data-logo alt="شعار بلدية وادي الست">
+      <h2 data-t="eTitle">بلدية بين يديك</h2>
+      <div class="kicker">END OF TOUR · نهاية الجولة</div>
+      <p data-t="eDesc">اثنتا عشرة خدمة، منصّة واحدة، ثلاث لغات. افتح البوابة، ثبّتها على شاشة هاتفك كتطبيق، وفعّل الإشعارات لتصلك أخبار البلدة وتنبيهاتها أوّلاً بأوّل.</p>
+      <div style="margin-top:22px">
+        <a class="cta" href="https://app.municipality-wadi-el-sitt.org/" target="_blank" rel="noopener" data-t="eOpen">افتح البوابة</a>
+        <button class="cta ghost" id="again" data-t="eAgain">أعد الجولة</button>
+      </div>
+      <div class="meta">app.municipality-wadi-el-sitt.org</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== STOPS (scene coordinates) ===================== */
+const STOPS=[
+{x:1360,y:232,icon:"🏛",page:"",key:"gate"},
+{x:1148,y:196,icon:"👥",page:"citizen.html",key:"citizen"},
+{x:936,y:262,icon:"🔔",page:"",key:"push"},
+{x:726,y:226,icon:"💧",page:"water.html",key:"water"},
+{x:556,y:452,icon:"🗓",page:"water-admin.html",key:"irrig"},
+{x:766,y:492,icon:"🧾",page:"water-admin.html#finance",key:"wfin"},
+{x:980,y:458,icon:"🛒",page:"coop.html",key:"coop"},
+{x:1196,y:500,icon:"📒",page:"phonebook.html",key:"dir"},
+{x:1338,y:714,icon:"📰",page:"news.html",key:"news"},
+{x:1116,y:742,icon:"🔐",page:"dashboard.html",key:"staff"},
+{x:892,y:706,icon:"💰",page:"sandouk.html",key:"sandouk"},
+{x:668,y:742,icon:"🗂",page:"mrs.html",key:"archive"}
+];
+
+/* ===================== CONTENT ===================== */
+const T={
+ar:{dir:"rtl",stepOf:(a,b)=>`المحطة ${a} من ${b}`,brand:"بلدية وادي الست",
+ setTitle:"الإعدادات",setLang:"لغة العرض",setBg:"خلفية العرض",bgPick:"📷 اختر صورة من جهازك",bgApp:"🏛 واجهة البوابة",bgTopo:"🗺 خطوط الجبل",bgNight:"🌄 القرية ليلاً",bgPhoto:"📷 صورة البلدة",
+ bgHint:"ضع صورة باسم wadi.jpg بجانب الملف لتُحمَّل تلقائياً، أو اختر صورة من جهازك الآن.",
+ setSpeed:"سرعة العرض التلقائي",spSlow:"هادئ",spNorm:"عادي",spFast:"سريع",
+ setPreview:"معاينة الوحدات",mkOn:"إظهار",mkOff:"إخفاء",
+ hint:"← → للتنقل، المسافة للتشغيل التلقائي، Esc لإغلاق هذه اللوحة.",
+ how:"كيف تعمل",feat:"أبرز الميزات",open:"افتح الصفحة",more:"التفاصيل الكاملة",
+ lTitle:"البوابة الإلكترونية لبلدية وادي الست",
+ lDesc:"اثنتا عشرة محطة تشرح ما تقدّمه البوابة للمواطن وللإدارة البلدية: من تقديم الشكوى ومتابعتها، إلى جدول الري، إلى سندات الصندوق وأرشيف الجباية الرسمي — كلّها تعمل اليوم على الهاتف.",
+ lCta:"ابدأ الجولة",eTitle:"بلدية بين يديك",
+ eDesc:"اثنتا عشرة خدمة، منصّة واحدة، ثلاث لغات. افتح البوابة، ثبّتها على شاشة هاتفك كتطبيق، وفعّل الإشعارات لتصلك أخبار البلدة وتنبيهاتها أوّلاً بأوّل.",
+ eOpen:"افتح البوابة",eAgain:"أعد الجولة",
+ s:{
+ gate:{c:"البنية الأساسية",t:"البوابة الرقمية",u:"مدخل واحد لكل خدمات البلدية",lbl:"البوابة",
+  b:"البوابة هي الواجهة الرسمية الموحّدة لبلدية وادي الست. صفحة واحدة تجمع خدمات المواطن والخدمات الإدارية، تعمل بالعربية والإنكليزية والفرنسية، وتُثبَّت على الهاتف كتطبيق من دون متجر ومن دون إنشاء حساب. صُمّمت لتعمل على شبكات ضعيفة، وتبقى الصفحات الأساسية متاحة حتى عند انقطاع الإنترنت.",
+  how:["يفتح المواطن الرابط من الهاتف أو الحاسوب","يختار الخدمة من شبكة الخدمات في الصفحة الرئيسية","يضيف البوابة إلى شاشة الهاتف فتصبح تطبيقاً مستقلاً"],
+  f:["تطبيق PWA يُثبَّت من المتصفح مباشرة","ثلاث لغات مع تبديل فوري واتجاه نص صحيح","سجل «ما الجديد» يوثّق كل تحديث بتاريخه","تحديث تلقائي عند كل زيارة، بلا تحميل يدوي"],
+  sn:"٣ لغات",sw:"واجهة واحدة بالعربية والإنكليزية والفرنسية، ومحتوى موحّد لكل الخدمات",
+  k:"لا متجر تطبيقات ولا تسجيل: الرابط نفسه هو التطبيق."},
+ citizen:{c:"خدمة للمواطن",t:"بوابة المواطن",u:"شكوى، طلب، ترخيص، إفادة",lbl:"بوابة المواطن",
+  b:"مدخل تقديم المعاملات إلى البلدية. يملأ المواطن نموذجاً قصيراً باسمه ورقم هاتفه ونوع الطلب، ويستطيع إرفاق صور وتحديد الموقع على الخريطة، فيصله رقم متابعة يعود إليه لاحقاً. يُسجَّل الطلب مباشرة في قاعدة بيانات البلدية ويظهر في لوحة الموظفين خلال ثوانٍ، من دون حاجة إلى زيارة مركز البلدية.",
+  how:["يختار المواطن نوع المعاملة: شكوى، طلب، ترخيص أو إفادة","يعبّئ بياناته ويرفق الصور ويحدّد الموقع على الخريطة","يستلم رقم المتابعة، ويتابع الموظف المعاملة حتى الإقفال"],
+  f:["من دون حساب ومن دون كلمة مرور","إرفاق صور وتحديد الموقع الجغرافي","رقم متابعة لكل معاملة","وصول فوري إلى لوحة الموظفين مع إشعار"],
+  sn:"دقيقة واحدة",sw:"هو متوسط الوقت اللازم لتسجيل شكوى كاملة بالصور والموقع",
+  k:"الشكوى تُسجَّل بالدليل والتاريخ، فلا تضيع ولا تُنسى."},
+ push:{c:"البنية الأساسية",t:"الإشعارات الفورية",u:"خبر البلدة يصل إلى الهاتف",lbl:"الإشعارات",
+  b:"نظام تنبيهات مباشر يربط البلدية بأهالي البلدة. يرسل الموظف المخوّل إشعاراً من لوحة التحكم فيصل فوراً إلى هواتف المشتركين: انقطاع مياه، موعد دورة ري، إعلان رسمي، أو حالة طارئة. التفعيل بضغطة واحدة من الصفحة الرئيسية، والاشتراك اختياري ويمكن إيقافه في أي وقت.",
+  how:["يفعّل المواطن الإشعارات بضغطة واحدة من البوابة","تكتب البلدية الإعلان وترسله من لوحة التحكم","يصل التنبيه إلى الهاتف حتى لو كانت البوابة مغلقة"],
+  f:["إشعارات Push على أندرويد و iOS","إرسال موجّه ومرتبط بصفحة الخبر","لا يتطلّب رقم هاتف ولا بيانات شخصية","إيقاف الاشتراك متاح في أي لحظة"],
+  sn:"فوري",sw:"يصل الإعلان الرسمي إلى الهاتف من دون فتح التطبيق أو انتظار الشائعة",
+  k:"إعلان واحد رسمي يغني عن عشر روايات متناقضة."},
+ water:{c:"خدمة للمواطن",t:"بوابة الري",u:"دورتك من دون اتصال ولا انتظار",lbl:"بوابة الري",
+  b:"صفحة عامة تتيح لكل مزارع معرفة دوره في جدول الري المعتمد من لجنة المياه. يُدخل رقم هاتفه فيظهر له تاريخ الدورة وساعتها ومدّتها. أي تعديل تجريه اللجنة على الجدول ينعكس على الصفحة مباشرة، فيتوقف الاعتماد على الاتصالات الهاتفية والرسائل المتفرّقة.",
+  how:["يدخل المزارع رقم هاتفه في البوابة","يظهر جدول دوراته القادمة بالتاريخ والساعة والمدة","يُنبَّه عبر الإشعارات عند اقتراب دوره أو تعديل الجدول"],
+  f:["بحث برقم الهاتف فقط، بلا حساب","جدول واضح بالتاريخ والساعة والمدة","انعكاس فوري لأي تعديل من اللجنة","مناسب لكبار السن: خطوة واحدة فقط"],
+  sn:"٢٤/٧",sw:"الجدول متاح في أي وقت، بلا اتصال هاتفي ولا مراجعة لأحد",
+  k:"سؤال «إيمتى دوري؟» صار له جواب واحد ومكتوب."},
+ irrig:{c:"أداة إدارية",t:"إدارة الري",u:"لجنة المياه تبني الدورات وتنشرها",lbl:"إدارة الري",
+  b:"لوحة خاصة بلجنة المياه لإدارة شبكة الري: إنشاء الدورات، توزيع الحصص على المشتركين، تعديل المواعيد وإعلانها. الدخول محمي ببريد وكلمة مرور ودور محدّد، وكل تعديل يظهر مباشرة في بوابة الري العامة، فيبقى جدول رسمي واحد يراه الجميع.",
+  how:["تدخل اللجنة بحساب محمي بدور محدّد","تُنشئ الدورة وتوزّع الحصص والمواعيد","تُنشر الدورة فتظهر للمزارعين مع إشعار"],
+  f:["إنشاء وتعديل الدورات والحصص","صلاحيات مقيّدة بأعضاء اللجنة","ارتباط مباشر بالبوابة العامة","سجل بالتعديلات ومن أجراها"],
+  sn:"جدول واحد",sw:"مصدر رسمي وحيد للدورات، بدل الدفاتر والرسائل المتفرّقة",
+  k:"من دفتر باليد إلى جدول رسمي يراه كل مشترك."},
+ wfin:{c:"أداة إدارية",t:"صندوق لجنة المياه",u:"جباية ونفقات بسندات ورصيد جارٍ",lbl:"صندوق المياه",
+  b:"وحدة مالية كاملة داخل لوحة الري: تسجيل الجباية لكل منزل باسم المشترك ورقم الإيصال، وتسجيل النفقات مع بيان الرصيد الجاري. لكل حركة سند قبض أو سند صرف بصيغة PDF يُطبع أو يُرسل عبر واتساب، إضافة إلى تقارير قابلة للتصدير إلى Excel.",
+  how:["تُسجَّل الجباية باسم المشترك ورقم الإيصال","تُسجَّل النفقة ببيانها ومستنداتها","يُصدَر السند PDF ويُشارك مع صاحب العلاقة"],
+  f:["سند قبض وسند صرف بتصميم رسمي","رصيد جارٍ محدّث بعد كل حركة","تقارير بفترة زمنية وتصدير Excel","بيانات محفوظة على خادم آمن ومحمي بصلاحيات"],
+  sn:"سند لكل حركة",sw:"لا قبض ولا صرف من دون سند مرقّم يمكن الرجوع إليه",
+  k:"شفافية الصندوق تبدأ من ورقة مرقّمة لكل ليرة."},
+ coop:{c:"تنمية محلية",t:"تعاونية وادي الست",u:"منتجات القرية إلى الزبون مباشرة",lbl:"التعاونية",
+  b:"سوق إلكتروني لمنتجات أهالي البلدة: زيت الزيتون، المونة، العسل، الزعتر والمزروعات الموسمية. يعرض المنتِج سلعته بالصورة والسعر، ويتواصل معه الزبون مباشرة عبر واتساب من دون وسيط، ما يدعم الاقتصاد المحلي ويعرّف بالبلدة خارجها.",
+  how:["يسجّل المنتِج سلعته بالصورة والسعر","يتصفّح الزبون المنتجات من البوابة","يتم الطلب مباشرة عبر واتساب مع المنتِج"],
+  f:["عرض بالصور والأسعار والتفاصيل","طلب مباشر عبر واتساب","تعريف بمنتجي البلدة ومواسمهم","مفتوح للزوار والمغتربين"],
+  sn:"بلا وسيط",sw:"العائد يذهب كاملاً إلى المنتِج في البلدة",
+  k:"سوق البلدة صار متاحاً لكل مغترب من هاتفه."},
+ dir:{c:"خدمة للمواطن",t:"دليل البلدية",u:"أرقام، عائلات، مهن ومواقع",lbl:"الدليل",
+  b:"الدليل الرسمي لبلدة وادي الست: أرقام الهواتف والمهن والحرف والخدمات، مرتّبة وقابلة للبحث بالعربية والإنكليزية والفرنسية أو برقم الهاتف. بضغطة واحدة يتم الاتصال أو فتح محادثة واتساب، فيجد الأهالي والزوار من يحتاجونه من داخل البلدة أولاً.",
+  how:["يبحث المستخدم بالاسم أو المهنة أو الرقم","تظهر النتائج مرتّبة مع التصنيف","اتصال أو واتساب بضغطة واحدة"],
+  f:["بحث فوري بثلاث لغات وبالأرقام","تصنيف حسب المهنة والعائلة","تحديث مركزي من البلدية","يعمل على الهاتف بلا حساب"],
+  sn:"بلدة كاملة",sw:"دليل واحد يجمع أرقام الأهالي وأصحاب المهن والخدمات",
+  k:"دفتر أرقام البلدة، محدَّث وفي جيب الجميع."},
+ news:{c:"خدمة للمواطن",t:"الأخبار والإعلانات",u:"المصدر الرسمي الوحيد للبلدة",lbl:"الأخبار",
+  b:"قسم الأخبار هو المنبر الرسمي للبلدية: إعلانات، فعاليات، قرارات وتنبيهات طارئة. تُنشر المادة من لوحة الأخبار بالنص والصور، وتُرسل في اللحظة نفسها كإشعار إلى هواتف المشتركين، ويبقى الأرشيف متاحاً للعودة إليه في أي وقت.",
+  how:["يكتب الموظف المخوّل الخبر ويرفق الصور","يُنشر الخبر ويُرسل كإشعار فوري","يبقى في الأرشيف قابلاً للبحث والمراجعة"],
+  f:["نشر بالنص والصور","تمييز الإعلانات العاجلة","ربط الخبر بالإشعارات","أرشيف دائم بتاريخ النشر"],
+  sn:"مصدر واحد",sw:"إعلان رسمي موثّق بتاريخه بدل تناقل الأخبار في المجالس",
+  k:"الخبر الرسمي يسبق الشائعة عندما يكون له مكان معروف."},
+ staff:{c:"أداة إدارية",t:"لوحة الموظفين",u:"من الشكوى إلى الإقفال",lbl:"لوحة الموظفين",
+  b:"مركز عمل موظفي البلدية. تصل المعاملات من بوابة المواطن فتُوزَّع على المسؤولين، وتتغيّر حالتها خطوة بخطوة حتى الإقفال، مع سجل بكل إجراء ومن قام به. الصلاحيات محدّدة بالأدوار: رئيس البلدية، الموظف، أمين الصندوق، وكل دور يرى ما يخصّه فقط.",
+  how:["تصل المعاملة من بوابة المواطن إلى اللوحة","يُسنَد الملف إلى الموظف المختص وتتغيّر حالته","يُبلَّغ المواطن بالنتيجة وتُقفل المعاملة بسجلّها"],
+  f:["أدوار وصلاحيات: رئيس، موظف، أمين صندوق","متابعة الحالة وسجل كامل للإجراءات","بحث وتصفية وتقارير إحصائية","إدارة المستخدمين وصلاحياتهم من داخل اللوحة"],
+  sn:"مسؤول لكل ملف",sw:"كل معاملة لها صاحب ومسار وتاريخ، وتُقفل بقرار موثّق",
+  k:"المتابعة لم تعد ذاكرة موظف، بل سجلاً يمكن مراجعته."},
+ sandouk:{c:"أداة إدارية",t:"صندوق البلدية",u:"سندات مرقّمة وموقّعة إلكترونياً",lbl:"صندوق البلدية",
+  b:"دفتر الصندوق الرسمي بصيغته الرقمية: قبض وصرف بالدولار والليرة، أرقام سندات تسلسلية تلقائية، طريقة دفع محدّدة، ورقم قرار عند الاقتضاء. يُوقَّع السند إلكترونياً بالإصبع من الدافع وأمين الصندوق ورئيس البلدية، وتُرفق به مستنداته، ويُلغى عند الخطأ بسبب موثّق يبقى ظاهراً في السجل.",
+  how:["تُسجَّل الحركة بالمبلغ والعملة وطريقة الدفع","يُوقَّع السند إلكترونياً من الأطراف المعنيّة","يُشارك السند PDF أو يُطبع، ويبقى في التقارير"],
+  f:["دولار وليرة مع أرصدة منفصلة لكل عملة","توقيع إلكتروني بالإصبع لثلاثة أطراف","إلغاء موثّق بالسبب من دون حذف السجل","مرفقات لكل سند وتقارير PDF و Excel"],
+  sn:"٣ توقيعات",sw:"الدافع وأمين الصندوق ورئيس البلدية، كلٌّ يوقّع على السند نفسه",
+  k:"دفتر الصندوق صار قابلاً للتدقيق في أي لحظة."},
+ archive:{c:"أرشفة وبيانات",t:"أرشيف الجباية",u:"بيانات نظام IDEAS الرسمية",lbl:"الأرشيف",
+  b:"أرشيف رقمي كامل مستخرج من نسخة نظام IDEAS الرسمي المعتمد لدى البلديات: المكلّفون، التكاليف، الإشعارات، الإيصالات، العقارات وبنود الموازنة. أكثر من ثلاثين ألف قيد صارت قابلة للبحث والفرز والتقرير في ثوانٍ، مع ملف كامل لكل مكلّف يجمع إشعاراته وإيصالاته وعقاراته ورصيده.",
+  how:["تُستخرج البيانات من نسخة النظام الرسمية","تُحمَّل إلى الأرشيف وتُدقَّق مقابل سجل النظام","يبحث المخوّل ويصدّر التقارير ويطبعها"],
+  f:["ملف كامل لكل مكلّف وعقاراته","لوحة رسوم بيانية بالتكليف والتحصيل بالسنوات","بحث وفرز وتصفية بفترة زمنية","تصدير Excel وطباعة رسمية وتحديث ذاتي"],
+  sn:"٣٠٬٢٥٨ قيداً",sw:"من ٢٨ جدولاً في النظام الرسمي، مطابقة تماماً لسجل النسخة",
+  k:"أرشيف ورقي عمره سنوات صار بحثاً يستغرق ثانية."}
+ }},
+en:{dir:"ltr",stepOf:(a,b)=>`STOP ${a} OF ${b}`,brand:"Wadi El Sit Municipality",
+ setTitle:"SETTINGS",setLang:"Tour language",setBg:"Backdrop",bgPick:"📷 Pick a photo from this device",bgApp:"🏛 Portal interface",bgTopo:"🗺 Mountain contours",bgNight:"🌄 Village at night",bgPhoto:"📷 Village photo",
+ bgHint:"Drop a file named wadi.jpg next to this page to load it automatically, or pick one now.",
+ setSpeed:"Autoplay speed",spSlow:"Calm",spNorm:"Normal",spFast:"Fast",
+ setPreview:"Module previews",mkOn:"Show",mkOff:"Hide",
+ hint:"← → to move, Space for autoplay, Esc to close this panel.",
+ how:"How it works",feat:"Key features",open:"Open the page",more:"Full details",
+ lTitle:"Wadi El Sit Municipality — Electronic Portal",
+ lDesc:"Twelve stops through what the portal delivers for residents and for the administration: filing and tracking a complaint, the irrigation schedule, treasury vouchers and the official revenue archive — all live on the phone today.",
+ lCta:"Start the tour",eTitle:"The municipality, in your pocket",
+ eDesc:"Twelve services, one platform, three languages. Open the portal, install it on your home screen, and turn on notifications to get village news first.",
+ eOpen:"Open the portal",eAgain:"Replay the tour",
+ s:{
+ gate:{c:"Foundation",t:"The digital gate",u:"One entrance to every service",lbl:"Portal",
+  b:"The portal is the municipality's single official front door. One page gathers resident services and administrative tools in Arabic, English and French, and installs on the phone as an app — no store, no account. It is built for weak networks, and core pages stay available when the connection drops.",
+  how:["A resident opens the link on a phone or computer","They pick a service from the home grid","They add the portal to the home screen as an app"],
+  f:["Installable PWA straight from the browser","Three languages with correct text direction","A “What’s new” log dated for every release","Updates itself on every visit"],
+  sn:"3 languages",sw:"One interface in Arabic, English and French across every service",
+  k:"No app store, no sign-up: the link is the app."},
+ citizen:{c:"Resident service",t:"Citizen portal",u:"Complaints, requests, permits, certificates",lbl:"Citizen",
+  b:"The entry point for filing with the municipality. A resident fills a short form with name, phone and request type, attaches photos and drops a map pin, and receives a tracking number. The case lands in the municipal database and appears on the staff board within seconds — no trip to the office.",
+  how:["Pick the type: complaint, request, permit or certificate","Fill in details, attach photos, drop a map pin","Receive a tracking number; staff work it to closure"],
+  f:["No account, no password","Photo attachments and geolocation","A tracking number per case","Instant arrival on the staff board"],
+  sn:"One minute",sw:"is the typical time to file a complete complaint with photos and location",
+  k:"A complaint filed with evidence and a date does not get lost."},
+ push:{c:"Foundation",t:"Push notifications",u:"Village news reaches the phone",lbl:"Alerts",
+  b:"A direct alert channel between the municipality and residents. An authorised officer sends from the staff board and it lands on subscribed phones at once: water cuts, irrigation turns, official announcements, emergencies. Enabling takes one tap, and it can be switched off any time.",
+  how:["The resident enables alerts with one tap","Staff write the announcement and send it","The alert arrives even with the portal closed"],
+  f:["Push on Android and iOS","Targeted sending, linked to the news item","No phone number or personal data required","Unsubscribe at any moment"],
+  sn:"Instant",sw:"Official announcements arrive without opening the app or waiting for hearsay",
+  k:"One official notice replaces ten conflicting versions."},
+ water:{c:"Resident service",t:"Irrigation portal",u:"Your turn, without a phone call",lbl:"Irrigation",
+  b:"A public page where every farmer can read their turn in the schedule approved by the water committee. Enter a phone number and the date, hour and duration appear. Any change the committee makes is reflected immediately, replacing scattered calls and messages.",
+  how:["The farmer enters a phone number","Upcoming turns appear with date, hour and duration","Alerts announce an approaching turn or a change"],
+  f:["Lookup by phone number, no account","Clear date, hour and duration","Committee edits appear instantly","One step only — usable by everyone"],
+  sn:"24/7",sw:"The schedule is available any time, with no call and no gatekeeper",
+  k:"“When is my turn?” now has one written answer."},
+ irrig:{c:"Administrative tool",t:"Irrigation admin",u:"The committee builds and publishes cycles",lbl:"Water admin",
+  b:"A private board for the water committee: create cycles, assign shares, adjust times and publish. Access is protected by email, password and role, and every edit flows straight to the public irrigation portal so a single official schedule stands.",
+  how:["The committee signs in with a defined role","Cycles are created and shares assigned","Publishing pushes the schedule to farmers"],
+  f:["Create and edit cycles and shares","Permissions limited to committee members","Direct link to the public portal","A log of edits and who made them"],
+  sn:"One schedule",sw:"A single official source, replacing notebooks and scattered messages",
+  k:"From a handwritten notebook to a schedule everyone can read."},
+ wfin:{c:"Administrative tool",t:"Water committee fund",u:"Collections and expenses with vouchers",lbl:"Water fund",
+  b:"A full finance module inside the irrigation board: household collections recorded by name and receipt number, expenses recorded with a running balance, and a PDF receipt or payment voucher for every movement — printable or shareable over WhatsApp — plus reports exportable to Excel.",
+  how:["Record a collection by subscriber and receipt number","Record an expense with its details","Issue the PDF voucher and share it"],
+  f:["Official receipt and payment vouchers","Running balance after every entry","Period reports and Excel export","Data on a secured, permission-controlled server"],
+  sn:"A voucher each",sw:"No money moves in or out without a numbered document",
+  k:"Transparency starts with a numbered slip for every pound."},
+ coop:{c:"Local economy",t:"Wadi El Sit cooperative",u:"Village produce, straight to the buyer",lbl:"Cooperative",
+  b:"An online market for local produce: olive oil, preserves, honey, thyme and seasonal crops. Producers list with photo and price, and buyers reach them directly over WhatsApp with no middleman — supporting the local economy and putting the village on the map.",
+  how:["A producer lists the item with photo and price","Buyers browse from the portal","The order goes straight to the producer on WhatsApp"],
+  f:["Photos, prices and details","Direct WhatsApp ordering","Profiles of village producers","Open to visitors and the diaspora"],
+  sn:"No middleman",sw:"The full return stays with the producer in the village",
+  k:"The village market is now open to every expatriate’s phone."},
+ dir:{c:"Resident service",t:"Village directory",u:"Numbers, families, trades, places",lbl:"Directory",
+  b:"The official Wadi El Sit directory: phone numbers, trades, crafts and services, searchable in Arabic, English and French — or by phone number. One tap calls or opens WhatsApp, so residents and visitors find what they need inside the village first.",
+  how:["Search by name, trade or number","Results appear grouped and categorised","Call or WhatsApp in a single tap"],
+  f:["Instant search in three languages","Grouped by trade and family","Maintained centrally by the municipality","Works on the phone with no account"],
+  sn:"The whole village",sw:"One directory covering residents, trades and services",
+  k:"The village phone book, current and in everyone’s pocket."},
+ news:{c:"Resident service",t:"News and announcements",u:"The single official source",lbl:"News",
+  b:"The municipality's official channel: announcements, events, decisions and emergency alerts. Items are published from the newsroom with text and images, sent as a notification in the same moment, and kept in a searchable archive.",
+  how:["An authorised officer writes and attaches images","The item is published and pushed as an alert","It stays archived and searchable"],
+  f:["Text and image publishing","Urgent items flagged","Linked to the notification channel","A permanent dated archive"],
+  sn:"One source",sw:"A dated official record instead of news travelling by word of mouth",
+  k:"Official news outruns rumour when it has a known home."},
+ staff:{c:"Administrative tool",t:"Staff board",u:"From complaint to closure",lbl:"Staff board",
+  b:"The working centre for municipal staff. Cases arrive from the citizen portal, get assigned, move through statuses to closure, and carry a log of every action and who took it. Permissions follow roles — mayor, officer, treasurer — and each role sees only its own scope.",
+  how:["The case arrives from the citizen portal","It is assigned and its status advances","The resident is informed and the case is closed with its log"],
+  f:["Roles: mayor, officer, treasurer","Status tracking and a full action log","Search, filters and statistics","User and permission management built in"],
+  sn:"An owner per case",sw:"Every case has an owner, a path and a date, closed with a recorded decision",
+  k:"Follow-up is no longer somebody's memory — it is a record."},
+ sandouk:{c:"Administrative tool",t:"Municipal fund",u:"Numbered, electronically signed vouchers",lbl:"Fund",
+  b:"The official cash book, digital: receipts and payments in USD and LBP, automatic sequential voucher numbers, a stated payment method and a decision number where required. Vouchers are signed on screen by the payer, the treasurer and the mayor, carry their attachments, and are voided — never deleted — with a recorded reason.",
+  how:["Record the movement with amount, currency and method","Parties sign the voucher on screen","Share the PDF or print it; reports keep it"],
+  f:["USD and LBP with separate balances","Finger signatures for three parties","Voiding with a recorded reason, no deletion","Attachments per voucher, PDF and Excel reports"],
+  sn:"3 signatures",sw:"Payer, treasurer and mayor all sign the same voucher",
+  k:"The cash book is auditable at any moment."},
+ archive:{c:"Data and archives",t:"Revenue archive",u:"Official IDEAS data",lbl:"Archive",
+  b:"A complete digital archive extracted from the official IDEAS municipal system: taxpayers, assessments, notices, receipts, properties and budget lines. More than thirty thousand records are searchable, sortable and reportable in seconds, with a full file per taxpayer covering notices, receipts, properties and balance.",
+  how:["Data is extracted from the official system backup","It is loaded and verified against the system log","Authorised users search, report and print"],
+  f:["A full file per taxpayer and property","Charts of assessment and collection by year","Search, sort and date filtering","Excel export, official printing and self-service refresh"],
+  sn:"30,258 records",sw:"From 28 tables in the official system, matching its export log exactly",
+  k:"Years of paper, searchable in a second."}
+ }},
+fr:{dir:"ltr",stepOf:(a,b)=>`ÉTAPE ${a} SUR ${b}`,brand:"Municipalité de Wadi El Sit",
+ setTitle:"RÉGLAGES",setLang:"Langue de la visite",setBg:"Arrière-plan",bgPick:"📷 Choisir une photo de l’appareil",bgApp:"🏛 Interface du portail",bgTopo:"🗺 Courbes de niveau",bgNight:"🌄 Le village la nuit",bgPhoto:"📷 Photo du village",
+ bgHint:"Placez un fichier wadi.jpg à côté de cette page pour le charger automatiquement, ou choisissez-en un maintenant.",
+ setSpeed:"Vitesse automatique",spSlow:"Lent",spNorm:"Normal",spFast:"Rapide",
+ setPreview:"Aperçus des modules",mkOn:"Afficher",mkOff:"Masquer",
+ hint:"← → pour naviguer, Espace pour la lecture auto, Échap pour fermer ce panneau.",
+ how:"Fonctionnement",feat:"Points clés",open:"Ouvrir la page",more:"Détails complets",
+ lTitle:"Municipalité de Wadi El Sit — Portail électronique",
+ lDesc:"Douze étapes pour découvrir ce que le portail apporte aux habitants et à l’administration : dépôt et suivi d’une plainte, calendrier d’irrigation, bons de caisse et archives fiscales — tout fonctionne déjà sur le téléphone.",
+ lCta:"Commencer la visite",eTitle:"La municipalité dans votre poche",
+ eDesc:"Douze services, une plateforme, trois langues. Ouvrez le portail, installez-le sur votre écran d’accueil et activez les notifications.",
+ eOpen:"Ouvrir le portail",eAgain:"Revoir la visite",
+ s:{
+ gate:{c:"Socle technique",t:"La porte numérique",u:"Une entrée pour tous les services",lbl:"Portail",
+  b:"Le portail est la façade officielle unique de la municipalité. Une seule page réunit les services aux habitants et les outils administratifs en arabe, anglais et français, et s’installe comme une application, sans magasin ni compte. Il est conçu pour les réseaux faibles et reste consultable hors connexion.",
+  how:["L’habitant ouvre le lien sur son téléphone","Il choisit un service sur la page d’accueil","Il ajoute le portail à son écran d’accueil"],
+  f:["PWA installable depuis le navigateur","Trois langues et sens de lecture correct","Journal « Nouveautés » daté à chaque version","Mise à jour automatique à chaque visite"],
+  sn:"3 langues",sw:"Une seule interface en arabe, anglais et français pour tous les services",
+  k:"Ni magasin d’applications ni inscription : le lien est l’application."},
+ citizen:{c:"Service aux habitants",t:"Portail citoyen",u:"Plaintes, demandes, permis, attestations",lbl:"Citoyen",
+  b:"Le point d’entrée des démarches. L’habitant remplit un formulaire court avec nom, téléphone et type de demande, joint des photos et place un point sur la carte, puis reçoit un numéro de suivi. Le dossier arrive en quelques secondes sur le tableau des agents, sans déplacement.",
+  how:["Choisir le type : plainte, demande, permis ou attestation","Remplir, joindre des photos, localiser","Recevoir un numéro de suivi jusqu’à la clôture"],
+  f:["Sans compte ni mot de passe","Photos et géolocalisation","Un numéro de suivi par dossier","Arrivée immédiate chez les agents"],
+  sn:"Une minute",sw:"suffit pour déposer une plainte complète avec photos et localisation",
+  k:"Une plainte datée et documentée ne se perd pas."},
+ push:{c:"Socle technique",t:"Notifications",u:"L’information arrive au téléphone",lbl:"Alertes",
+  b:"Un canal d’alerte direct entre la municipalité et les habitants. L’agent habilité envoie depuis le tableau de bord et l’alerte arrive aussitôt : coupures d’eau, tours d’irrigation, annonces officielles, urgences. Activation en un geste, désactivation à tout moment.",
+  how:["L’habitant active les alertes en un geste","La municipalité rédige et envoie l’annonce","L’alerte arrive même portail fermé"],
+  f:["Push sur Android et iOS","Envoi ciblé, lié à l’actualité publiée","Sans numéro ni donnée personnelle","Désabonnement immédiat"],
+  sn:"Immédiat",sw:"L’annonce officielle arrive sans ouvrir l’application",
+  k:"Une annonce officielle vaut mieux que dix versions."},
+ water:{c:"Service aux habitants",t:"Portail d’irrigation",u:"Votre tour, sans appel",lbl:"Irrigation",
+  b:"Une page publique où chaque agriculteur lit son tour dans le calendrier approuvé par le comité de l’eau. Il saisit son numéro et voit la date, l’heure et la durée. Toute modification du comité est reflétée immédiatement.",
+  how:["L’agriculteur saisit son numéro","Ses prochains tours s’affichent","Les alertes signalent tour et modifications"],
+  f:["Recherche par numéro, sans compte","Date, heure et durée claires","Modifications visibles aussitôt","Une seule étape, accessible à tous"],
+  sn:"24/7",sw:"Le calendrier est consultable à toute heure, sans intermédiaire",
+  k:"« C’est quand mon tour ? » a désormais une réponse écrite."},
+ irrig:{c:"Outil administratif",t:"Gestion de l’irrigation",u:"Le comité construit et publie",lbl:"Gestion eau",
+  b:"Un tableau réservé au comité de l’eau : créer les cycles, répartir les parts, ajuster les horaires et publier. L’accès est protégé par rôle et chaque modification alimente le portail public : un seul calendrier officiel.",
+  how:["Le comité se connecte avec un rôle défini","Les cycles et les parts sont créés","La publication informe les agriculteurs"],
+  f:["Création et modification des cycles","Droits limités aux membres du comité","Lien direct avec le portail public","Journal des modifications"],
+  sn:"Un calendrier",sw:"Une source officielle unique, au lieu des carnets et des messages",
+  k:"Du carnet manuscrit au calendrier lisible par tous."},
+ wfin:{c:"Outil administratif",t:"Caisse du comité de l’eau",u:"Recouvrement et dépenses justifiés",lbl:"Caisse eau",
+  b:"Un module financier complet : recouvrement par foyer avec nom et numéro de reçu, dépenses avec solde courant, et pour chaque mouvement un reçu ou un bon en PDF, imprimable ou partageable par WhatsApp, avec rapports exportables vers Excel.",
+  how:["Saisir le recouvrement par abonné et reçu","Saisir la dépense et ses justificatifs","Éditer le bon PDF et le partager"],
+  f:["Reçus et bons officiels","Solde courant après chaque écriture","Rapports par période et export Excel","Données sur un serveur sécurisé"],
+  sn:"Un bon par écriture",sw:"Aucun mouvement sans document numéroté",
+  k:"La transparence commence par un reçu numéroté."},
+ coop:{c:"Économie locale",t:"Coopérative de Wadi El Sit",u:"Les produits du village, en direct",lbl:"Coopérative",
+  b:"Un marché en ligne pour l’huile d’olive, les conserves, le miel, le thym et les cultures de saison. Le producteur publie avec photo et prix, l’acheteur le contacte directement par WhatsApp, sans intermédiaire.",
+  how:["Le producteur publie son produit","L’acheteur consulte depuis le portail","La commande passe par WhatsApp"],
+  f:["Photos, prix et détails","Commande directe par WhatsApp","Fiches des producteurs du village","Ouvert aux visiteurs et à la diaspora"],
+  sn:"Sans intermédiaire",sw:"La totalité du revenu reste au producteur du village",
+  k:"Le marché du village est accessible depuis l’étranger."},
+ dir:{c:"Service aux habitants",t:"Annuaire du village",u:"Numéros, familles, métiers",lbl:"Annuaire",
+  b:"L’annuaire officiel de Wadi El Sit : numéros, métiers, artisans et services, recherchables en trois langues ou par téléphone. Un geste suffit pour appeler ou ouvrir WhatsApp.",
+  how:["Rechercher par nom, métier ou numéro","Les résultats s’affichent classés","Appeler ou écrire en un geste"],
+  f:["Recherche instantanée en trois langues","Classement par métier et famille","Mise à jour centralisée","Sans compte, sur téléphone"],
+  sn:"Tout le village",sw:"Un annuaire unique des habitants, métiers et services",
+  k:"L’annuaire du village, à jour, dans chaque poche."},
+ news:{c:"Service aux habitants",t:"Actualités et annonces",u:"La source officielle",lbl:"Actualités",
+  b:"Le canal officiel de la municipalité : annonces, événements, décisions et alertes. Publication avec texte et images, envoi immédiat en notification, et archive consultable.",
+  how:["L’agent habilité rédige et illustre","La publication part en notification","L’élément reste archivé et consultable"],
+  f:["Publication texte et images","Mise en avant des urgences","Lié au canal de notifications","Archive permanente et datée"],
+  sn:"Une source",sw:"Une information officielle datée plutôt que du bouche-à-oreille",
+  k:"L’information officielle devance la rumeur."},
+ staff:{c:"Outil administratif",t:"Tableau des agents",u:"De la plainte à la clôture",lbl:"Agents",
+  b:"Le poste de travail des agents. Les dossiers arrivent du portail citoyen, sont attribués, changent de statut jusqu’à la clôture, avec un journal de chaque action. Les droits suivent les rôles : président, agent, trésorier.",
+  how:["Le dossier arrive du portail citoyen","Il est attribué et son statut avance","L’habitant est informé, le dossier est clôturé"],
+  f:["Rôles : président, agent, trésorier","Suivi du statut et journal complet","Recherche, filtres et statistiques","Gestion des utilisateurs et des droits"],
+  sn:"Un responsable",sw:"Chaque dossier a un responsable, un parcours et une date",
+  k:"Le suivi n’est plus une mémoire, c’est un registre."},
+ sandouk:{c:"Outil administratif",t:"Caisse municipale",u:"Bons numérotés et signés",lbl:"Caisse",
+  b:"Le livre de caisse officiel, en numérique : recettes et dépenses en dollars et en livres, numérotation automatique, mode de paiement et numéro de décision. Les bons sont signés à l’écran par le payeur, le trésorier et le président, avec pièces jointes, et sont annulés — jamais supprimés — avec un motif enregistré.",
+  how:["Saisir montant, devise et mode de paiement","Faire signer le bon à l’écran","Partager le PDF ou l’imprimer"],
+  f:["Dollars et livres, soldes séparés","Signatures au doigt pour trois parties","Annulation motivée sans suppression","Pièces jointes, rapports PDF et Excel"],
+  sn:"3 signatures",sw:"Payeur, trésorier et président signent le même bon",
+  k:"Le livre de caisse est vérifiable à tout moment."},
+ archive:{c:"Données et archives",t:"Archives fiscales",u:"Données officielles IDEAS",lbl:"Archives",
+  b:"Une archive numérique complète issue du système officiel IDEAS : contribuables, impositions, avis, reçus, biens et lignes budgétaires. Plus de trente mille enregistrements consultables et exploitables en quelques secondes, avec un dossier complet par contribuable.",
+  how:["Extraction depuis la sauvegarde officielle","Chargement et vérification avec le journal","Recherche, rapports et impression"],
+  f:["Un dossier par contribuable et par bien","Graphiques par année","Recherche, tri et filtre par période","Export Excel, impression et mise à jour autonome"],
+  sn:"30 258 écritures",sw:"Issues de 28 tables du système officiel, conformes à son journal",
+  k:"Des années de papier, cherchables en une seconde."}
+ }}
+};
+
+/* mock previews (Arabic — the live interface language) */
+const MOCK={
+gate:[{t:"h",v:"🏛 بلدية وادي الست"},{t:"tiles",v:[["👥","بوابة المواطن","طلب جديد"],["💧","بوابة الري","جدول الدورة"],["🛒","التعاونية","منتجات محلية"],["📰","الأخبار","آخر التحديثات"]]},{t:"note",v:"AR · EN · FR — تُثبَّت كتطبيق على الهاتف"}],
+citizen:[{t:"h",v:"👥 تقديم طلب"},{t:"fld",v:"نوع الطلب: شكوى"},{t:"fld",v:"الاسم الكامل"},{t:"fld",v:"رقم الهاتف"},{t:"fld",v:"📍 تحديد الموقع + 📷 صور"},{t:"btn",v:"إرسال الطلب"},{t:"note",v:"يصلك رقم متابعة فور الإرسال"}],
+push:[{t:"push",v:[["💧","انقطاع مياه","صيانة الخط الرئيسي غداً من 8 حتى 12"],["🗓","دورة الري","دورك يوم الخميس الساعة 6:00"],["📰","إعلان بلدي","بدء جباية القيمة التأجيرية 2026"]]}],
+water:[{t:"h",v:"💧 جدول الري"},{t:"fld",v:"رقم الهاتف: 03 ••• •••"},{t:"row",v:["الخميس 14 آب","6:00 — 8:00","دورك","g"]},{t:"row",v:["الاثنين 18 آب","9:00 — 11:00","",""]},{t:"row",v:["الجمعة 22 آب","6:00 — 7:30","",""]}],
+irrig:[{t:"h",v:"🗓 إدارة الدورات"},{t:"row",v:["دورة آب — القسم الأعلى","24 مشترك","منشورة","g"]},{t:"row",v:["دورة آب — القسم الأسفل","19 مشترك","مسودة","o"]},{t:"btn",v:"إنشاء دورة جديدة"}],
+wfin:[{t:"kpi",v:[["1,495","الجباية"],["851","النفقات"],["644","الرصيد"]]},{t:"row",v:["جباية — منزل رقم 12","سند 2026-018","قبض","g"]},{t:"row",v:["صيانة مضخة","سند 2026-011","صرف","r"]},{t:"note",v:"سند PDF يُطبع أو يُرسل عبر واتساب"}],
+coop:[{t:"h",v:"🛒 تعاونية وادي الست"},{t:"tiles",v:[["🫒","زيت زيتون","بلدي"],["🍯","عسل جبلي","2026"],["🫙","مونة","مكدوس"],["🌿","زعتر بلدي","طازج"]]},{t:"btn",v:"اطلب عبر واتساب"}],
+dir:[{t:"h",v:"📒 دليل البلدية"},{t:"fld",v:"🔍 ابحث بالاسم أو المهنة أو الرقم"},{t:"row",v:["كهربائي","03 ••• •••","اتصال",""]},{t:"row",v:["ممرّضة","70 ••• •••","اتصال",""]},{t:"row",v:["نقل وتوصيل","71 ••• •••","واتساب","g"]}],
+news:[{t:"h",v:"📰 أخبار وإعلانات"},{t:"row",v:["بدء جباية 2026","اليوم","عاجل","r"]},{t:"row",v:["صيانة شبكة المياه","أمس","إعلان",""]},{t:"row",v:["حفل تخريج البلدة","الأسبوع الماضي","فعالية","g"]}],
+staff:[{t:"h",v:"🔐 لوحة المعاملات"},{t:"kpi",v:[["17","قيد المعالجة"],["4","جديدة"],["126","مقفلة"]]},{t:"row",v:["شكوى إنارة — حي الكرم","#1042","قيد المعالجة","o"]},{t:"row",v:["طلب إفادة سكن","#1041","مقفلة","g"]}],
+sandouk:[{t:"rcpt",v:["سند قبض · RECEIPT VOUCHER","Q-2026-004","$ 120.00","توقيع الدافع · أمين الصندوق · رئيس البلدية"]},{t:"note",v:"دولار وليرة · توقيع إلكتروني · مرفقات · إلغاء موثّق بالسبب"}],
+archive:[{t:"kpi",v:[["209","مكلّف"],["3,595","تكليف"],["1,615","إيصال"]]},{t:"bars",v:[["2024",78],["2023",64],["2022",52],["2021",41]]},{t:"note",v:"المصدر: نظام IDEAS الرسمي — 28 جدولاً، 30,258 قيداً"}]
+};
+
+/* ===================== SCENE ===================== */
+const SVGNS="http://www.w3.org/2000/svg", el=id=>document.getElementById(id);
+
+(function stars(){let s='';for(let i=0;i<150;i++){
+  s+=`<circle cx="${(Math.random()*1536).toFixed(0)}" cy="${(Math.random()*520).toFixed(0)}" r="${(Math.random()*1.5+.3).toFixed(1)}" fill="#dbeaff" opacity="${(Math.random()*.6+.2).toFixed(2)}"/>`;}
+  el('stars').innerHTML=s;})();
+
+(function village(){let s='';const rnd=(a,b)=>a+Math.random()*(b-a);
+  for(let i=0;i<46;i++){const x=rnd(40,1500),y=rnd(600,980),w=rnd(26,52),h=w*rnd(.55,.8);
+    s+=`<g opacity="${(.5+Math.random()*.45).toFixed(2)}"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#0a2135"/>
+    <path d="M${x-4} ${y} L${x+w/2} ${y-h*.45} L${x+w+4} ${y}Z" fill="#0e2c45"/>
+    <rect x="${x+w*.25}" y="${y+h*.3}" width="${w*.18}" height="${h*.3}" fill="#ffca6e" opacity="${(.35+Math.random()*.5).toFixed(2)}"/>
+    <rect x="${x+w*.6}" y="${y+h*.3}" width="${w*.18}" height="${h*.3}" fill="#ffca6e" opacity="${(.25+Math.random()*.5).toFixed(2)}"/></g>`;}
+  for(let i=0;i<34;i++){const x=rnd(20,1520),y=rnd(560,1000),h=rnd(26,64);
+    s+=`<path d="M${x} ${y} q${h*.22} -${h*.5} 0 -${h} q-${h*.22} ${h*.5} 0 ${h}Z" fill="#05202f" opacity=".85"/>`;}
+  el('village').innerHTML=s;})();
+
+function pathThrough(p){let d=`M${p[0].x} ${p[0].y}`;
+  for(let i=0;i<p.length-1;i++){const p0=p[i-1]||p[i],p1=p[i],p2=p[i+1],p3=p[i+2]||p[i+1];
+    d+=` C${(p1.x+(p2.x-p0.x)/6).toFixed(1)} ${(p1.y+(p2.y-p0.y)/6).toFixed(1)},${(p2.x-(p3.x-p1.x)/6).toFixed(1)} ${(p2.y-(p3.y-p1.y)/6).toFixed(1)},${p2.x} ${p2.y}`;}
+  return d;}
+const D=pathThrough(STOPS), route=el('route'), trail=el('trail');
+route.setAttribute('d',D); trail.setAttribute('d',D);
+const LEN=trail.getTotalLength();
+trail.style.strokeDasharray=LEN; trail.style.strokeDashoffset=LEN;
+const FRACS=STOPS.map(s=>{let best=0,bd=1e9;
+  for(let i=0;i<=600;i++){const p=trail.getPointAtLength(LEN*i/600);const d=(p.x-s.x)**2+(p.y-s.y)**2;
+    if(d<bd){bd=d;best=i/600}}
+  return best;});
+
+const gNodes=el('nodes'), gLabels=el('labels');
+STOPS.forEach((s,i)=>{
+  const g=document.createElementNS(SVGNS,'g');
+  g.setAttribute('transform',`translate(${s.x},${s.y})`); g.style.cursor='pointer';
+  g.innerHTML=`<circle r="21" fill="rgba(4,16,29,.88)" stroke="rgba(217,165,58,.45)" stroke-width="1.2"/>
+    <text y="7" text-anchor="middle" font-size="19">${s.icon}</text>`;
+  g.addEventListener('click',()=>{go(i);setTimeout(()=>openPop(i),420)}); gNodes.appendChild(g);
+  const t=document.createElementNS(SVGNS,'text');
+  t.setAttribute('x',s.x); t.setAttribute('y',s.y+46); t.setAttribute('text-anchor','middle');
+  gLabels.appendChild(t);
+});
+
+/* ===================== STATE ===================== */
+let lang='ar', step=-1, pos=0, playing=false, speed=11000, showMock=true, timer=null, anim=null;
+const pulse=el('pulse'), fill=el('fill'), dotsWrap=el('dots');
+STOPS.forEach((s,i)=>{const b=document.createElement('button');b.className='step';
+  b.innerHTML='<span class="dot"></span><span class="slab"></span>';
+  b.setAttribute('aria-label','stop '+(i+1));b.addEventListener('click',()=>go(i));dotsWrap.appendChild(b);});
+const steps=[...dotsWrap.children];
+
+function setPulse(f){const p=trail.getPointAtLength(LEN*f);
+  pulse.setAttribute('transform',`translate(${p.x},${p.y})`);
+  trail.style.strokeDashoffset=LEN*(1-f);}
+setPulse(0);
+
+function travel(to){cancelAnimationFrame(anim);
+  const from=pos, dur=Math.min(1700,750+Math.abs(to-from)*2300), t0=performance.now();
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches){pos=to;setPulse(to);return}
+  (function frame(now){const r=Math.min(1,(now-t0)/dur);
+    const e=r<.5?2*r*r:1-Math.pow(-2*r+2,2)/2;
+    pos=from+(to-from)*e; setPulse(pos);
+    if(r<1) anim=requestAnimationFrame(frame);})(performance.now());}
+
+/* ===================== BACKDROPS ===================== */
+(function topo(){ // procedural mountain contour lines — generated, no external asset
+  let out='';
+  for(let i=0;i<18;i++){
+    const base=90+i*56, amp=26+((i*37)%40), l1=340+((i*53)%260), l2=120+((i*29)%90), ph=i*1.7;
+    let d=`M-20 ${base.toFixed(0)}`;
+    for(let x=0;x<=1576;x+=24){
+      const y=base+amp*Math.sin(x/l1+ph)+amp*.45*Math.sin(x/l2+ph*1.7)+amp*.2*Math.sin(x/61+ph*.6);
+      d+=` L${x} ${y.toFixed(1)}`;
+    }
+    const gold=i%4===0;
+    out+=`<path d="${d}" fill="none" stroke="${gold?'rgba(217,165,58,.28)':'rgba(88,182,255,.16)'}" stroke-width="${gold?1.6:1}"/>`;
+  }
+  el('topo').innerHTML=out;
+})();
+
+const photo=el('photo');
+let photoURL=null, bgMode=null;
+function setPhoto(url,apply){
+  photoURL=url;
+  photo.style.backgroundImage=url?`url("${url}")`:'';
+  photo.classList.toggle('on',!!url);
+  if(url&&apply!==false) applyBg('photo');
+}
+function applyBg(m){
+  if(m==='photo'&&!photoURL){el('bgFile').click();return}
+  bgMode=m; document.body.className='bg-'+m;
+  try{localStorage.setItem('wes_tour_bgmode',m)}catch(_){}
+  document.querySelectorAll('#bgModes .pill').forEach(b=>b.classList.toggle('on',b.dataset.bg===m));
+}
+document.querySelectorAll('#bgModes .pill').forEach(b=>b.addEventListener('click',()=>applyBg(b.dataset.bg)));
+el('bgBtn').addEventListener('click',()=>{
+  const order=['app','topo','night'].concat(photoURL?['photo']:[]);
+  applyBg(order[(order.indexOf(bgMode)+1)%order.length]);
+});
+el('bgPick').addEventListener('click',()=>el('bgFile').click());
+function readImg(f){const r=new FileReader();
+  r.onload=()=>{setPhoto(r.result);try{localStorage.setItem('wes_tour_bg',r.result)}catch(_){}};
+  r.readAsDataURL(f);}
+el('bgFile').addEventListener('change',e=>{const f=e.target.files[0];if(f)readImg(f)});
+addEventListener('paste',e=>{const it=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith('image/'));
+  if(it){const f=it.getAsFile(); if(f) readImg(f)}});
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{e.preventDefault();
+  const f=[...e.dataTransfer.files].find(x=>x.type.startsWith('image/')); if(f) readImg(f);});
+
+(function initBg(){
+  const savedMode=localStorage.getItem('wes_tour_bgmode');
+  applyBg(savedMode||'app');
+  const saved=localStorage.getItem('wes_tour_bg');
+  if(saved){setPhoto(saved,savedMode==='photo'||!savedMode?true:false);
+    if(savedMode&&savedMode!=='photo') applyBg(savedMode);
+    return}
+  const cands=['wadi.jpg','wadi.jpeg','wadi.png','wadi-el-sit.jpg','assets/wadi.jpg','images/wadi.jpg'];
+  (function tryNext(i){
+    if(i>=cands.length) return;
+    const im=new Image();
+    im.onload=()=>{setPhoto(cands[i],!savedMode); if(savedMode) applyBg(savedMode)};
+    im.onerror=()=>tryNext(i+1);
+    im.src=cands[i];})(0);
+})();
+
+/* ===================== MOCK ===================== */
+function renderMock(key){
+  const spec=MOCK[key]||[]; let head='', body='';
+  spec.forEach(it=>{
+    if(it.t==='h'){head=`<div class="mh">${it.v}</div>`;return}
+    if(it.t==='fld') body+=`<div class="fld">${it.v}</div>`;
+    if(it.t==='btn') body+=`<div class="btn">${it.v}</div>`;
+    if(it.t==='note') body+=`<div class="note">${it.v}</div>`;
+    if(it.t==='row'){const[a,b,tag,c]=it.v;
+      body+=`<div class="row"><span class="t">${a}</span><span class="s">${b}</span>${tag?`<span class="tag ${c||''}">${tag}</span>`:''}</div>`}
+    if(it.t==='kpi') body+='<div class="kpis">'+it.v.map(k=>`<div class="kpi"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('')+'</div>';
+    if(it.t==='tiles') body+='<div class="tiles">'+it.v.map(k=>`<div class="tile"><div class="e">${k[0]}</div><b>${k[1]}</b><span>${k[2]}</span></div>`).join('')+'</div>';
+    if(it.t==='bars') body+=it.v.map(k=>`<div class="bar"><u>${k[0]}</u><i style="width:${k[1]}%"></i></div>`).join('');
+    if(it.t==='push') body+=it.v.map(k=>`<div class="push"><span class="e">${k[0]}</span><div><b>${k[1]}</b><p>${k[2]}</p></div></div>`).join('');
+    if(it.t==='rcpt'){const[h1,no,amt,sig]=it.v;
+      body+=`<div class="rcpt"><div class="h">${h1}</div><div class="no">${no}</div><div class="amt">${amt}</div><div class="sig">${sig}</div></div>`}
+  });
+  return `<div class="mk">${head}<div class="mb">${body}</div></div>`;
+}
+
+/* ===================== RENDER ===================== */
+const tr=()=>T[lang];
+function paintStatic(){
+  const t=tr();
+  document.documentElement.lang=lang; document.documentElement.dir=t.dir;
+  document.querySelectorAll('[data-t]').forEach(n=>{if(t[n.dataset.t]) n.textContent=t[n.dataset.t]});
+  document.querySelectorAll('.lang').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
+  document.querySelectorAll('#setLangs .pill').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
+  el('tHow').textContent=t.how; el('tFeat').textContent=t.feat;
+  el('prog').style.direction=t.dir;
+  el('prev').textContent=t.dir==='rtl'?'\u203A':'\u2039';
+  el('next').textContent=t.dir==='rtl'?'\u2039':'\u203A';
+  STOPS.forEach((s,i)=>{gLabels.children[i].textContent=t.s[s.key].lbl;
+    const sl=steps[i].querySelector('.slab'); sl.textContent=t.s[s.key].lbl; sl.style.direction=t.dir;});
+  if(step>=0) paint();
+}
+function paint(){
+  const t=tr(), s=STOPS[step], c=t.s[s.key];
+  el('pStep').textContent=t.stepOf(step+1,STOPS.length);
+  el('pCat').textContent=c.c;
+  el('pTitle').textContent=c.t;
+  el('pSub').textContent=c.u;
+  el('pText').textContent=c.b;
+  el('pStatN').textContent=c.sn; el('pStatW').textContent=c.sw;
+  el('pHow').innerHTML=c.how.map(x=>`<div>${x}</div>`).join('');
+  el('pFeat').innerHTML=c.f.map(x=>`<div>${x}</div>`).join('');
+  el('pKey').textContent=c.k;
+  const link=el('pLink');
+  link.href='https://app.municipality-wadi-el-sitt.org/'+s.page;
+  link.textContent=t.open+' ↗';
+  el('mockWrap').style.display=showMock?'block':'none';
+  if(showMock) el('mock').innerHTML=renderMock(s.key);
+  el('stepText').textContent=t.stepOf(step+1,STOPS.length);
+  steps.forEach((st,i)=>{st.classList.toggle('done',i<step);st.classList.toggle('cur',i===step);
+    const dt=st.querySelector('.dot');dt.classList.toggle('done',i<step);dt.classList.toggle('cur',i===step)});
+  fill.style.width=(step/(STOPS.length-1))*100+'%';
+  [...gLabels.children].forEach((n,i)=>{n.classList.toggle('on',i<=step);n.classList.toggle('cur',i===step)});
+  [...gNodes.children].forEach((n,i)=>{
+    n.firstElementChild.setAttribute('stroke',i===step?'#ffcf7a':'rgba(217,165,58,.45)');
+    n.firstElementChild.setAttribute('stroke-width',i===step?'2.3':'1.2');});
+  el('prev').disabled=step===0;
+  el('pBody').scrollTop=0;
+}
+const pop=el('pop');
+function hidePop(){pop.classList.remove('show')}
+function openPop(i){
+  const t=tr(), st=STOPS[i], c=t.s[st.key];
+  el('popT').textContent=c.t; el('popS').textContent=c.u; el('popB').textContent=c.k;
+  const a=el('popL'); a.href='https://app.municipality-wadi-el-sitt.org/'+st.page; a.textContent=t.open+' \u2197';
+  el('popD').textContent=t.more;
+  pop.style.direction=t.dir;
+  pop.classList.add('show');
+  const r=gNodes.children[i].getBoundingClientRect();
+  const w=pop.offsetWidth, h=pop.offsetHeight, m=14;
+  let left=r.left+r.width/2-w/2;
+  const minL=(innerWidth>900?parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--panelW')):0)+16;
+  left=Math.max(minL,Math.min(left,innerWidth-w-16));
+  let top=r.top-h-m;
+  if(top<170) top=r.bottom+m;
+  top=Math.max(96,Math.min(top,innerHeight-h-16));
+  pop.style.left=left+'px'; pop.style.top=top+'px';
+}
+el('popX').addEventListener('click',hidePop);
+el('popD').addEventListener('click',()=>{hidePop();el('panel').classList.add('show');el('pBody').scrollTop=0});
+addEventListener('click',e=>{if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.closest('#nodes')) hidePop()},true);
+
+function go(i){
+  hidePop();
+  if(i>=STOPS.length){finish();return}
+  step=Math.max(0,Math.min(STOPS.length-1,i));
+  el('panel').classList.add('show');
+  travel(FRACS[step]); paint();
+  if(playing) queue();
+}
+function queue(){clearTimeout(timer);timer=setTimeout(()=>{
+  if(step>=STOPS.length-1){setPlay(false);finish();return}
+  go(step+1);},speed);}
+function setPlay(v){playing=v;el('playBtn').textContent=v?'❚❚':'▶';el('playBtn').classList.toggle('on',v);
+  clearTimeout(timer); if(v) queue();}
+function finish(){el('end').classList.remove('hide');setPlay(false)}
+
+/* ===================== EVENTS ===================== */
+el('enter').addEventListener('click',()=>{el('launch').classList.add('hide');go(0)});
+el('again').addEventListener('click',()=>{el('end').classList.add('hide');go(0)});
+el('next').addEventListener('click',()=>go(step+1));
+el('prev').addEventListener('click',()=>go(step-1));
+el('playBtn').addEventListener('click',()=>{if(step<0){el('launch').classList.add('hide');go(0)}setPlay(!playing)});
+el('setBtn').addEventListener('click',()=>el('set').classList.toggle('open'));
+el('setClose').addEventListener('click',()=>el('set').classList.remove('open'));
+el('fsBtn').addEventListener('click',()=>{
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();});
+document.querySelectorAll('[data-lang]').forEach(b=>b.addEventListener('click',()=>{lang=b.dataset.lang;paintStatic()}));
+document.querySelectorAll('#speeds .pill').forEach(b=>b.addEventListener('click',()=>{
+  speed=+b.dataset.sp;document.querySelectorAll('#speeds .pill').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); if(playing) queue();}));
+document.querySelectorAll('#mockToggle .pill').forEach(b=>b.addEventListener('click',()=>{
+  showMock=b.dataset.mk==='1';document.querySelectorAll('#mockToggle .pill').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); if(step>=0) paint();}));
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight') go(lang==='ar'?step-1:step+1);
+  else if(e.key==='ArrowLeft') go(lang==='ar'?step+1:step-1);
+  else if(e.key===' '){e.preventDefault();if(step<0){el('launch').classList.add('hide');go(0)}setPlay(!playing)}
+  else if(e.key==='Escape'){el('set').classList.remove('open');hidePop()}});
+let tx=0;
+addEventListener('touchstart',e=>tx=e.changedTouches[0].clientX,{passive:true});
+addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-tx;
+  if(Math.abs(d)<60||step<0) return;
+  go(step+((lang==='ar'? d>0 : d<0)?1:-1));},{passive:true});
+
+(function(){const L=document.querySelector('#brand img').src;
+  document.querySelectorAll('img[data-logo]').forEach(i=>i.src=L);})();
+paintStatic();
+</script>
+</body>
+</html>
