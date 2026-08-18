@@ -197,8 +197,10 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-f-pay" onchange="bfRenderLedger()"><option value="">الكل</option><option value="cash">نقداً</option><option value="transfer">حوالة</option><option value="whish">Whish</option></select></div>
         <div><label class="fl">من تاريخ</label><input type="date" class="fi" id="bf-f-from" onchange="bfRenderLedger()"></div>
         <div><label class="fl">إلى تاريخ</label><input type="date" class="fi" id="bf-f-to" onchange="bfRenderLedger()"></div>
-        <div><label class="fl">من سند رقم</label><input type="number" class="fi" id="bf-f-sfrom" placeholder="1" oninput="bfRenderLedger()" style="width:100px" title="تصفية حسب تسلسل رقم السند"></div>
-        <div><label class="fl">إلى سند رقم</label><input type="number" class="fi" id="bf-f-sto" placeholder="999" oninput="bfRenderLedger()" style="width:100px" title="تصفية حسب تسلسل رقم السند"></div>
+        <div><label class="fl">من سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-sfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب تسلسل رقم السند"></div>
+        <div><label class="fl">إلى سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-sto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب تسلسل رقم السند"></div>
+        <div><label class="fl">من وصل رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب رقم الوصل"></div>
+        <div><label class="fl">إلى وصل رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب رقم الوصل"></div>
       </div>
       <div class="bf-tblwrap"><table id="bf-ledger-tbl">
         <thead id="bf-ledger-head"></thead>
@@ -918,7 +920,7 @@ const BF_COLS=[
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'manual_receipt_no',label:'رقم الإيصال (يدوي)',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
-  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>e.wassel_number||'',search:e=>e.wassel_number||'',cell:e=>{const wn=(e.wassel_number||'').trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
+  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا وصل';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
   {key:'wassel_date',label:'تاريخ الوصل',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
@@ -978,20 +980,34 @@ function bfSortClear(){
   bfRenderLedger();
   bfColStatePersist();
 }
-// Serial part of a sanad number ("Q-2026-014" → 14) for the من/إلى سند range filter.
-function bfSanadSeq(no){
-  const m=String(no==null?'':no).match(/(\d+)\s*$/);
+// ── 🔢 TEXT / DIGIT NORMALISATION ──
+// Arabic keyboards produce Arabic-Indic digits (١٢٣) while sanad/wassel numbers
+// are stored with Latin ones, so an unnormalised "contains" match silently found
+// nothing. Everything typed into a filter — and everything it is compared with —
+// goes through bfNormTxt first.
+const BF_DIGIT_MAP={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9',
+                    '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+function bfNormDigits(v){return String(v==null?'':v).replace(/[٠-٩۰-۹]/g,d=>BF_DIGIT_MAP[d]||d);}
+function bfNormTxt(v){return bfNormDigits(v).replace(/\s+/g,' ').trim().toLowerCase();}
+// Trailing number of a serial ("Q-2026-014" → 14, "١٢" → 12) — used by the
+// من/إلى range filters for both السند and رقم الوصل.
+function bfTrailNum(v){
+  const m=bfNormDigits(v).match(/(\d+)\s*$/);
   return m?parseInt(m[1],10):null;
 }
+function bfSanadSeq(no){return bfTrailNum(no);}
+function bfWasselSeq(no){return bfTrailNum(no);}
 
 function bfFiltered(){
   const ft=document.getElementById('bf-f-type').value, fc=document.getElementById('bf-f-cat').value,
         fcur=document.getElementById('bf-f-cur').value,
         fpay=document.getElementById('bf-f-pay').value,
-        fq=(document.getElementById('bf-f-q').value||'').trim().toLowerCase(),
+        fq=bfNormTxt(document.getElementById('bf-f-q').value||''),
         from=document.getElementById('bf-f-from').value, to=document.getElementById('bf-f-to').value;
-  const sFrom=parseInt((document.getElementById('bf-f-sfrom')||{}).value,10),
-        sTo=parseInt((document.getElementById('bf-f-sto')||{}).value,10);
+  const sFrom=bfTrailNum((document.getElementById('bf-f-sfrom')||{}).value),
+        sTo=bfTrailNum((document.getElementById('bf-f-sto')||{}).value),
+        wFrom=bfTrailNum((document.getElementById('bf-f-wfrom')||{}).value),
+        wTo=bfTrailNum((document.getElementById('bf-f-wto')||{}).value);
   const cf=bfColState.filters||{};
   let balU=0,balL=0; const out=[];
   bfEntries.forEach(e=>{
@@ -1004,23 +1020,29 @@ function bfFiltered(){
     if(fcur&&(e.currency||'USD')!==fcur)return;
     if(fpay&&(e.payment_method||'cash')!==fpay)return;
     if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
-    if(isFinite(sFrom)||isFinite(sTo)){
+    if(sFrom!==null||sTo!==null){
       const seq=bfSanadSeq(e.receipt_no);
       if(seq===null)return;
-      if(isFinite(sFrom)&&seq<sFrom)return;
-      if(isFinite(sTo)&&seq>sTo)return;
+      if(sFrom!==null&&seq<sFrom)return;
+      if(sTo!==null&&seq>sTo)return;
+    }
+    if(wFrom!==null||wTo!==null){
+      const wseq=bfWasselSeq(e.wassel_number);
+      if(wseq===null)return;
+      if(wFrom!==null&&wseq<wFrom)return;
+      if(wTo!==null&&wseq>wTo)return;
     }
     if(fq){
-      const hay=[e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number,e.manual_receipt_no,e.wassel_number,e.wassel_date].join(' ').toLowerCase();
+      const hay=bfNormTxt([e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number,e.manual_receipt_no,e.wassel_number,e.wassel_date].join(' '));
       if(hay.indexOf(fq)<0)return;
     }
     const enriched=Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)});
     // Per-column filters
     let keep=true;
     for(const k in cf){
-      const v=(cf[k]||'').trim().toLowerCase(); if(!v)continue;
+      const v=bfNormTxt(cf[k]||''); if(!v)continue;
       const col=bfCol(k); if(!col)continue;
-      const s=String(col.search(enriched)||'').toLowerCase();
+      const s=bfNormTxt(col.search(enriched)||'');
       if(col.filter==='select'){ if(s!==v)keep=false; }
       else if(s.indexOf(v)<0)keep=false;
       if(!keep)break;
@@ -1064,8 +1086,14 @@ function bfColFilter(el){
 }
 function bfRenderLedgerBody(){
   const cols=bfVisibleCols();
-  const rows=bfFiltered().map(e=>'<tr'+(e.voided?' class="bf-void"':'')+' onclick="bfOpenCase(\''+e.id+'\')">'
-    +cols.map(c=>c.cell(e)).join('')+'</tr>').join('');
+  const rows=bfFiltered().map(e=>{
+    // A single malformed entry used to throw out of cell() and kill the whole
+    // body render — which looked exactly like "the filters stopped working".
+    const tds=cols.map(c=>{
+      try{return c.cell(e);}catch(_e){return '<td style="color:#c22">⚠️</td>';}
+    }).join('');
+    return '<tr'+(e.voided?' class="bf-void"':'')+' onclick="bfOpenCase(\''+e.id+'\')">'+tds+'</tr>';
+  }).join('');
   const cs=cols.length||1;
   document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="'+cs+'" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
 }
@@ -1163,7 +1191,9 @@ function bfCollectState(){
       from:document.getElementById('bf-f-from').value||'',
       to:document.getElementById('bf-f-to').value||'',
       sfrom:(document.getElementById('bf-f-sfrom')||{}).value||'',
-      sto:(document.getElementById('bf-f-sto')||{}).value||''
+      sto:(document.getElementById('bf-f-sto')||{}).value||'',
+      wfrom:(document.getElementById('bf-f-wfrom')||{}).value||'',
+      wto:(document.getElementById('bf-f-wto')||{}).value||''
     },
     cols:{order:bfColState.order.slice(),hidden:bfColState.hidden.slice(),filters:Object.assign({},bfColState.filters||{}),sort:Object.assign({key:'',dir:''},bfColState.sort||{})}
   };
@@ -1180,6 +1210,8 @@ function bfApplyState(s){
   document.getElementById('bf-f-to').value=t.to||'';
   const sf=document.getElementById('bf-f-sfrom'); if(sf)sf.value=t.sfrom||'';
   const st=document.getElementById('bf-f-sto'); if(st)st.value=t.sto||'';
+  const wf=document.getElementById('bf-f-wfrom'); if(wf)wf.value=t.wfrom||'';
+  const wt=document.getElementById('bf-f-wto'); if(wt)wt.value=t.wto||'';
   const c=s.cols||{};
   // Reconcile order with current BF_COLS in case columns were added since save
   const knownKeys=BF_COLS.map(x=>x.key);
@@ -1260,7 +1292,7 @@ async function bfViewDelete(){
   toast('✓ تم الحذف');
 }
 function bfViewReset(silent){
-  ['q','type','cat','cur','pay','from','to','sfrom','sto'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
+  ['q','type','cat','cur','pay','from','to','sfrom','sto','wfrom','wto'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
   bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{},sort:{key:'',dir:''}};
   bfCurrentViewId='';
   document.getElementById('bf-view-select').value='';
