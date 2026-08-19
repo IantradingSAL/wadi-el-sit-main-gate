@@ -7,6 +7,7 @@
 <title>البريد الوارد — بلدية وادي الست</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+<script src="wadi-perms.js"></script>
 <style>
 :root{
   --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#f0f5fa;
@@ -394,6 +395,13 @@ document.getElementById('search').oninput = e => {
 async function init(){
   const { data: { user } } = await sb.auth.getUser();
   if (!user) { showLogin(); return; }
+  // the municipality's incoming mail: signed in is not the same as allowed
+  await WadiPerms.load(sb,true);
+  if (!WadiPerms.can('inbox_read')) {
+    await sb.auth.signOut();
+    showLogin('🚫 هذا الحساب لا يملك صلاحية الاطلاع على البريد الوارد');
+    return;
+  }
   hideLogin();
   await loadAll();
 
