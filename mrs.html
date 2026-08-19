@@ -282,7 +282,7 @@ function render(){
   }
   hd.innerHTML=h;
   bd.innerHTML=rows.join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:20px">لا نتائج</td></tr>';
-  document.getElementById('cnt').textContent=rows.length.toLocaleString()+' سجل';
+  document.getElementById('cnt').textContent=rows.length.toLocaleString('en-US')+' سجل';
   bindSort();
 }
 let sortState={tab:null,col:-1,dir:1};

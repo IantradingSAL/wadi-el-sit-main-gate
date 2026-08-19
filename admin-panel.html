@@ -1137,8 +1137,9 @@ document.getElementById('promptInput').addEventListener('keydown', e => {
 /* ─── Utilities ─── */
 function fmtNum(n) {
   if (n == null || isNaN(n)) return '0';
-  const loc = LANG === 'en' ? 'en-US' : (LANG === 'fr' ? 'fr-FR' : 'ar-LB');
-  return new Intl.NumberFormat(loc, { maximumFractionDigits: 0 }).format(Number(n));
+  // Always Latin digits grouped with commas — 156,000,000 — in every
+  // language, so amounts read the same on receipts, screens and exports.
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(n));
 }
 function fmtDate(s) {
   if (!s) return '—';

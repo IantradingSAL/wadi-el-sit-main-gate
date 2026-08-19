@@ -6,6 +6,7 @@
 <title>صندوق البلدية — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
 <script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -236,14 +237,14 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
-        <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
+        <input type="number" class="fi" data-num id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
         <select class="fi" id="bf-i-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('i')">
           <option value="LBP" selected>ل.ل. ليرة</option>
           <option value="USD">$ دولار</option>
         </select>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
         <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-i-total" readonly style="direction:ltr;background:#f0f7ff;font-weight:800;color:#0f4d82" value="0.00"></div>
       </div>
       <div class="bf-g2">
@@ -286,14 +287,14 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
-        <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
+        <input type="number" class="fi" data-num id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
         <select class="fi" id="bf-e-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('e')">
           <option value="LBP" selected>ل.ل. ليرة</option>
           <option value="USD">$ دولار</option>
         </select>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
         <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-e-total" readonly style="direction:ltr;background:#fdf1f1;font-weight:800;color:#a83232" value="0.00"></div>
       </div>
       <div class="bf-g2">
@@ -428,11 +429,11 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">النوع *</label><select class="fi" id="bf-ed-type" onchange="bfEditRefreshCats()"><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="opening">رصيد افتتاحي</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
+      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" data-num id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
       <div><label class="fl">العملة</label><select class="fi" id="bf-ed-cur"><option value="USD">$ دولار</option><option value="LBP">ل.ل. ليرة</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
+      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
       <div style="font-size:11px;color:#8a95a3;align-self:end;padding-bottom:12px">قيمة الطوابع محسوبة ضمن "المبلغ الإجمالي" أعلاه.</div>
     </div>
     <div class="bf-g2">
