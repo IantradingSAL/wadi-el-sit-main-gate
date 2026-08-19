@@ -2566,6 +2566,13 @@ async function loadEmpCards() {
   try {
     var d = await adminAPI({action:'list'});
     var users = (d.users||[]).filter(function(u){ return u.email; }); // Show all users
+    // show the role each account actually holds on the server, not the copy in
+    // its token — those can drift, and only the server one decides anything
+    var SRV = {};
+    try {
+      var rr = await sb.from('user_roles').select('user_id,role');
+      ((rr && rr.data) || []).forEach(function(r){ (SRV[r.user_id] = SRV[r.user_id] || []).push(r.role); });
+    } catch(_e) {}
     if(!users.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">لا يوجد موظفون بعد</div>'; return; }
     var allR = getAllRoles();
     var roleOpts2 = function(currentRid) {
@@ -2575,8 +2582,10 @@ async function loadEmpCards() {
     };
     el.innerHTML = users.map(function(u) {
       var meta = u.user_metadata || {};
-      var rid = meta.role || 'officer';
+      var srvRoles = SRV[u.id] || [];
+      var rid = srvRoles[0] || meta.role || 'officer';
       var rc = getAdvRoleCfg(rid);
+      var srvLbl = srvRoles.length ? srvRoles.join('، ') : '⚠️ بلا دور على الخادم';
       var active = !u.banned_until || new Date(u.banned_until) < new Date();
       var name = meta.name || (u.email ? u.email.split('@')[0] : '—');
       var ini = name.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase() || '?';
@@ -2590,7 +2599,7 @@ async function loadEmpCards() {
         '<div style="font-weight:700;font-size:14px">'+name+'</div>' +
         '<div style="font-size:12px;color:var(--text3);direction:ltr">'+(u.email||'')+'</div>' +
         (ni?'<div style="font-size:11px;margin-top:2px">'+ni+'</div>':'') + '</div>' +
-        '<span class="rpill" style="background:'+rc.bg+';color:'+rc.color+'">'+rc.label+'</span>' +
+        '<span class="rpill" style="background:'+rc.bg+';color:'+rc.color+'" title="الدور على الخادم">'+srvLbl+'</span>' +
         '<span style="font-size:11px;color:var(--text3)">'+pc+' ص</span>' +
         '<div style="display:flex;align-items:center;gap:4px;">' +
         '<span style="font-size:10px;color:var(--text3)">'+(active?'نشط':'موقوف')+'</span>' +
