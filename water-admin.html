@@ -1386,7 +1386,17 @@ async function wfDel(id){
   if(error){toast('⚠️ فشل الحذف: '+error.message,'err');return;}
   toast('✓ تم الحذف'); wfLoaded=true; await loadFinance();
 }
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let saveExpense__busy=false;
 async function saveExpense(){
+  if(saveExpense__busy)return;
+  saveExpense__busy=true;
+  try{ return await saveExpense__run(); }
+  finally{ saveExpense__busy=false; }
+}
+async function saveExpense__run(){
   const date=document.getElementById('e-date').value;
   const amount=parseFloat(document.getElementById('e-amount').value);
   const desc=document.getElementById('e-desc').value.trim();
@@ -1405,7 +1415,17 @@ async function saveExpense(){
   await loadFinance();
   if(data&&data[0]){wfLastSaved=data[0];openReceiptShare(data[0]);}
 }
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let saveCollection__busy=false;
 async function saveCollection(){
+  if(saveCollection__busy)return;
+  saveCollection__busy=true;
+  try{ return await saveCollection__run(); }
+  finally{ saveCollection__busy=false; }
+}
+async function saveCollection__run(){
   const date=document.getElementById('c-date').value;
   const amount=parseFloat(document.getElementById('c-amount').value);
   const person=document.getElementById('c-person').value.trim();

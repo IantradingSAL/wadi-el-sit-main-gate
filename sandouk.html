@@ -1362,7 +1362,17 @@ function bfNextNo(type,dateStr){
   });
   return pre+String(max+1).padStart(3,'0');
 }
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let bfSave__busy=false;
 async function bfSave(type){
+  if(bfSave__busy)return;
+  bfSave__busy=true;
+  try{ return await bfSave__run(type); }
+  finally{ bfSave__busy=false; }
+}
+async function bfSave__run(type){
   const p=type==='income'?'i':'e';
   const superOn=bfIsSuper();
   // ✳️ For non-super users: entry_date is ALWAYS today and receipt_no is ALWAYS
@@ -2391,7 +2401,17 @@ function bfOpenEdit(id){
   document.getElementById('bf-edit-ov').style.display='flex';
 }
 function bfCloseEdit(){document.getElementById('bf-edit-ov').style.display='none';bfEditId=null;}
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let bfEditSave__busy=false;
 async function bfEditSave(){
+  if(bfEditSave__busy)return;
+  bfEditSave__busy=true;
+  try{ return await bfEditSave__run(); }
+  finally{ bfEditSave__busy=false; }
+}
+async function bfEditSave__run(){
   if(!bfEditId)return;
   if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل السندات','err');return;}
   const err=document.getElementById('bf-ed-err');err.textContent='';
