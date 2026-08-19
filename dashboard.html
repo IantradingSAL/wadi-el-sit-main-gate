@@ -1396,7 +1396,7 @@ function openProfile(){
 
 
 async function createUser(){
-  if(!guard("admin","🚫 إنشاء الحسابات متاح للإدارة فقط")) return;
+  if(!WadiPerms.can('users_create')){toast('🚫 إنشاء الحسابات متاح للمشرف العام والمدير','err');return;}
   const name=document.getElementById("nu-name")?.value?.trim();
   const email=document.getElementById("nu-email")?.value?.trim();
   const pw=document.getElementById("nu-pw")?.value;
@@ -1408,8 +1408,18 @@ async function createUser(){
   try{
     const d=await adminAPI({action:"create",email:email,password:pw,name:name,role:role});
     if(d.error) throw new Error(d.error);
-    msg.style.color="var(--green2)";
-    msg.textContent="✅ تم إنشاء حساب "+name+" بنجاح! يمكنه الدخول الآن.";
+    // The pages and the database policies read user_roles: an account created
+    // without a row there exists but cannot open anything.
+    const newId=d.id||(d.user&&d.user.id)||null;
+    let roleWarn='';
+    if(newId){
+      const ins=await sb.from('user_roles').insert({user_id:newId,role:role});
+      if(ins.error) roleWarn=' ⚠️ لكن لم يُسجَّل الدور على الخادم ('+ins.error.message+') — عدّل الدور من قائمة الموظفين.';
+    } else {
+      roleWarn=' ⚠️ لم يصل معرّف الحساب — عيّن الدور من قائمة الموظفين.';
+    }
+    msg.style.color=roleWarn?"var(--warn)":"var(--green2)";
+    msg.textContent="✅ تم إنشاء حساب "+name+(roleWarn||" بنجاح! يمكنه الدخول الآن.");
     ["nu-name","nu-email","nu-pw"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
     setTimeout(function(){loadEmpCards();loadEmp();loadOfficers();},800);
   }catch(e){msg.style.color="var(--danger)";msg.textContent="خطأ: "+e.message;}
@@ -2728,8 +2738,15 @@ function doResetPw(btn) {
 
 async function doDelUser(btn) {
   var uid=btn.dataset.uid, name=btn.dataset.nm;
+  if(!WadiPerms.can('users_delete')){toast('🚫 حذف الحسابات غير مسموح لهذا الحساب','err');return;}
   if(!confirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
-  try { await adminAPI({action:'delete',uid:uid}); toast('🗑️ تم حذف '+name); loadEmpCards(); }
+  try {
+    await adminAPI({action:'delete',uid:uid});
+    // leave no orphan role or permission rows behind
+    try { await sb.from('user_roles').delete().eq('user_id',uid); } catch(_e) {}
+    try { await sb.from('user_permissions').delete().eq('user_id',uid); } catch(_e) {}
+    toast('🗑️ تم حذف '+name); loadEmpCards();
+  }
   catch(e) { toast('⚠️ '+e.message,'err'); }
 }
 
