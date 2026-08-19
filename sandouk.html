@@ -869,12 +869,17 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
     if(!name){err.textContent='⚠️ الاسم مطلوب';return;}
     err.textContent='⏳ جاري الحفظ…';saveBtn.disabled=true;
     const parts=name.split(/\s+/);
+    // phonebook_entries.phone is NOT NULL — an omitted (optional) number is stored as an
+    // empty string, which every reader already treats as "no phone"
+    const phoneNorm=bfNormDigits(phone).replace(/\s+/g,'').trim();
     const payload={
       mun_id:BF_MUN_ID,
       name:name,
       first:parts[0]||name,
       family:parts.slice(1).join(' ')||null,
-      phone:phone||null,
+      phone:phoneNorm,
+      wa:phoneNorm?phoneNorm.replace(/\D/g,''):null,
+      cc:phoneNorm?(phoneNorm.indexOf('+961')===0?'lb':'other'):null,
       is_wadi_citizen:wadi,
       status:'approved',
       source:'sandouk',
