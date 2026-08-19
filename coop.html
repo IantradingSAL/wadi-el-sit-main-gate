@@ -2236,7 +2236,7 @@ document.addEventListener('DOMContentLoaded',async function(){
 async function loadAllData(){
   try{
     // Sellers
-    const sRes=await sb.from('coop_sellers').select('*').eq('status','approved').order('created_at',{ascending:false});
+    const sRes=await sb.from('coop_sellers').select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').eq('status','approved').order('created_at',{ascending:false});
     allSellers=sRes.data||[];
     
     // Products with seller info
@@ -3126,7 +3126,7 @@ async function openDeliveryAgent(){
   try{
     const u=JSON.parse(localStorage.getItem('wadi_user')||'{}');
     if(u.phone){
-      const res=await sb.from('coop_delivery_agents').select('*').eq('phone',u.phone).maybeSingle();
+      const res=await sb.from('coop_delivery_agents').select('id,name,phone,area,vehicle,status,created_at').eq('phone',u.phone).maybeSingle();
       if(res.data){
         showDeliveryAgentStatus(res.data);
         return;
@@ -3516,7 +3516,7 @@ async function submitDeliveryAgent(){
     const pin_hash = await sha256hex(pin);
     const res=await sb.from('coop_delivery_agents').insert([{
       name,phone,whatsapp:wa,area,vehicle,notes:notes||null,status:'pending',pin_hash
-    }]).select().single();
+    }]).select('id,name,phone,area,vehicle,status,created_at').single();
     if(res.error){
       console.error(res.error);
       toast(((window.__wadi_t&&window.__wadi_t('orderFailed'))||'فشل إرسال الطلب')+': '+(res.error.message||((window.__wadi_t&&window.__wadi_t('unknownError'))||'خطأ غير معروف')),'err');
@@ -3553,7 +3553,7 @@ async function refreshSellerStatus(){
   /* Re-fetch seller status from DB so admin approval shows immediately */
   if(!currentSeller || !currentSeller.id || !sb) return;
   try{
-    const res = await sb.from('coop_sellers').select('*').eq('id', currentSeller.id).maybeSingle();
+    const res = await sb.from('coop_sellers').select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').eq('id', currentSeller.id).maybeSingle();
     if(res.data){
       const oldStatus = currentSeller.status;
       currentSeller = res.data;
@@ -3649,13 +3649,15 @@ async function doSellerLogin(){
   err.style.display='none';
   if(!u||!pw){err.textContent=(window.__wadi_t&&window.__wadi_t('sellerDataRequired'))||'البيانات مطلوبة';err.style.display='block';return;}
   try{
-    const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-    const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    const res=await sb.from('coop_sellers').select('*').eq('username',u).single();
-    if(res.error||!res.data||res.data.password_hash!==hash){
+    // The password is checked in the database. It used to be compared here,
+    // against a row anyone could read — which meant every seller's hash was
+    // downloadable, and the check itself could simply be skipped.
+    const res=await sb.rpc('coop_seller_login',{p_username:u,p_password:pw});
+    const row=(res.data&&res.data[0])||null;
+    if(res.error||!row){
       err.textContent=((window.__wadi_t&&window.__wadi_t('loginBadCreds'))||'بيانات الدخول غير صحيحة');err.style.display='block';return;
     }
-    currentSeller=res.data;
+    currentSeller=row;
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
     toast('✅ '+((window.__wadi_t&&window.__wadi_t('sellerWelcomeBack'))||'مرحباً')+' '+(currentSeller.display_name||''),'ok');
     renderSellPage();
@@ -3681,7 +3683,7 @@ async function doSellerRegister(){
     const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
     const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
     const name=f+' '+l;
-    const res=await sb.from('coop_sellers').insert([{username:u,password_hash:hash,display_name:name,phone,area:area||null,bio:bio||null,whatsapp:phone,status:'pending',balance:0}]).select().single();
+    const res=await sb.from('coop_sellers').insert([{username:u,password_hash:hash,display_name:name,phone,area:area||null,bio:bio||null,whatsapp:phone,status:'pending',balance:0}]).select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').single();
     if(res.error){err.textContent='فشل: '+(res.error.message||'خطأ');err.style.display='block';return;}
     currentSeller=res.data;
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
@@ -4443,7 +4445,7 @@ async function loadAdminPanel(){
   c.innerHTML='<div class="spinner"></div>';
   try{
     const [s,o,p,da,tx,cats]=await Promise.all([
-      sb.from('coop_sellers').select('*').order('created_at',{ascending:false}),
+      sb.from('coop_sellers').select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').order('created_at',{ascending:false}),
       sb.from('coop_orders').select('*').order('created_at',{ascending:false}).limit(500),
       sb.from('coop_products').select('*').order('created_at',{ascending:false}),
       sb.from('coop_delivery_agents').select('*').order('created_at',{ascending:false}),

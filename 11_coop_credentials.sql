@@ -1,0 +1,21 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 11 — the coop seller login stops handing out password hashes
+--
+-- Applied live as: coop_seller_login_server_side, coop_seller_login_fix_types_v2
+--
+-- doSellerLogin fetched the seller row and compared password_hash in the
+-- browser. coop_sellers is readable by anon, so every seller's hash was
+-- downloadable — unsalted SHA-256, a lookup away from the password — and the
+-- comparison being client-side meant it could simply be skipped.
+--
+-- Delivery agents already did this correctly via coop_agent_verify_pin.
+-- Sellers now follow the same shape: the password goes in, the hash never
+-- comes out. password_hash and pin_hash are no longer granted to anon; every
+-- other column the shop displays still is.
+--
+-- Verified: correct password returns the seller, wrong password and empty
+-- password return nothing, username matching stays case-insensitive, and
+-- anon can no longer select password_hash or pin_hash while display_name and
+-- whatsapp still read fine. Client side, doSellerLogin calls the function
+-- with the raw password, never reads the table, and stores nothing on a
+-- failed login.
