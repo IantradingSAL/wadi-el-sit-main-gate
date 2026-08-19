@@ -492,6 +492,7 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 <button class="help-btn" onclick="openHelp('d')" title="مساعدة">?</button>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="wadi-perms.js"></script>
 <script>const MUN_ID='00000000-0000-0000-0000-000000000001';
 
 
@@ -554,7 +555,23 @@ function tick(){
     if(badge){badge.style.display=unreviewed.length?"inline":"none";badge.textContent=unreviewed.length||'!';}
   }catch(e){}
 document.getElementById('LD').textContent=new Date().toLocaleString('ar-LB',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
-function getRoleCfg(){return ROLE_CFG[userRole]||ROLE_CFG.officer;}
+function getRoleCfg(){
+  const base=ROLE_CFG[userRole]||ROLE_CFG.officer;
+  if(typeof WadiPerms==='undefined'||!WadiPerms.loaded())return base;
+  // one place decides: the role's defaults, overridden by whatever was ticked
+  // for this person on the user screen
+  return Object.assign({},base,{
+    add:WadiPerms.can('cases_add'),
+    edit:WadiPerms.can('cases_edit'),
+    del:WadiPerms.can('cases_delete'),
+    A:WadiPerms.can('cases_approve'),
+    admin:WadiPerms.can('users_view'),
+    export:WadiPerms.can('export_data'),
+    settings:WadiPerms.can('settings_edit'),
+    audit:WadiPerms.can('audit_view'),
+    f_water:WadiPerms.can('water_view')
+  });
+}
 function canDo(action){return !!getRoleCfg()[action];}
 function guard(action,msg){
   if(canDo(action)) return true;
@@ -777,6 +794,13 @@ async function doLogin(){
   try{
     const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
     if(error)throw error;
+    await WadiPerms.load(sb,true);
+    if(!(WadiPerms.can('cases_view')||WadiPerms.can('water_view')||WadiPerms.can('sandouk_view'))){
+      await sb.auth.signOut({scope:'local'});
+      errEl.textContent='🚫 هذا الحساب لا يملك صلاحية الدخول إلى لوحة البلدية';
+      btn.disabled=false;btn.textContent='🔐 تسجيل الدخول';
+      return;
+    }
     await setupUser(data.user);
   }catch(e){
     errEl.textContent='البريد الإلكتروني أو كلمة المرور غير صحيحة ❌';
@@ -793,9 +817,22 @@ async function doReset(){
   else{document.getElementById('LERR').style.color='var(--green)';document.getElementById('LERR').textContent='✅ تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك';}
 }
 
+// The page's capability map is keyed by these names; server roles that have no
+// map of their own borrow the closest one, and the per-user permissions below
+// then decide what is actually enabled.
+const ROLE_TO_CFG={super_admin:'mayor',mayor:'mayor',admin:'admin',approver:'approver',
+  officer:'officer',viewer:'viewer',water_admin:'water_only',water_only:'water_only',
+  finance:'sandouk',sandouk:'sandouk'};
+function serverRoleForCfg(){
+  const order=['super_admin','mayor','admin','approver','water_admin','finance','sandouk','officer','viewer','water_only'];
+  const mine=(typeof WadiPerms!=='undefined')?WadiPerms.roles():[];
+  for(const r of order) if(mine.includes(r)) return ROLE_TO_CFG[r]||'officer';
+  return 'viewer';
+}
 async function setupUser(user){
   currentUser=user;
-  userRole=(user.user_metadata&&user.user_metadata.role)||'officer';
+  if(typeof WadiPerms!=='undefined' && !WadiPerms.loaded()) await WadiPerms.load(sb,true);
+  userRole=serverRoleForCfg();
   const userName=(user.user_metadata&&user.user_metadata.name)||user.email.split('@')[0];
   const R=getRoleCfg();
   // Update sidebar
@@ -1359,7 +1396,7 @@ function openProfile(){
 
 
 async function createUser(){
-  if(!guard("admin","🚫 إنشاء الحسابات متاح للإدارة فقط")) return;
+  if(!WadiPerms.can('users_create')){toast('🚫 إنشاء الحسابات متاح للمشرف العام والمدير','err');return;}
   const name=document.getElementById("nu-name")?.value?.trim();
   const email=document.getElementById("nu-email")?.value?.trim();
   const pw=document.getElementById("nu-pw")?.value;
@@ -1371,8 +1408,18 @@ async function createUser(){
   try{
     const d=await adminAPI({action:"create",email:email,password:pw,name:name,role:role});
     if(d.error) throw new Error(d.error);
-    msg.style.color="var(--green2)";
-    msg.textContent="✅ تم إنشاء حساب "+name+" بنجاح! يمكنه الدخول الآن.";
+    // The pages and the database policies read user_roles: an account created
+    // without a row there exists but cannot open anything.
+    const newId=d.id||(d.user&&d.user.id)||null;
+    let roleWarn='';
+    if(newId){
+      const ins=await sb.from('user_roles').insert({user_id:newId,role:role});
+      if(ins.error) roleWarn=' ⚠️ لكن لم يُسجَّل الدور على الخادم ('+ins.error.message+') — عدّل الدور من قائمة الموظفين.';
+    } else {
+      roleWarn=' ⚠️ لم يصل معرّف الحساب — عيّن الدور من قائمة الموظفين.';
+    }
+    msg.style.color=roleWarn?"var(--warn)":"var(--green2)";
+    msg.textContent="✅ تم إنشاء حساب "+name+(roleWarn||" بنجاح! يمكنه الدخول الآن.");
     ["nu-name","nu-email","nu-pw"].forEach(function(id){var el=document.getElementById(id);if(el)el.value="";});
     setTimeout(function(){loadEmpCards();loadEmp();loadOfficers();},800);
   }catch(e){msg.style.color="var(--danger)";msg.textContent="خطأ: "+e.message;}
@@ -2087,8 +2134,10 @@ window.addEventListener('load',async()=>{
   try{
     const{data:{session}}=await sb.auth.getSession();
     if(session&&session.user){
-      const role=session.user?.user_metadata?.role||'';
-      if(['mayor','admin','approver','officer','viewer'].includes(role)){
+      // roles come from user_roles through wadi-perms.js; user_metadata.role is
+      // editable by the signed-in user and can no longer open this page
+      await WadiPerms.load(sb,true);
+      if(WadiPerms.can('cases_view')||WadiPerms.can('water_view')||WadiPerms.can('sandouk_view')){
         await setupUser(session.user);
         return;
       }
@@ -2517,6 +2566,13 @@ async function loadEmpCards() {
   try {
     var d = await adminAPI({action:'list'});
     var users = (d.users||[]).filter(function(u){ return u.email; }); // Show all users
+    // show the role each account actually holds on the server, not the copy in
+    // its token — those can drift, and only the server one decides anything
+    var SRV = {};
+    try {
+      var rr = await sb.from('user_roles').select('user_id,role');
+      ((rr && rr.data) || []).forEach(function(r){ (SRV[r.user_id] = SRV[r.user_id] || []).push(r.role); });
+    } catch(_e) {}
     if(!users.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">لا يوجد موظفون بعد</div>'; return; }
     var allR = getAllRoles();
     var roleOpts2 = function(currentRid) {
@@ -2526,8 +2582,10 @@ async function loadEmpCards() {
     };
     el.innerHTML = users.map(function(u) {
       var meta = u.user_metadata || {};
-      var rid = meta.role || 'officer';
+      var srvRoles = SRV[u.id] || [];
+      var rid = srvRoles[0] || meta.role || 'officer';
       var rc = getAdvRoleCfg(rid);
+      var srvLbl = srvRoles.length ? srvRoles.join('، ') : '⚠️ بلا دور على الخادم';
       var active = !u.banned_until || new Date(u.banned_until) < new Date();
       var name = meta.name || (u.email ? u.email.split('@')[0] : '—');
       var ini = name.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase() || '?';
@@ -2541,7 +2599,7 @@ async function loadEmpCards() {
         '<div style="font-weight:700;font-size:14px">'+name+'</div>' +
         '<div style="font-size:12px;color:var(--text3);direction:ltr">'+(u.email||'')+'</div>' +
         (ni?'<div style="font-size:11px;margin-top:2px">'+ni+'</div>':'') + '</div>' +
-        '<span class="rpill" style="background:'+rc.bg+';color:'+rc.color+'">'+rc.label+'</span>' +
+        '<span class="rpill" style="background:'+rc.bg+';color:'+rc.color+'" title="الدور على الخادم">'+srvLbl+'</span>' +
         '<span style="font-size:11px;color:var(--text3)">'+pc+' ص</span>' +
         '<div style="display:flex;align-items:center;gap:4px;">' +
         '<span style="font-size:10px;color:var(--text3)">'+(active?'نشط':'موقوف')+'</span>' +
@@ -2550,6 +2608,7 @@ async function loadEmpCards() {
         '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' +
         '<select class="fi" style="flex:1;padding:6px 10px;font-size:12px;height:auto" data-uid="'+u.id+'" data-nm="'+name+'" onchange="doChRole(this)">'+roleOpts2(rid)+'</select>' +
         '<button class="btn" style="padding:6px 12px;font-size:12px" data-uid="'+u.id+'" data-nm="'+name+'" data-rl="'+rid+'" onclick="openEditUser(this)">🔐 تخصيص</button>' +
+        '<button class="btn" style="padding:6px 12px;font-size:12px" data-uid="'+u.id+'" data-nm="'+name+'" onclick="openUserPerms(this)">🔑 الصلاحيات</button>' +
         '<button class="btn" style="padding:6px 12px;font-size:12px" data-uid="'+u.id+'" data-nm="'+name+'" onclick="doResetPw(this)">🔑 كلمة المرور</button>' +
         '<button class="btn" style="padding:6px 12px;font-size:12px;color:var(--danger)" data-uid="'+u.id+'" data-nm="'+name+'" onclick="doDelUser(this)">🗑️</button>' +
         '</div></div>';
@@ -2559,10 +2618,109 @@ async function loadEmpCards() {
   }
 }
 
+// ══════════ 🔑 PER-USER PERMISSIONS (صلاحيات المستخدم) ══════════
+// The role gives the defaults; the checkboxes here override them for one person
+// — grant an admin editing while withholding deletion, for example. Only the
+// differences from the role are stored, so changing someone's role still moves
+// everything that was left at its default. The database enforces the same
+// resolution in has_perm(); this screen is how it gets set.
+const WP_GROUPS=[
+  {t:'💰 صندوق البلدية',keys:[['sandouk_view','الاطلاع'],['sandouk_add','إدخال سندات'],['sandouk_edit','تعديل السندات'],['sandouk_delete','حذف السندات'],['sandouk_sign','التوقيع']]},
+  {t:'📋 معاملات المواطنين',keys:[['cases_view','الاطلاع'],['cases_add','إضافة معاملة'],['cases_edit','تعديل'],['cases_delete','حذف'],['cases_approve','الموافقات']]},
+  {t:'💧 الري',keys:[['water_view','الاطلاع'],['water_edit','التعديل']]},
+  {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
+  {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل']]},
+  {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['inbox_read','البريد الوارد']]},
+  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات']]}
+];
+let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}}
+
+async function openUserPerms(btn){
+  if(!WadiPerms.can('roles_edit')&&!WadiPerms.can('users_edit')){toast('🚫 تعديل الصلاحيات متاح للمشرف العام والمدير','err');return;}
+  const uid=btn.dataset.uid, name=btn.dataset.nm;
+  const box=document.getElementById('emp-cards');
+  const old=document.getElementById('wp-panel'); if(old)old.remove();
+  box.insertAdjacentHTML('afterbegin','<div id="wp-panel" style="background:var(--bg2);border:1.5px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:12px">⏳ جاري تحميل الصلاحيات…</div>');
+  try{
+    const [rolesRes, defsRes, ovRes] = await Promise.all([
+      sb.from('user_roles').select('role').eq('user_id',uid),
+      sb.from('role_permissions').select('role,perms'),
+      sb.from('user_permissions').select('perms').eq('user_id',uid).maybeSingle()
+    ]);
+    const roles=((rolesRes&&rolesRes.data)||[]).map(r=>r.role);
+    const defs={};
+    ((defsRes&&defsRes.data)||[]).forEach(row=>{
+      if(roles.indexOf(row.role)<0)return;
+      Object.keys(row.perms||{}).forEach(k=>{ defs[k]=defs[k]===true?true:!!row.perms[k]; });
+    });
+    const ov=((ovRes&&ovRes.data&&ovRes.data.perms)||{});
+    WP_CTX={uid:uid,name:name,roles:roles,defaults:defs,overrides:ov};
+    document.getElementById('wp-panel').innerHTML=wpPanelHTML();
+  }catch(e){
+    document.getElementById('wp-panel').innerHTML='<div style="color:var(--danger);font-size:13px">⚠️ '+e.message+'</div>';
+  }
+}
+function wpPanelHTML(){
+  const c=WP_CTX;
+  const eff=k=>Object.prototype.hasOwnProperty.call(c.overrides,k)?!!c.overrides[k]:!!c.defaults[k];
+  const isOv=k=>Object.prototype.hasOwnProperty.call(c.overrides,k)&&(!!c.overrides[k])!==(!!c.defaults[k]);
+  const groups=WP_GROUPS.map(g=>
+    '<div style="margin-bottom:10px">'
+    +'<div style="font-size:12px;font-weight:800;color:var(--blue2);margin-bottom:4px">'+g.t+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px">'
+    +g.keys.map(([k,l])=>
+      '<label style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;font-size:12.5px;cursor:pointer;'
+      +'background:'+(isOv(k)?'#fff4e0':'var(--bg)')+';border:1px solid '+(isOv(k)?'var(--warn)':'var(--border)')+'">'
+      +'<input type="checkbox" id="wp-'+k+'" '+(eff(k)?'checked':'')+' onchange="wpToggle(\''+k+'\',this.checked)" style="width:15px;height:15px;accent-color:var(--blue)">'
+      +'<span>'+l+'</span>'
+      +(isOv(k)?'<span style="font-size:9.5px;color:var(--warn);font-weight:800;margin-inline-start:auto">مخصّص</span>':'')
+      +'</label>').join('')
+    +'</div></div>').join('');
+  return '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">'
+    +'<div><div style="font-size:14px;font-weight:800;color:var(--blue2)">🔑 صلاحيات: '+c.name+'</div>'
+    +'<div style="font-size:11.5px;color:var(--text3)">الدور: '+(c.roles.join('، ')||'بلا دور')+' — المربّع المظلّل بالبرتقالي مخالف لإعداد الدور</div></div>'
+    +'<div style="display:flex;gap:6px"><button class="btn bp" style="padding:6px 12px;font-size:12px" onclick="wpSave()">✓ حفظ</button>'
+    +'<button class="btn bg" style="padding:6px 12px;font-size:12px" onclick="wpResetToRole()">↩️ إعادة لإعداد الدور</button>'
+    +'<button class="btn bg" style="padding:6px 12px;font-size:12px" onclick="document.getElementById(\'wp-panel\').remove()">إغلاق</button></div></div>'
+    +groups;
+}
+function wpToggle(k,val){
+  const c=WP_CTX; if(!c)return;
+  if((!!val)===(!!c.defaults[k])) delete c.overrides[k];   // back to the role default → no override stored
+  else c.overrides[k]=!!val;
+  document.getElementById('wp-panel').innerHTML=wpPanelHTML();
+}
+function wpResetToRole(){ if(!WP_CTX)return; WP_CTX.overrides={}; document.getElementById('wp-panel').innerHTML=wpPanelHTML(); }
+async function wpSave(){
+  const c=WP_CTX; if(!c)return;
+  try{
+    const keys=Object.keys(c.overrides);
+    if(!keys.length){
+      await sb.from('user_permissions').delete().eq('user_id',c.uid);
+    }else{
+      const{error}=await sb.from('user_permissions')
+        .upsert({user_id:c.uid,perms:c.overrides,updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      if(error)throw error;
+    }
+    toast('✅ حُفظت صلاحيات '+c.name+(keys.length?(' ('+keys.length+' مخصّصة)'):' (كلها حسب الدور)'));
+    const p=document.getElementById('wp-panel'); if(p)p.remove();
+  }catch(e){ toast('⚠️ '+e.message,'err'); }
+}
+
 // ── EMPLOYEE ACTIONS ──────────────────────────────────────────────────────────
 async function doChRole(sel) {
   var uid=sel.dataset.uid, name=sel.dataset.nm, role=sel.value;
-  try { await adminAPI({action:'update',uid:uid,updates:{user_metadata:{role:role}}}); toast('✅ تم تغيير دور '+name); }
+  if(!WadiPerms.can('roles_edit')){ toast('🚫 تغيير الأدوار متاح للمشرف العام والمدير','err'); return; }
+  try {
+    // user_roles is what the pages and the database policies read
+    var del = await sb.from('user_roles').delete().eq('user_id',uid).neq('role','super_admin');
+    if(del.error) throw del.error;
+    var ins = await sb.from('user_roles').insert({user_id:uid, role:role});
+    if(ins.error) throw ins.error;
+    // keep the old metadata field in step for anything not yet migrated
+    try { await adminAPI({action:'update',uid:uid,updates:{user_metadata:{role:role}}}); } catch(_e) {}
+    toast('✅ تم تغيير دور '+name+' إلى '+role);
+  }
   catch(e) { toast('⚠️ '+e.message,'err'); }
 }
 
@@ -2589,8 +2747,15 @@ function doResetPw(btn) {
 
 async function doDelUser(btn) {
   var uid=btn.dataset.uid, name=btn.dataset.nm;
+  if(!WadiPerms.can('users_delete')){toast('🚫 حذف الحسابات غير مسموح لهذا الحساب','err');return;}
   if(!confirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
-  try { await adminAPI({action:'delete',uid:uid}); toast('🗑️ تم حذف '+name); loadEmpCards(); }
+  try {
+    await adminAPI({action:'delete',uid:uid});
+    // leave no orphan role or permission rows behind
+    try { await sb.from('user_roles').delete().eq('user_id',uid); } catch(_e) {}
+    try { await sb.from('user_permissions').delete().eq('user_id',uid); } catch(_e) {}
+    toast('🗑️ تم حذف '+name); loadEmpCards();
+  }
   catch(e) { toast('⚠️ '+e.message,'err'); }
 }
 
