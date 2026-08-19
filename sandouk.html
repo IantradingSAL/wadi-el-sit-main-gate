@@ -869,12 +869,17 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
     if(!name){err.textContent='⚠️ الاسم مطلوب';return;}
     err.textContent='⏳ جاري الحفظ…';saveBtn.disabled=true;
     const parts=name.split(/\s+/);
+    // phonebook_entries.phone is NOT NULL — an omitted (optional) number is stored as an
+    // empty string, which every reader already treats as "no phone"
+    const phoneNorm=bfNormDigits(phone).replace(/\s+/g,'').trim();
     const payload={
       mun_id:BF_MUN_ID,
       name:name,
       first:parts[0]||name,
       family:parts.slice(1).join(' ')||null,
-      phone:phone||null,
+      phone:phoneNorm,
+      wa:phoneNorm?phoneNorm.replace(/\D/g,''):null,
+      cc:phoneNorm?(phoneNorm.indexOf('+961')===0?'lb':'other'):null,
       is_wadi_citizen:wadi,
       status:'approved',
       source:'sandouk',
@@ -1599,21 +1604,61 @@ function bfBuildReportEl(){
   const two=(u,l)=>u+(hasL?'<br><span style="font-size:12px">'+l+'</span>':'');
   const dts=new Date().toLocaleDateString('ar-LB');
   const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
-  const td=(v,s)=>'<td style="padding:4px;border:1px solid #e0e6ef;word-break:break-word;'+(s||'')+'">'+(v==null?'':v)+'</td>';
-  const tbl=(h,r)=>'<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:14px"><thead><tr>'
-    +h.map(x=>'<th style="background:#eef3fa;color:#0f4d82;padding:5px 4px;border:1px solid #d5dfec;text-align:right;font-weight:800">'+x+'</th>').join('')
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // html2canvas cannot break an Arabic run itself without losing the word gaps, so the
+  // report wraps long cells here: words are grouped into lines of ~n characters and the
+  // breaks are emitted as real <br> elements.
+  const wrap=(v,n)=>{
+    const words=String(v==null?'':v).trim().split(/\s+/).filter(Boolean);
+    if(!words.length)return '';
+    const lines=[]; let line='';
+    words.forEach(w=>{
+      if(!line){line=w;return;}
+      if((line+' '+w).length<=n){line+=' '+w;return;}
+      lines.push(line); line=w;
+    });
+    if(line)lines.push(line);
+    return lines.map(esc).join('<br>');
+  };
+  const num=(v,color)=>(color?'<span style="color:'+color+'">'+v+'</span>':String(v));
+  const td=(v,s)=>'<td style="padding:4px;border:1px solid #e0e6ef;vertical-align:top;'+(s||'')+'">'+(v==null?'':v)+'</td>';
+  const cg=w=>w?('<colgroup>'+w.map(x=>'<col style="width:'+(x?x+'px':'auto')+'">').join('')+'</colgroup>'):'';
+  const tbl=(h,r,w)=>'<table style="width:100%;table-layout:'+(w?'fixed':'auto')+';border-collapse:collapse;font-size:11px;margin-bottom:14px">'+cg(w)+'<thead><tr>'
+    +h.map((x,i)=>'<th style="background:#eef3fa;color:#0f4d82;padding:5px 4px;border:1px solid #d5dfec;text-align:right;font-weight:800">'
+      +((w&&w[i])?wrap(x,Math.max(4,Math.floor(w[i]/6.2))):esc(x))+'</th>').join('')
     +'</tr></thead><tbody>'+r+'</tbody></table>';
   const secT=t=>'<div style="font-size:14px;font-weight:800;color:#0f4d82;margin:14px 0 6px">'+t+'</div>';
-  const rows=bfFiltered().map(e=>'<tr style="page-break-inside:avoid">'
-    +td(e.entry_date.split('-').reverse().join('/'))+td(e.receipt_no)
-    +td(e.wassel_number?e.wassel_number:'<span style="color:#c22;font-weight:800">بلا وصل</span>','font-size:10px')
-    +td(TYPE_AR[e.entry_type]||e.entry_type)
-    +td(e.category,'font-size:10px')+td(bfPay(e),'font-size:10px')
-    +td((e.description||'')+(e.voided?' — ⛔ ملغى'+(e.void_reason?': '+e.void_reason:''):''),e.voided?'color:#c22':'')
-    +td(e.person)
-    +td((e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':''),'font-weight:800;color:'+(e.voided?'#999':(e.signed<0?'#a83232':'#1f7a45')))
-    +td(bfMoney(e.bal,e.currency),'font-weight:800;color:#0f4d82')+'</tr>').join('');
-  const sumR=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+td(k)+td(v.n)+td(bfSumTxt(v),'font-weight:800;color:'+color)+'</tr>').join('');
+  // the ledger is always printed oldest → newest, and the balance column runs in that order
+  const seqNo=v=>{const m=String(v==null?'':v).match(/(\d+)\s*$/);return m?parseInt(m[1],10):0;};
+  const led=bfFiltered().slice().sort((a,b)=>
+      String(a.entry_date||'').localeCompare(String(b.entry_date||''))
+      ||seqNo(a.receipt_no)-seqNo(b.receipt_no)
+      ||String(a.id||'').localeCompare(String(b.id||'')));
+  let rbU=0,rbL=0,tiU=0,tiL=0,teU=0,teL=0;
+  led.forEach(e=>{
+    if(!e.voided){
+      if(e.currency==='LBP')rbL+=e.signed; else rbU+=e.signed;
+      if(e.signed<0){ if(e.currency==='LBP')teL+=-e.signed; else teU+=-e.signed; }
+      else { if(e.currency==='LBP')tiL+=e.signed; else tiU+=e.signed; }
+    }
+    e.rbal=(e.currency==='LBP'?rbL:rbU);
+  });
+  const LEDW=[56,42,52,48,72,34,0,64,96,96];
+  const rows=led.map((e,i)=>'<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
+    +td(num(e.entry_date?e.entry_date.split('-').reverse().join('/'):''),'font-size:10px')
+    +td(e.receipt_no?num(esc(e.receipt_no)):'','font-size:10px')
+    +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا وصل</span>','font-size:10px')
+    +td(wrap(TYPE_AR[e.entry_type]||e.entry_type,8),'font-size:10px')
+    +td(wrap(e.category,12),'font-size:10px')+td(wrap(bfPay(e),6),'font-size:10px')
+    +td(wrap(e.description,32)+(e.voided?'<br><span style="color:#c22;font-weight:800">⛔ ملغى</span>'+(e.void_reason?'<br>'+wrap(e.void_reason,34):''):''),e.voided?'color:#c22':'')
+    +td(wrap(e.person,11),'font-size:10px')
+    +td(num((e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)),'font-size:10px;font-weight:800;color:'+(e.voided?'#999':(e.signed<0?'#a83232':'#1f7a45')))
+    +td(num(bfMoney(e.rbal,e.currency)),'font-size:10px;font-weight:800;text-align:left;color:#0f4d82')+'</tr>').join('');
+  const totTxt=(u,l)=>[u?'$'+bfFmt(u):'',l?bfFmt(l)+' ل.ل.':''].filter(Boolean).join(' + ')||'$0';
+  const ledTot='<tr style="page-break-inside:avoid;background:#eef3fa;font-weight:800">'
+    +'<td colspan="8" style="padding:5px 4px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+led.length+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
+    +'<td colspan="2" style="padding:5px 4px;border:1px solid #d5dfec;color:#0f4d82">'+num('الرصيد: '+totTxt(rbU,rbL))+'</td></tr>';
+  const sumR=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+td(wrap(k,30))+td(num(v.n))+td(num(bfSumTxt(v),color),'font-weight:800')+'</tr>').join('');
   const el=document.createElement('div');
   el.setAttribute('dir','rtl');
   el.style.cssText='width:760px;background:#fff;color:#1a1a2e;font-family:Tajawal,sans-serif;padding:10px';
@@ -1629,28 +1674,29 @@ function bfBuildReportEl(){
       '<b style="font-size:15px">'+bfEntries.length+'</b><br>عدد الحركات'
      ].map(x=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
     +'</div>'
-    +secT('📒 سجل الحركات')
-    +tbl(['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],rows||'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>')
     +secT('🟢 المقبوضات حسب الفئة')
-    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'))
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'),[0,60,190])
     +secT('🔴 المصروفات حسب الفئة')
-    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'))
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'),[0,60,190])
+    +secT('📒 سجل الحركات')
+    +tbl(['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],
+         rows?(rows+ledTot):'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>',LEDW)
     +(function(){
       const st=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
       if(!st.length) return '';
       const TYPE_AR2={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'};
       let sU=0,sL=0; st.forEach(e=>{if(e.currency==='LBP')sL+=+e.stamp_value;else sU+=+e.stamp_value;});
       const totalTxt=[sU?'$'+bfFmt(sU):'',sL?bfFmt(sL)+' ل.ل.':''].filter(Boolean).join(' + ')||'—';
-      const rows=st.sort((a,b)=>String(a.entry_date||'').localeCompare(String(b.entry_date||''))).map(e=>'<tr style="page-break-inside:avoid">'
-        +td(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')
-        +td(e.receipt_no||'')
-        +td(TYPE_AR2[e.entry_type]||e.entry_type||'')
-        +td(e.person||'')
-        +td(e.description||'','font-size:10px')
-        +td(bfMoney(+e.stamp_value,e.currency),'font-weight:800;color:#8a6d1a')
+      const rows=st.slice().sort((a,b)=>String(a.entry_date||'').localeCompare(String(b.entry_date||''))||seqNo(a.receipt_no)-seqNo(b.receipt_no)).map((e,i)=>'<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
+        +td(num(e.entry_date?e.entry_date.split('-').reverse().join('/'):''),'font-size:10px')
+        +td(e.receipt_no?num(esc(e.receipt_no)):'','font-size:10px')
+        +td(TYPE_AR2[e.entry_type]||esc(e.entry_type),'font-size:10px')
+        +td(wrap(e.person,16),'font-size:10px')
+        +td(wrap(e.description,40),'font-size:10px')
+        +td(num(bfMoney(+e.stamp_value,e.currency)),'font-weight:800;color:#8a6d1a')
       +'</tr>').join('');
       return secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+st.length)
-        +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows);
+        +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows,[60,54,56,110,0,96]);
     })()
     +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
     +'<div>أمين الصندوق: ________________</div><div>رئيس البلدية: ________________</div><div>أُنشئ بواسطة: '+(bfUser?bfUser.email:'')+'</div></div>';
@@ -1667,13 +1713,38 @@ function bfMountForPdf(el){
   return hold;
 }
 function bfFitForPdf(el,opts){
-  const w=Math.max(el.scrollWidth,el.offsetWidth,560);
-  el.style.width=w+'px';
+  el.style.boxSizing='border-box';
+  const w0=Math.max(el.scrollWidth,el.offsetWidth,560);
+  el.style.width=w0+'px';
+  // re-measure: the element may still be wider than asked (long unbreakable content),
+  // and capturing at a stale width crops the last column out of the canvas
+  const w=Math.max(el.scrollWidth,el.offsetWidth,w0);
   if(el.parentNode)el.parentNode.style.width=w+'px';
-  // html2canvas drops inter-word spaces in Arabic text — swap them for NBSP + a zero-width break point
+  // html2canvas loses the word gap wherever a line can break, which is what glued the
+  // Arabic words together and pushed the amounts over their neighbours. Freeze the
+  // browser's own line breaking into <br> elements first, then make every remaining gap
+  // a non-breaking space so the renderer keeps it.
   try{
     const tw=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);
-    let n; while((n=tw.nextNode())){ if(n.nodeValue&&n.nodeValue.indexOf(' ')>-1) n.nodeValue=n.nodeValue.replace(/ /g,'\u00A0\u200B'); }
+    const nodes=[]; let n;
+    while((n=tw.nextNode())) if(n.nodeValue&&n.nodeValue.indexOf(' ')>-1) nodes.push(n);
+    const rng=document.createRange();
+    nodes.forEach(node=>{
+      const txt=node.nodeValue; const re=/\S+/g;
+      let m,lineTop=null,line=[],lines=[];
+      while((m=re.exec(txt))){
+        rng.setStart(node,m.index); rng.setEnd(node,m.index+m[0].length);
+        const top=Math.round(rng.getBoundingClientRect().top);
+        if(lineTop===null||Math.abs(top-lineTop)<2){ line.push(m[0]); if(lineTop===null)lineTop=top; }
+        else { lines.push(line.join('\u00A0')); line=[m[0]]; lineTop=top; }
+      }
+      if(line.length)lines.push(line.join('\u00A0'));
+      if(!lines.length)return;
+      if(lines.length===1){ node.nodeValue=lines[0]; return; }
+      const frag=document.createDocumentFragment();
+      lines.forEach((L,i)=>{ if(i)frag.appendChild(document.createElement('br')); frag.appendChild(document.createTextNode(L)); });
+      node.parentNode.replaceChild(frag,node);
+    });
   }catch(_e){}
   opts.html2canvas=Object.assign({},opts.html2canvas,{width:w,windowWidth:w,x:0,y:0,scrollX:0,scrollY:0});
   if(bfShareCtx){
@@ -1744,14 +1815,49 @@ function bfShareText(){
   });
   const hasL=!!(iL||eL);
   const cmb=(u,l)=>bfFmt(u)+' دولار'+(hasL?(' + '+bfFmt(l)+' ل.ل.'):'');
-  return '*صندوق البلدية — بلدية وادي الست*\n'
+  // ملخّص الفئات جزء من الترويسة (أعلى التقرير)، والتفاصيل تأتي تحته
+  const catBlock=(title,list)=>{
+    const g=bfGroup(list,e=>e.category);
+    if(!g.length)return '';
+    return '*'+title+'*\n'+g.map(([k,v])=>'• '+k+': '+bfSumTxt(v)+' ('+v.n+')').join('\n')+'\n'+SEP+'\n';
+  };
+  const head='*صندوق البلدية — بلدية وادي الست*\n'
+    +'قضاء الشوف — جبل لبنان\n'
     +'التاريخ: '+new Date().toLocaleDateString('ar-LB')+'\n'
     +SEP+'\n'
     +'الرصيد الحالي: '+cmb(iU-eU,iL-eL)+'\n'
     +'إجمالي المقبوضات: '+cmb(iU,iL)+'\n'
     +'إجمالي المصروفات: '+cmb(eU,eL)+'\n'
     +'عدد الحركات: '+bfEntries.length+'\n'
-    +SEP;
+    +SEP+'\n'
+    +catBlock('🟢 المقبوضات حسب الفئة',bfEntries.filter(e=>e.entry_type!=='expense'))
+    +catBlock('🔴 المصروفات حسب الفئة',bfEntries.filter(e=>e.entry_type==='expense'));
+  // تفاصيل الحركات سطراً سطراً تحت الترويسة، مرقّمة (حسب الفلاتر الحالية)
+  let list=[]; try{list=bfFiltered();}catch(_e){list=[];}
+  if(!list.length) return head+'*📒 تفاصيل الحركات*\nلا توجد حركات ضمن الفلاتر الحالية\n'+SEP;
+  const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
+  const MAXCH=3200; // سقف طول النص كي لا تُقصّ الرسالة عند مشاركتها عبر واتساب
+  let det='',shown=0,stop=false;
+  list.forEach((e,i)=>{
+    if(stop)return;
+    const d=e.entry_date?e.entry_date.split('-').reverse().join('/'):'';
+    const w=String(e.wassel_number||'').trim();
+    const blk=(i+1)+') '+d+' · سند '+(e.receipt_no||'—')+' · '+(w?('وصل '+w):'بلا وصل')+' · '+(TYPE_AR[e.entry_type]||e.entry_type||'')+'\n'
+      +'البيان: '+(e.description||'—')+(e.category?(' · الفئة: '+e.category):'')+'\n'
+      +(e.person?('الجهة: '+e.person+' · '):'')+bfPay(e)+'\n'
+      +'المبلغ: '+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)
+      +' · الرصيد: '+bfMoney(e.bal,e.currency)
+      +(e.voided?(' · ⛔ ملغى'+(e.void_reason?(': '+e.void_reason):'')):'')+'\n'
+      +SEP+'\n';
+    if(det.length+blk.length>MAXCH){stop=true;return;}
+    det+=blk;shown++;
+  });
+  const rest=list.length-shown;
+  return head
+    +'*📒 تفاصيل الحركات ('+list.length+')*\n'
+    +SEP+'\n'
+    +det
+    +(rest?('… و'+rest+' حركة إضافية — راجع ملف التقرير PDF\n'+SEP):'');
 }
 function bfOpenWa(text){
   const enc=encodeURIComponent(text);
