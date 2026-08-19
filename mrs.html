@@ -4,6 +4,7 @@
 <title>أرشيف الرسوم البلدية — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="wadi-perms.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--b:#0f4d82;--b2:#1a6eb5;--gold:#c9a227;--bg:#f2f5f9;--bd:#e0e6ef}
@@ -144,7 +145,6 @@ tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
 
 <script>
 const sb=window.supabase.createClient('https://onjbwhkmmtqnymhjnplw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4',{realtime:{enabled:false}});
-const ALLOWED=['mayor','admin','sandouk'];
 let T={},cur='muk';
 const F=n=>n==null?'':Number(n).toLocaleString('en-US');
 function dOK(d){
@@ -282,7 +282,7 @@ function render(){
   }
   hd.innerHTML=h;
   bd.innerHTML=rows.join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:20px">لا نتائج</td></tr>';
-  document.getElementById('cnt').textContent=rows.length.toLocaleString()+' سجل';
+  document.getElementById('cnt').textContent=rows.length.toLocaleString('en-US')+' سجل';
   bindSort();
 }
 let sortState={tab:null,col:-1,dir:1};
@@ -539,11 +539,12 @@ function openIsh(id){
 async function doLogin(){
   const{data,error}=await sb.auth.signInWithPassword({email:document.getElementById('li-em').value.trim(),password:document.getElementById('li-pw').value});
   if(error){document.getElementById('li-err').textContent='⚠️ '+(/(invalid|credentials)/i.test(error.message)?'بيانات الدخول غير صحيحة':error.message);return;}
-  gate(data.user);
+  await gate(data.user);
 }
-function gate(u){
-  const role=(u.user_metadata&&u.user_metadata.role)||'';
-  if(ALLOWED.indexOf(role)<0){document.getElementById('li-err').textContent='🚫 لا تملك صلاحية الاطلاع على الأرشيف';document.getElementById('login').style.display='flex';sb.auth.signOut({scope:'local'});return;}
+async function gate(u){
+  // permission comes from user_roles via wadi-perms.js, never from user_metadata
+  await WadiPerms.load(sb,true);
+  if(!WadiPerms.can('mrs_view')){document.getElementById('li-err').textContent='🚫 لا تملك صلاحية الاطلاع على الأرشيف';document.getElementById('login').style.display='flex';sb.auth.signOut({scope:'local'});return;}
   boot(u);
 }
 async function doLogout(){await sb.auth.signOut({scope:'local'});location.reload();}
@@ -552,7 +553,7 @@ async function doLogout(){await sb.auth.signOut({scope:'local'});location.reload
     const{data:{session}}=await sb.auth.getSession();
     if(session&&session.user){
       const{data:{user},error}=await sb.auth.getUser();
-      if(!error&&user){gate(user);return;}
+      if(!error&&user){await gate(user);return;}
       await sb.auth.signOut({scope:'local'});
     }
   }catch(e){}

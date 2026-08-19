@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v68';
+const CACHE_NAME   = 'wadi-elsit-v81';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used by notificationclick to mark opens.
@@ -30,6 +30,17 @@ const APP_SHELL = [
   './wadi-el-sit-demo.html',
   './news-detail.html',
   './analytics.js',
+  './number-format.js',
+  // Every local script the pages above pull in. Without these the shell
+  // loads from cache but its behaviour does not: auth-common and
+  // wadi-perms decide who may see what, so a page that renders while they
+  // are still fetching is a page with no permissions resolved.
+  './auth-common.js',
+  './wadi-perms.js',
+  './contacts-registry.js',
+  './i18n.js',
+  './pwa.js',
+  './pwa-ios.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

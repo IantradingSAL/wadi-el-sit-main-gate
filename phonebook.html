@@ -2790,7 +2790,17 @@ function showLocationHelp(reason){
   openModal(html);
 }
 
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let submitAdd__busy=false;
 async function submitAdd(e){
+  if(submitAdd__busy)return;
+  submitAdd__busy=true;
+  try{ return await submitAdd__run(e); }
+  finally{ submitAdd__busy=false; }
+}
+async function submitAdd__run(e){
   if(e && e.preventDefault) e.preventDefault();
   const btn = document.getElementById('AD_SUB');
   const err = document.getElementById('AD_ERR'); err.innerHTML='';

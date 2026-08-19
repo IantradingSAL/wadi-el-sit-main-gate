@@ -6,6 +6,8 @@
 <title>صندوق البلدية — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
+<script src="wadi-perms.js"></script>
 <script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -173,6 +175,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <button class="bf-tab" id="bf-tab-income" onclick="bfShowTab('income')">🟢 سند قبض</button>
       <button class="bf-tab" id="bf-tab-expense" onclick="bfShowTab('expense')">🔴 سند صرف</button>
       <button class="bf-tab" id="bf-tab-reports" onclick="bfShowTab('reports')">📊 التقارير</button>
+      <button class="bf-tab" id="bf-tab-audit" onclick="bfShowTab('audit')">📜 سجل العمليات</button>
     </div>
 
     <!-- LEDGER -->
@@ -191,7 +194,7 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <div class="bf-filters">
         <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
-        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option><option value="__no_wassel">📄 بدون رقم وصل</option></select></div>
+        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option><option value="__no_wassel">📄 بدون رقم إيصال</option></select></div>
         <div><label class="fl">الفئة</label><select class="fi" id="bf-f-cat" onchange="bfRenderLedger()"><option value="">الكل</option></select></div>
         <div><label class="fl">العملة</label><select class="fi" id="bf-f-cur" onchange="bfRenderLedger()"><option value="">الكل</option><option value="USD">دولار $</option><option value="LBP">ليرة ل.ل.</option></select></div>
         <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-f-pay" onchange="bfRenderLedger()"><option value="">الكل</option><option value="cash">نقداً</option><option value="transfer">حوالة</option><option value="whish">Whish</option></select></div>
@@ -199,8 +202,8 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">إلى تاريخ</label><input type="date" class="fi" id="bf-f-to" onchange="bfRenderLedger()"></div>
         <div><label class="fl">من سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-sfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب تسلسل رقم السند"></div>
         <div><label class="fl">إلى سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-sto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب تسلسل رقم السند"></div>
-        <div><label class="fl">من وصل رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب رقم الوصل"></div>
-        <div><label class="fl">إلى وصل رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب رقم الوصل"></div>
+        <div><label class="fl">من إيصال رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب رقم الإيصال"></div>
+        <div><label class="fl">إلى إيصال رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب رقم الإيصال"></div>
       </div>
       <div class="bf-tblwrap"><table id="bf-ledger-tbl">
         <thead id="bf-ledger-head"></thead>
@@ -231,19 +234,19 @@ select.bf-colfilter{padding-inline-end:22px}
         </div>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">📄 رقم الوصل <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-i-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
-        <div><label class="fl">📅 تاريخ الوصل <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-i-wassel-date"></div>
+        <div><label class="fl">📄 رقم الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-i-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+        <div><label class="fl">📅 تاريخ الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-i-wassel-date"></div>
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
-        <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
+        <input type="number" class="fi" data-num id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
         <select class="fi" id="bf-i-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('i')">
           <option value="LBP" selected>ل.ل. ليرة</option>
           <option value="USD">$ دولار</option>
         </select>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
         <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-i-total" readonly style="direction:ltr;background:#f0f7ff;font-weight:800;color:#0f4d82" value="0.00"></div>
       </div>
       <div class="bf-g2">
@@ -253,17 +256,17 @@ select.bf-colfilter{padding-inline-end:22px}
       <div id="bf-i-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-i-cat-other" placeholder="فئة أخرى…"></div>
       <label class="fl">البيان * <span style="color:#8a95a3;font-weight:700">(اختَر من القائمة أو اكتب بياناً جديداً)</span></label><input type="text" class="fi" id="bf-i-desc" list="bf-dl-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
       <div class="bf-g2">
-        <div><label class="fl">الدافع / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
+        <div><label class="fl">المكلف / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
         <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
       </div>
       <div class="bf-g2">
         <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-i-property" placeholder="اختياري — مثال: 1245/شوف" style="direction:ltr"></div>
-        <div><label class="fl">🧾 رقم الإيصال (إيصال يدوي داخلي)</label><input type="text" class="fi" id="bf-i-manual" placeholder="اختياري — رقم الإيصال المطبوع" style="direction:ltr"></div>
+        <div><label class="fl">🧾 رقم الإيصال اليدوي (داخلي)</label><input type="text" class="fi" id="bf-i-manual" placeholder="اختياري — رقم الإيصال المطبوع" style="direction:ltr"></div>
       </div>
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
       <label class="fl">📎 مستندات مرفقة (اختياري — صور أو PDF)</label>
       <input type="file" class="fi" id="bf-i-files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
-      <div style="font-size:11.5px;color:#8a95a3;font-weight:700;margin:-4px 0 8px">📄 تُسمّى المرفقات تلقائياً برقم الوصل المُدخَل أعلاه (أو رقم السند إن لم يُصدَر الوصل بعد)</div>
+      <div style="font-size:11.5px;color:#8a95a3;font-weight:700;margin:-4px 0 8px">📄 تُسمّى المرفقات تلقائياً برقم الإيصال المُدخَل أعلاه (أو رقم السند إن لم يُصدَر الإيصال بعد)</div>
       <div id="bf-i-upl" style="display:none;font-size:12px;color:#0f4d82;font-weight:700;margin-bottom:8px"></div>
       <div class="bf-err" id="bf-i-err"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -282,19 +285,19 @@ select.bf-colfilter{padding-inline-end:22px}
         </div>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">📄 رقم الوصل <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-e-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
-        <div><label class="fl">📅 تاريخ الوصل <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-e-wassel-date"></div>
+        <div><label class="fl">📄 رقم الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-e-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+        <div><label class="fl">📅 تاريخ الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-e-wassel-date"></div>
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
-        <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
+        <input type="number" class="fi" data-num id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
         <select class="fi" id="bf-e-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('e')">
           <option value="LBP" selected>ل.ل. ليرة</option>
           <option value="USD">$ دولار</option>
         </select>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
         <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-e-total" readonly style="direction:ltr;background:#fdf1f1;font-weight:800;color:#a83232" value="0.00"></div>
       </div>
       <div class="bf-g2">
@@ -311,7 +314,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-e-notes" placeholder="اختياري">
       <label class="fl">📎 مستندات مرفقة — القرار / فواتير (اختياري — صور أو PDF)</label>
       <input type="file" class="fi" id="bf-e-files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
-      <div style="font-size:11.5px;color:#8a95a3;font-weight:700;margin:-4px 0 8px">📄 تُسمّى المرفقات تلقائياً برقم الوصل المُدخَل أعلاه (أو رقم السند إن لم يُصدَر الوصل بعد)</div>
+      <div style="font-size:11.5px;color:#8a95a3;font-weight:700;margin:-4px 0 8px">📄 تُسمّى المرفقات تلقائياً برقم الإيصال المُدخَل أعلاه (أو رقم السند إن لم يُصدَر الإيصال بعد)</div>
       <div id="bf-e-upl" style="display:none;font-size:12px;color:#0f4d82;font-weight:700;margin-bottom:8px"></div>
       <div class="bf-err" id="bf-e-err"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -343,6 +346,28 @@ select.bf-colfilter{padding-inline-end:22px}
         </table></div>
       </div>
     </div>
+
+    <!-- 📜 AUDIT LOG -->
+    <div id="bf-pane-audit" style="display:none">
+      <div class="bf-card">
+        <div class="bf-sumtitle">📜 سجل العمليات — من فعل ماذا ومتى</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px">كل إضافة أو تعديل أو إلغاء أو حذف في الصندوق يُسجَّل تلقائياً في قاعدة البيانات ولا يمكن تعديله أو حذفه من التطبيق.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">من تاريخ</div><input type="date" id="bf-a-from" onchange="bfRenderAudit()"></div>
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">إلى تاريخ</div><input type="date" id="bf-a-to" onchange="bfRenderAudit()"></div>
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">المستخدم</div><select id="bf-a-user" onchange="bfRenderAudit()"><option value="">— الكل —</option></select></div>
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">العملية</div><select id="bf-a-act" onchange="bfRenderAudit()"><option value="">— الكل —</option></select></div>
+          <div style="flex:1;min-width:150px"><div style="font-size:11px;font-weight:800;color:#0f4d82">بحث</div><input type="text" id="bf-a-q" placeholder="رقم السند، بيان، تفاصيل…" oninput="bfRenderAudit()" style="width:100%"></div>
+          <button class="bf-vbtn" onclick="bfLoadAudit(true)">🔄 تحديث</button>
+          <button class="bf-vbtn primary" onclick="bfAuditCSV()">⬇️ تصدير CSV</button>
+        </div>
+        <div id="bf-a-count" style="font-size:12px;font-weight:800;color:#0f4d82;margin:8px 0 4px"></div>
+        <div class="bf-tblwrap"><table>
+          <thead><tr><th>التاريخ والوقت</th><th>المستخدم</th><th>العملية</th><th>السند</th><th>التفاصيل</th></tr></thead>
+          <tbody id="bf-a-rows"></tbody>
+        </table></div>
+      </div>
+    </div>
   </div>
 
   <datalist id="bf-dl-persons"></datalist>
@@ -354,7 +379,7 @@ select.bf-colfilter{padding-inline-end:22px}
 <div class="bf-share-ov" id="bf-share-ov" onclick="if(event.target===this)bfCloseSendModal()">
   <div class="bf-share-box">
     <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:14px" id="bf-share-title">🧾 مشاركة السند</div>
-    <button class="bf-share-btn" id="bf-share-sign" style="display:none" onclick="bfSignFromShare()">✍️ <span>توقيع على الشاشة (المستلم / الدافع)</span></button>
+    <button class="bf-share-btn" id="bf-share-sign" style="display:none" onclick="bfSignFromShare()">✍️ <span>توقيع على الشاشة (المستلم / المكلف)</span></button>
     <button class="bf-share-btn" onclick="bfPrint()">🖨️ <span>طباعة السند</span></button>
     <button class="bf-share-btn" onclick="bfShareFile()">📎 <span>مشاركة كملف PDF (واتساب / حفظ)</span></button>
     <button class="bf-share-btn" onclick="bfShareWaText()">🟢 <span>إرسال ملخّص نصي عبر واتساب</span></button>
@@ -395,6 +420,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <div style="display:flex;gap:8px">
       <button class="bf-share-btn" style="flex:2;width:auto;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfSignSave()">✔️ حفظ التوقيع</button>
       <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;margin-bottom:0" onclick="bfSignClear()">🧹 مسح</button>
+      <button class="bf-share-btn" id="bf-sign-del" style="display:none;flex:1;width:auto;justify-content:center;color:#a83232;border-color:#e6bcbc;margin-bottom:0" onclick="bfSignRemove()">🗑️ حذف التوقيع</button>
       <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#0f4d82;font-weight:800;border-color:#0f4d82;margin-bottom:0" onclick="bfSignFinish()">✅ إنهاء</button>
     </div>
   </div>
@@ -430,11 +456,11 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">النوع *</label><select class="fi" id="bf-ed-type" onchange="bfEditRefreshCats()"><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="opening">رصيد افتتاحي</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
+      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" data-num id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
       <div><label class="fl">العملة</label><select class="fi" id="bf-ed-cur"><option value="USD">$ دولار</option><option value="LBP">ل.ل. ليرة</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
+      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
       <div style="font-size:11px;color:#8a95a3;align-self:end;padding-bottom:12px">قيمة الطوابع محسوبة ضمن "المبلغ الإجمالي" أعلاه.</div>
     </div>
     <div class="bf-g2">
@@ -448,16 +474,16 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">📄 رقم الوصل</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
-      <div><label class="fl">📅 تاريخ الوصل</label><input type="date" class="fi" id="bf-ed-wassel-date"></div>
+      <div><label class="fl">📄 رقم الإيصال</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+      <div><label class="fl">📅 تاريخ الإيصال</label><input type="date" class="fi" id="bf-ed-wassel-date"></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">الجهة (الدافع/المستفيد)</label><input type="text" class="fi" id="bf-ed-person"></div>
+      <div><label class="fl">الجهة (المكلف/المستفيد)</label><input type="text" class="fi" id="bf-ed-person"></div>
       <div><label class="fl">المسلّم/المستلم</label><input type="text" class="fi" id="bf-ed-handled"></div>
     </div>
     <div class="bf-g2">
       <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
-      <div><label class="fl">🧾 رقم الإيصال (يدوي)</label><input type="text" class="fi" id="bf-ed-manual" style="direction:ltr"></div>
+      <div><label class="fl">🧾 رقم الإيصال اليدوي</label><input type="text" class="fi" id="bf-ed-manual" style="direction:ltr"></div>
     </div>
     <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-ed-notes">
     <div class="bf-err" id="bf-ed-err" style="margin-top:6px"></div>
@@ -493,7 +519,7 @@ select.bf-colfilter{padding-inline-end:22px}
 // ═══════════ 💰 BALADIEH FINANCE (صندوق البلدية) ═══════════
 let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null, bfReadyFile=null;
 // Full phonebook rows loaded from public.phonebook_entries — used by the
-// custom typeahead picker (bfMakePicker) on the الدافع/الجهة inputs.
+// custom typeahead picker (bfMakePicker) on the المكلف/الجهة inputs.
 let bfPhonebookEntries=[];
 const BF_MUN_ID='00000000-0000-0000-0000-000000000001';
 const BF_LOGO=(function(){
@@ -509,21 +535,14 @@ function bfMoney(a,c){return (c==='LBP') ? bfFmt(a)+' ل.ل.' : '$'+bfFmt(a);}
 function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار أميركي';}
 const BF_PAY={cash:'نقداً',transfer:'حوالة مصرفية',whish:'Whish'};
 const BF_SIGN_ROLES=['person','cashier','mayor'];
-const BF_SUPER='imadaehn@gmail.com';
-function bfIsSuper(){return !!bfUser && String(bfUser.email||'').toLowerCase()===BF_SUPER;}
-function bfCanDel(){
-  if(!bfUser)return false;
-  if(bfIsSuper())return true;
-  return !!(bfUser.user_metadata&&bfUser.user_metadata.sandouk_delete===true);
-}
-function bfCanEdit(){
-  if(!bfUser)return false;
-  if(bfCanDel())return true;
-  const md=bfUser.user_metadata||{};
-  if(md.sandouk_edit===true)return true;
-  const role=String(md.role||'').toLowerCase();
-  return role==='finance' || role==='mayor' || role==='admin';
-}
+// Permissions come from the server (user_roles → role_permissions →
+// user_permissions, resolved in wadi-perms.js). user_metadata is not consulted:
+// a signed-in user can rewrite their own metadata from the browser console.
+function bfIsSuper(){return !!bfUser && WadiPerms.isSuper();}
+function bfCanDel(){return !!bfUser && WadiPerms.can('sandouk_delete');}
+function bfCanEdit(){return !!bfUser && WadiPerms.can('sandouk_edit');}
+function bfCanAdd(){return !!bfUser && WadiPerms.can('sandouk_add');}
+function bfCanSign(){return !!bfUser && WadiPerms.can('sandouk_sign');}
 function bfSigs(e){
   const s=(e.signatures&&typeof e.signatures==='object')?e.signatures:{};
   if(e.signature&&!(s.person&&s.person.img))return Object.assign({person:{img:e.signature,at:e.signed_at}},s);
@@ -531,7 +550,7 @@ function bfSigs(e){
 }
 function bfSigCount(e){const s=bfSigs(e);return BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).length;}
 function bfSignRoleLabel(e,role){
-  if(role==='person')return e.entry_type==='income'?'الدافع':'المستفيد';
+  if(role==='person')return e.entry_type==='income'?'المكلف':'المستفيد';
   if(role==='cashier')return 'أمين الصندوق';
   return 'رئيس البلدية';
 }
@@ -552,6 +571,12 @@ function bfStart(user){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('bf-screen').style.display='flex';
   document.getElementById('bf-logo-img').src=BF_LOGO;
+  // an account that may look but not enter (رئيس البلدية, by the municipality's
+  // own rule) gets the ledger and the reports without the two entry forms
+  ['income','expense'].forEach(function(k){
+    const b=document.getElementById('bf-tab-'+k);
+    if(b) b.style.display = bfCanAdd() ? '' : 'none';
+  });
   if(!bfLoaded){bfLoaded=true;bfInitForms();bfLoad();}
   else{bfApplyLocks();}
 }
@@ -644,27 +669,50 @@ async function bfLoad(){
   // explicit is_wadi_citizen flag).
   const registry=(typeof window!=='undefined' && Array.isArray(window.__CONTACTS)) ? window.__CONTACTS : [];
   const bag=new Map();
-  const keyOf=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
+  // Keyed on each record's own id, not on the name. Keying on the name
+  // dropped the second of any two residents who share one, and the registry
+  // holds five such pairs — different people with different mothers, birth
+  // dates and registry ids, who happen to share a name. They share a
+  // household phone too, so name+phone would have hidden them just the same.
+  // All five were unpickable as a payer; now they are not.
+  const nameKey=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
+  const phoneKey=(ph)=>String(ph||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');
   registry.forEach(r=>{
     const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
     if(!name) return;
-    bag.set(keyOf(name),{
+    bag.set('reg:'+(r.id||name),{
       id:'reg:'+(r.id||name),
       name:name,
       phone:r.phone||'',
+      bdate:r.bdate||'',      // tells namesakes apart in the picker
       is_wadi:true // registry entries are the wadi el sit citizen directory
     });
   });
   (pb.data||[]).forEach(r=>{
     const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
     if(!name) return;
-    bag.set(keyOf(name),{
+    bag.set('db:'+r.id,{
       id:r.id,
       name:name,
       phone:r.phone||'',
+      bdate:'',
       is_wadi:!!r.is_wadi_citizen
     });
   });
+  // A directory row supersedes its registry counterpart — but only when that
+  // counterpart is unambiguous. Where a name+phone belongs to more than one
+  // resident, both are kept rather than guessing which was edited.
+  (function(){
+    const regByNP={};
+    bag.forEach((v,k)=>{ if(String(k).indexOf('reg:')===0){
+      const np=nameKey(v.name)+'|'+phoneKey(v.phone);
+      (regByNP[np]=regByNP[np]||[]).push(k);
+    }});
+    bag.forEach((v,k)=>{ if(String(k).indexOf('db:')===0){
+      const hits=regByNP[nameKey(v.name)+'|'+phoneKey(v.phone)];
+      if(hits&&hits.length===1) bag.delete(hits[0]);
+    }});
+  })();
   bfPhonebookEntries=Array.from(bag.values());
   bfRefresh();
   bfViewsInit();
@@ -684,7 +732,7 @@ function bfKPIs(rowsArg){
   document.getElementById('bf-k-bal').innerHTML=two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.');
   document.getElementById('bf-k-inc').innerHTML=two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.');
   document.getElementById('bf-k-exp').innerHTML=two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.');
-  document.getElementById('bf-k-cnt').textContent=rows.length;
+  document.getElementById('bf-k-cnt').textContent=bfFmt(rows.length);
   const filtered=(rows!==bfEntries)&&(rows.length!==bfEntries.length);
   ['bf-k-bal','bf-k-inc','bf-k-exp','bf-k-cnt'].forEach(id=>{
     const el=document.getElementById(id); if(!el)return;
@@ -719,7 +767,7 @@ function bfDatalists(){
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Custom typeahead picker for the الدافع/الجهة & المدفوع له/الجهة inputs.
+// Custom typeahead picker for the المكلف/الجهة & المدفوع له/الجهة inputs.
 // Filters bfPhonebookEntries by substring on every keystroke, ranks matches
 // with prefix-first, offers an inline "➕ إضافة جديد" row when there is no
 // exact match — clicking that opens bfShowAddPhonebookModal which asks for
@@ -775,7 +823,11 @@ function bfMakePicker(inputId){
     const rows=matches.map((r,i)=>{
       const wadi=r.is_wadi?'<span class="bf-pk-badge">🏡 من وادي الست</span>':'';
       const phone=r.phone?'<span class="bf-pk-sub">📞 '+r.phone.replace(/</g,'&lt;')+'</span>':'';
-      return '<div class="bf-pk-opt" data-idx="'+i+'"><div style="flex:1;min-width:0"><div class="bf-pk-nm">'+r.name.replace(/</g,'&lt;')+'</div>'+phone+'</div>'+wadi+'</div>';
+      // two residents can share a name and a household line — show the birth
+      // date on those so they can be told apart
+      const shared=matches.filter(m=>bfNorm(m.name)===bfNorm(r.name)).length>1;
+      const born=(shared&&r.bdate)?'<span class="bf-pk-sub">🎂 '+String(r.bdate).replace(/</g,'&lt;')+'</span>':'';
+      return '<div class="bf-pk-opt" data-idx="'+i+'"><div style="flex:1;min-width:0"><div class="bf-pk-nm">'+r.name.replace(/</g,'&lt;')+'</div>'+phone+born+'</div>'+wadi+'</div>';
     }).join('');
     let html='';
     if(rows) html+=rows;
@@ -894,6 +946,7 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
     if(t) t.value=name;
     ov.classList.remove('on');
     toast('✓ تمت الإضافة إلى الدليل'+(wadi?' (مواطن من وادي الست)':''));
+    bfAudit('phonebook_add',name+(phoneNorm?(' — '+phoneNorm):' — بلا رقم')+(wadi?' — مواطن من وادي الست':''));
     await bfLoad();
   };
   ov.classList.add('on');
@@ -901,7 +954,12 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
 }
 const BF_TYPE_LABEL={expense:'<span class="bf-badge exp">مصروف</span>',income:'<span class="bf-badge inc">مقبوضات</span>',opening:'<span class="bf-badge opn">رصيد افتتاحي</span>'};
 function bfShowTab(t){
-  ['ledger','income','expense','reports'].forEach(x=>{
+  if((t==='income'||t==='expense')&&!bfCanAdd()){
+    toast('🚫 هذا الحساب يطّلع على الصندوق ولا يُدخل سندات','err');
+    return;
+  }
+  if(t==='audit')bfLoadAudit();
+  ['ledger','income','expense','reports','audit'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
@@ -926,9 +984,9 @@ const BF_COLS=[
   {key:'handled_by',label:'المستلم/المسلّم',filter:'text',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
-  {key:'manual_receipt_no',label:'رقم الإيصال (يدوي)',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
-  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا وصل';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
-  {key:'wassel_date',label:'تاريخ الوصل',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
+  {key:'manual_receipt_no',label:'رقم الإيصال اليدوي',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
+  {key:'wassel_number',label:'رقم الإيصال',filter:'text',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا إيصال';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا إيصال</span>')+'</td>';}},
+  {key:'wassel_date',label:'تاريخ الإيصال',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
   {key:'stamp_value',label:'قيمة الطوابع',filter:'text',num:true,sortVal:e=>Number(e.stamp_value)||0,val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
@@ -997,7 +1055,7 @@ const BF_DIGIT_MAP={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'
 function bfNormDigits(v){return String(v==null?'':v).replace(/[٠-٩۰-۹]/g,d=>BF_DIGIT_MAP[d]||d);}
 function bfNormTxt(v){return bfNormDigits(v).replace(/\s+/g,' ').trim().toLowerCase();}
 // Trailing number of a serial ("Q-2026-014" → 14, "١٢" → 12) — used by the
-// من/إلى range filters for both السند and رقم الوصل.
+// من/إلى range filters for both السند and رقم الإيصال.
 function bfTrailNum(v){
   const m=bfNormDigits(v).match(/(\d+)\s*$/);
   return m?parseInt(m[1],10):null;
@@ -1268,6 +1326,7 @@ async function bfViewSaveNew(){
   if(error){toast('⚠️ '+error.message,'err');return;}
   const nv=(data&&data[0]); if(nv){bfViews.push(nv);bfCurrentViewId=nv.id;bfViewsRender();document.getElementById('bf-view-select').value=nv.id;}
   toast('✓ تم حفظ العرض: '+name);
+  bfAudit('view_save','عرض جديد: '+name.trim());
 }
 async function bfViewSaveOver(){
   if(!bfCurrentViewId){toast('⚠️ لا يوجد عرض محدد — استخدم "حفظ كعرض جديد"','err');return;}
@@ -1276,6 +1335,7 @@ async function bfViewSaveOver(){
   if(error){toast('⚠️ '+error.message,'err');return;}
   const nv=(data&&data[0]); if(nv){const i=bfViews.findIndex(v=>v.id===nv.id); if(i>=0)bfViews[i]=nv;}
   toast('✓ تم تحديث العرض');
+  bfAudit('view_save','تحديث العرض: '+((bfViews.find(v=>v.id===bfCurrentViewId)||{}).name||''));
 }
 async function bfViewRename(){
   if(!bfCurrentViewId){toast('⚠️ اختر عرضاً أولاً','err');return;}
@@ -1297,6 +1357,7 @@ async function bfViewDelete(){
   bfCurrentViewId='';
   bfViewsRender();
   toast('✓ تم الحذف');
+  bfAudit('view_delete','حذف العرض: '+v.name);
 }
 function bfViewReset(silent){
   ['q','type','cat','cur','pay','from','to','sfrom','sto','wfrom','wto'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
@@ -1321,16 +1382,36 @@ async function bfDel(id){
 function bfNextNo(type,dateStr){
   const y=(dateStr||bfToday()).slice(0,4);
   const pre=(type==='income'?'Q':'S')+'-'+y+'-';
-  let max=0;
+  // Two numbering series existed side by side: the municipality's paper
+  // receipt book (plain numbers — income runs 472..1350) and a Q-/S- series
+  // this function started from 001, which only ever looked at its own
+  // prefix. An auditor comparing the app to the book found two sets of
+  // numbers. Carry on whichever series this entry type already uses.
+  let maxPlain=0, sawPlain=false, maxPrefixed=0;
   bfEntries.forEach(e=>{
-    if(e.receipt_no&&e.receipt_no.indexOf(pre)===0){
-      const n=parseInt(e.receipt_no.slice(pre.length),10);
-      if(n>max)max=n;
+    if(e.entry_type!==type)return;
+    const r=String(e.receipt_no||'').trim();
+    if(/^\d+$/.test(r)){
+      sawPlain=true;
+      const n=parseInt(r,10); if(n>maxPlain)maxPlain=n;
+    }else if(r.indexOf(pre)===0){
+      const n=parseInt(r.slice(pre.length),10); if(n>maxPrefixed)maxPrefixed=n;
     }
   });
-  return pre+String(max+1).padStart(3,'0');
+  if(sawPlain)return String(maxPlain+1);
+  return pre+String(maxPrefixed+1).padStart(3,'0');
 }
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let bfSave__busy=false;
 async function bfSave(type){
+  if(bfSave__busy)return;
+  bfSave__busy=true;
+  try{ return await bfSave__run(type); }
+  finally{ bfSave__busy=false; }
+}
+async function bfSave__run(type){
   const p=type==='income'?'i':'e';
   const superOn=bfIsSuper();
   // ✳️ For non-super users: entry_date is ALWAYS today and receipt_no is ALWAYS
@@ -1408,7 +1489,7 @@ function bfRenderReports(){
   if(tot){
     tot.innerHTML=stEntries.length
       ? '<div class="bf-kpi" style="flex:1;min-width:150px;border-top-color:#c9a227"><div class="v" style="color:#8a6d1a">'+bfSumTxt(stTot)+'</div><div class="l">إجمالي قيمة الطوابع</div></div>'
-        +'<div class="bf-kpi" style="flex:1;min-width:150px"><div class="v" style="color:#0f4d82">'+stTot.n+'</div><div class="l">عدد السندات ذات طوابع</div></div>'
+        +'<div class="bf-kpi" style="flex:1;min-width:150px"><div class="v" style="color:#0f4d82">'+bfFmt(stTot.n)+'</div><div class="l">عدد السندات ذات طوابع</div></div>'
       : '<div style="font-size:12.5px;color:#8a95a3">لا توجد سندات مسجّل عليها قيمة طوابع بعد</div>';
   }
   const body=document.getElementById('bf-rep-stamps');
@@ -1452,7 +1533,7 @@ function bfKpiClick(kind){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,رقم الوصل,تاريخ الوصل,رقم الإيصال (يدوي),النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
+  const lines=['التاريخ,رقم السند,رقم الإيصال,تاريخ الإيصال,رقم الإيصال اليدوي,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
@@ -1464,6 +1545,144 @@ function bfExportCSV(){
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
+  bfAudit('export_csv','تصدير سجل الحركات ('+bfEntries.length+' حركة)');
+}
+
+// ═══════════ 📜 AUDIT LOG (سجل العمليات) ═══════════
+// Rows come from public.baladieh_finance_audit: a trigger on baladieh_finance
+// writes every create/update/void/unvoid/sign/delete (source 'db'), the seeded
+// history of entries that predate the trigger carries source 'seed', and the
+// actions below that leave no DB trace — exporting, sharing, printing — are
+// logged from here with source 'ui'. RLS lets clients append 'ui' rows only,
+// and nothing may update or delete the log.
+let bfAuditRows=[], bfAuditLoaded=false;
+const BF_ACT_AR={create:'➕ إضافة سند',update:'✏️ تعديل',void:'⛔ إلغاء',unvoid:'↩️ تراجع عن الإلغاء',
+  sign:'✍️ توقيع',delete:'🗑️ حذف',export_pdf:'📄 تصدير تقرير PDF',export_csv:'⬇️ تصدير CSV',
+  share_text:'📤 مشاركة نص',share_file:'📤 مشاركة ملف',copy_text:'📋 نسخ النص',print:'🖨️ طباعة',
+  receipt_pdf:'🧾 تصدير سند PDF',phonebook_add:'👤 إضافة اسم إلى الدليل',view_save:'👁️ حفظ عرض',view_delete:'👁️ حذف عرض'};
+const BF_FIELD_AR={entry_date:'التاريخ',receipt_no:'رقم السند',wassel_number:'رقم الإيصال',wassel_date:'تاريخ الإيصال',
+  manual_receipt_no:'رقم الإيصال',entry_type:'النوع',category:'الفئة',payment_method:'طريقة الدفع',
+  description:'البيان',person:'الجهة',handled_by:'المستلم/المسلّم',amount:'المبلغ',currency:'العملة',
+  stamp_value:'قيمة الطوابع',karar_number:'رقم القرار',property_number:'رقم العقار',notes:'ملاحظات',
+  voided:'ملغى',void_reason:'سبب الإلغاء',voided_at:'تاريخ الإلغاء',voided_by:'أُلغي بواسطة',
+  documents:'المرفقات',signatures:'التواقيع',signature:'التوقيع',signed_at:'تاريخ التوقيع',created_by:'أُدخل بواسطة'};
+function bfAuditActLabel(a){return BF_ACT_AR[a]||a||'';}
+function bfAuditVal(v,key){
+  if(v===null||v===undefined||v==='')return '—';
+  if(v===true)return 'نعم'; if(v===false)return 'لا';
+  if((key==='amount'||key==='stamp_value')&&!isNaN(Number(v)))return bfFmt(Number(v));
+  const s=String(v);
+  return s.length>60?s.slice(0,60)+'…':s;
+}
+// Append a UI action to the log. Never blocks and never surfaces its own errors.
+async function bfAudit(action,detail,entry){
+  try{
+    if(!bfUser)return;
+    await sb.from('baladieh_finance_audit').insert({
+      entry_id:(entry&&entry.id&&String(entry.id).indexOf('reg:')<0)?entry.id:null,
+      receipt_no:entry?entry.receipt_no:null,
+      entry_date:entry?entry.entry_date:null,
+      action:action, source:'ui', detail:detail||null,
+      actor_email:bfUser.email||null, actor_id:bfUser.id||null
+    });
+    if(bfAuditLoaded)bfAuditLoaded=false;   // next visit to the tab refetches
+  }catch(_e){}
+}
+async function bfLoadAudit(force){
+  const tb=document.getElementById('bf-a-rows'); if(!tb)return;
+  if(bfAuditLoaded&&!force){bfRenderAudit();return;}
+  tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">⏳ جاري تحميل السجل…</td></tr>';
+  const{data,error}=await sb.from('baladieh_finance_audit').select('*').order('created_at',{ascending:false}).limit(3000);
+  if(error){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#c22">⚠️ '+error.message+'</td></tr>';return;}
+  bfAuditRows=data||[]; bfAuditLoaded=true;
+  const users=[...new Set(bfAuditRows.map(r=>r.actor_email).filter(Boolean))].sort();
+  const acts=[...new Set(bfAuditRows.map(r=>r.action).filter(Boolean))].sort();
+  const fill=(id,vals,lbl)=>{const sel=document.getElementById(id);if(!sel)return;const cur=sel.value;
+    sel.innerHTML='<option value="">— الكل —</option>'+vals.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">'+(lbl?lbl(v):v)+'</option>').join('');
+    sel.value=cur;};
+  fill('bf-a-user',users); fill('bf-a-act',acts,bfAuditActLabel);
+  bfRenderAudit();
+}
+function bfAuditFiltered(){
+  const from=(document.getElementById('bf-a-from')||{}).value||'',
+        to=(document.getElementById('bf-a-to')||{}).value||'',
+        u=(document.getElementById('bf-a-user')||{}).value||'',
+        a=(document.getElementById('bf-a-act')||{}).value||'',
+        q=bfNormTxt((document.getElementById('bf-a-q')||{}).value||'');
+  return bfAuditRows.filter(r=>{
+    const d=String(r.created_at||'').slice(0,10);
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    if(u&&r.actor_email!==u)return false;
+    if(a&&r.action!==a)return false;
+    if(q){
+      const hay=bfNormTxt([r.receipt_no,r.actor_email,bfAuditActLabel(r.action),r.detail,
+        JSON.stringify(r.changes||{}),JSON.stringify(r.snapshot||{})].join(' '));
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+}
+function bfAuditDetailHTML(r){
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const ch=r.changes||{}, sn=r.snapshot||{};
+  const bits=[];
+  const keys=Object.keys(ch);
+  if(keys.length){
+    keys.forEach(k=>{
+      const c=ch[k]||{};
+      const lbl=BF_FIELD_AR[k]||k;
+      if(c.changed)bits.push('<span style="color:#0f4d82;font-weight:700">'+esc(lbl)+'</span>: تم التعديل');
+      else bits.push('<span style="color:#0f4d82;font-weight:700">'+esc(lbl)+'</span>: '
+        +'<s style="color:#a83232">'+esc(bfAuditVal(c.from,k))+'</s> ← <b>'+esc(bfAuditVal(c.to,k))+'</b>');
+    });
+  }else if(r.action==='create'||r.action==='delete'){
+    const t={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'}[sn.entry_type]||sn.entry_type||'';
+    const amt=(sn.amount!=null)?bfMoney(sn.amount,sn.currency):'';
+    bits.push([t,amt,sn.category,sn.person,sn.description].filter(Boolean).map(esc).join(' · '));
+  }
+  if(r.detail)bits.push('<span style="color:#6b7280">'+esc(r.detail)+'</span>');
+  return bits.join('<br>')||'—';
+}
+function bfRenderAudit(){
+  const tb=document.getElementById('bf-a-rows'); if(!tb)return;
+  const rows=bfAuditFiltered();
+  const cnt=document.getElementById('bf-a-count');
+  if(cnt)cnt.textContent='عدد العمليات: '+bfFmt(rows.length)+(bfAuditRows.length!==rows.length?(' من أصل '+bfFmt(bfAuditRows.length)):'');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">لا توجد عمليات مطابقة</td></tr>';return;}
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const COLOR={create:'#1f7a45',update:'#8a6d1a',void:'#a83232',unvoid:'#8a6d1a',delete:'#a83232',sign:'#0f4d82'};
+  tb.innerHTML=rows.map(r=>{
+    const d=new Date(r.created_at);
+    const when=isNaN(d)?esc(r.created_at):(d.toLocaleDateString('ar-LB')+' — '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'}));
+    const src=r.source==='seed'?' <span style="font-size:10px;color:#8a8f9c">(سجل سابق)</span>':'';
+    return '<tr style="cursor:default">'
+      +'<td style="white-space:nowrap;font-size:12px">'+when+src+'</td>'
+      +'<td style="font-size:12px">'+esc(r.actor_email||'—')+'</td>'
+      +'<td style="white-space:nowrap;font-weight:800;font-size:12px;color:'+(COLOR[r.action]||'#0f4d82')+'">'+esc(bfAuditActLabel(r.action))+'</td>'
+      +'<td style="white-space:nowrap;font-size:12px">'+esc(r.receipt_no||'—')+'</td>'
+      +'<td style="white-space:normal;font-size:12px;line-height:1.7">'+bfAuditDetailHTML(r)+'</td></tr>';
+  }).join('');
+}
+function bfAuditCSV(){
+  const rows=bfAuditFiltered();
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const plain=r=>{
+    const ch=r.changes||{},sn=r.snapshot||{},out=[];
+    Object.keys(ch).forEach(k=>{const c=ch[k]||{};const lbl=BF_FIELD_AR[k]||k;
+      out.push(c.changed?(lbl+': تم التعديل'):(lbl+': '+bfAuditVal(c.from,k)+' ← '+bfAuditVal(c.to,k)));});
+    if(!out.length&&(r.action==='create'||r.action==='delete'))
+      out.push([({income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'})[sn.entry_type]||sn.entry_type,
+        sn.amount!=null?bfMoney(sn.amount,sn.currency):'',sn.category,sn.person,sn.description].filter(Boolean).join(' · '));
+    if(r.detail)out.push(r.detail);
+    return out.join(' | ');
+  };
+  const lines=['التاريخ والوقت,المستخدم,العملية,رقم السند,تاريخ السند,المصدر,التفاصيل'];
+  rows.forEach(r=>lines.push([q(r.created_at),q(r.actor_email),q(bfAuditActLabel(r.action)),q(r.receipt_no),
+    q(r.entry_date),q(r.source),q(plain(r))].join(',')));
+  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk-audit-'+bfToday()+'.csv';a.click();URL.revokeObjectURL(a.href);
+  bfAudit('export_csv','تصدير سجل العمليات ('+rows.length+' عملية)');
 }
 
 // ── 🧾 RECEIPT (سند قبض / سند صرف — بشعار البلدية) ──
@@ -1504,14 +1723,14 @@ function bfReceiptHTML(e){
     +(e.voided?'<div style="background:#fdecec;border:1.5px solid #c22;color:#a11;border-radius:10px;padding:7px 12px;margin:8px 0 2px;font-size:12px;font-weight:700;position:relative">⛔ سند ملغى'+(e.voided_at?' بتاريخ '+new Date(e.voided_at).toLocaleDateString('ar-LB'):'')+(e.void_reason?'<br>السبب: '+e.void_reason:'')+'</div>':'')
     +'<div style="position:relative">'
       +row('البيان',e.description)
-      +row(isIn?'وصلنا من السيد/ة':'دُفع إلى السيد/ة',e.person)
+      +row(isIn?'وصلنا من السيد/السيدة':'دُفع إلى السيد/السيدة',e.person)
       +row(isIn?'المستلم':'المسلّم',e.handled_by)
       +row('طريقة الدفع',bfPay(e))
-      +row('رقم القرار',e.karar_number)
-      +row('رقم العقار',e.property_number)
-      +row('رقم الإيصال (يدوي)',e.manual_receipt_no)
-      +row('رقم الوصل',e.wassel_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_number+'</span>':'<span style="color:#c22;font-weight:800">— بلا وصل —</span>')
-      +row('تاريخ الوصل',e.wassel_date?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>':'')
+      +row('رقم القرار',(e.karar_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.karar_number+'</span>':''))
+      +row('رقم العقار',(e.property_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.property_number+'</span>':''))
+      +row('رقم الإيصال اليدوي',(e.manual_receipt_no?'<span style="direction:ltr;unicode-bidi:embed">'+e.manual_receipt_no+'</span>':''))
+      +row('رقم الإيصال',e.wassel_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_number+'</span>':'<span style="color:#c22;font-weight:800">— بلا إيصال —</span>')
+      +row('تاريخ الإيصال',e.wassel_date?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>':'')
       +row('ملاحظات',e.notes)
       +((e.documents&&e.documents.length)?row('المرفقات',e.documents.length+' مستند — '+e.documents.map(d=>d.name).join('، ')):'')
     +'</div>'
@@ -1533,7 +1752,7 @@ function bfReceiptHTML(e){
       +'</div>';
     })()
     +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
-      +sigBlock(isIn?'توقيع الدافع':'توقيع المستفيد','person')
+      +sigBlock(isIn?'توقيع المكلف':'توقيع المستفيد','person')
       +sigBlock('أمين الصندوق','cashier')
       +sigBlock('رئيس البلدية','mayor')
     +'</div>'
@@ -1564,7 +1783,7 @@ function bfOpenReceiptShare(e){
   document.getElementById('bf-share-title').textContent='🧾 '+bfKind(e)+' — '+(e.receipt_no||'');
   const sb2=document.getElementById('bf-share-sign');
   sb2.style.display='';
-  sb2.querySelector('span').textContent=e.signature?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع الدافع على الشاشة':'✍️ توقيع المستلم على الشاشة');
+  sb2.querySelector('span').textContent=bfSigCount(e)?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع المكلف على الشاشة':'✍️ توقيع المستلم على الشاشة');
   document.getElementById('bf-share-ov').style.display='flex';
 }
 function bfShareLast(){
@@ -1582,6 +1801,7 @@ function bfCloseSendModal(){document.getElementById('bf-share-ov').style.display
 // ── PRINT ──
 function bfPrint(){
   bfCloseSendModal();
+  bfAudit('print',bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق',bfShareCtx);
   const inner=bfShareCtx?bfReceiptHTML(bfShareCtx):bfBuildReportEl().innerHTML;
   const w=window.open('','_blank');
   if(!w){toast('⚠️ يرجى السماح بالنوافذ المنبثقة للطباعة','err');return;}
@@ -1656,7 +1876,7 @@ function bfBuildReportEl(){
   const dmy=d=>d?d.split('-').reverse().join('/'):'—';
 
   // ── one row per movement, remembering how tall it is so pages can be cut cleanly ──
-  const LEDH=['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'];
+  const LEDH=['التاريخ','السند','رقم الإيصال','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'];
   const LEDW=[66,62,62,58,100,48,0,110,118,118];
   const built=led.map((e,i)=>{
     const cDesc=wrapL(e.description,42), cCat=wrapL(e.category,16), cPer=wrapL(e.person,15),
@@ -1665,8 +1885,8 @@ function bfBuildReportEl(){
     const lines=Math.max(1,cDesc.length+cVoid,cCat.length,cPer.length,cType.length,cPay.length);
     const html='<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
       +td(num(dmy(e.entry_date)))
-      +td(e.receipt_no?num(esc(e.receipt_no)):'')
-      +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا وصل</span>')
+      +td(e.receipt_no?num(esc(e.receipt_no)):'','direction:ltr;unicode-bidi:embed;')
+      +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا إيصال</span>','direction:ltr;unicode-bidi:embed;')
       +td(cType.map(esc).join('<br>'))
       +td(cCat.map(esc).join('<br>'))+td(cPay.map(esc).join('<br>'))
       +td(cDesc.map(esc).join('<br>')+(e.voided?'<br><span style="color:#c22;font-weight:800">⛔ ملغى</span>'+(e.void_reason?'<br>'+wrap(e.void_reason,42):''):''),e.voided?'color:#c22':'')
@@ -1684,7 +1904,7 @@ function bfBuildReportEl(){
   });
   if(cur.length)pages.push(cur);
   const ledTot='<tr style="page-break-inside:avoid;background:#eef3fa;font-weight:800">'
-    +'<td colspan="8" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+led.length+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
+    +'<td colspan="8" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+bfFmt(led.length)+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
     +'<td colspan="2" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">'+num('الرصيد: '+totTxt(rbU,rbL))+'</td></tr>';
   const brk='page-break-before:always';
   const foot=(t)=>'<div style="font-size:10.5px;color:#8a8f9c;margin:2px 0 0;display:flex;justify-content:space-between">'
@@ -1705,7 +1925,7 @@ function bfBuildReportEl(){
     ['الرصيد الحالي',two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.'),'#0f4d82'],
     ['إجمالي المقبوضات',two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.'),'#1f7a45'],
     ['إجمالي المصروفات',two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.'),'#a83232'],
-    ['عدد الحركات',String(bfEntries.length),'#1a1a2e']
+    ['عدد الحركات',bfFmt(bfEntries.length),'#1a1a2e']
   ];
   const infoRow=(l,v)=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:#8a8f9c;font-weight:700">'+l+':</span><span style="font-weight:700">'+v+'</span></div>';
   el.innerHTML=
@@ -1722,8 +1942,8 @@ function bfBuildReportEl(){
     +'</div>'
     +'<div style="border:1px solid #e0e6ef;border-radius:10px;padding:10px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px 26px">'
     +infoRow('الفترة',dmy(dFrom)+' — '+dmy(dTo))
-    +infoRow('حركات هذا التقرير',String(led.length))
-    +infoRow('إجمالي حركات الصندوق',String(bfEntries.length))
+    +infoRow('حركات هذا التقرير',bfFmt(led.length))
+    +infoRow('إجمالي حركات الصندوق',bfFmt(bfEntries.length))
     +infoRow('مقبوضات الفترة',totTxt(tiU,tiL))
     +infoRow('مصروفات الفترة',totTxt(teU,teL))
     +infoRow('رصيد الفترة',totTxt(rbU,rbL))
@@ -1744,14 +1964,14 @@ function bfBuildReportEl(){
       const totalTxt=[sU?'$'+bfFmt(sU):'',sL?bfFmt(sL)+' ل.ل.':''].filter(Boolean).join(' + ')||'—';
       const rows=st.slice().sort((a,b)=>String(a.entry_date||'').localeCompare(String(b.entry_date||''))||seqNo(a.receipt_no)-seqNo(b.receipt_no)).map((e,i)=>'<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
         +td(num(dmy(e.entry_date)))
-        +td(e.receipt_no?num(esc(e.receipt_no)):'')
+        +td(e.receipt_no?num(esc(e.receipt_no)):'','direction:ltr;unicode-bidi:embed;')
         +td(wrap(TYPE_AR2[e.entry_type]||e.entry_type,9))
         +td(wrap(e.person,20))
         +td(wrap(e.description,54))
         +td(num(bfMoney(+e.stamp_value,e.currency)),'font-weight:800;color:#8a6d1a')
       +'</tr>').join('');
       return '<div style="'+brk+'">'
-        +secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+st.length)
+        +secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+bfFmt(st.length))
         +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows,[74,70,64,150,0,130])
         +'</div>';
     })()
@@ -1842,6 +2062,7 @@ async function bfExportPDF(){
       await html2pdf().set(bfFitForPdf(el,bfPdfOpts())).from(el).save();
     }finally{hold.remove();}
     toast('✓ تم إنشاء التقرير');
+    bfAudit('export_pdf','تقرير الصندوق ('+bfFiltered().length+' حركة)');
   }catch(e){toast('⚠️ فشل إنشاء PDF: '+e.message,'err');}
   btn.disabled=false;btn.textContent=lbl;
 }
@@ -1860,9 +2081,9 @@ function bfShareText(){
       +'الفئة: '+(e.category||'')+'\n'
       +'البيان: '+(e.description||'')+'\n'
       +((e.documents&&e.documents.length)?('المرفقات: '+e.documents.length+' مستند\n'):'')
-      +(e.person?((e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
+      +(e.person?((e.entry_type==='income'?'المكلف':'المستفيد')+': '+e.person+'\n'):'')
       +(e.handled_by?((e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'')
-      +(e.wassel_number?('رقم الوصل: '+e.wassel_number+(e.wassel_date?(' — '+e.wassel_date.split('-').reverse().join('/')):'')+'\n'):'⚠️ لا يوجد رقم وصل بعد\n')
+      +(e.wassel_number?('رقم الإيصال: '+e.wassel_number+(e.wassel_date?(' — '+e.wassel_date.split('-').reverse().join('/')):'')+'\n'):'⚠️ لا يوجد رقم إيصال بعد\n')
       +(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k));return L.length?('موقّع إلكترونياً ✓ ('+L.join('، ')+')\n'):'';})()
       +SEP;
   }
@@ -1888,7 +2109,7 @@ function bfShareText(){
     +'الرصيد الحالي: '+cmb(iU-eU,iL-eL)+'\n'
     +'إجمالي المقبوضات: '+cmb(iU,iL)+'\n'
     +'إجمالي المصروفات: '+cmb(eU,eL)+'\n'
-    +'عدد الحركات: '+bfEntries.length+'\n'
+    +'عدد الحركات: '+bfFmt(bfEntries.length)+'\n'
     +SEP+'\n'
     +catBlock('🟢 المقبوضات حسب الفئة',bfEntries.filter(e=>e.entry_type!=='expense'))
     +catBlock('🔴 المصروفات حسب الفئة',bfEntries.filter(e=>e.entry_type==='expense'));
@@ -1902,7 +2123,7 @@ function bfShareText(){
     if(stop)return;
     const d=e.entry_date?e.entry_date.split('-').reverse().join('/'):'';
     const w=String(e.wassel_number||'').trim();
-    const blk=(i+1)+') '+d+' · سند '+(e.receipt_no||'—')+' · '+(w?('وصل '+w):'بلا وصل')+' · '+(TYPE_AR[e.entry_type]||e.entry_type||'')+'\n'
+    const blk=(i+1)+') '+d+' · سند '+(e.receipt_no||'—')+' · '+(w?('إيصال '+w):'بلا إيصال')+' · '+(TYPE_AR[e.entry_type]||e.entry_type||'')+'\n'
       +'البيان: '+(e.description||'—')+(e.category?(' · الفئة: '+e.category):'')+'\n'
       +(e.person?('الجهة: '+e.person+' · '):'')+bfPay(e)+'\n'
       +'المبلغ: '+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)
@@ -1914,7 +2135,7 @@ function bfShareText(){
   });
   const rest=list.length-shown;
   return head
-    +'*📒 تفاصيل الحركات ('+list.length+')*\n'
+    +'*📒 تفاصيل الحركات ('+bfFmt(list.length)+')*\n'
     +SEP+'\n'
     +det
     +(rest?('… و'+rest+' حركة إضافية — راجع ملف التقرير PDF\n'+SEP):'');
@@ -1930,7 +2151,8 @@ function bfOpenWa(text){
     if(!w)location.href='https://wa.me/?text='+enc;
   }
 }
-function bfShareWaText(){bfCloseSendModal();bfOpenWa(bfShareText());}
+function bfShareWaText(){bfCloseSendModal();bfOpenWa(bfShareText());
+  bfAudit('share_text',bfShareCtx?('واتساب — '+bfKind(bfShareCtx)):'واتساب — تقرير الصندوق',bfShareCtx);}
 async function bfCopyText(){
   bfCloseSendModal();
   const t=bfShareText();
@@ -1940,6 +2162,7 @@ async function bfCopyText(){
     try{document.execCommand('copy');toast('✓ تم نسخ النص');}catch(_e){toast('⚠️ تعذّر النسخ','err');}
     ta.remove();
   }
+  bfAudit('copy_text',bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق',bfShareCtx);
 }
 async function bfShareFile(){
   bfCloseSendModal();
@@ -1957,6 +2180,7 @@ async function bfShareFile(){
     for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
     const file=new File([arr],bfPdfOpts().filename,{type:'application/pdf'});
     bfReadyFile=file;
+    bfAudit(bfShareCtx?'receipt_pdf':'share_file',(bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق')+' — '+file.name,bfShareCtx);
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{
         await navigator.share({files:[file],title:bfShareCtx?bfKind(bfShareCtx)+' — بلدية وادي الست':'تقرير صندوق البلدية'});
@@ -1995,10 +2219,10 @@ function bfDownloadReady(){
   toast('✓ تم تنزيل الملف');
 }
 
-// ── 📄 تسمية المرفقات برقم الوصل ──
-// المستند المرفق يجب أن يحمل رقم الوصل الذي أُدخِل يدوياً — لا اسم
-// الملف الآتي من الهاتف أو الماسح ("farid.jpg"). إن لم يُصدَر الوصل بعد
-// يُستخدم رقم السند مؤقتاً، ثم تُعاد التسمية تلقائياً فور إدخال رقم الوصل.
+// ── 📄 تسمية المرفقات برقم الإيصال ──
+// المستند المرفق يجب أن يحمل رقم الإيصال الذي أُدخِل يدوياً — لا اسم
+// الملف الآتي من الهاتف أو الماسح ("farid.jpg"). إن لم يُصدَر الإيصال بعد
+// يُستخدم رقم السند مؤقتاً، ثم تُعاد التسمية تلقائياً فور إدخال رقم الإيصال.
 function bfSlug(v){return bfNormDigits(v).trim().replace(/[\\\/:*?"<>|\s]+/g,'-').replace(/^-+|-+$/g,'');}
 // مفتاح التخزين يبقى ASCII خالصاً حتى لا ينكسر مسار الملف في Supabase Storage.
 function bfDocKey(n){const k=String(n||'').replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-{2,}/g,'-').replace(/^-+|-+$/g,'');return k||'doc';}
@@ -2010,13 +2234,13 @@ function bfDocBase(e){
   return rn?'sanad-'+rn:'doc';
 }
 function bfDocName(e,ext,i,total){return bfDocBase(e)+((total>1)?'-'+(i+1):'')+'.'+ext;}
-// رابط التنزيل يحمل الاسم النهائي حتى يُحفَظ الملف برقم الوصل لا باسمه الأصلي.
+// رابط التنزيل يحمل الاسم النهائي حتى يُحفَظ الملف برقم الإيصال لا باسمه الأصلي.
 function bfDocUrl(path,name){
   try{const{data}=sb.storage.from('sandouk-docs').getPublicUrl(path,{download:name});if(data&&data.publicUrl)return data.publicUrl;}catch(_e){}
   const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
   return pd.publicUrl;
 }
-// يُعيد تسمية كل المرفقات المُسمّاة آلياً بعد تغيّر رقم الوصل، فلا يضطرّ
+// يُعيد تسمية كل المرفقات المُسمّاة آلياً بعد تغيّر رقم الإيصال، فلا يضطرّ
 // المستخدم لتصحيحها واحداً واحداً.
 function bfRenameDocs(e,docs){
   const list=Array.isArray(docs)?docs.slice():[];
@@ -2029,7 +2253,7 @@ function bfRenameDocs(e,docs){
       wassel_number:(e&&e.wassel_number)||null,wassel_date:(e&&e.wassel_date)||null});
   });
 }
-// يُزامن أسماء مرفقات سند واحد مع رقم الوصل المحفوظ حالياً.
+// يُزامن أسماء مرفقات سند واحد مع رقم الإيصال المحفوظ حالياً.
 async function bfSyncDocNames(id){
   try{
     const{data:cur,error}=await sb.from('baladieh_finance').select('documents,receipt_no,wassel_number,wassel_date').eq('id',id).single();
@@ -2054,7 +2278,7 @@ async function bfUploadDocs(saved,p){
     const f=files[i];
     st.textContent='⏳ رفع الملف '+(i+1)+' من '+files.length+': '+f.name;
     const ext=bfDocExt(f.name);
-    // 📄 الاسم النهائي = رقم الوصل المُدخَل في شاشة الإدخال نفسها.
+    // 📄 الاسم النهائي = رقم الإيصال المُدخَل في شاشة الإدخال نفسها.
     const name=bfDocName(saved,ext,i,files.length);
     const path=saved.id+'/'+Date.now()+'_'+i+'_'+bfDocKey(name);
     const{error}=await sb.storage.from('sandouk-docs').upload(path,f);
@@ -2098,36 +2322,36 @@ function bfOpenCase(id){
     +dr('الفئة',e.category)
     +dr('طريقة الدفع',bfPay(e))
     +dr('البيان',e.description)
-    +dr(e.entry_type==='income'?'الدافع':'المستفيد',e.person)
+    +dr(e.entry_type==='income'?'المكلف':'المستفيد',e.person)
     +dr(e.entry_type==='income'?'المستلم':'المسلّم',e.handled_by)
     +dr('رقم القرار',e.karar_number)
     +dr('رقم العقار',e.property_number)
-    +dr('رقم الإيصال (يدوي)',e.manual_receipt_no)
+    +dr('رقم الإيصال اليدوي',e.manual_receipt_no)
     +(function(){
-      // 📄 Yellow الوصل box — anyone with edit rights can add/update the wassel
+      // 📄 Yellow الإيصال box — anyone with edit rights can add/update the wassel
       // number & date later (the wassel is often issued after the sanad).
       if(!bfCanEdit()){
-        return dr('رقم الوصل',e.wassel_number||'<span style="color:#c22">— بلا وصل —</span>')
-          +(e.wassel_date?dr('تاريخ الوصل','<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>'):'');
+        return dr('رقم الإيصال',e.wassel_number||'<span style="color:#c22">— بلا إيصال —</span>')
+          +(e.wassel_date?dr('تاريخ الإيصال','<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>'):'');
       }
       const wn=(e.wassel_number||'').replace(/"/g,'&quot;');
       const wd=e.wassel_date||'';
       return '<div style="background:#fff8e1;border:1.5px solid #f0c88a;border-radius:12px;padding:10px 12px;margin-top:10px">'
-        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:4px">📄 الوصل (يُضاف لاحقاً — منفصل عن السند)</div>'
+        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:4px">📄 الإيصال (يُضاف لاحقاً — منفصل عن السند)</div>'
         +'<div style="font-size:11.5px;color:#8a6d1a;margin-bottom:8px;line-height:1.55">'
-          +'يمكن أن يكون تاريخ الوصل قبل تاريخ السند (حتى لو بأسبوع أو أكثر) — التاريخ متاح بدون قيود. '
-          +'أدخل رقم الوصل يدوياً من الوصل الورقي، وارفق صورته أو ملفه أدناه؛ سيُحفظ في مرفقات السند بتسمية «الوصل — رقم …»'
+          +'يمكن أن يكون تاريخ الإيصال قبل تاريخ السند (حتى لو بأسبوع أو أكثر) — التاريخ متاح بدون قيود. '
+          +'أدخل رقم الإيصال يدوياً من الإيصال الورقي، وارفق صورته أو ملفه أدناه؛ سيُحفظ في مرفقات السند بتسمية «الإيصال — رقم …»'
         +'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الوصل (يُدخل يدوياً)</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>'
-        +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الوصل</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
+        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الإيصال (يُدخل يدوياً)</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>'
+        +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الإيصال</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
         +'</div>'
-        +'<div style="margin-top:8px"><label class="fl">📎 مستند الوصل (اختياري — صورة أو PDF)</label>'
+        +'<div style="margin-top:8px"><label class="fl">📎 مستند الإيصال (اختياري — صورة أو PDF)</label>'
           +'<input type="file" class="fi" id="bf-case-wassel-file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">'
-          +'<div style="font-size:11.5px;color:#8a6d1a;font-weight:700;margin-top:4px">📄 تُسمّى المرفقات تلقائياً برقم الوصل عند الحفظ</div></div>'
+          +'<div style="font-size:11.5px;color:#8a6d1a;font-weight:700;margin-top:4px">📄 تُسمّى المرفقات تلقائياً برقم الإيصال عند الحفظ</div></div>'
         +'<div id="bf-case-wassel-upl" style="display:none;font-size:12px;color:#8a6d1a;font-weight:700;margin-top:4px"></div>'
         +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-        +'<button class="bf-share-btn" id="bf-case-wassel-save" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الوصل</button>'
+        +'<button class="bf-share-btn" id="bf-case-wassel-save" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الإيصال</button>'
         +((e.wassel_number||e.wassel_date)?'<button class="bf-share-btn" style="flex:0 0 auto;color:#a83232;border-color:#eec2c2;margin-bottom:0" onclick="bfClearWasselFromCase()">🗑️ مسح</button>':'')
         +'</div>'
         +'<div id="bf-case-wassel-err" style="color:#a83232;font-size:12px;min-height:14px;margin-top:4px"></div>'
@@ -2150,7 +2374,7 @@ function bfOpenCase(id){
 function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none';bfCaseId=null;}
 async function bfSaveWasselFromCase(){
   if(!bfCaseId)return;
-  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية إضافة الوصل','err');return;}
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية إضافة الإيصال','err');return;}
   const wn=(document.getElementById('bf-case-wassel-no').value||'').trim();
   const wd=document.getElementById('bf-case-wassel-date').value||null;
   const err=document.getElementById('bf-case-wassel-err');
@@ -2175,7 +2399,7 @@ async function bfSaveWasselFromCase(){
       const ctx={wassel_number:wn||null,wassel_date:wd,receipt_no:(cur&&cur.receipt_no)||null};
       for(let i=0;i<files.length;i++){
         const f=files[i];
-        if(upl){upl.style.display='block';upl.textContent='⏳ رفع مستند الوصل '+(i+1)+' من '+files.length+': '+f.name;}
+        if(upl){upl.style.display='block';upl.textContent='⏳ رفع مستند الإيصال '+(i+1)+' من '+files.length+': '+f.name;}
         const ext=bfDocExt(f.name);
         const name=bfDocBase(ctx)+'.'+ext;
         const path=bfCaseId+'/'+Date.now()+'_'+i+'_'+bfDocKey(name);
@@ -2186,9 +2410,9 @@ async function bfSaveWasselFromCase(){
       const{error:eUpd}=await sb.from('baladieh_finance').update({documents:docs}).eq('id',bfCaseId);
       if(eUpd){if(err)err.textContent='⚠️ '+eUpd.message;return;}
     }
-    // 🔄 تُعاد تسمية كل مرفقات السند برقم الوصل الجديد — بلا تصحيح يدوي.
+    // 🔄 تُعاد تسمية كل مرفقات السند برقم الإيصال الجديد — بلا تصحيح يدوي.
     await bfSyncDocNames(bfCaseId);
-    toast('✓ تم حفظ الوصل'+(files.length?' مع '+files.length+' مستند':''));
+    toast('✓ تم حفظ الإيصال'+(files.length?' مع '+files.length+' مستند':''));
   } finally {
     if(upl)upl.style.display='none';
     if(btn)btn.disabled=false;
@@ -2200,11 +2424,11 @@ async function bfSaveWasselFromCase(){
 }
 async function bfClearWasselFromCase(){
   if(!bfCaseId)return;
-  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل الوصل','err');return;}
-  if(!confirm('مسح رقم الوصل وتاريخه من هذا السند؟'))return;
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل الإيصال','err');return;}
+  if(!confirm('مسح رقم الإيصال وتاريخه من هذا السند؟'))return;
   const{error}=await sb.from('baladieh_finance').update({wassel_number:null,wassel_date:null}).eq('id',bfCaseId);
   if(error){toast('⚠️ '+error.message,'err');return;}
-  // تُعاد تسمية المرفقات إلى رقم السند بعد مسح رقم الوصل.
+  // تُعاد تسمية المرفقات إلى رقم السند بعد مسح رقم الإيصال.
   await bfSyncDocNames(bfCaseId);
   toast('✓ تم المسح');
   const id=bfCaseId;
@@ -2270,7 +2494,17 @@ function bfOpenEdit(id){
   document.getElementById('bf-edit-ov').style.display='flex';
 }
 function bfCloseEdit(){document.getElementById('bf-edit-ov').style.display='none';bfEditId=null;}
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let bfEditSave__busy=false;
 async function bfEditSave(){
+  if(bfEditSave__busy)return;
+  bfEditSave__busy=true;
+  try{ return await bfEditSave__run(); }
+  finally{ bfEditSave__busy=false; }
+}
+async function bfEditSave__run(){
   if(!bfEditId)return;
   if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل السندات','err');return;}
   const err=document.getElementById('bf-ed-err');err.textContent='';
@@ -2304,7 +2538,7 @@ async function bfEditSave(){
   }
   const{error}=await sb.from('baladieh_finance').update(patch).eq('id',bfEditId).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
-  // 🔄 إن تغيّر رقم الوصل هنا تُعاد تسمية المرفقات تلقائياً كذلك.
+  // 🔄 إن تغيّر رقم الإيصال هنا تُعاد تسمية المرفقات تلقائياً كذلك.
   await bfSyncDocNames(bfEditId);
   toast('✓ تم حفظ التعديلات');
   bfCloseEdit();
@@ -2351,6 +2585,11 @@ async function bfCaseUnvoid(){
 
 // ── ✍️ SIGNATURE PAD ──
 let bfSignTarget=null, bfSignCtx2=null, bfSignDrawn=false, bfSignRole='person', bfSignedAny=false;
+// Ink laid down on the pad, in px of stroke. A finger brushing the canvas
+// produces a few px; the shortest real signature produces dozens. Below
+// this the pad is treated as blank, so closing the modal saves nothing.
+const BF_SIGN_MIN_INK=24;
+let bfSignInk=0;
 function bfSignFromShare(){const e=bfShareCtx;bfCloseSendModal();if(e&&e.id)bfOpenSign(e.id);}
 function bfCaseSign(){const id=bfCaseId;bfCloseCase();if(id)bfOpenSign(id);}
 function bfOpenSign(id){
@@ -2375,6 +2614,39 @@ function bfSignRenderRoles(){
       +(on?'background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:1.5px solid #0f4d82;':'background:#fff;color:#444;border:1.5px solid #dfe5ee;')
       +'">'+bfSignRoleLabel(e,k)+(signed?' ✓':'')+(name?'<br><span style="font-weight:700;font-size:10.5px;opacity:.8">'+name+'</span>':'')+'</button>';
   }).join('');
+  const del=document.getElementById('bf-sign-del');
+  if(del){
+    const cur=s[bfSignRole];
+    del.style.display=(cur&&cur.img&&bfCanSign())?'':'none';
+  }
+}
+
+// Remove a signature that is already stored. Without this a signature saved
+// by mistake can never be taken off the sanad, and the row keeps showing ✍️.
+async function bfSignRemove(){
+  const e=bfSignTarget; if(!e)return;
+  if(!bfCanSign()){toast('🚫 لا تملك صلاحية التوقيع','err');return;}
+  const role=bfSignRole;
+  const cur=bfSigs(e)[role];
+  if(!(cur&&cur.img)){toast('لا يوجد توقيع محفوظ لهذا الدور','err');return;}
+  if(!confirm('حذف توقيع '+bfSignRoleLabel(e,role)+'؟')) return;
+  const sigs=Object.assign({},bfSigs(e));
+  delete sigs[role];
+  // The person slot is also fed by the legacy `signature` column, so clearing
+  // only `signatures` would let bfSigs() rebuild the signature just removed.
+  const patch=(role==='person')
+    ? {signatures:sigs,signature:null,signed_at:null}
+    : {signatures:sigs};
+  const{data,error}=await sb.from('baladieh_finance').update(patch).eq('id',e.id).select();
+  if(error){toast('⚠️ فشل حذف التوقيع: '+error.message,'err');return;}
+  if(data&&data[0])bfSignTarget=data[0];
+  bfAudit('sign','حذف توقيع '+bfSignRoleLabel(e,role),e);
+  toast('✓ تم حذف توقيع '+bfSignRoleLabel(e,role));
+  bfSignClear();
+  await bfLoad();
+  const f=bfEntries.find(x=>String(x.id)===String(bfSignTarget&&bfSignTarget.id));
+  if(f)bfSignTarget=f;
+  bfSignRenderRoles();
 }
 async function bfSignCommit(role){
   if(!bfSignTarget||!bfSignDrawn)return false;
@@ -2409,17 +2681,19 @@ function bfSignInit(){
   const ctx=cv.getContext('2d');
   ctx.scale(dpr,dpr);
   ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0f2f56';
-  bfSignCtx2=ctx; bfSignDrawn=false;
+  bfSignCtx2=ctx; bfSignDrawn=false; bfSignInk=0;
   if(!cv._bound){
     cv._bound=true;
     let drawing=false,lx=0,ly=0;
     const P=(x,y)=>{const b=cv.getBoundingClientRect();return[x-b.left,y-b.top];};
     const start=(x,y)=>{drawing=true;const p=P(x,y);lx=p[0];ly=p[1];
-      // نقطة عند اللمس حتى لو لم يتحرك الإصبع
-      bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(lx+0.1,ly+0.1);bfSignCtx2.stroke();bfSignDrawn=true;};
+      // نقطة عند اللمس حتى لو لم يتحرك الإصبع — تظهر فقط، ولا تُحتسب توقيعاً
+      bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(lx+0.1,ly+0.1);bfSignCtx2.stroke();};
     const move=(x,y)=>{if(!drawing)return;const p=P(x,y);
       bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(p[0],p[1]);bfSignCtx2.stroke();
-      lx=p[0];ly=p[1];bfSignDrawn=true;};
+      bfSignInk+=Math.sqrt((p[0]-lx)*(p[0]-lx)+(p[1]-ly)*(p[1]-ly));
+      lx=p[0];ly=p[1];
+      if(bfSignInk>=BF_SIGN_MIN_INK)bfSignDrawn=true;};
     const end=()=>{drawing=false;};
     // touch أولاً — الأكثر موثوقية على الهواتف
     cv.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();const t=ev.touches[0];if(t)start(t.clientX,t.clientY);},{passive:false});
@@ -2436,7 +2710,7 @@ function bfSignInit(){
 function bfSignClear(){
   const cv=document.getElementById('bf-sign-cv');
   if(bfSignCtx2)bfSignCtx2.clearRect(0,0,cv.width,cv.height);
-  bfSignDrawn=false;
+  bfSignDrawn=false; bfSignInk=0;
 }
 function bfSignClose(){document.getElementById('bf-sign-ov').style.display='none';document.body.style.overflow='';bfSignTarget=null;}
 async function bfSignFinish(){
@@ -2460,10 +2734,9 @@ async function bfSignSave(){
 }
 
 // ── 🔐 AUTH (standalone) ──
-const BF_ALLOWED=['mayor','admin','sandouk','finance'];
-function bfGate(user){
-  const role=(user.user_metadata&&user.user_metadata.role)||'';
-  if(BF_ALLOWED.indexOf(role)<0){
+async function bfGate(user){
+  await WadiPerms.load(sb,true);
+  if(!WadiPerms.can('sandouk_view')){
     document.getElementById('login-screen').style.display='flex';
     document.getElementById('li-err').textContent='🚫 هذا الحساب لا يملك صلاحية صندوق البلدية';
     sb.auth.signOut({scope:'local'});
@@ -2478,7 +2751,7 @@ async function doLogin(){
   if(!em||!pw){err.textContent='يرجى إدخال البريد وكلمة المرور';return;}
   const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
   if(error){err.textContent='⚠️ '+(/(invalid|credentials)/i.test(error.message)?'بيانات الدخول غير صحيحة':error.message);return;}
-  bfGate(data.user);
+  await bfGate(data.user);
 }
 async function doLogout(){await sb.auth.signOut({scope:'local'});location.reload();}
 async function bfChangePassword(){
@@ -2505,7 +2778,7 @@ async function bfInitAuth(){
     const{data:{session}}=await sb.auth.getSession();
     if(session&&session.user){
       const{data:{user},error}=await sb.auth.getUser();
-      if(!error&&user){bfGate(user);return;}
+      if(!error&&user){await bfGate(user);return;}
       await sb.auth.signOut({scope:'local'});
     }
   }catch(e){}

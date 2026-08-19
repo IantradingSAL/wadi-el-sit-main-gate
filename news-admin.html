@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="wadi-perms.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;--blue4:#eef5fc;--green:#2d7a3e;--green3:#d4f0dc;--green4:#ebf7ee;--warn:#d97706;--warn3:#fef3c7;--danger:#bf2424;--danger3:#fee2e2;--bg:#f5f7fa;--bg2:#eef2f7;--surface:#fff;--text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--border:#e2e8f0;--shadow:0 2px 10px rgba(15,77,130,.06)}
@@ -313,6 +314,15 @@ const CAT_INFO={general:{l:'📢 عام',c:'#1a6eb5'},announcement:{l:'📢 إع
 async function checkSession(){
   const {data:{session}} = await sb.auth.getSession();
   if (session && session.user) {
+    // being signed in is not the same as being allowed: publishing in the
+    // municipality's name needs the news_publish permission
+    await WadiPerms.load(sb,true);
+    if(!WadiPerms.can('news_publish')){
+      await sb.auth.signOut();
+      show('LOGIN_VIEW');
+      document.getElementById('LERR').innerHTML='<div class="alert err">🚫 هذا الحساب لا يملك صلاحية نشر الأخبار</div>';
+      return;
+    }
     currentUser = session.user;
     document.getElementById('USER_BADGE').textContent = '👤 ' + (session.user.email||'').split('@')[0];
     show('MAIN_VIEW');

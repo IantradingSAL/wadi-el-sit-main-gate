@@ -1313,10 +1313,12 @@ async function confirmPhone(){
   el.innerHTML='<div style="text-align:center;padding:14px;color:var(--text3)">' + L().checking + '</div>';
   if(!dbR){el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center">' + L().serviceUnavailable + '</div>';return;}
   try{
-    const{data,error}=await sb.from('cases')
-      .select('id,name,phone,email,address,type,status,description,created_at,timeline,documents,public_note,priority,assigned')
-      .eq('id',ref).single();
+    // The phone is checked in the database, not here: citizen_track_case
+    // returns nothing unless it matches the one stored on the request.
+    const{data:rows,error}=await sb.rpc('citizen_track_case',{p_ref:ref,p_phone:phone});
+    const data=Array.isArray(rows)?rows[0]:rows;
     if(error||!data){el.innerHTML='<div style="background:var(--danger-bg);border:1px solid #f2bcbc;border-radius:12px;padding:16px;text-align:center;color:var(--danger)">' + L().errCaseNotFound + '</div>';return;}
+    // kept as a belt-and-braces check; the database already enforced it
     const storedPhone=(data.phone||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');
     const inputPhone=phone.replace(/^[+]?961/,'').replace(/^0/,'');
     if(data.phone&&storedPhone&&inputPhone&&inputPhone!==storedPhone){
@@ -1379,7 +1381,17 @@ async function confirmPhone(){
 function closePhoneModal(){
   document.getElementById('phone-modal').style.display='none';
 }
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let doSubmitCit__busy=false;
 async function doSubmitCit(){
+  if(doSubmitCit__busy)return;
+  doSubmitCit__busy=true;
+  try{ return await doSubmitCit__run(); }
+  finally{ doSubmitCit__busy=false; }
+}
+async function doSubmitCit__run(){
   const name=document.getElementById('c-name').value.trim();
   const phone=document.getElementById('c-phone').value.trim();
   const email=document.getElementById('c-email').value.trim();
@@ -1448,7 +1460,7 @@ async function doSubmitCit(){
     timeline:[{a: isEmergency ? '🚨 تبليغ طوارئ عبر الموقع' : 'تم تقديم الطلب عبر الموقع الإلكتروني',by:name,d:today,cls: isEmergency?'urgent':''}],
     documents:[],source:'website',lang:_currentLang()};
   try{
-    const{data,error}=await sb.from('cases').insert([nc]).select().single();
+    const{data,error}=await sb.from('cases').insert([nc]).select('id').single();
     if(error)throw error;
     const newCaseId = data.id;
     document.getElementById('c-ref').textContent = newCaseId;
@@ -1773,7 +1785,7 @@ async function submitCitCase(){
       approval_state:na?'pending':null,approval_by:null,approval_date:null,
       timeline:[{a:'تم تقديم الطلب عبر بوابة المواطن',by:name,d:today,cls:''}],
       documents:[],source:'citizen-portal'};
-    const{data,error}=await sb.from('cases').insert([nc]).select().single();
+    const{data,error}=await sb.from('cases').insert([nc]).select('id').single();
     if(error)throw error;
     const caseId=data.id;
     // 2. Upload files if any
@@ -1965,23 +1977,15 @@ async function linkPushToPhone(phone, name) {
 
 // Auto-show a case fetched from a push notification deeplink (?case=ID)
 async function autoShowCase(caseId) {
-  if (!sb) return;
-  var resEl = document.getElementById('track-res');
-  if (!resEl) return;
-  // Set the track number visually so user sees what was clicked
+  // Reached from a push notification deeplink (?case=ID). It used to fetch and
+  // render the request outright, so anyone who guessed an id saw the citizen's
+  // name, phone and address. Now it just fills the number and asks for the
+  // phone, exactly like tracking by hand.
   var trackInput = document.getElementById('track-num');
   if (trackInput) trackInput.value = caseId;
-  // Show loading
-  resEl.scrollIntoView({behavior:'smooth', block:'center'});
-  resEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:14px">⏳ جاري تحميل تفاصيل طلبك...</div>';
-  try {
-    var { data, error } = await sb.from('cases').select('id,name,type,status,description,created_at,approval_state,approval_date,documents,public_note,timeline,phone').eq('id', caseId).single();
-    if (error) throw error;
-    if (!data) throw new Error('الطلب غير موجود');
-    renderCaseDetails(data, resEl);
-  } catch(ex) {
-    resEl.innerHTML = '<div style="text-align:center;padding:18px;color:var(--danger);font-size:13px;background:#fee2e2;border-radius:10px">⚠️ تعذّر تحميل تفاصيل الطلب: ' + (ex.message||'خطأ') + '</div>';
-  }
+  var resEl = document.getElementById('track-res');
+  if (resEl) resEl.scrollIntoView({behavior:'smooth', block:'center'});
+  if (typeof doTrack === 'function') doTrack();
 }
 
 // Render case details inline (used by both autoShowCase and tracking flow)
@@ -2056,7 +2060,17 @@ function openHelp(p){
   var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل بوابة المواطن</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';
 }
 
-async function submitCitUpdate(caseId, casePhone) {
+// Re-entry guard. These handlers are wired straight to a button and await a
+// network insert, so a second tap before the first returns — routine on a
+// phone with a weak signal — used to create a second record.
+let submitCitUpdate__busy=false;
+async function submitCitUpdate(caseId, casePhone){
+  if(submitCitUpdate__busy)return;
+  submitCitUpdate__busy=true;
+  try{ return await submitCitUpdate__run(caseId, casePhone); }
+  finally{ submitCitUpdate__busy=false; }
+}
+async function submitCitUpdate__run(caseId, casePhone) {
   var note = document.getElementById('cit-update-note');
   var msgEl = document.getElementById('cit-update-msg');
   var noteText = note ? note.value.trim() : '';

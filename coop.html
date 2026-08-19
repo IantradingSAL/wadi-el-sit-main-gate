@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
 <script src="i18n.js"></script>
 <script>
 if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
@@ -1224,6 +1225,10 @@ input,textarea,select{font-family:var(--font);outline:none}
 .stat-due::before{background:#7c3aed}
 .stat-icon{font-size:24px;margin-bottom:6px;line-height:1}
 .stat-num{font-size:22px;font-weight:900;line-height:1.1;margin-bottom:4px}
+/* full grouped amounts (1,250,000) are long — step the size down so
+   the card never clips them (.stat-card has overflow:hidden) */
+.stat-num.sn-lg{font-size:16px}
+.stat-num.sn-xl{font-size:13px;letter-spacing:-.2px}
 .stat-blue .stat-num{color:var(--primary)}
 .stat-amber .stat-num{color:var(--accent)}
 .stat-green .stat-num{color:var(--green)}
@@ -1939,7 +1944,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
       <div class="row-2">
         <div class="field">
           <label class="field-label" id="prod-price-label" data-i18n="priceLabel">السعر *</label>
-          <input class="field-input" id="prod-price" type="number" inputmode="decimal" placeholder="50000" style="direction:ltr;text-align:right" oninput="updatePriceConverted()">
+          <input class="field-input" data-num id="prod-price" type="number" inputmode="decimal" placeholder="50000" style="direction:ltr;text-align:right" oninput="updatePriceConverted()">
           <div id="prod-price-converted" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:end"></div>
         </div>
         <div class="field">
@@ -1949,7 +1954,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
       </div>
       <div class="field">
         <label class="field-label" data-i18n="qtyAvailable">الكمية المتوفّرة *</label>
-        <input class="field-input" id="prod-stock" type="number" inputmode="numeric" placeholder="10" style="direction:ltr;text-align:right">
+        <input class="field-input" data-num id="prod-stock" type="number" inputmode="numeric" placeholder="10" style="direction:ltr;text-align:right">
       </div>
       <div class="field">
         <label class="field-label" data-i18n="descLabel">الوصف</label>
@@ -2231,7 +2236,7 @@ document.addEventListener('DOMContentLoaded',async function(){
 async function loadAllData(){
   try{
     // Sellers
-    const sRes=await sb.from('coop_sellers').select('*').eq('status','approved').order('created_at',{ascending:false});
+    const sRes=await sb.from('coop_sellers').select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').eq('status','approved').order('created_at',{ascending:false});
     allSellers=sRes.data||[];
     
     // Products with seller info
@@ -3121,7 +3126,7 @@ async function openDeliveryAgent(){
   try{
     const u=JSON.parse(localStorage.getItem('wadi_user')||'{}');
     if(u.phone){
-      const res=await sb.from('coop_delivery_agents').select('*').eq('phone',u.phone).maybeSingle();
+      const res=await sb.from('coop_delivery_agents').select('id,name,phone,area,vehicle,status,created_at').eq('phone',u.phone).maybeSingle();
       if(res.data){
         showDeliveryAgentStatus(res.data);
         return;
@@ -3511,7 +3516,7 @@ async function submitDeliveryAgent(){
     const pin_hash = await sha256hex(pin);
     const res=await sb.from('coop_delivery_agents').insert([{
       name,phone,whatsapp:wa,area,vehicle,notes:notes||null,status:'pending',pin_hash
-    }]).select().single();
+    }]).select('id,name,phone,area,vehicle,status,created_at').single();
     if(res.error){
       console.error(res.error);
       toast(((window.__wadi_t&&window.__wadi_t('orderFailed'))||'فشل إرسال الطلب')+': '+(res.error.message||((window.__wadi_t&&window.__wadi_t('unknownError'))||'خطأ غير معروف')),'err');
@@ -3548,7 +3553,7 @@ async function refreshSellerStatus(){
   /* Re-fetch seller status from DB so admin approval shows immediately */
   if(!currentSeller || !currentSeller.id || !sb) return;
   try{
-    const res = await sb.from('coop_sellers').select('*').eq('id', currentSeller.id).maybeSingle();
+    const res = await sb.from('coop_sellers').select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').eq('id', currentSeller.id).maybeSingle();
     if(res.data){
       const oldStatus = currentSeller.status;
       currentSeller = res.data;
@@ -3644,13 +3649,15 @@ async function doSellerLogin(){
   err.style.display='none';
   if(!u||!pw){err.textContent=(window.__wadi_t&&window.__wadi_t('sellerDataRequired'))||'البيانات مطلوبة';err.style.display='block';return;}
   try{
-    const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-    const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    const res=await sb.from('coop_sellers').select('*').eq('username',u).single();
-    if(res.error||!res.data||res.data.password_hash!==hash){
+    // The password is checked in the database. It used to be compared here,
+    // against a row anyone could read — which meant every seller's hash was
+    // downloadable, and the check itself could simply be skipped.
+    const res=await sb.rpc('coop_seller_login',{p_username:u,p_password:pw});
+    const row=(res.data&&res.data[0])||null;
+    if(res.error||!row){
       err.textContent=((window.__wadi_t&&window.__wadi_t('loginBadCreds'))||'بيانات الدخول غير صحيحة');err.style.display='block';return;
     }
-    currentSeller=res.data;
+    currentSeller=row;
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
     toast('✅ '+((window.__wadi_t&&window.__wadi_t('sellerWelcomeBack'))||'مرحباً')+' '+(currentSeller.display_name||''),'ok');
     renderSellPage();
@@ -3676,7 +3683,7 @@ async function doSellerRegister(){
     const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
     const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
     const name=f+' '+l;
-    const res=await sb.from('coop_sellers').insert([{username:u,password_hash:hash,display_name:name,phone,area:area||null,bio:bio||null,whatsapp:phone,status:'pending',balance:0}]).select().single();
+    const res=await sb.from('coop_sellers').insert([{username:u,password_hash:hash,display_name:name,phone,area:area||null,bio:bio||null,whatsapp:phone,status:'pending',balance:0}]).select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').single();
     if(res.error){err.textContent='فشل: '+(res.error.message||'خطأ');err.style.display='block';return;}
     currentSeller=res.data;
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
@@ -3830,8 +3837,8 @@ async function loadSellerStats(){
     
     const totalSalesEl = document.getElementById('seller-total-sales');
     const amountDueEl = document.getElementById('seller-amount-due');
-    if(totalSalesEl) totalSalesEl.textContent = formatPriceShort(totalSales);
-    if(amountDueEl) amountDueEl.textContent = formatPriceShort(amountDue);
+    setStatNum(totalSalesEl, formatPriceShort(totalSales));
+    setStatNum(amountDueEl, formatPriceShort(amountDue));
     
     // Cache for payout request
     window._sellerAmountDue = amountDue;
@@ -3909,10 +3916,17 @@ async function loadSellerStats(){
 }
 
 function formatPriceShort(amt){
-  if(!amt) return '0';
-  if(amt >= 1000000) return (amt/1000000).toFixed(1) + 'M';
-  if(amt >= 1000) return (amt/1000).toFixed(0) + 'K';
-  return Math.round(amt).toString();
+  amt = parseFloat(amt) || 0;
+  return Math.round(amt).toLocaleString('en-US');
+}
+
+// Write a number into a stat card, shrinking the type for long amounts.
+function setStatNum(el, text){
+  if(!el) return;
+  el.textContent = text;
+  el.classList.remove('sn-lg','sn-xl');
+  if(text.length >= 12) el.classList.add('sn-xl');
+  else if(text.length >= 8) el.classList.add('sn-lg');
 }
 
 async function updateOrderStatus(orderId, newStatus){
@@ -4431,7 +4445,7 @@ async function loadAdminPanel(){
   c.innerHTML='<div class="spinner"></div>';
   try{
     const [s,o,p,da,tx,cats]=await Promise.all([
-      sb.from('coop_sellers').select('*').order('created_at',{ascending:false}),
+      sb.from('coop_sellers').select('id,username,display_name,phone,email,bio,area,avatar_url,status,balance,whatsapp,created_at,business_hours,delivery_options,rating,total_orders').order('created_at',{ascending:false}),
       sb.from('coop_orders').select('*').order('created_at',{ascending:false}).limit(500),
       sb.from('coop_products').select('*').order('created_at',{ascending:false}),
       sb.from('coop_delivery_agents').select('*').order('created_at',{ascending:false}),
@@ -4512,7 +4526,7 @@ async function loadAdminPanel(){
             <div style="font-size:11px;color:var(--text3)" id="rate-updated"></div>
           </div>
           <div style="display:flex;gap:8px;align-items:stretch">
-            <input class="field-input" id="rate-input" type="number" step="100" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="89500">
+            <input class="field-input" data-num id="rate-input" type="number" step="100" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="89500">
             <button class="btn btn-primary" onclick="saveCurrencyRate()" data-i18n="save">حفظ ✓</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px" data-i18n="rateHint">يُطبَّق فوراً على كل الأسعار المعروضة في المتجر</div>
@@ -4524,7 +4538,7 @@ async function loadAdminPanel(){
             <div style="font-size:13px;color:var(--text3);font-weight:700">أجرة التوصيل لكل طلب (ل.ل.)</div>
           </div>
           <div style="display:flex;gap:8px;align-items:stretch">
-            <input class="field-input" id="dfee-input" type="number" step="1000" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="50000">
+            <input class="field-input" data-num id="dfee-input" type="number" step="1000" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="50000">
             <button class="btn btn-primary" onclick="saveDeliveryFee()">حفظ ✓</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px">هذه الأجرة يحصل عليها عامل التوصيل بعد كل تسليم. تعديلها يؤثّر فقط على الطلبات المقبلة.</div>
