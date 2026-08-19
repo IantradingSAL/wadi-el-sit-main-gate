@@ -6,6 +6,7 @@
 <title>إدارة الري — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="wadi-perms.js"></script>
 <script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -280,9 +281,9 @@ window.addEventListener('DOMContentLoaded', async function(){
   dbR=true;
   var res=await sb.auth.getUser();
   if(res.data&&res.data.user){
-    var meta=res.data.user.user_metadata||{};
-    var role=meta.role||'';
-    if(role==='water_admin'||role==='admin'||role==='mayor'||role==='super_admin'){
+    // permission comes from user_roles via wadi-perms.js, never from user_metadata
+    await WadiPerms.load(sb,true);
+    if(WadiPerms.can('water_view')){
       await showWaterApp(res.data.user);
     }
   }
@@ -297,9 +298,8 @@ async function doLogin(){
   try{
     var res=await sb.auth.signInWithPassword({email:em,password:pw});
     if(res.error) throw res.error;
-    var meta=res.data.user.user_metadata||{};
-    var role=meta.role||'';
-    if(role!=='water_admin'&&role!=='admin'&&role!=='mayor'&&role!=='super_admin'){
+    await WadiPerms.load(sb,true);
+    if(!WadiPerms.can('water_view')){
       err.textContent='⚠️ لا تملك صلاحية الدخول لنظام الري';
       await sb.auth.signOut(); return;
     }

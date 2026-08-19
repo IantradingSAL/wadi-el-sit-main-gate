@@ -6,6 +6,7 @@
 <title>صندوق البلدية — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="wadi-perms.js"></script>
 <script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -530,21 +531,14 @@ function bfMoney(a,c){return (c==='LBP') ? bfFmt(a)+' ل.ل.' : '$'+bfFmt(a);}
 function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار أميركي';}
 const BF_PAY={cash:'نقداً',transfer:'حوالة مصرفية',whish:'Whish'};
 const BF_SIGN_ROLES=['person','cashier','mayor'];
-const BF_SUPER='imadaehn@gmail.com';
-function bfIsSuper(){return !!bfUser && String(bfUser.email||'').toLowerCase()===BF_SUPER;}
-function bfCanDel(){
-  if(!bfUser)return false;
-  if(bfIsSuper())return true;
-  return !!(bfUser.user_metadata&&bfUser.user_metadata.sandouk_delete===true);
-}
-function bfCanEdit(){
-  if(!bfUser)return false;
-  if(bfCanDel())return true;
-  const md=bfUser.user_metadata||{};
-  if(md.sandouk_edit===true)return true;
-  const role=String(md.role||'').toLowerCase();
-  return role==='finance' || role==='mayor' || role==='admin';
-}
+// Permissions come from the server (user_roles → role_permissions →
+// user_permissions, resolved in wadi-perms.js). user_metadata is not consulted:
+// a signed-in user can rewrite their own metadata from the browser console.
+function bfIsSuper(){return !!bfUser && WadiPerms.isSuper();}
+function bfCanDel(){return !!bfUser && WadiPerms.can('sandouk_delete');}
+function bfCanEdit(){return !!bfUser && WadiPerms.can('sandouk_edit');}
+function bfCanAdd(){return !!bfUser && WadiPerms.can('sandouk_add');}
+function bfCanSign(){return !!bfUser && WadiPerms.can('sandouk_sign');}
 function bfSigs(e){
   const s=(e.signatures&&typeof e.signatures==='object')?e.signatures:{};
   if(e.signature&&!(s.person&&s.person.img))return Object.assign({person:{img:e.signature,at:e.signed_at}},s);
@@ -573,6 +567,12 @@ function bfStart(user){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('bf-screen').style.display='flex';
   document.getElementById('bf-logo-img').src=BF_LOGO;
+  // an account that may look but not enter (رئيس البلدية, by the municipality's
+  // own rule) gets the ledger and the reports without the two entry forms
+  ['income','expense'].forEach(function(k){
+    const b=document.getElementById('bf-tab-'+k);
+    if(b) b.style.display = bfCanAdd() ? '' : 'none';
+  });
   if(!bfLoaded){bfLoaded=true;bfInitForms();bfLoad();}
   else{bfApplyLocks();}
 }
@@ -923,6 +923,10 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
 }
 const BF_TYPE_LABEL={expense:'<span class="bf-badge exp">مصروف</span>',income:'<span class="bf-badge inc">مقبوضات</span>',opening:'<span class="bf-badge opn">رصيد افتتاحي</span>'};
 function bfShowTab(t){
+  if((t==='income'||t==='expense')&&!bfCanAdd()){
+    toast('🚫 هذا الحساب يطّلع على الصندوق ولا يُدخل سندات','err');
+    return;
+  }
   if(t==='audit')bfLoadAudit();
   ['ledger','income','expense','reports','audit'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
@@ -2573,10 +2577,9 @@ async function bfSignSave(){
 }
 
 // ── 🔐 AUTH (standalone) ──
-const BF_ALLOWED=['mayor','admin','sandouk','finance'];
-function bfGate(user){
-  const role=(user.user_metadata&&user.user_metadata.role)||'';
-  if(BF_ALLOWED.indexOf(role)<0){
+async function bfGate(user){
+  await WadiPerms.load(sb,true);
+  if(!WadiPerms.can('sandouk_view')){
     document.getElementById('login-screen').style.display='flex';
     document.getElementById('li-err').textContent='🚫 هذا الحساب لا يملك صلاحية صندوق البلدية';
     sb.auth.signOut({scope:'local'});
@@ -2591,7 +2594,7 @@ async function doLogin(){
   if(!em||!pw){err.textContent='يرجى إدخال البريد وكلمة المرور';return;}
   const{data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
   if(error){err.textContent='⚠️ '+(/(invalid|credentials)/i.test(error.message)?'بيانات الدخول غير صحيحة':error.message);return;}
-  bfGate(data.user);
+  await bfGate(data.user);
 }
 async function doLogout(){await sb.auth.signOut({scope:'local'});location.reload();}
 async function bfChangePassword(){
@@ -2618,7 +2621,7 @@ async function bfInitAuth(){
     const{data:{session}}=await sb.auth.getSession();
     if(session&&session.user){
       const{data:{user},error}=await sb.auth.getUser();
-      if(!error&&user){bfGate(user);return;}
+      if(!error&&user){await bfGate(user);return;}
       await sb.auth.signOut({scope:'local'});
     }
   }catch(e){}
