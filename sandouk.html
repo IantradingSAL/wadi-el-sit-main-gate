@@ -194,7 +194,7 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <div class="bf-filters">
         <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
-        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option><option value="__no_wassel">📄 بدون رقم وصل</option></select></div>
+        <div><label class="fl">النوع</label><select class="fi" id="bf-f-type" onchange="bfRenderLedger()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option><option value="__no_wassel">📄 بدون رقم إيصال</option></select></div>
         <div><label class="fl">الفئة</label><select class="fi" id="bf-f-cat" onchange="bfRenderLedger()"><option value="">الكل</option></select></div>
         <div><label class="fl">العملة</label><select class="fi" id="bf-f-cur" onchange="bfRenderLedger()"><option value="">الكل</option><option value="USD">دولار $</option><option value="LBP">ليرة ل.ل.</option></select></div>
         <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-f-pay" onchange="bfRenderLedger()"><option value="">الكل</option><option value="cash">نقداً</option><option value="transfer">حوالة</option><option value="whish">Whish</option></select></div>
@@ -202,8 +202,8 @@ select.bf-colfilter{padding-inline-end:22px}
         <div><label class="fl">إلى تاريخ</label><input type="date" class="fi" id="bf-f-to" onchange="bfRenderLedger()"></div>
         <div><label class="fl">من سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-sfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب تسلسل رقم السند"></div>
         <div><label class="fl">إلى سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-sto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب تسلسل رقم السند"></div>
-        <div><label class="fl">من وصل رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب رقم الوصل"></div>
-        <div><label class="fl">إلى وصل رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب رقم الوصل"></div>
+        <div><label class="fl">من إيصال رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wfrom" placeholder="1" oninput="bfRenderLedger()" title="تصفية حسب رقم الإيصال"></div>
+        <div><label class="fl">إلى إيصال رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-f-wto" placeholder="999" oninput="bfRenderLedger()" title="تصفية حسب رقم الإيصال"></div>
       </div>
       <div class="bf-tblwrap"><table id="bf-ledger-tbl">
         <thead id="bf-ledger-head"></thead>
@@ -234,8 +234,8 @@ select.bf-colfilter{padding-inline-end:22px}
         </div>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">📄 رقم الوصل <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-i-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
-        <div><label class="fl">📅 تاريخ الوصل <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-i-wassel-date"></div>
+        <div><label class="fl">📄 رقم الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-i-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+        <div><label class="fl">📅 تاريخ الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-i-wassel-date"></div>
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
@@ -256,12 +256,12 @@ select.bf-colfilter{padding-inline-end:22px}
       <div id="bf-i-cat-other-w" style="display:none"><label class="fl">حدّد الفئة</label><input type="text" class="fi" id="bf-i-cat-other" placeholder="فئة أخرى…"></div>
       <label class="fl">البيان * <span style="color:#8a95a3;font-weight:700">(اختَر من القائمة أو اكتب بياناً جديداً)</span></label><input type="text" class="fi" id="bf-i-desc" list="bf-dl-desc" placeholder="مثال: رسوم بلدية 2026 — الدفعة الأولى">
       <div class="bf-g2">
-        <div><label class="fl">الدافع / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
+        <div><label class="fl">المكلف / الجهة</label><div class="bf-picker" data-picker-for="bf-i-person"><input type="text" class="fi" id="bf-i-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="bf-picker-dd" id="bf-i-person-dd"></div></div></div>
         <div><label class="fl">المستلم (أمين الصندوق)</label><input type="text" class="fi" id="bf-i-handled" list="bf-dl-handlers" placeholder="اسم المستلم"></div>
       </div>
       <div class="bf-g2">
         <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-i-property" placeholder="اختياري — مثال: 1245/شوف" style="direction:ltr"></div>
-        <div><label class="fl">🧾 رقم الإيصال (إيصال يدوي داخلي)</label><input type="text" class="fi" id="bf-i-manual" placeholder="اختياري — رقم الإيصال المطبوع" style="direction:ltr"></div>
+        <div><label class="fl">🧾 رقم الإيصال اليدوي (داخلي)</label><input type="text" class="fi" id="bf-i-manual" placeholder="اختياري — رقم الإيصال المطبوع" style="direction:ltr"></div>
       </div>
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
       <label class="fl">📎 مستندات مرفقة (اختياري — صور أو PDF)</label>
@@ -284,8 +284,8 @@ select.bf-colfilter{padding-inline-end:22px}
         </div>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">📄 رقم الوصل <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-e-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
-        <div><label class="fl">📅 تاريخ الوصل <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-e-wassel-date"></div>
+        <div><label class="fl">📄 رقم الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري — يُضاف لاحقاً)</span></label><input type="text" class="fi" id="bf-e-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+        <div><label class="fl">📅 تاريخ الإيصال <span style="color:#8a95a3;font-weight:700">(اختياري)</span></label><input type="date" class="fi" id="bf-e-wassel-date"></div>
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
@@ -377,7 +377,7 @@ select.bf-colfilter{padding-inline-end:22px}
 <div class="bf-share-ov" id="bf-share-ov" onclick="if(event.target===this)bfCloseSendModal()">
   <div class="bf-share-box">
     <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:14px" id="bf-share-title">🧾 مشاركة السند</div>
-    <button class="bf-share-btn" id="bf-share-sign" style="display:none" onclick="bfSignFromShare()">✍️ <span>توقيع على الشاشة (المستلم / الدافع)</span></button>
+    <button class="bf-share-btn" id="bf-share-sign" style="display:none" onclick="bfSignFromShare()">✍️ <span>توقيع على الشاشة (المستلم / المكلف)</span></button>
     <button class="bf-share-btn" onclick="bfPrint()">🖨️ <span>طباعة السند</span></button>
     <button class="bf-share-btn" onclick="bfShareFile()">📎 <span>مشاركة كملف PDF (واتساب / حفظ)</span></button>
     <button class="bf-share-btn" onclick="bfShareWaText()">🟢 <span>إرسال ملخّص نصي عبر واتساب</span></button>
@@ -472,16 +472,16 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">📄 رقم الوصل</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
-      <div><label class="fl">📅 تاريخ الوصل</label><input type="date" class="fi" id="bf-ed-wassel-date"></div>
+      <div><label class="fl">📄 رقم الإيصال</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
+      <div><label class="fl">📅 تاريخ الإيصال</label><input type="date" class="fi" id="bf-ed-wassel-date"></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">الجهة (الدافع/المستفيد)</label><input type="text" class="fi" id="bf-ed-person"></div>
+      <div><label class="fl">الجهة (المكلف/المستفيد)</label><input type="text" class="fi" id="bf-ed-person"></div>
       <div><label class="fl">المسلّم/المستلم</label><input type="text" class="fi" id="bf-ed-handled"></div>
     </div>
     <div class="bf-g2">
       <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
-      <div><label class="fl">🧾 رقم الإيصال (يدوي)</label><input type="text" class="fi" id="bf-ed-manual" style="direction:ltr"></div>
+      <div><label class="fl">🧾 رقم الإيصال اليدوي</label><input type="text" class="fi" id="bf-ed-manual" style="direction:ltr"></div>
     </div>
     <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-ed-notes">
     <div class="bf-err" id="bf-ed-err" style="margin-top:6px"></div>
@@ -517,7 +517,7 @@ select.bf-colfilter{padding-inline-end:22px}
 // ═══════════ 💰 BALADIEH FINANCE (صندوق البلدية) ═══════════
 let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null, bfReadyFile=null;
 // Full phonebook rows loaded from public.phonebook_entries — used by the
-// custom typeahead picker (bfMakePicker) on the الدافع/الجهة inputs.
+// custom typeahead picker (bfMakePicker) on the المكلف/الجهة inputs.
 let bfPhonebookEntries=[];
 const BF_MUN_ID='00000000-0000-0000-0000-000000000001';
 const BF_LOGO=(function(){
@@ -548,7 +548,7 @@ function bfSigs(e){
 }
 function bfSigCount(e){const s=bfSigs(e);return BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).length;}
 function bfSignRoleLabel(e,role){
-  if(role==='person')return e.entry_type==='income'?'الدافع':'المستفيد';
+  if(role==='person')return e.entry_type==='income'?'المكلف':'المستفيد';
   if(role==='cashier')return 'أمين الصندوق';
   return 'رئيس البلدية';
 }
@@ -765,7 +765,7 @@ function bfDatalists(){
 }
 
 // ───────────────────────────────────────────────────────────────────────────
-// Custom typeahead picker for the الدافع/الجهة & المدفوع له/الجهة inputs.
+// Custom typeahead picker for the المكلف/الجهة & المدفوع له/الجهة inputs.
 // Filters bfPhonebookEntries by substring on every keystroke, ranks matches
 // with prefix-first, offers an inline "➕ إضافة جديد" row when there is no
 // exact match — clicking that opens bfShowAddPhonebookModal which asks for
@@ -982,9 +982,9 @@ const BF_COLS=[
   {key:'handled_by',label:'المستلم/المسلّم',filter:'text',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
-  {key:'manual_receipt_no',label:'رقم الإيصال (يدوي)',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
-  {key:'wassel_number',label:'رقم الوصل',filter:'text',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا وصل';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا وصل</span>')+'</td>';}},
-  {key:'wassel_date',label:'تاريخ الوصل',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
+  {key:'manual_receipt_no',label:'رقم الإيصال اليدوي',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
+  {key:'wassel_number',label:'رقم الإيصال',filter:'text',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا إيصال';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا إيصال</span>')+'</td>';}},
+  {key:'wassel_date',label:'تاريخ الإيصال',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
   {key:'stamp_value',label:'قيمة الطوابع',filter:'text',num:true,sortVal:e=>Number(e.stamp_value)||0,val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
@@ -1053,7 +1053,7 @@ const BF_DIGIT_MAP={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'
 function bfNormDigits(v){return String(v==null?'':v).replace(/[٠-٩۰-۹]/g,d=>BF_DIGIT_MAP[d]||d);}
 function bfNormTxt(v){return bfNormDigits(v).replace(/\s+/g,' ').trim().toLowerCase();}
 // Trailing number of a serial ("Q-2026-014" → 14, "١٢" → 12) — used by the
-// من/إلى range filters for both السند and رقم الوصل.
+// من/إلى range filters for both السند and رقم الإيصال.
 function bfTrailNum(v){
   const m=bfNormDigits(v).match(/(\d+)\s*$/);
   return m?parseInt(m[1],10):null;
@@ -1531,7 +1531,7 @@ function bfKpiClick(kind){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,رقم الوصل,تاريخ الوصل,رقم الإيصال (يدوي),النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
+  const lines=['التاريخ,رقم السند,رقم الإيصال,تاريخ الإيصال,رقم الإيصال اليدوي,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
@@ -1558,7 +1558,7 @@ const BF_ACT_AR={create:'➕ إضافة سند',update:'✏️ تعديل',void:
   sign:'✍️ توقيع',delete:'🗑️ حذف',export_pdf:'📄 تصدير تقرير PDF',export_csv:'⬇️ تصدير CSV',
   share_text:'📤 مشاركة نص',share_file:'📤 مشاركة ملف',copy_text:'📋 نسخ النص',print:'🖨️ طباعة',
   receipt_pdf:'🧾 تصدير سند PDF',phonebook_add:'👤 إضافة اسم إلى الدليل',view_save:'👁️ حفظ عرض',view_delete:'👁️ حذف عرض'};
-const BF_FIELD_AR={entry_date:'التاريخ',receipt_no:'رقم السند',wassel_number:'رقم الوصل',wassel_date:'تاريخ الوصل',
+const BF_FIELD_AR={entry_date:'التاريخ',receipt_no:'رقم السند',wassel_number:'رقم الإيصال',wassel_date:'تاريخ الإيصال',
   manual_receipt_no:'رقم الإيصال',entry_type:'النوع',category:'الفئة',payment_method:'طريقة الدفع',
   description:'البيان',person:'الجهة',handled_by:'المستلم/المسلّم',amount:'المبلغ',currency:'العملة',
   stamp_value:'قيمة الطوابع',karar_number:'رقم القرار',property_number:'رقم العقار',notes:'ملاحظات',
@@ -1721,14 +1721,14 @@ function bfReceiptHTML(e){
     +(e.voided?'<div style="background:#fdecec;border:1.5px solid #c22;color:#a11;border-radius:10px;padding:7px 12px;margin:8px 0 2px;font-size:12px;font-weight:700;position:relative">⛔ سند ملغى'+(e.voided_at?' بتاريخ '+new Date(e.voided_at).toLocaleDateString('ar-LB'):'')+(e.void_reason?'<br>السبب: '+e.void_reason:'')+'</div>':'')
     +'<div style="position:relative">'
       +row('البيان',e.description)
-      +row(isIn?'وصلنا من السيد/ة':'دُفع إلى السيد/ة',e.person)
+      +row(isIn?'وصلنا من السيد/السيدة':'دُفع إلى السيد/السيدة',e.person)
       +row(isIn?'المستلم':'المسلّم',e.handled_by)
       +row('طريقة الدفع',bfPay(e))
-      +row('رقم القرار',e.karar_number)
-      +row('رقم العقار',e.property_number)
-      +row('رقم الإيصال (يدوي)',e.manual_receipt_no)
-      +row('رقم الوصل',e.wassel_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_number+'</span>':'<span style="color:#c22;font-weight:800">— بلا وصل —</span>')
-      +row('تاريخ الوصل',e.wassel_date?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>':'')
+      +row('رقم القرار',(e.karar_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.karar_number+'</span>':''))
+      +row('رقم العقار',(e.property_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.property_number+'</span>':''))
+      +row('رقم الإيصال اليدوي',(e.manual_receipt_no?'<span style="direction:ltr;unicode-bidi:embed">'+e.manual_receipt_no+'</span>':''))
+      +row('رقم الإيصال',e.wassel_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_number+'</span>':'<span style="color:#c22;font-weight:800">— بلا إيصال —</span>')
+      +row('تاريخ الإيصال',e.wassel_date?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>':'')
       +row('ملاحظات',e.notes)
       +((e.documents&&e.documents.length)?row('المرفقات',e.documents.length+' مستند — '+e.documents.map(d=>d.name).join('، ')):'')
     +'</div>'
@@ -1750,7 +1750,7 @@ function bfReceiptHTML(e){
       +'</div>';
     })()
     +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:26px;font-size:12px;color:#555;text-align:center;position:relative">'
-      +sigBlock(isIn?'توقيع الدافع':'توقيع المستفيد','person')
+      +sigBlock(isIn?'توقيع المكلف':'توقيع المستفيد','person')
       +sigBlock('أمين الصندوق','cashier')
       +sigBlock('رئيس البلدية','mayor')
     +'</div>'
@@ -1781,7 +1781,7 @@ function bfOpenReceiptShare(e){
   document.getElementById('bf-share-title').textContent='🧾 '+bfKind(e)+' — '+(e.receipt_no||'');
   const sb2=document.getElementById('bf-share-sign');
   sb2.style.display='';
-  sb2.querySelector('span').textContent=bfSigCount(e)?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع الدافع على الشاشة':'✍️ توقيع المستلم على الشاشة');
+  sb2.querySelector('span').textContent=bfSigCount(e)?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع المكلف على الشاشة':'✍️ توقيع المستلم على الشاشة');
   document.getElementById('bf-share-ov').style.display='flex';
 }
 function bfShareLast(){
@@ -1874,7 +1874,7 @@ function bfBuildReportEl(){
   const dmy=d=>d?d.split('-').reverse().join('/'):'—';
 
   // ── one row per movement, remembering how tall it is so pages can be cut cleanly ──
-  const LEDH=['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'];
+  const LEDH=['التاريخ','السند','رقم الإيصال','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'];
   const LEDW=[66,62,62,58,100,48,0,110,118,118];
   const built=led.map((e,i)=>{
     const cDesc=wrapL(e.description,42), cCat=wrapL(e.category,16), cPer=wrapL(e.person,15),
@@ -1883,8 +1883,8 @@ function bfBuildReportEl(){
     const lines=Math.max(1,cDesc.length+cVoid,cCat.length,cPer.length,cType.length,cPay.length);
     const html='<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
       +td(num(dmy(e.entry_date)))
-      +td(e.receipt_no?num(esc(e.receipt_no)):'')
-      +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا وصل</span>')
+      +td(e.receipt_no?num(esc(e.receipt_no)):'','direction:ltr;unicode-bidi:embed;')
+      +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا إيصال</span>','direction:ltr;unicode-bidi:embed;')
       +td(cType.map(esc).join('<br>'))
       +td(cCat.map(esc).join('<br>'))+td(cPay.map(esc).join('<br>'))
       +td(cDesc.map(esc).join('<br>')+(e.voided?'<br><span style="color:#c22;font-weight:800">⛔ ملغى</span>'+(e.void_reason?'<br>'+wrap(e.void_reason,42):''):''),e.voided?'color:#c22':'')
@@ -1962,7 +1962,7 @@ function bfBuildReportEl(){
       const totalTxt=[sU?'$'+bfFmt(sU):'',sL?bfFmt(sL)+' ل.ل.':''].filter(Boolean).join(' + ')||'—';
       const rows=st.slice().sort((a,b)=>String(a.entry_date||'').localeCompare(String(b.entry_date||''))||seqNo(a.receipt_no)-seqNo(b.receipt_no)).map((e,i)=>'<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
         +td(num(dmy(e.entry_date)))
-        +td(e.receipt_no?num(esc(e.receipt_no)):'')
+        +td(e.receipt_no?num(esc(e.receipt_no)):'','direction:ltr;unicode-bidi:embed;')
         +td(wrap(TYPE_AR2[e.entry_type]||e.entry_type,9))
         +td(wrap(e.person,20))
         +td(wrap(e.description,54))
@@ -2079,9 +2079,9 @@ function bfShareText(){
       +'الفئة: '+(e.category||'')+'\n'
       +'البيان: '+(e.description||'')+'\n'
       +((e.documents&&e.documents.length)?('المرفقات: '+e.documents.length+' مستند\n'):'')
-      +(e.person?((e.entry_type==='income'?'الدافع':'المستفيد')+': '+e.person+'\n'):'')
+      +(e.person?((e.entry_type==='income'?'المكلف':'المستفيد')+': '+e.person+'\n'):'')
       +(e.handled_by?((e.entry_type==='income'?'المستلم':'المسلّم')+': '+e.handled_by+'\n'):'')
-      +(e.wassel_number?('رقم الوصل: '+e.wassel_number+(e.wassel_date?(' — '+e.wassel_date.split('-').reverse().join('/')):'')+'\n'):'⚠️ لا يوجد رقم وصل بعد\n')
+      +(e.wassel_number?('رقم الإيصال: '+e.wassel_number+(e.wassel_date?(' — '+e.wassel_date.split('-').reverse().join('/')):'')+'\n'):'⚠️ لا يوجد رقم إيصال بعد\n')
       +(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k));return L.length?('موقّع إلكترونياً ✓ ('+L.join('، ')+')\n'):'';})()
       +SEP;
   }
@@ -2121,7 +2121,7 @@ function bfShareText(){
     if(stop)return;
     const d=e.entry_date?e.entry_date.split('-').reverse().join('/'):'';
     const w=String(e.wassel_number||'').trim();
-    const blk=(i+1)+') '+d+' · سند '+(e.receipt_no||'—')+' · '+(w?('وصل '+w):'بلا وصل')+' · '+(TYPE_AR[e.entry_type]||e.entry_type||'')+'\n'
+    const blk=(i+1)+') '+d+' · سند '+(e.receipt_no||'—')+' · '+(w?('إيصال '+w):'بلا إيصال')+' · '+(TYPE_AR[e.entry_type]||e.entry_type||'')+'\n'
       +'البيان: '+(e.description||'—')+(e.category?(' · الفئة: '+e.category):'')+'\n'
       +(e.person?('الجهة: '+e.person+' · '):'')+bfPay(e)+'\n'
       +'المبلغ: '+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)
@@ -2271,35 +2271,35 @@ function bfOpenCase(id){
     +dr('الفئة',e.category)
     +dr('طريقة الدفع',bfPay(e))
     +dr('البيان',e.description)
-    +dr(e.entry_type==='income'?'الدافع':'المستفيد',e.person)
+    +dr(e.entry_type==='income'?'المكلف':'المستفيد',e.person)
     +dr(e.entry_type==='income'?'المستلم':'المسلّم',e.handled_by)
     +dr('رقم القرار',e.karar_number)
     +dr('رقم العقار',e.property_number)
-    +dr('رقم الإيصال (يدوي)',e.manual_receipt_no)
+    +dr('رقم الإيصال اليدوي',e.manual_receipt_no)
     +(function(){
-      // 📄 Yellow الوصل box — anyone with edit rights can add/update the wassel
+      // 📄 Yellow الإيصال box — anyone with edit rights can add/update the wassel
       // number & date later (the wassel is often issued after the sanad).
       if(!bfCanEdit()){
-        return dr('رقم الوصل',e.wassel_number||'<span style="color:#c22">— بلا وصل —</span>')
-          +(e.wassel_date?dr('تاريخ الوصل','<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>'):'');
+        return dr('رقم الإيصال',e.wassel_number||'<span style="color:#c22">— بلا إيصال —</span>')
+          +(e.wassel_date?dr('تاريخ الإيصال','<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>'):'');
       }
       const wn=(e.wassel_number||'').replace(/"/g,'&quot;');
       const wd=e.wassel_date||'';
       return '<div style="background:#fff8e1;border:1.5px solid #f0c88a;border-radius:12px;padding:10px 12px;margin-top:10px">'
-        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:4px">📄 الوصل (يُضاف لاحقاً — منفصل عن السند)</div>'
+        +'<div style="font-size:12.5px;font-weight:800;color:#8a6d1a;margin-bottom:4px">📄 الإيصال (يُضاف لاحقاً — منفصل عن السند)</div>'
         +'<div style="font-size:11.5px;color:#8a6d1a;margin-bottom:8px;line-height:1.55">'
-          +'يمكن أن يكون تاريخ الوصل قبل تاريخ السند (حتى لو بأسبوع أو أكثر) — التاريخ متاح بدون قيود. '
-          +'أدخل رقم الوصل يدوياً من الوصل الورقي، وارفق صورته أو ملفه أدناه؛ سيُحفظ في مرفقات السند بتسمية «الوصل — رقم …»'
+          +'يمكن أن يكون تاريخ الإيصال قبل تاريخ السند (حتى لو بأسبوع أو أكثر) — التاريخ متاح بدون قيود. '
+          +'أدخل رقم الإيصال يدوياً من الإيصال الورقي، وارفق صورته أو ملفه أدناه؛ سيُحفظ في مرفقات السند بتسمية «الإيصال — رقم …»'
         +'</div>'
         +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الوصل (يُدخل يدوياً)</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>'
-        +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الوصل</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
+        +'<div style="flex:1;min-width:120px"><label class="fl">رقم الإيصال (يُدخل يدوياً)</label><input type="text" class="fi" id="bf-case-wassel-no" value="'+wn+'" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>'
+        +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الإيصال</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
         +'</div>'
-        +'<div style="margin-top:8px"><label class="fl">📎 مستند الوصل (اختياري — صورة أو PDF)</label>'
+        +'<div style="margin-top:8px"><label class="fl">📎 مستند الإيصال (اختياري — صورة أو PDF)</label>'
           +'<input type="file" class="fi" id="bf-case-wassel-file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"></div>'
         +'<div id="bf-case-wassel-upl" style="display:none;font-size:12px;color:#8a6d1a;font-weight:700;margin-top:4px"></div>'
         +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
-        +'<button class="bf-share-btn" id="bf-case-wassel-save" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الوصل</button>'
+        +'<button class="bf-share-btn" id="bf-case-wassel-save" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الإيصال</button>'
         +((e.wassel_number||e.wassel_date)?'<button class="bf-share-btn" style="flex:0 0 auto;color:#a83232;border-color:#eec2c2;margin-bottom:0" onclick="bfClearWasselFromCase()">🗑️ مسح</button>':'')
         +'</div>'
         +'<div id="bf-case-wassel-err" style="color:#a83232;font-size:12px;min-height:14px;margin-top:4px"></div>'
@@ -2322,7 +2322,7 @@ function bfOpenCase(id){
 function bfCloseCase(){document.getElementById('bf-case-ov').style.display='none';bfCaseId=null;}
 async function bfSaveWasselFromCase(){
   if(!bfCaseId)return;
-  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية إضافة الوصل','err');return;}
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية إضافة الإيصال','err');return;}
   const wn=(document.getElementById('bf-case-wassel-no').value||'').trim();
   const wd=document.getElementById('bf-case-wassel-date').value||null;
   const err=document.getElementById('bf-case-wassel-err');
@@ -2338,7 +2338,7 @@ async function bfSaveWasselFromCase(){
     if(e1){if(err)err.textContent='⚠️ '+e1.message;return;}
     // 2) If a file was chosen, upload it and append to the entry's documents array.
     //    Naming follows the user's instruction: the wassel's manually-entered
-    //    number becomes the human-readable label on the attachment ("الوصل — رقم <N>").
+    //    number becomes the human-readable label on the attachment ("الإيصال — رقم <N>").
     const files=(fileInp&&fileInp.files)?Array.from(fileInp.files):[];
     if(files.length){
       const{data:cur,error:eCur}=await sb.from('baladieh_finance').select('documents').eq('id',bfCaseId).single();
@@ -2346,19 +2346,19 @@ async function bfSaveWasselFromCase(){
       const docs=Array.isArray(cur&&cur.documents)?cur.documents.slice():[];
       for(let i=0;i<files.length;i++){
         const f=files[i];
-        if(upl){upl.style.display='block';upl.textContent='⏳ رفع مستند الوصل '+(i+1)+' من '+files.length+': '+f.name;}
+        if(upl){upl.style.display='block';upl.textContent='⏳ رفع مستند الإيصال '+(i+1)+' من '+files.length+': '+f.name;}
         const ext=(f.name.split('.').pop()||'bin').toLowerCase();
         const path=bfCaseId+'/wassel_'+Date.now()+'_'+i+'.'+ext;
         const{error:eUp}=await sb.storage.from('sandouk-docs').upload(path,f);
         if(eUp){toast('⚠️ فشل رفع '+f.name+': '+eUp.message,'err');continue;}
         const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
-        const label='📄 الوصل'+(wn?' — رقم '+wn:'')+' — '+f.name;
+        const label='📄 الإيصال'+(wn?' — رقم '+wn:'')+' — '+f.name;
         docs.push({name:label,path:path,url:pd.publicUrl,type:ext,size:f.size,kind:'wassel',wassel_number:wn||null,wassel_date:wd||null});
       }
       const{error:eUpd}=await sb.from('baladieh_finance').update({documents:docs}).eq('id',bfCaseId);
       if(eUpd){if(err)err.textContent='⚠️ '+eUpd.message;return;}
     }
-    toast('✓ تم حفظ الوصل'+(files.length?' مع '+files.length+' مستند':''));
+    toast('✓ تم حفظ الإيصال'+(files.length?' مع '+files.length+' مستند':''));
   } finally {
     if(upl)upl.style.display='none';
     if(btn)btn.disabled=false;
@@ -2370,8 +2370,8 @@ async function bfSaveWasselFromCase(){
 }
 async function bfClearWasselFromCase(){
   if(!bfCaseId)return;
-  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل الوصل','err');return;}
-  if(!confirm('مسح رقم الوصل وتاريخه من هذا السند؟'))return;
+  if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل الإيصال','err');return;}
+  if(!confirm('مسح رقم الإيصال وتاريخه من هذا السند؟'))return;
   const{error}=await sb.from('baladieh_finance').update({wassel_number:null,wassel_date:null}).eq('id',bfCaseId);
   if(error){toast('⚠️ '+error.message,'err');return;}
   toast('✓ تم المسح');
