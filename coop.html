@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
 <script src="i18n.js"></script>
 <script>
 if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
@@ -1224,6 +1225,10 @@ input,textarea,select{font-family:var(--font);outline:none}
 .stat-due::before{background:#7c3aed}
 .stat-icon{font-size:24px;margin-bottom:6px;line-height:1}
 .stat-num{font-size:22px;font-weight:900;line-height:1.1;margin-bottom:4px}
+/* full grouped amounts (1,250,000) are long — step the size down so
+   the card never clips them (.stat-card has overflow:hidden) */
+.stat-num.sn-lg{font-size:16px}
+.stat-num.sn-xl{font-size:13px;letter-spacing:-.2px}
 .stat-blue .stat-num{color:var(--primary)}
 .stat-amber .stat-num{color:var(--accent)}
 .stat-green .stat-num{color:var(--green)}
@@ -1939,7 +1944,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
       <div class="row-2">
         <div class="field">
           <label class="field-label" id="prod-price-label" data-i18n="priceLabel">السعر *</label>
-          <input class="field-input" id="prod-price" type="number" inputmode="decimal" placeholder="50000" style="direction:ltr;text-align:right" oninput="updatePriceConverted()">
+          <input class="field-input" data-num id="prod-price" type="number" inputmode="decimal" placeholder="50000" style="direction:ltr;text-align:right" oninput="updatePriceConverted()">
           <div id="prod-price-converted" style="font-size:11px;color:var(--text3);margin-top:4px;text-align:end"></div>
         </div>
         <div class="field">
@@ -1949,7 +1954,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
       </div>
       <div class="field">
         <label class="field-label" data-i18n="qtyAvailable">الكمية المتوفّرة *</label>
-        <input class="field-input" id="prod-stock" type="number" inputmode="numeric" placeholder="10" style="direction:ltr;text-align:right">
+        <input class="field-input" data-num id="prod-stock" type="number" inputmode="numeric" placeholder="10" style="direction:ltr;text-align:right">
       </div>
       <div class="field">
         <label class="field-label" data-i18n="descLabel">الوصف</label>
@@ -3830,8 +3835,8 @@ async function loadSellerStats(){
     
     const totalSalesEl = document.getElementById('seller-total-sales');
     const amountDueEl = document.getElementById('seller-amount-due');
-    if(totalSalesEl) totalSalesEl.textContent = formatPriceShort(totalSales);
-    if(amountDueEl) amountDueEl.textContent = formatPriceShort(amountDue);
+    setStatNum(totalSalesEl, formatPriceShort(totalSales));
+    setStatNum(amountDueEl, formatPriceShort(amountDue));
     
     // Cache for payout request
     window._sellerAmountDue = amountDue;
@@ -3909,10 +3914,17 @@ async function loadSellerStats(){
 }
 
 function formatPriceShort(amt){
-  if(!amt) return '0';
-  if(amt >= 1000000) return (amt/1000000).toFixed(1) + 'M';
-  if(amt >= 1000) return (amt/1000).toFixed(0) + 'K';
-  return Math.round(amt).toString();
+  amt = parseFloat(amt) || 0;
+  return Math.round(amt).toLocaleString('en-US');
+}
+
+// Write a number into a stat card, shrinking the type for long amounts.
+function setStatNum(el, text){
+  if(!el) return;
+  el.textContent = text;
+  el.classList.remove('sn-lg','sn-xl');
+  if(text.length >= 12) el.classList.add('sn-xl');
+  else if(text.length >= 8) el.classList.add('sn-lg');
 }
 
 async function updateOrderStatus(orderId, newStatus){
@@ -4512,7 +4524,7 @@ async function loadAdminPanel(){
             <div style="font-size:11px;color:var(--text3)" id="rate-updated"></div>
           </div>
           <div style="display:flex;gap:8px;align-items:stretch">
-            <input class="field-input" id="rate-input" type="number" step="100" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="89500">
+            <input class="field-input" data-num id="rate-input" type="number" step="100" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="89500">
             <button class="btn btn-primary" onclick="saveCurrencyRate()" data-i18n="save">حفظ ✓</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px" data-i18n="rateHint">يُطبَّق فوراً على كل الأسعار المعروضة في المتجر</div>
@@ -4524,7 +4536,7 @@ async function loadAdminPanel(){
             <div style="font-size:13px;color:var(--text3);font-weight:700">أجرة التوصيل لكل طلب (ل.ل.)</div>
           </div>
           <div style="display:flex;gap:8px;align-items:stretch">
-            <input class="field-input" id="dfee-input" type="number" step="1000" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="50000">
+            <input class="field-input" data-num id="dfee-input" type="number" step="1000" min="0" inputmode="decimal" style="direction:ltr;text-align:right;flex:1" placeholder="50000">
             <button class="btn btn-primary" onclick="saveDeliveryFee()">حفظ ✓</button>
           </div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px">هذه الأجرة يحصل عليها عامل التوصيل بعد كل تسليم. تعديلها يؤثّر فقط على الطلبات المقبلة.</div>

@@ -6,6 +6,7 @@
 <title>إدارة الري — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
 <script src="wadi-perms.js"></script>
 <script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -174,7 +175,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <div class="wf-sumtitle">➖ إدخال مصروف جديد</div>
       <div class="wf-g2">
         <div><label class="wf-fl">التاريخ *</label><input class="fi" id="e-date" type="date"></div>
-        <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" id="e-amount" type="number" step="0.01" min="0" placeholder="0"></div>
+        <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" data-num id="e-amount" type="number" step="0.01" min="0" placeholder="0"></div>
       </div>
       <label class="wf-fl">البيان / الوصف *</label>
       <input class="fi" id="e-desc" placeholder="مثال: اجرة يوم عمل - ...">
@@ -195,7 +196,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
       <div class="wf-sumtitle">➕ إدخال جباية (لكل منزل / مشترك)</div>
       <div class="wf-g2">
         <div><label class="wf-fl">التاريخ *</label><input class="fi" id="c-date" type="date"></div>
-        <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" id="c-amount" type="number" step="0.01" min="0" placeholder="0"></div>
+        <div><label class="wf-fl">المبلغ ($) *</label><input class="fi" data-num id="c-amount" type="number" step="0.01" min="0" placeholder="0"></div>
       </div>
       <div class="wf-g2">
         <div><label class="wf-fl">اسم الدافع / المنزل *</label><div class="wf-picker" data-picker-for="c-person" style="position:relative"><input class="fi" id="c-person" placeholder="ابدأ الكتابة لاختيار من الدليل…" autocomplete="off"><div class="wf-picker-dd" id="c-person-dd" style="display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;background:#fff;border:1.5px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(15,77,130,.14);max-height:280px;overflow-y:auto;z-index:60;padding:4px 0"></div></div></div>
@@ -1518,7 +1519,7 @@ function wfBuildReportEl(mode){
       +['<b style="color:#1a6eb5;font-size:16px">$'+wfFmt(inc-exp)+'</b><br>الرصيد الحالي',
         '<b style="color:#2e7d32;font-size:16px">$'+wfFmt(inc)+'</b><br>إجمالي المداخيل',
         '<b style="color:#c0392b;font-size:16px">$'+wfFmt(exp)+'</b><br>إجمالي المصاريف',
-        '<b style="font-size:16px">'+wfEntries.length+'</b><br>عدد الحركات'
+        '<b style="font-size:16px">'+wfFmt(wfEntries.length)+'</b><br>عدد الحركات'
        ].map(x=>'<div style="flex:1;border:1px solid #e0e6e0;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
       +'</div>'
       +(mode==='summary'?'':secT('📒 سجل الحركات')
@@ -1646,7 +1647,7 @@ function wfTextSummary(){
     +'💰 الرصيد الحالي: $'+wfFmt(inc-exp)+'\n'
     +'⬇️ إجمالي المداخيل: $'+wfFmt(inc)+'\n'
     +'⬆️ إجمالي المصاريف: $'+wfFmt(exp)+'\n'
-    +'🧾 عدد الحركات: '+wfEntries.length;
+    +'🧾 عدد الحركات: '+wfFmt(wfEntries.length);
 }
 function wfShareText(){
   if(wfShareCtx){

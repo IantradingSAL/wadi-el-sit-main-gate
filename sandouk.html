@@ -6,6 +6,7 @@
 <title>صندوق البلدية — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
 <script src="wadi-perms.js"></script>
 <script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -238,14 +239,14 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
-        <input type="number" class="fi" id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
+        <input type="number" class="fi" data-num id="bf-i-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('i')">
         <select class="fi" id="bf-i-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('i')">
           <option value="LBP" selected>ل.ل. ليرة</option>
           <option value="USD">$ دولار</option>
         </select>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-i-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('i')"></div>
         <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-i-total" readonly style="direction:ltr;background:#f0f7ff;font-weight:800;color:#0f4d82" value="0.00"></div>
       </div>
       <div class="bf-g2">
@@ -288,14 +289,14 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <label class="fl">قيمة الإجراءات *</label>
       <div style="display:flex;gap:8px">
-        <input type="number" class="fi" id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
+        <input type="number" class="fi" data-num id="bf-e-amount" min="0" step="0.01" placeholder="0.00" style="direction:ltr;flex:1" oninput="bfUpdateTotal('e')">
         <select class="fi" id="bf-e-cur" style="flex:0 0 118px" onchange="bfUpdateTotal('e')">
           <option value="LBP" selected>ل.ل. ليرة</option>
           <option value="USD">$ دولار</option>
         </select>
       </div>
       <div class="bf-g2">
-        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
+        <div><label class="fl">سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-e-stamp" min="0" step="0.01" placeholder="0.00" style="direction:ltr" oninput="bfUpdateTotal('e')"></div>
         <div><label class="fl">المجموع (إجراءات + طوابع)</label><input type="text" class="fi" id="bf-e-total" readonly style="direction:ltr;background:#fdf1f1;font-weight:800;color:#a83232" value="0.00"></div>
       </div>
       <div class="bf-g2">
@@ -452,11 +453,11 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">النوع *</label><select class="fi" id="bf-ed-type" onchange="bfEditRefreshCats()"><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="opening">رصيد افتتاحي</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
+      <div><label class="fl">المبلغ الإجمالي *</label><input type="number" class="fi" data-num id="bf-ed-amount" min="0" step="0.01" style="direction:ltr"></div>
       <div><label class="fl">العملة</label><select class="fi" id="bf-ed-cur"><option value="USD">$ دولار</option><option value="LBP">ل.ل. ليرة</option></select></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
+      <div><label class="fl">🏷️ سند قيمة الطوابع</label><input type="number" class="fi" data-num id="bf-ed-stamp" min="0" step="0.01" style="direction:ltr" placeholder="0.00"></div>
       <div style="font-size:11px;color:#8a95a3;align-self:end;padding-bottom:12px">قيمة الطوابع محسوبة ضمن "المبلغ الإجمالي" أعلاه.</div>
     </div>
     <div class="bf-g2">
@@ -705,7 +706,7 @@ function bfKPIs(rowsArg){
   document.getElementById('bf-k-bal').innerHTML=two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.');
   document.getElementById('bf-k-inc').innerHTML=two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.');
   document.getElementById('bf-k-exp').innerHTML=two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.');
-  document.getElementById('bf-k-cnt').textContent=rows.length;
+  document.getElementById('bf-k-cnt').textContent=bfFmt(rows.length);
   const filtered=(rows!==bfEntries)&&(rows.length!==bfEntries.length);
   ['bf-k-bal','bf-k-inc','bf-k-exp','bf-k-cnt'].forEach(id=>{
     const el=document.getElementById(id); if(!el)return;
@@ -1438,7 +1439,7 @@ function bfRenderReports(){
   if(tot){
     tot.innerHTML=stEntries.length
       ? '<div class="bf-kpi" style="flex:1;min-width:150px;border-top-color:#c9a227"><div class="v" style="color:#8a6d1a">'+bfSumTxt(stTot)+'</div><div class="l">إجمالي قيمة الطوابع</div></div>'
-        +'<div class="bf-kpi" style="flex:1;min-width:150px"><div class="v" style="color:#0f4d82">'+stTot.n+'</div><div class="l">عدد السندات ذات طوابع</div></div>'
+        +'<div class="bf-kpi" style="flex:1;min-width:150px"><div class="v" style="color:#0f4d82">'+bfFmt(stTot.n)+'</div><div class="l">عدد السندات ذات طوابع</div></div>'
       : '<div style="font-size:12.5px;color:#8a95a3">لا توجد سندات مسجّل عليها قيمة طوابع بعد</div>';
   }
   const body=document.getElementById('bf-rep-stamps');
@@ -1597,7 +1598,7 @@ function bfRenderAudit(){
   const tb=document.getElementById('bf-a-rows'); if(!tb)return;
   const rows=bfAuditFiltered();
   const cnt=document.getElementById('bf-a-count');
-  if(cnt)cnt.textContent='عدد العمليات: '+rows.length+(bfAuditRows.length!==rows.length?(' من أصل '+bfAuditRows.length):'');
+  if(cnt)cnt.textContent='عدد العمليات: '+bfFmt(rows.length)+(bfAuditRows.length!==rows.length?(' من أصل '+bfFmt(bfAuditRows.length)):'');
   if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">لا توجد عمليات مطابقة</td></tr>';return;}
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const COLOR={create:'#1f7a45',update:'#8a6d1a',void:'#a83232',unvoid:'#8a6d1a',delete:'#a83232',sign:'#0f4d82'};
@@ -1853,7 +1854,7 @@ function bfBuildReportEl(){
   });
   if(cur.length)pages.push(cur);
   const ledTot='<tr style="page-break-inside:avoid;background:#eef3fa;font-weight:800">'
-    +'<td colspan="8" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+led.length+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
+    +'<td colspan="8" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+bfFmt(led.length)+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
     +'<td colspan="2" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">'+num('الرصيد: '+totTxt(rbU,rbL))+'</td></tr>';
   const brk='page-break-before:always';
   const foot=(t)=>'<div style="font-size:10.5px;color:#8a8f9c;margin:2px 0 0;display:flex;justify-content:space-between">'
@@ -1874,7 +1875,7 @@ function bfBuildReportEl(){
     ['الرصيد الحالي',two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.'),'#0f4d82'],
     ['إجمالي المقبوضات',two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.'),'#1f7a45'],
     ['إجمالي المصروفات',two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.'),'#a83232'],
-    ['عدد الحركات',String(bfEntries.length),'#1a1a2e']
+    ['عدد الحركات',bfFmt(bfEntries.length),'#1a1a2e']
   ];
   const infoRow=(l,v)=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:#8a8f9c;font-weight:700">'+l+':</span><span style="font-weight:700">'+v+'</span></div>';
   el.innerHTML=
@@ -1891,8 +1892,8 @@ function bfBuildReportEl(){
     +'</div>'
     +'<div style="border:1px solid #e0e6ef;border-radius:10px;padding:10px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px 26px">'
     +infoRow('الفترة',dmy(dFrom)+' — '+dmy(dTo))
-    +infoRow('حركات هذا التقرير',String(led.length))
-    +infoRow('إجمالي حركات الصندوق',String(bfEntries.length))
+    +infoRow('حركات هذا التقرير',bfFmt(led.length))
+    +infoRow('إجمالي حركات الصندوق',bfFmt(bfEntries.length))
     +infoRow('مقبوضات الفترة',totTxt(tiU,tiL))
     +infoRow('مصروفات الفترة',totTxt(teU,teL))
     +infoRow('رصيد الفترة',totTxt(rbU,rbL))
@@ -1920,7 +1921,7 @@ function bfBuildReportEl(){
         +td(num(bfMoney(+e.stamp_value,e.currency)),'font-weight:800;color:#8a6d1a')
       +'</tr>').join('');
       return '<div style="'+brk+'">'
-        +secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+st.length)
+        +secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+bfFmt(st.length))
         +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows,[74,70,64,150,0,130])
         +'</div>';
     })()
@@ -2058,7 +2059,7 @@ function bfShareText(){
     +'الرصيد الحالي: '+cmb(iU-eU,iL-eL)+'\n'
     +'إجمالي المقبوضات: '+cmb(iU,iL)+'\n'
     +'إجمالي المصروفات: '+cmb(eU,eL)+'\n'
-    +'عدد الحركات: '+bfEntries.length+'\n'
+    +'عدد الحركات: '+bfFmt(bfEntries.length)+'\n'
     +SEP+'\n'
     +catBlock('🟢 المقبوضات حسب الفئة',bfEntries.filter(e=>e.entry_type!=='expense'))
     +catBlock('🔴 المصروفات حسب الفئة',bfEntries.filter(e=>e.entry_type==='expense'));
@@ -2084,7 +2085,7 @@ function bfShareText(){
   });
   const rest=list.length-shown;
   return head
-    +'*📒 تفاصيل الحركات ('+list.length+')*\n'
+    +'*📒 تفاصيل الحركات ('+bfFmt(list.length)+')*\n'
     +SEP+'\n'
     +det
     +(rest?('… و'+rest+' حركة إضافية — راجع ملف التقرير PDF\n'+SEP):'');
