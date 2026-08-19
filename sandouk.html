@@ -1585,14 +1585,18 @@ function bfPrint(){
   if(!w){toast('⚠️ يرجى السماح بالنوافذ المنبثقة للطباعة','err');return;}
   w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8"><title>طباعة</title>'
     +'<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">'
-    +'<style>@page{size:'+(bfShareCtx?'A5':'A4')+';margin:9mm}body{font-family:Tajawal,Tahoma,sans-serif;margin:0;direction:rtl}</style>'
-    +'</head><body>'+(bfShareCtx?'<div style="max-width:560px;margin:0 auto">'+inner+'</div>':'<div style="max-width:760px;margin:0 auto">'+inner+'</div>')
+    +'<style>@page{size:'+(bfShareCtx?'A5':'A4 landscape')+';margin:9mm}body{font-family:Tajawal,Tahoma,sans-serif;margin:0;direction:rtl}</style>'
+    +'</head><body>'+(bfShareCtx?'<div style="max-width:560px;margin:0 auto">'+inner+'</div>':'<div style="max-width:1040px;margin:0 auto">'+inner+'</div>')
     +'<script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script></body></html>');
   w.document.close();
 }
 
 // ── REPORT PDF ──
 function bfBuildReportEl(){
+  // ── page geometry: the report prints on A4 landscape, so the 10 ledger columns get
+  //    real width and the text lands around 9pt on paper instead of 7pt ──
+  const W=1040, PAD=12, INNER=W-2*PAD;
+  const PAGE_H=Math.round(W*(190/277));   // usable height of one landscape page, in px
   let iU=0,eU=0,iL=0,eL=0;
   bfEntries.forEach(e=>{
     if(e.voided)return;
@@ -1601,16 +1605,16 @@ function bfBuildReportEl(){
     else { if(l)iL+=+e.amount; else iU+=+e.amount; }
   });
   const hasL=!!(iL||eL);
-  const two=(u,l)=>u+(hasL?'<br><span style="font-size:12px">'+l+'</span>':'');
+  const two=(u,l)=>u+(hasL?'<br><span style="font-size:13px">'+l+'</span>':'');
   const dts=new Date().toLocaleDateString('ar-LB');
   const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  // html2canvas cannot break an Arabic run itself without losing the word gaps, so the
-  // report wraps long cells here: words are grouped into lines of ~n characters and the
-  // breaks are emitted as real <br> elements.
-  const wrap=(v,n)=>{
+  // html2canvas cannot break an Arabic run itself without losing the word gaps, so long
+  // cells are wrapped here: words are grouped into lines of ~n characters and the breaks
+  // are emitted as real <br> elements.
+  const wrapL=(v,n)=>{
     const words=String(v==null?'':v).trim().split(/\s+/).filter(Boolean);
-    if(!words.length)return '';
+    if(!words.length)return [];
     const lines=[]; let line='';
     words.forEach(w=>{
       if(!line){line=w;return;}
@@ -1618,23 +1622,25 @@ function bfBuildReportEl(){
       lines.push(line); line=w;
     });
     if(line)lines.push(line);
-    return lines.map(esc).join('<br>');
+    return lines;
   };
+  const wrap=(v,n)=>wrapL(v,n).map(esc).join('<br>');
   const num=(v,color)=>(color?'<span style="color:'+color+'">'+v+'</span>':String(v));
-  const td=(v,s)=>'<td style="padding:4px;border:1px solid #e0e6ef;vertical-align:top;'+(s||'')+'">'+(v==null?'':v)+'</td>';
+  const td=(v,s)=>'<td style="padding:5px 5px;border:1px solid #e0e6ef;vertical-align:top;'+(s||'')+'">'+(v==null?'':v)+'</td>';
   const cg=w=>w?('<colgroup>'+w.map(x=>'<col style="width:'+(x?x+'px':'auto')+'">').join('')+'</colgroup>'):'';
-  const tbl=(h,r,w)=>'<table style="width:100%;table-layout:'+(w?'fixed':'auto')+';border-collapse:collapse;font-size:11px;margin-bottom:14px">'+cg(w)+'<thead><tr>'
-    +h.map((x,i)=>'<th style="background:#eef3fa;color:#0f4d82;padding:5px 4px;border:1px solid #d5dfec;text-align:right;font-weight:800">'
-      +((w&&w[i])?wrap(x,Math.max(4,Math.floor(w[i]/6.2))):esc(x))+'</th>').join('')
-    +'</tr></thead><tbody>'+r+'</tbody></table>';
-  const secT=t=>'<div style="font-size:14px;font-weight:800;color:#0f4d82;margin:14px 0 6px">'+t+'</div>';
-  // the ledger is always printed oldest → newest, and the balance column runs in that order
+  const thRow=(h,w)=>'<tr>'+h.map((x,i)=>'<th style="background:#eef3fa;color:#0f4d82;padding:6px 5px;border:1px solid #d5dfec;text-align:right;font-weight:800;font-size:12px">'
+      +((w&&w[i])?wrap(x,Math.max(4,Math.floor(w[i]/6.6))):esc(x))+'</th>').join('')+'</tr>';
+  const tbl=(h,r,w)=>'<table style="width:100%;table-layout:'+(w?'fixed':'auto')+';border-collapse:collapse;font-size:11.5px;margin-bottom:12px">'
+    +cg(w)+'<thead>'+thRow(h,w)+'</thead><tbody>'+r+'</tbody></table>';
+  const secT=t=>'<div style="font-size:16px;font-weight:800;color:#0f4d82;margin:12px 0 6px">'+t+'</div>';
+
+  // ── ledger: always oldest → newest, with the balance column running in that order ──
   const seqNo=v=>{const m=String(v==null?'':v).match(/(\d+)\s*$/);return m?parseInt(m[1],10):0;};
   const led=bfFiltered().slice().sort((a,b)=>
       String(a.entry_date||'').localeCompare(String(b.entry_date||''))
       ||seqNo(a.receipt_no)-seqNo(b.receipt_no)
       ||String(a.id||'').localeCompare(String(b.id||'')));
-  let rbU=0,rbL=0,tiU=0,tiL=0,teU=0,teL=0;
+  let rbU=0,rbL=0,tiU=0,tiL=0,teU=0,teL=0,dFrom='',dTo='';
   led.forEach(e=>{
     if(!e.voided){
       if(e.currency==='LBP')rbL+=e.signed; else rbU+=e.signed;
@@ -1642,45 +1648,92 @@ function bfBuildReportEl(){
       else { if(e.currency==='LBP')tiL+=e.signed; else tiU+=e.signed; }
     }
     e.rbal=(e.currency==='LBP'?rbL:rbU);
+    const d=e.entry_date||''; if(d){ if(!dFrom||d<dFrom)dFrom=d; if(!dTo||d>dTo)dTo=d; }
   });
-  const LEDW=[56,42,52,48,72,34,0,64,96,96];
-  const rows=led.map((e,i)=>'<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
-    +td(num(e.entry_date?e.entry_date.split('-').reverse().join('/'):''),'font-size:10px')
-    +td(e.receipt_no?num(esc(e.receipt_no)):'','font-size:10px')
-    +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا وصل</span>','font-size:10px')
-    +td(wrap(TYPE_AR[e.entry_type]||e.entry_type,8),'font-size:10px')
-    +td(wrap(e.category,12),'font-size:10px')+td(wrap(bfPay(e),6),'font-size:10px')
-    +td(wrap(e.description,32)+(e.voided?'<br><span style="color:#c22;font-weight:800">⛔ ملغى</span>'+(e.void_reason?'<br>'+wrap(e.void_reason,34):''):''),e.voided?'color:#c22':'')
-    +td(wrap(e.person,11),'font-size:10px')
-    +td(num((e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)),'font-size:10px;font-weight:800;color:'+(e.voided?'#999':(e.signed<0?'#a83232':'#1f7a45')))
-    +td(num(bfMoney(e.rbal,e.currency)),'font-size:10px;font-weight:800;text-align:left;color:#0f4d82')+'</tr>').join('');
   const totTxt=(u,l)=>[u?'$'+bfFmt(u):'',l?bfFmt(l)+' ل.ل.':''].filter(Boolean).join(' + ')||'$0';
+  const dmy=d=>d?d.split('-').reverse().join('/'):'—';
+
+  // ── one row per movement, remembering how tall it is so pages can be cut cleanly ──
+  const LEDH=['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'];
+  const LEDW=[66,62,62,58,100,48,0,110,118,118];
+  const built=led.map((e,i)=>{
+    const cDesc=wrapL(e.description,42), cCat=wrapL(e.category,16), cPer=wrapL(e.person,15),
+          cType=wrapL(TYPE_AR[e.entry_type]||e.entry_type,9), cPay=wrapL(bfPay(e),8),
+          cVoid=e.voided?(1+wrapL(e.void_reason,42).length):0;
+    const lines=Math.max(1,cDesc.length+cVoid,cCat.length,cPer.length,cType.length,cPay.length);
+    const html='<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
+      +td(num(dmy(e.entry_date)))
+      +td(e.receipt_no?num(esc(e.receipt_no)):'')
+      +td(e.wassel_number?num(esc(e.wassel_number)):'<span style="color:#c22;font-weight:800">بلا وصل</span>')
+      +td(cType.map(esc).join('<br>'))
+      +td(cCat.map(esc).join('<br>'))+td(cPay.map(esc).join('<br>'))
+      +td(cDesc.map(esc).join('<br>')+(e.voided?'<br><span style="color:#c22;font-weight:800">⛔ ملغى</span>'+(e.void_reason?'<br>'+wrap(e.void_reason,42):''):''),e.voided?'color:#c22':'')
+      +td(cPer.map(esc).join('<br>'))
+      +td(num((e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)),'font-weight:800;color:'+(e.voided?'#999':(e.signed<0?'#a83232':'#1f7a45')))
+      +td(num(bfMoney(e.rbal,e.currency)),'font-weight:800;color:#0f4d82')+'</tr>';
+    return {html:html,h:lines*16+12};
+  });
+  // pack rows into pages: header row + rows + the page footer must fit one landscape page
+  const CHUNK_BUDGET=PAGE_H-72;
+  const pages=[]; let cur=[],curH=0;
+  built.forEach(r=>{
+    if(cur.length&&curH+r.h>CHUNK_BUDGET){ pages.push(cur); cur=[]; curH=0; }
+    cur.push(r.html); curH+=r.h;
+  });
+  if(cur.length)pages.push(cur);
   const ledTot='<tr style="page-break-inside:avoid;background:#eef3fa;font-weight:800">'
-    +'<td colspan="8" style="padding:5px 4px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+led.length+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
-    +'<td colspan="2" style="padding:5px 4px;border:1px solid #d5dfec;color:#0f4d82">'+num('الرصيد: '+totTxt(rbU,rbL))+'</td></tr>';
-  const sumR=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+td(wrap(k,30))+td(num(v.n))+td(num(bfSumTxt(v),color),'font-weight:800')+'</tr>').join('');
+    +'<td colspan="8" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">الإجمالي ('+led.length+' حركة) — مقبوضات: '+totTxt(tiU,tiL)+' · مصروفات: '+totTxt(teU,teL)+'</td>'
+    +'<td colspan="2" style="padding:6px 5px;border:1px solid #d5dfec;color:#0f4d82">'+num('الرصيد: '+totTxt(rbU,rbL))+'</td></tr>';
+  const brk='page-break-before:always';
+  const foot=(t)=>'<div style="font-size:10.5px;color:#8a8f9c;margin:2px 0 0;display:flex;justify-content:space-between">'
+    +'<div>بلدية وادي الست — صندوق البلدية</div><div>'+t+'</div></div>';
+  const ledgerHtml=pages.length
+    ? pages.map((rows,pi)=>'<div style="'+brk+'">'
+        +secT('📒 سجل الحركات'+(pages.length>1?' ('+(pi+1)+'/'+pages.length+')':''))
+        +tbl(LEDH,rows.join('')+(pi===pages.length-1?ledTot:''),LEDW)
+        +foot('سجل الحركات — صفحة '+(pi+1)+' من '+pages.length)+'</div>').join('')
+    : '<div style="'+brk+'">'+secT('📒 سجل الحركات')
+        +tbl(LEDH,'<tr>'+td('لا توجد حركات مطابقة للفلاتر','text-align:center;color:#999')+'</tr>',LEDW)+'</div>';
+
+  const sumR=(pairs,color)=>pairs.map(([k,v])=>'<tr style="page-break-inside:avoid">'+td(wrap(k,36))+td(num(v.n))+td(num(bfSumTxt(v),color),'font-weight:800')+'</tr>').join('');
   const el=document.createElement('div');
   el.setAttribute('dir','rtl');
-  el.style.cssText='width:760px;background:#fff;color:#1a1a2e;font-family:Tajawal,sans-serif;padding:10px';
+  el.style.cssText='width:'+W+'px;background:#fff;color:#1a1a2e;font-family:Tajawal,Tahoma,sans-serif;padding:'+PAD+'px';
+  const kpi=[
+    ['الرصيد الحالي',two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.'),'#0f4d82'],
+    ['إجمالي المقبوضات',two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.'),'#1f7a45'],
+    ['إجمالي المصروفات',two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.'),'#a83232'],
+    ['عدد الحركات',String(bfEntries.length),'#1a1a2e']
+  ];
+  const infoRow=(l,v)=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:#8a8f9c;font-weight:700">'+l+':</span><span style="font-weight:700">'+v+'</span></div>';
   el.innerHTML=
-    '<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #c9a227;padding-bottom:10px;margin-bottom:12px">'
-    +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:52px">':'')
-    +'<div style="flex:1"><div style="font-size:19px;font-weight:800;color:#0f4d82">💰 صندوق البلدية — بلدية وادي الست</div>'
-    +'<div style="font-size:11px;color:#8a8f9c;font-weight:700">قضاء الشوف — جبل لبنان · تقرير المقبوضات والمصروفات · تاريخ التقرير: '+dts+'</div></div></div>'
-    +'<div style="display:flex;gap:8px;margin-bottom:14px;text-align:center">'
-    +['<b style="color:#0f4d82;font-size:15px">'+two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.')+'</b><br>الرصيد الحالي',
-      '<b style="color:#1f7a45;font-size:15px">'+two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.')+'</b><br>إجمالي المقبوضات',
-      '<b style="color:#a83232;font-size:15px">'+two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.')+'</b><br>إجمالي المصروفات',
-      '<b style="font-size:15px">'+bfEntries.length+'</b><br>عدد الحركات'
-     ].map(x=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
+    // ── page 1: title block + summary ──
+    '<div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid #c9a227;padding-bottom:12px;margin-bottom:14px">'
+    +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:64px">':'')
+    +'<div style="flex:1"><div style="font-size:13px;color:#8a8f9c;font-weight:700">الجمهورية اللبنانية — محافظة جبل لبنان — قضاء الشوف</div>'
+    +'<div style="font-size:24px;font-weight:800;color:#0f4d82">بلدية وادي الست — صندوق البلدية</div>'
+    +'<div style="font-size:15px;font-weight:800;color:#c9a227">تقرير المقبوضات والمصروفات</div></div>'
+    +'<div style="text-align:left;font-size:12px;color:#8a8f9c;font-weight:700">تاريخ التقرير<br><span style="font-size:15px;color:#1a1a2e">'+dts+'</span></div></div>'
+    +'<div style="display:flex;gap:10px;margin-bottom:14px;text-align:center">'
+    +kpi.map(([l,v,c])=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:10px;padding:10px;font-size:12px">'
+        +'<b style="color:'+c+';font-size:19px">'+v+'</b><br>'+l+'</div>').join('')
+    +'</div>'
+    +'<div style="border:1px solid #e0e6ef;border-radius:10px;padding:10px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px 26px">'
+    +infoRow('الفترة',dmy(dFrom)+' — '+dmy(dTo))
+    +infoRow('حركات هذا التقرير',String(led.length))
+    +infoRow('إجمالي حركات الصندوق',String(bfEntries.length))
+    +infoRow('مقبوضات الفترة',totTxt(tiU,tiL))
+    +infoRow('مصروفات الفترة',totTxt(teU,teL))
+    +infoRow('رصيد الفترة',totTxt(rbU,rbL))
     +'</div>'
     +secT('🟢 المقبوضات حسب الفئة')
-    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'),[0,60,190])
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'),[0,70,240])
     +secT('🔴 المصروفات حسب الفئة')
-    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'),[0,60,190])
-    +secT('📒 سجل الحركات')
-    +tbl(['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],
-         rows?(rows+ledTot):'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>',LEDW)
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'),[0,70,240])
+    +foot('ملخّص — صفحة الغلاف')
+    // ── ledger pages, each with its own column header ──
+    +ledgerHtml
+    // ── stamps ──
     +(function(){
       const st=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
       if(!st.length) return '';
@@ -1688,20 +1741,25 @@ function bfBuildReportEl(){
       let sU=0,sL=0; st.forEach(e=>{if(e.currency==='LBP')sL+=+e.stamp_value;else sU+=+e.stamp_value;});
       const totalTxt=[sU?'$'+bfFmt(sU):'',sL?bfFmt(sL)+' ل.ل.':''].filter(Boolean).join(' + ')||'—';
       const rows=st.slice().sort((a,b)=>String(a.entry_date||'').localeCompare(String(b.entry_date||''))||seqNo(a.receipt_no)-seqNo(b.receipt_no)).map((e,i)=>'<tr style="page-break-inside:avoid;background:'+(i%2?'#fafbfd':'#fff')+'">'
-        +td(num(e.entry_date?e.entry_date.split('-').reverse().join('/'):''),'font-size:10px')
-        +td(e.receipt_no?num(esc(e.receipt_no)):'','font-size:10px')
-        +td(TYPE_AR2[e.entry_type]||esc(e.entry_type),'font-size:10px')
-        +td(wrap(e.person,16),'font-size:10px')
-        +td(wrap(e.description,40),'font-size:10px')
+        +td(num(dmy(e.entry_date)))
+        +td(e.receipt_no?num(esc(e.receipt_no)):'')
+        +td(wrap(TYPE_AR2[e.entry_type]||e.entry_type,9))
+        +td(wrap(e.person,20))
+        +td(wrap(e.description,54))
         +td(num(bfMoney(+e.stamp_value,e.currency)),'font-weight:800;color:#8a6d1a')
       +'</tr>').join('');
-      return secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+st.length)
-        +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows,[60,54,56,110,0,96]);
+      return '<div style="'+brk+'">'
+        +secT('🏷️ تقرير الطوابع المستعملة — إجمالي: '+totalTxt+' · عدد السندات: '+st.length)
+        +tbl(['التاريخ','السند','النوع','الجهة','البيان','قيمة الطوابع'],rows,[74,70,64,150,0,130])
+        +'</div>';
     })()
-    +'<div style="margin-top:20px;font-size:11px;color:#555;display:flex;justify-content:space-between">'
-    +'<div>أمين الصندوق: ________________</div><div>رئيس البلدية: ________________</div><div>أُنشئ بواسطة: '+(bfUser?bfUser.email:'')+'</div></div>';
+    // ── signatures ──
+    +'<div style="margin-top:26px;padding-top:10px;border-top:1px solid #e0e6ef;font-size:12px;color:#555;display:flex;justify-content:space-between;page-break-inside:avoid">'
+    +'<div>أمين الصندوق: ________________</div><div>رئيس البلدية: ________________</div>'
+    +'<div>أُنشئ بواسطة: '+esc(bfUser?bfUser.email:'')+'</div></div>';
   return el;
 }
+
 function bfMountForPdf(el){
   // Pin the element at the document's top-left so RTL overflow on narrow screens
   // can never push it to negative coordinates (which html2canvas crops out)
@@ -1763,11 +1821,11 @@ function bfPdfOpts(){
       jsPDF:{unit:'mm',format:'a5',orientation:'portrait'},
       pagebreak:{mode:['css','legacy']}};
   }
-  return {margin:[10,8,12,8],
+  return {margin:[10,10,10,10],
     filename:'Sandouk-Baladieh-Report-'+bfToday()+'.pdf',
     image:{type:'jpeg',quality:0.96},
     html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
     pagebreak:{mode:['css','legacy']}};
 }
 async function bfExportPDF(){
