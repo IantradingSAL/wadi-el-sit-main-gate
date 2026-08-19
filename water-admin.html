@@ -1313,9 +1313,16 @@ async function wfShowAddPhonebookModal(prefillName, targetInputId){
   const ph=(prompt('📞 رقم الهاتف (اختياري):','')||'').trim();
   const wadi=confirm('🏡 هل هو مواطن من بلدة وادي الست؟');
   const parts=nm.split(/\s+/);
+  // phonebook_entries.phone is NOT NULL — store an omitted number as an empty string
+  const D={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9',
+           '۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+  const phoneNorm=String(ph||'').replace(/[٠-٩۰-۹]/g,d=>D[d]||d).replace(/\s+/g,'').trim();
   const{error}=await sb.from('phonebook_entries').insert({
     mun_id:MUN_ID,name:nm,first:parts[0]||nm,family:parts.slice(1).join(' ')||null,
-    phone:ph||null,is_wadi_citizen:wadi,status:'approved',source:'water-admin',entry_hidden:false
+    phone:phoneNorm,
+    wa:phoneNorm?phoneNorm.replace(/\D/g,''):null,
+    cc:phoneNorm?(phoneNorm.indexOf('+961')===0?'lb':'other'):null,
+    is_wadi_citizen:wadi,status:'approved',source:'water-admin',entry_hidden:false
   });
   if(error){toast('⚠️ '+error.message,'err');return;}
   const t=document.getElementById(targetInputId); if(t) t.value=nm;
