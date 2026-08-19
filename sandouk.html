@@ -1629,12 +1629,12 @@ function bfBuildReportEl(){
       '<b style="font-size:15px">'+bfEntries.length+'</b><br>عدد الحركات'
      ].map(x=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:8px;padding:8px;font-size:11px">'+x+'</div>').join('')
     +'</div>'
-    +secT('📒 سجل الحركات')
-    +tbl(['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],rows||'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>')
     +secT('🟢 المقبوضات حسب الفئة')
     +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'))
     +secT('🔴 المصروفات حسب الفئة')
     +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'))
+    +secT('📒 سجل الحركات')
+    +tbl(['التاريخ','السند','رقم الوصل','النوع','الفئة','الدفع','البيان','الجهة','المبلغ','الرصيد'],rows||'<tr>'+td('لا توجد حركات','text-align:center;color:#999')+'</tr>')
     +(function(){
       const st=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
       if(!st.length) return '';
@@ -1744,6 +1744,12 @@ function bfShareText(){
   });
   const hasL=!!(iL||eL);
   const cmb=(u,l)=>bfFmt(u)+' دولار'+(hasL?(' + '+bfFmt(l)+' ل.ل.'):'');
+  // ملخّص الفئات جزء من الترويسة (أعلى التقرير)، والتفاصيل تأتي تحته
+  const catBlock=(title,list)=>{
+    const g=bfGroup(list,e=>e.category);
+    if(!g.length)return '';
+    return '*'+title+'*\n'+g.map(([k,v])=>'• '+k+': '+bfSumTxt(v)+' ('+v.n+')').join('\n')+'\n'+SEP+'\n';
+  };
   const head='*صندوق البلدية — بلدية وادي الست*\n'
     +'قضاء الشوف — جبل لبنان\n'
     +'التاريخ: '+new Date().toLocaleDateString('ar-LB')+'\n'
@@ -1752,10 +1758,12 @@ function bfShareText(){
     +'إجمالي المقبوضات: '+cmb(iU,iL)+'\n'
     +'إجمالي المصروفات: '+cmb(eU,eL)+'\n'
     +'عدد الحركات: '+bfEntries.length+'\n'
-    +SEP;
+    +SEP+'\n'
+    +catBlock('🟢 المقبوضات حسب الفئة',bfEntries.filter(e=>e.entry_type!=='expense'))
+    +catBlock('🔴 المصروفات حسب الفئة',bfEntries.filter(e=>e.entry_type==='expense'));
   // تفاصيل الحركات سطراً سطراً تحت الترويسة، مرقّمة (حسب الفلاتر الحالية)
   let list=[]; try{list=bfFiltered();}catch(_e){list=[];}
-  if(!list.length) return head+'\n*📒 تفاصيل الحركات*\nلا توجد حركات ضمن الفلاتر الحالية\n'+SEP;
+  if(!list.length) return head+'*📒 تفاصيل الحركات*\nلا توجد حركات ضمن الفلاتر الحالية\n'+SEP;
   const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
   const MAXCH=3200; // سقف طول النص كي لا تُقصّ الرسالة عند مشاركتها عبر واتساب
   let det='',shown=0,stop=false;
@@ -1774,7 +1782,7 @@ function bfShareText(){
     det+=blk;shown++;
   });
   const rest=list.length-shown;
-  return head+'\n'
+  return head
     +'*📒 تفاصيل الحركات ('+list.length+')*\n'
     +SEP+'\n'
     +det
