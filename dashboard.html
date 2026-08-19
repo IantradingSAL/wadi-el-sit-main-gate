@@ -1399,10 +1399,7 @@ async function loadEmp() {
   const el = document.getElementById('emp-list');
   if (!el || !dbR) return;
   try {
-    const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/auth/v1/admin/users?per_page=50', {
-      headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4' }
-    });
-    const j = await r.json();
+    const j = await adminAPI({ action: 'list' });
     const users = (j.users || []).filter(u => ['mayor','admin','approver','officer','viewer','sandouk','water_only'].includes(u.user_metadata?.role));
     if (!users.length) { el.innerHTML = '<div style="text-align:center;padding:14px;color:var(--text3)">لا يوجد موظفون بعد</div>'; return; }
     const RL = { mayor: '👑 رئيس البلدية', admin: '⚙️ المدير', approver: '✅ مسؤول الموافقات', officer: '👤 موظف المتابعة', viewer:'👁️ عرض فقط', sandouk:'💰 صلاحية الصندوق فقط', water_only:'💧 صلاحية الري فقط' };
@@ -1439,13 +1436,7 @@ async function chRole(sel) {
   if(!guard('admin','🚫 تعديل الأدوار متاح للإدارة فقط')) return;
   const uid = sel.dataset.uid, name = sel.dataset.nm, role = sel.value;
   try {
-    const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/auth/v1/admin/users/' + uid, {
-      method: 'PUT',
-      headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_metadata: { role } })
-    });
-    const d = await r.json();
-    if (d.error) throw new Error(d.msg || JSON.stringify(d.error));
+    await adminAPI({ action: 'update', uid: uid, updates: { user_metadata: { role: role } } });
     toast('✅ تم تغيير دور ' + name);
     setTimeout(loadEmp, 700);
   } catch(e) { toast('⚠️ ' + e.message, 'err'); }
@@ -1484,13 +1475,7 @@ async function saveEmp(uid) {
   const rl = document.getElementById('edit-rl').value;
   if (!nm) { toast('يرجى إدخال الاسم', 'err'); return; }
   try {
-    const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/auth/v1/admin/users/' + uid, {
-      method: 'PUT',
-      headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_metadata: { name: nm, role: rl, sandouk_delete: !!document.getElementById('edit-sd')?.checked } })
-    });
-    const d = await r.json();
-    if (d.error) throw new Error(d.msg || JSON.stringify(d.error));
+    await adminAPI({ action: 'update', uid: uid, updates: { user_metadata: { name: nm, role: rl, sandouk_delete: !!document.getElementById('edit-sd')?.checked } } });
     toast('✅ تم حفظ التعديلات');
     setTimeout(loadEmp, 700);
   } catch(e) { toast('⚠️ ' + e.message, 'err'); }
@@ -1501,12 +1486,8 @@ async function delEmp(btn) {
   const uid = btn.dataset.uid, name = btn.dataset.nm;
   if (!confirm('حذف ' + name + '؟')) return;
   try {
-    const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/auth/v1/admin/users/' + uid, {
-      method: 'DELETE',
-      headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4', Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4' }
-    });
-    if (r.status === 200 || r.status === 204) { toast('🗑 تم حذف ' + name); setTimeout(loadEmp, 700); }
-    else throw new Error('فشل الحذف');
+    await adminAPI({ action: 'delete', uid: uid });
+    toast('🗑 تم حذف ' + name); setTimeout(loadEmp, 700);
   } catch(e) { toast('⚠️ ' + e.message, 'err'); }
 }
 
@@ -2125,18 +2106,31 @@ window.addEventListener('load',async()=>{
 const SB_ADM = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
 
 async function adminAPI(payload) {
+  // The admin-user edge function identifies the caller from this token, so it must be the
+  // signed-in user's session JWT. Sending the anon key (as this did) reads to the function
+  // as no session at all, which is the "Invalid or expired session" the page used to show.
+  let token = '';
+  try { const s = await sb.auth.getSession(); token = (s && s.data && s.data.session && s.data.session.access_token) || ''; } catch(e) {}
+  if (!token) throw new Error('انتهت صلاحية الجلسة — يرجى تسجيل الدخول من جديد');
   const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/functions/v1/admin-user', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4'
-    },
+    headers: { 'Content-Type': 'application/json', 'apikey': SB_ADM, 'Authorization': 'Bearer ' + token },
     body: JSON.stringify(payload)
   });
   let d;
   try { d = await r.json(); } catch(e) { d = {}; }
-  if (!r.ok) throw new Error(d.error || d.message || d.msg || 'فشل (' + r.status + ')');
+  if (!r.ok) {
+    const raw = d.error || d.message || d.msg || ('فشل (' + r.status + ')');
+    const AR = {
+      'Invalid or expired session': 'انتهت صلاحية الجلسة — سجّل الخروج ثم الدخول من جديد',
+      'Missing Authorization header': 'انتهت صلاحية الجلسة — يرجى تسجيل الدخول من جديد',
+      'Session has no user id': 'انتهت صلاحية الجلسة — يرجى تسجيل الدخول من جديد',
+      'No employee profile linked to this account': 'هذا الحساب غير مرتبط بملف موظف — إدارة المستخدمين تحتاج صلاحية «مدير»',
+      'Your account is blocked': 'هذا الحساب موقوف',
+      'Managers only': 'إدارة المستخدمين متاحة لحساب «مدير» فقط'
+    };
+    throw new Error(AR[raw] || raw);
+  }
   return d;
 }
 
@@ -2743,18 +2737,11 @@ function doSaveNewRole(){
 async function loadOfficers() {
   OFFICERS.length = 0; // clear old names first
   try {
-    const r = await fetch('https://onjbwhkmmtqnymhjnplw.supabase.co/functions/v1/admin-user', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4'},
-      body: JSON.stringify({action:'list'})
+    const d = await adminAPI({ action: 'list' });
+    (d.users||[]).forEach(function(u) {
+      const name = u.user_metadata && u.user_metadata.name;
+      if (name && !OFFICERS.includes(name)) OFFICERS.push(name);
     });
-    if (r.ok) {
-      const d = await r.json();
-      (d.users||[]).forEach(function(u) {
-        const name = u.user_metadata && u.user_metadata.name;
-        if (name && !OFFICERS.includes(name)) OFFICERS.push(name);
-      });
-    }
   } catch(e) {}
   // Always include current user
   if (currentUser) {

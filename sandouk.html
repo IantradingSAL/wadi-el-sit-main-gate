@@ -174,6 +174,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <button class="bf-tab" id="bf-tab-income" onclick="bfShowTab('income')">🟢 سند قبض</button>
       <button class="bf-tab" id="bf-tab-expense" onclick="bfShowTab('expense')">🔴 سند صرف</button>
       <button class="bf-tab" id="bf-tab-reports" onclick="bfShowTab('reports')">📊 التقارير</button>
+      <button class="bf-tab" id="bf-tab-audit" onclick="bfShowTab('audit')">📜 سجل العمليات</button>
     </div>
 
     <!-- LEDGER -->
@@ -339,6 +340,28 @@ select.bf-colfilter{padding-inline-end:22px}
         <div class="bf-tblwrap"><table>
           <thead><tr><th>التاريخ</th><th>السند</th><th>النوع</th><th>الجهة</th><th>البيان</th><th>قيمة الطوابع</th></tr></thead>
           <tbody id="bf-rep-stamps"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- 📜 AUDIT LOG -->
+    <div id="bf-pane-audit" style="display:none">
+      <div class="bf-card">
+        <div class="bf-sumtitle">📜 سجل العمليات — من فعل ماذا ومتى</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px">كل إضافة أو تعديل أو إلغاء أو حذف في الصندوق يُسجَّل تلقائياً في قاعدة البيانات ولا يمكن تعديله أو حذفه من التطبيق.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">من تاريخ</div><input type="date" id="bf-a-from" onchange="bfRenderAudit()"></div>
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">إلى تاريخ</div><input type="date" id="bf-a-to" onchange="bfRenderAudit()"></div>
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">المستخدم</div><select id="bf-a-user" onchange="bfRenderAudit()"><option value="">— الكل —</option></select></div>
+          <div><div style="font-size:11px;font-weight:800;color:#0f4d82">العملية</div><select id="bf-a-act" onchange="bfRenderAudit()"><option value="">— الكل —</option></select></div>
+          <div style="flex:1;min-width:150px"><div style="font-size:11px;font-weight:800;color:#0f4d82">بحث</div><input type="text" id="bf-a-q" placeholder="رقم السند، بيان، تفاصيل…" oninput="bfRenderAudit()" style="width:100%"></div>
+          <button class="bf-vbtn" onclick="bfLoadAudit(true)">🔄 تحديث</button>
+          <button class="bf-vbtn primary" onclick="bfAuditCSV()">⬇️ تصدير CSV</button>
+        </div>
+        <div id="bf-a-count" style="font-size:12px;font-weight:800;color:#0f4d82;margin:8px 0 4px"></div>
+        <div class="bf-tblwrap"><table>
+          <thead><tr><th>التاريخ والوقت</th><th>المستخدم</th><th>العملية</th><th>السند</th><th>التفاصيل</th></tr></thead>
+          <tbody id="bf-a-rows"></tbody>
         </table></div>
       </div>
     </div>
@@ -893,6 +916,7 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
     if(t) t.value=name;
     ov.classList.remove('on');
     toast('✓ تمت الإضافة إلى الدليل'+(wadi?' (مواطن من وادي الست)':''));
+    bfAudit('phonebook_add',name+(phoneNorm?(' — '+phoneNorm):' — بلا رقم')+(wadi?' — مواطن من وادي الست':''));
     await bfLoad();
   };
   ov.classList.add('on');
@@ -900,7 +924,8 @@ function bfShowAddPhonebookModal(prefillName, targetInputId){
 }
 const BF_TYPE_LABEL={expense:'<span class="bf-badge exp">مصروف</span>',income:'<span class="bf-badge inc">مقبوضات</span>',opening:'<span class="bf-badge opn">رصيد افتتاحي</span>'};
 function bfShowTab(t){
-  ['ledger','income','expense','reports'].forEach(x=>{
+  if(t==='audit')bfLoadAudit();
+  ['ledger','income','expense','reports','audit'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
@@ -1267,6 +1292,7 @@ async function bfViewSaveNew(){
   if(error){toast('⚠️ '+error.message,'err');return;}
   const nv=(data&&data[0]); if(nv){bfViews.push(nv);bfCurrentViewId=nv.id;bfViewsRender();document.getElementById('bf-view-select').value=nv.id;}
   toast('✓ تم حفظ العرض: '+name);
+  bfAudit('view_save','عرض جديد: '+name.trim());
 }
 async function bfViewSaveOver(){
   if(!bfCurrentViewId){toast('⚠️ لا يوجد عرض محدد — استخدم "حفظ كعرض جديد"','err');return;}
@@ -1275,6 +1301,7 @@ async function bfViewSaveOver(){
   if(error){toast('⚠️ '+error.message,'err');return;}
   const nv=(data&&data[0]); if(nv){const i=bfViews.findIndex(v=>v.id===nv.id); if(i>=0)bfViews[i]=nv;}
   toast('✓ تم تحديث العرض');
+  bfAudit('view_save','تحديث العرض: '+((bfViews.find(v=>v.id===bfCurrentViewId)||{}).name||''));
 }
 async function bfViewRename(){
   if(!bfCurrentViewId){toast('⚠️ اختر عرضاً أولاً','err');return;}
@@ -1296,6 +1323,7 @@ async function bfViewDelete(){
   bfCurrentViewId='';
   bfViewsRender();
   toast('✓ تم الحذف');
+  bfAudit('view_delete','حذف العرض: '+v.name);
 }
 function bfViewReset(silent){
   ['q','type','cat','cur','pay','from','to','sfrom','sto','wfrom','wto'].forEach(k=>{const el=document.getElementById('bf-f-'+k); if(el)el.value='';});
@@ -1463,6 +1491,144 @@ function bfExportCSV(){
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
+  bfAudit('export_csv','تصدير سجل الحركات ('+bfEntries.length+' حركة)');
+}
+
+// ═══════════ 📜 AUDIT LOG (سجل العمليات) ═══════════
+// Rows come from public.baladieh_finance_audit: a trigger on baladieh_finance
+// writes every create/update/void/unvoid/sign/delete (source 'db'), the seeded
+// history of entries that predate the trigger carries source 'seed', and the
+// actions below that leave no DB trace — exporting, sharing, printing — are
+// logged from here with source 'ui'. RLS lets clients append 'ui' rows only,
+// and nothing may update or delete the log.
+let bfAuditRows=[], bfAuditLoaded=false;
+const BF_ACT_AR={create:'➕ إضافة سند',update:'✏️ تعديل',void:'⛔ إلغاء',unvoid:'↩️ تراجع عن الإلغاء',
+  sign:'✍️ توقيع',delete:'🗑️ حذف',export_pdf:'📄 تصدير تقرير PDF',export_csv:'⬇️ تصدير CSV',
+  share_text:'📤 مشاركة نص',share_file:'📤 مشاركة ملف',copy_text:'📋 نسخ النص',print:'🖨️ طباعة',
+  receipt_pdf:'🧾 تصدير سند PDF',phonebook_add:'👤 إضافة اسم إلى الدليل',view_save:'👁️ حفظ عرض',view_delete:'👁️ حذف عرض'};
+const BF_FIELD_AR={entry_date:'التاريخ',receipt_no:'رقم السند',wassel_number:'رقم الوصل',wassel_date:'تاريخ الوصل',
+  manual_receipt_no:'رقم الإيصال',entry_type:'النوع',category:'الفئة',payment_method:'طريقة الدفع',
+  description:'البيان',person:'الجهة',handled_by:'المستلم/المسلّم',amount:'المبلغ',currency:'العملة',
+  stamp_value:'قيمة الطوابع',karar_number:'رقم القرار',property_number:'رقم العقار',notes:'ملاحظات',
+  voided:'ملغى',void_reason:'سبب الإلغاء',voided_at:'تاريخ الإلغاء',voided_by:'أُلغي بواسطة',
+  documents:'المرفقات',signatures:'التواقيع',signature:'التوقيع',signed_at:'تاريخ التوقيع',created_by:'أُدخل بواسطة'};
+function bfAuditActLabel(a){return BF_ACT_AR[a]||a||'';}
+function bfAuditVal(v,key){
+  if(v===null||v===undefined||v==='')return '—';
+  if(v===true)return 'نعم'; if(v===false)return 'لا';
+  if((key==='amount'||key==='stamp_value')&&!isNaN(Number(v)))return bfFmt(Number(v));
+  const s=String(v);
+  return s.length>60?s.slice(0,60)+'…':s;
+}
+// Append a UI action to the log. Never blocks and never surfaces its own errors.
+async function bfAudit(action,detail,entry){
+  try{
+    if(!bfUser)return;
+    await sb.from('baladieh_finance_audit').insert({
+      entry_id:(entry&&entry.id&&String(entry.id).indexOf('reg:')<0)?entry.id:null,
+      receipt_no:entry?entry.receipt_no:null,
+      entry_date:entry?entry.entry_date:null,
+      action:action, source:'ui', detail:detail||null,
+      actor_email:bfUser.email||null, actor_id:bfUser.id||null
+    });
+    if(bfAuditLoaded)bfAuditLoaded=false;   // next visit to the tab refetches
+  }catch(_e){}
+}
+async function bfLoadAudit(force){
+  const tb=document.getElementById('bf-a-rows'); if(!tb)return;
+  if(bfAuditLoaded&&!force){bfRenderAudit();return;}
+  tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">⏳ جاري تحميل السجل…</td></tr>';
+  const{data,error}=await sb.from('baladieh_finance_audit').select('*').order('created_at',{ascending:false}).limit(3000);
+  if(error){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#c22">⚠️ '+error.message+'</td></tr>';return;}
+  bfAuditRows=data||[]; bfAuditLoaded=true;
+  const users=[...new Set(bfAuditRows.map(r=>r.actor_email).filter(Boolean))].sort();
+  const acts=[...new Set(bfAuditRows.map(r=>r.action).filter(Boolean))].sort();
+  const fill=(id,vals,lbl)=>{const sel=document.getElementById(id);if(!sel)return;const cur=sel.value;
+    sel.innerHTML='<option value="">— الكل —</option>'+vals.map(v=>'<option value="'+v.replace(/"/g,'&quot;')+'">'+(lbl?lbl(v):v)+'</option>').join('');
+    sel.value=cur;};
+  fill('bf-a-user',users); fill('bf-a-act',acts,bfAuditActLabel);
+  bfRenderAudit();
+}
+function bfAuditFiltered(){
+  const from=(document.getElementById('bf-a-from')||{}).value||'',
+        to=(document.getElementById('bf-a-to')||{}).value||'',
+        u=(document.getElementById('bf-a-user')||{}).value||'',
+        a=(document.getElementById('bf-a-act')||{}).value||'',
+        q=bfNormTxt((document.getElementById('bf-a-q')||{}).value||'');
+  return bfAuditRows.filter(r=>{
+    const d=String(r.created_at||'').slice(0,10);
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    if(u&&r.actor_email!==u)return false;
+    if(a&&r.action!==a)return false;
+    if(q){
+      const hay=bfNormTxt([r.receipt_no,r.actor_email,bfAuditActLabel(r.action),r.detail,
+        JSON.stringify(r.changes||{}),JSON.stringify(r.snapshot||{})].join(' '));
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+}
+function bfAuditDetailHTML(r){
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const ch=r.changes||{}, sn=r.snapshot||{};
+  const bits=[];
+  const keys=Object.keys(ch);
+  if(keys.length){
+    keys.forEach(k=>{
+      const c=ch[k]||{};
+      const lbl=BF_FIELD_AR[k]||k;
+      if(c.changed)bits.push('<span style="color:#0f4d82;font-weight:700">'+esc(lbl)+'</span>: تم التعديل');
+      else bits.push('<span style="color:#0f4d82;font-weight:700">'+esc(lbl)+'</span>: '
+        +'<s style="color:#a83232">'+esc(bfAuditVal(c.from,k))+'</s> ← <b>'+esc(bfAuditVal(c.to,k))+'</b>');
+    });
+  }else if(r.action==='create'||r.action==='delete'){
+    const t={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'}[sn.entry_type]||sn.entry_type||'';
+    const amt=(sn.amount!=null)?bfMoney(sn.amount,sn.currency):'';
+    bits.push([t,amt,sn.category,sn.person,sn.description].filter(Boolean).map(esc).join(' · '));
+  }
+  if(r.detail)bits.push('<span style="color:#6b7280">'+esc(r.detail)+'</span>');
+  return bits.join('<br>')||'—';
+}
+function bfRenderAudit(){
+  const tb=document.getElementById('bf-a-rows'); if(!tb)return;
+  const rows=bfAuditFiltered();
+  const cnt=document.getElementById('bf-a-count');
+  if(cnt)cnt.textContent='عدد العمليات: '+rows.length+(bfAuditRows.length!==rows.length?(' من أصل '+bfAuditRows.length):'');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">لا توجد عمليات مطابقة</td></tr>';return;}
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const COLOR={create:'#1f7a45',update:'#8a6d1a',void:'#a83232',unvoid:'#8a6d1a',delete:'#a83232',sign:'#0f4d82'};
+  tb.innerHTML=rows.map(r=>{
+    const d=new Date(r.created_at);
+    const when=isNaN(d)?esc(r.created_at):(d.toLocaleDateString('ar-LB')+' — '+d.toLocaleTimeString('ar-LB',{hour:'2-digit',minute:'2-digit'}));
+    const src=r.source==='seed'?' <span style="font-size:10px;color:#8a8f9c">(سجل سابق)</span>':'';
+    return '<tr style="cursor:default">'
+      +'<td style="white-space:nowrap;font-size:12px">'+when+src+'</td>'
+      +'<td style="font-size:12px">'+esc(r.actor_email||'—')+'</td>'
+      +'<td style="white-space:nowrap;font-weight:800;font-size:12px;color:'+(COLOR[r.action]||'#0f4d82')+'">'+esc(bfAuditActLabel(r.action))+'</td>'
+      +'<td style="white-space:nowrap;font-size:12px">'+esc(r.receipt_no||'—')+'</td>'
+      +'<td style="white-space:normal;font-size:12px;line-height:1.7">'+bfAuditDetailHTML(r)+'</td></tr>';
+  }).join('');
+}
+function bfAuditCSV(){
+  const rows=bfAuditFiltered();
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const plain=r=>{
+    const ch=r.changes||{},sn=r.snapshot||{},out=[];
+    Object.keys(ch).forEach(k=>{const c=ch[k]||{};const lbl=BF_FIELD_AR[k]||k;
+      out.push(c.changed?(lbl+': تم التعديل'):(lbl+': '+bfAuditVal(c.from,k)+' ← '+bfAuditVal(c.to,k)));});
+    if(!out.length&&(r.action==='create'||r.action==='delete'))
+      out.push([({income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'})[sn.entry_type]||sn.entry_type,
+        sn.amount!=null?bfMoney(sn.amount,sn.currency):'',sn.category,sn.person,sn.description].filter(Boolean).join(' · '));
+    if(r.detail)out.push(r.detail);
+    return out.join(' | ');
+  };
+  const lines=['التاريخ والوقت,المستخدم,العملية,رقم السند,تاريخ السند,المصدر,التفاصيل'];
+  rows.forEach(r=>lines.push([q(r.created_at),q(r.actor_email),q(bfAuditActLabel(r.action)),q(r.receipt_no),
+    q(r.entry_date),q(r.source),q(plain(r))].join(',')));
+  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk-audit-'+bfToday()+'.csv';a.click();URL.revokeObjectURL(a.href);
+  bfAudit('export_csv','تصدير سجل العمليات ('+rows.length+' عملية)');
 }
 
 // ── 🧾 RECEIPT (سند قبض / سند صرف — بشعار البلدية) ──
@@ -1581,6 +1747,7 @@ function bfCloseSendModal(){document.getElementById('bf-share-ov').style.display
 // ── PRINT ──
 function bfPrint(){
   bfCloseSendModal();
+  bfAudit('print',bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق',bfShareCtx);
   const inner=bfShareCtx?bfReceiptHTML(bfShareCtx):bfBuildReportEl().innerHTML;
   const w=window.open('','_blank');
   if(!w){toast('⚠️ يرجى السماح بالنوافذ المنبثقة للطباعة','err');return;}
@@ -1841,6 +2008,7 @@ async function bfExportPDF(){
       await html2pdf().set(bfFitForPdf(el,bfPdfOpts())).from(el).save();
     }finally{hold.remove();}
     toast('✓ تم إنشاء التقرير');
+    bfAudit('export_pdf','تقرير الصندوق ('+bfFiltered().length+' حركة)');
   }catch(e){toast('⚠️ فشل إنشاء PDF: '+e.message,'err');}
   btn.disabled=false;btn.textContent=lbl;
 }
@@ -1929,7 +2097,8 @@ function bfOpenWa(text){
     if(!w)location.href='https://wa.me/?text='+enc;
   }
 }
-function bfShareWaText(){bfCloseSendModal();bfOpenWa(bfShareText());}
+function bfShareWaText(){bfCloseSendModal();bfOpenWa(bfShareText());
+  bfAudit('share_text',bfShareCtx?('واتساب — '+bfKind(bfShareCtx)):'واتساب — تقرير الصندوق',bfShareCtx);}
 async function bfCopyText(){
   bfCloseSendModal();
   const t=bfShareText();
@@ -1939,6 +2108,7 @@ async function bfCopyText(){
     try{document.execCommand('copy');toast('✓ تم نسخ النص');}catch(_e){toast('⚠️ تعذّر النسخ','err');}
     ta.remove();
   }
+  bfAudit('copy_text',bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق',bfShareCtx);
 }
 async function bfShareFile(){
   bfCloseSendModal();
@@ -1956,6 +2126,7 @@ async function bfShareFile(){
     for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
     const file=new File([arr],bfPdfOpts().filename,{type:'application/pdf'});
     bfReadyFile=file;
+    bfAudit(bfShareCtx?'receipt_pdf':'share_file',(bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق')+' — '+file.name,bfShareCtx);
     if(navigator.canShare&&navigator.canShare({files:[file]})){
       try{
         await navigator.share({files:[file],title:bfShareCtx?bfKind(bfShareCtx)+' — بلدية وادي الست':'تقرير صندوق البلدية'});
