@@ -667,27 +667,50 @@ async function bfLoad(){
   // explicit is_wadi_citizen flag).
   const registry=(typeof window!=='undefined' && Array.isArray(window.__CONTACTS)) ? window.__CONTACTS : [];
   const bag=new Map();
-  const keyOf=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
+  // Keyed on each record's own id, not on the name. Keying on the name
+  // dropped the second of any two residents who share one, and the registry
+  // holds five such pairs — different people with different mothers, birth
+  // dates and registry ids, who happen to share a name. They share a
+  // household phone too, so name+phone would have hidden them just the same.
+  // All five were unpickable as a payer; now they are not.
+  const nameKey=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
+  const phoneKey=(ph)=>String(ph||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');
   registry.forEach(r=>{
     const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
     if(!name) return;
-    bag.set(keyOf(name),{
+    bag.set('reg:'+(r.id||name),{
       id:'reg:'+(r.id||name),
       name:name,
       phone:r.phone||'',
+      bdate:r.bdate||'',      // tells namesakes apart in the picker
       is_wadi:true // registry entries are the wadi el sit citizen directory
     });
   });
   (pb.data||[]).forEach(r=>{
     const name=(r.name||[r.first,r.family].filter(Boolean).join(' ')||'').trim();
     if(!name) return;
-    bag.set(keyOf(name),{
+    bag.set('db:'+r.id,{
       id:r.id,
       name:name,
       phone:r.phone||'',
+      bdate:'',
       is_wadi:!!r.is_wadi_citizen
     });
   });
+  // A directory row supersedes its registry counterpart — but only when that
+  // counterpart is unambiguous. Where a name+phone belongs to more than one
+  // resident, both are kept rather than guessing which was edited.
+  (function(){
+    const regByNP={};
+    bag.forEach((v,k)=>{ if(String(k).indexOf('reg:')===0){
+      const np=nameKey(v.name)+'|'+phoneKey(v.phone);
+      (regByNP[np]=regByNP[np]||[]).push(k);
+    }});
+    bag.forEach((v,k)=>{ if(String(k).indexOf('db:')===0){
+      const hits=regByNP[nameKey(v.name)+'|'+phoneKey(v.phone)];
+      if(hits&&hits.length===1) bag.delete(hits[0]);
+    }});
+  })();
   bfPhonebookEntries=Array.from(bag.values());
   bfRefresh();
   bfViewsInit();
@@ -798,7 +821,11 @@ function bfMakePicker(inputId){
     const rows=matches.map((r,i)=>{
       const wadi=r.is_wadi?'<span class="bf-pk-badge">🏡 من وادي الست</span>':'';
       const phone=r.phone?'<span class="bf-pk-sub">📞 '+r.phone.replace(/</g,'&lt;')+'</span>':'';
-      return '<div class="bf-pk-opt" data-idx="'+i+'"><div style="flex:1;min-width:0"><div class="bf-pk-nm">'+r.name.replace(/</g,'&lt;')+'</div>'+phone+'</div>'+wadi+'</div>';
+      // two residents can share a name and a household line — show the birth
+      // date on those so they can be told apart
+      const shared=matches.filter(m=>bfNorm(m.name)===bfNorm(r.name)).length>1;
+      const born=(shared&&r.bdate)?'<span class="bf-pk-sub">🎂 '+String(r.bdate).replace(/</g,'&lt;')+'</span>':'';
+      return '<div class="bf-pk-opt" data-idx="'+i+'"><div style="flex:1;min-width:0"><div class="bf-pk-nm">'+r.name.replace(/</g,'&lt;')+'</div>'+phone+born+'</div>'+wadi+'</div>';
     }).join('');
     let html='';
     if(rows) html+=rows;
@@ -1353,14 +1380,24 @@ async function bfDel(id){
 function bfNextNo(type,dateStr){
   const y=(dateStr||bfToday()).slice(0,4);
   const pre=(type==='income'?'Q':'S')+'-'+y+'-';
-  let max=0;
+  // Two numbering series existed side by side: the municipality's paper
+  // receipt book (plain numbers — income runs 472..1350) and a Q-/S- series
+  // this function started from 001, which only ever looked at its own
+  // prefix. An auditor comparing the app to the book found two sets of
+  // numbers. Carry on whichever series this entry type already uses.
+  let maxPlain=0, sawPlain=false, maxPrefixed=0;
   bfEntries.forEach(e=>{
-    if(e.receipt_no&&e.receipt_no.indexOf(pre)===0){
-      const n=parseInt(e.receipt_no.slice(pre.length),10);
-      if(n>max)max=n;
+    if(e.entry_type!==type)return;
+    const r=String(e.receipt_no||'').trim();
+    if(/^\d+$/.test(r)){
+      sawPlain=true;
+      const n=parseInt(r,10); if(n>maxPlain)maxPlain=n;
+    }else if(r.indexOf(pre)===0){
+      const n=parseInt(r.slice(pre.length),10); if(n>maxPrefixed)maxPrefixed=n;
     }
   });
-  return pre+String(max+1).padStart(3,'0');
+  if(sawPlain)return String(maxPlain+1);
+  return pre+String(maxPrefixed+1).padStart(3,'0');
 }
 // Re-entry guard. These handlers are wired straight to a button and await a
 // network insert, so a second tap before the first returns — routine on a

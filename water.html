@@ -591,7 +591,7 @@ window.addEventListener('DOMContentLoaded', async function(){
 
   // Load owners: try irr_owners table → fallback to settings → fallback to localStorage
   try{
-    var r1=await sb.from('irr_owners').select('id,name,phone,email,area,land_name,land_ref,crop,hours,sort_order,notes').eq('municipality_id',MUN_ID).order('sort_order',{ascending:true});
+    var r1=await sb.from('irr_owners').select('id,name,area,land_name,land_ref,crop,hours,sort_order').eq('municipality_id',MUN_ID).order('sort_order',{ascending:true});
     if(!r1.error && r1.data){
       var tableOwners = r1.data.map(function(r){
         return {id:r.id,name:r.name,phone:r.phone,email:r.email||'',
@@ -694,14 +694,27 @@ window.addEventListener('DOMContentLoaded', async function(){
 });
 
 // ── LOOKUP ────────────────────────────────────────────────────────────────────
-function lookupWaterOwner(){
+async function lookupWaterOwner(){
   var phone=document.getElementById('wp-phone').value.replace(/[^0-9]/g,'').trim();
   var err=document.getElementById('wp-err'),result=document.getElementById('wp-result');
   if(!phone||phone.length<6){err.textContent=L().errPhoneRequired;return;}
   err.textContent='';
   var norm=function(p){return(p||'').replace(/[^0-9]/g,'').replace(/^961/,'').replace(/^0/,'');};
   var inp=norm(phone);
-  var matches=_owners.filter(function(o){return norm(o.phone)===inp;});
+  // The match is done in the database. The page no longer downloads every
+  // subscriber's phone number just to find one of them.
+  var matches=[];
+  if(dbR&&sb){
+    try{
+      var rpc=await sb.rpc('irr_owner_by_phone',{p_phone:phone});
+      if(!rpc.error&&Array.isArray(rpc.data)) matches=rpc.data.map(function(o){
+        return {id:o.id,name:o.name,phone:o.phone,email:o.email||'',area:o.area||'',
+                land_name:o.land_name||'',land_ref:o.land_ref||'',crop:o.crop||'',
+                hours:parseFloat(o.hours)||0,sort_order:parseInt(o.sort_order)||1,notes:o.notes||''};
+      });
+    }catch(e){}
+  }
+  if(!matches.length) matches=_owners.filter(function(o){return o.phone&&norm(o.phone)===inp;});
   if(!matches.length){
     var t = L();
     var noOwnersMsg = _owners.length===0
