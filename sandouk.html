@@ -418,6 +418,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <div style="display:flex;gap:8px">
       <button class="bf-share-btn" style="flex:2;width:auto;justify-content:center;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:none;margin-bottom:0" onclick="bfSignSave()">✔️ حفظ التوقيع</button>
       <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;margin-bottom:0" onclick="bfSignClear()">🧹 مسح</button>
+      <button class="bf-share-btn" id="bf-sign-del" style="display:none;flex:1;width:auto;justify-content:center;color:#a83232;border-color:#e6bcbc;margin-bottom:0" onclick="bfSignRemove()">🗑️ حذف التوقيع</button>
       <button class="bf-share-btn" style="flex:1;width:auto;justify-content:center;color:#0f4d82;font-weight:800;border-color:#0f4d82;margin-bottom:0" onclick="bfSignFinish()">✅ إنهاء</button>
     </div>
   </div>
@@ -1733,7 +1734,7 @@ function bfOpenReceiptShare(e){
   document.getElementById('bf-share-title').textContent='🧾 '+bfKind(e)+' — '+(e.receipt_no||'');
   const sb2=document.getElementById('bf-share-sign');
   sb2.style.display='';
-  sb2.querySelector('span').textContent=e.signature?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع الدافع على الشاشة':'✍️ توقيع المستلم على الشاشة');
+  sb2.querySelector('span').textContent=bfSigCount(e)?'✍️ إعادة التوقيع (موقّع ✓)':(e.entry_type==='income'?'✍️ توقيع الدافع على الشاشة':'✍️ توقيع المستلم على الشاشة');
   document.getElementById('bf-share-ov').style.display='flex';
 }
 function bfShareLast(){
@@ -2469,6 +2470,11 @@ async function bfCaseUnvoid(){
 
 // ── ✍️ SIGNATURE PAD ──
 let bfSignTarget=null, bfSignCtx2=null, bfSignDrawn=false, bfSignRole='person', bfSignedAny=false;
+// Ink laid down on the pad, in px of stroke. A finger brushing the canvas
+// produces a few px; the shortest real signature produces dozens. Below
+// this the pad is treated as blank, so closing the modal saves nothing.
+const BF_SIGN_MIN_INK=24;
+let bfSignInk=0;
 function bfSignFromShare(){const e=bfShareCtx;bfCloseSendModal();if(e&&e.id)bfOpenSign(e.id);}
 function bfCaseSign(){const id=bfCaseId;bfCloseCase();if(id)bfOpenSign(id);}
 function bfOpenSign(id){
@@ -2493,6 +2499,39 @@ function bfSignRenderRoles(){
       +(on?'background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;border:1.5px solid #0f4d82;':'background:#fff;color:#444;border:1.5px solid #dfe5ee;')
       +'">'+bfSignRoleLabel(e,k)+(signed?' ✓':'')+(name?'<br><span style="font-weight:700;font-size:10.5px;opacity:.8">'+name+'</span>':'')+'</button>';
   }).join('');
+  const del=document.getElementById('bf-sign-del');
+  if(del){
+    const cur=s[bfSignRole];
+    del.style.display=(cur&&cur.img&&bfCanSign())?'':'none';
+  }
+}
+
+// Remove a signature that is already stored. Without this a signature saved
+// by mistake can never be taken off the sanad, and the row keeps showing ✍️.
+async function bfSignRemove(){
+  const e=bfSignTarget; if(!e)return;
+  if(!bfCanSign()){toast('🚫 لا تملك صلاحية التوقيع','err');return;}
+  const role=bfSignRole;
+  const cur=bfSigs(e)[role];
+  if(!(cur&&cur.img)){toast('لا يوجد توقيع محفوظ لهذا الدور','err');return;}
+  if(!confirm('حذف توقيع '+bfSignRoleLabel(e,role)+'؟')) return;
+  const sigs=Object.assign({},bfSigs(e));
+  delete sigs[role];
+  // The person slot is also fed by the legacy `signature` column, so clearing
+  // only `signatures` would let bfSigs() rebuild the signature just removed.
+  const patch=(role==='person')
+    ? {signatures:sigs,signature:null,signed_at:null}
+    : {signatures:sigs};
+  const{data,error}=await sb.from('baladieh_finance').update(patch).eq('id',e.id).select();
+  if(error){toast('⚠️ فشل حذف التوقيع: '+error.message,'err');return;}
+  if(data&&data[0])bfSignTarget=data[0];
+  bfAudit('sign','حذف توقيع '+bfSignRoleLabel(e,role),e);
+  toast('✓ تم حذف توقيع '+bfSignRoleLabel(e,role));
+  bfSignClear();
+  await bfLoad();
+  const f=bfEntries.find(x=>String(x.id)===String(bfSignTarget&&bfSignTarget.id));
+  if(f)bfSignTarget=f;
+  bfSignRenderRoles();
 }
 async function bfSignCommit(role){
   if(!bfSignTarget||!bfSignDrawn)return false;
@@ -2527,17 +2566,19 @@ function bfSignInit(){
   const ctx=cv.getContext('2d');
   ctx.scale(dpr,dpr);
   ctx.lineWidth=2.4; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle='#0f2f56';
-  bfSignCtx2=ctx; bfSignDrawn=false;
+  bfSignCtx2=ctx; bfSignDrawn=false; bfSignInk=0;
   if(!cv._bound){
     cv._bound=true;
     let drawing=false,lx=0,ly=0;
     const P=(x,y)=>{const b=cv.getBoundingClientRect();return[x-b.left,y-b.top];};
     const start=(x,y)=>{drawing=true;const p=P(x,y);lx=p[0];ly=p[1];
-      // نقطة عند اللمس حتى لو لم يتحرك الإصبع
-      bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(lx+0.1,ly+0.1);bfSignCtx2.stroke();bfSignDrawn=true;};
+      // نقطة عند اللمس حتى لو لم يتحرك الإصبع — تظهر فقط، ولا تُحتسب توقيعاً
+      bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(lx+0.1,ly+0.1);bfSignCtx2.stroke();};
     const move=(x,y)=>{if(!drawing)return;const p=P(x,y);
       bfSignCtx2.beginPath();bfSignCtx2.moveTo(lx,ly);bfSignCtx2.lineTo(p[0],p[1]);bfSignCtx2.stroke();
-      lx=p[0];ly=p[1];bfSignDrawn=true;};
+      bfSignInk+=Math.sqrt((p[0]-lx)*(p[0]-lx)+(p[1]-ly)*(p[1]-ly));
+      lx=p[0];ly=p[1];
+      if(bfSignInk>=BF_SIGN_MIN_INK)bfSignDrawn=true;};
     const end=()=>{drawing=false;};
     // touch أولاً — الأكثر موثوقية على الهواتف
     cv.addEventListener('touchstart',ev=>{ev.preventDefault();ev.stopPropagation();const t=ev.touches[0];if(t)start(t.clientX,t.clientY);},{passive:false});
@@ -2554,7 +2595,7 @@ function bfSignInit(){
 function bfSignClear(){
   const cv=document.getElementById('bf-sign-cv');
   if(bfSignCtx2)bfSignCtx2.clearRect(0,0,cv.width,cv.height);
-  bfSignDrawn=false;
+  bfSignDrawn=false; bfSignInk=0;
 }
 function bfSignClose(){document.getElementById('bf-sign-ov').style.display='none';document.body.style.overflow='';bfSignTarget=null;}
 async function bfSignFinish(){
