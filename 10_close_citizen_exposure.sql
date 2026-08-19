@@ -1,0 +1,30 @@
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 10 — stop anonymous visitors reading residents' personal details
+--
+-- Applied to the live project as three migrations:
+--   close_citizen_case_exposure
+--   close_remaining_anon_pii_and_delivery_claim
+--   irrigation_owner_lookup_by_phone
+-- Kept here so the schema history lives in the repo alongside 01..09.
+--
+-- cases.cases_public_select was `using (true)` for anon: all 39 citizen
+-- records — name, phone, email, address, description — readable by anyone
+-- holding the public key, with sequential ids to walk. The tracking screen
+-- already asked for the phone; it just checked it in JavaScript after
+-- fetching the row. That check now happens in the database, so what the
+-- citizen does is unchanged.
+--
+-- irr_owners and push_subscriptions kept their rows public but lost the
+-- columns nobody needs: the irrigation schedule shows who is next, not their
+-- phone and email; the push table needs the device token, not the
+-- subscriber's name and number.
+--
+-- coop_orders_delivery_claim checked only that an order was a delivery, with
+-- no auth test at all, so anyone could reassign or complete any delivery.
+-- Every other coop write policy already required auth.uid(); this one now
+-- matches them.
+--
+-- Verified: anon reads 0 rows from cases and cannot read phone or email on
+-- irr_owners / push_subscriptions; a staff account still reads all 39 cases;
+-- the tracking lookup returns the request for the right phone and nothing
+-- for a wrong one.
