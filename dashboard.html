@@ -492,6 +492,7 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 <button class="help-btn" onclick="openHelp('d')" title="مساعدة">?</button>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="number-format.js"></script>
 <script src="wadi-perms.js"></script>
 <script>const MUN_ID='00000000-0000-0000-0000-000000000001';
 
@@ -682,9 +683,9 @@ function openActivityTracking(){
   const stats=getActivityStats();
   const last=rows.slice(0,20).map(r=>`<div class="log-item"><div class="log-title">${r.action}</div><div class="log-meta">👤 ${r.user} — ${r.role}<br>📝 ${r.details||'—'}<br>🕒 ${fmtDT(r.at)}</div></div>`).join('') || '<div class="em">لا يوجد نشاط بعد</div>';
   const users={}; rows.forEach(r=>{users[r.user]=(users[r.user]||0)+1;});
-  const top=Object.entries(users).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([u,c])=>`<div class="log-item"><div class="log-title">${u}</div><div class="log-meta">عدد الأنشطة المسجّلة: ${c}</div></div>`).join('') || '<div class="em">لا بيانات</div>';
+  const top=Object.entries(users).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([u,c])=>`<div class="log-item"><div class="log-title">${u}</div><div class="log-meta">عدد الأنشطة المسجّلة: ${numGroup(c)}</div></div>`).join('') || '<div class="em">لا بيانات</div>';
   document.getElementById('MT').textContent='📊 تتبع نشاط الموظفين';
-  document.getElementById('MB').innerHTML=`<div class="kpi-strip"><div class="kpi-box"><div class="kpi-num">${stats.total}</div><div class="kpi-lbl">إجمالي الأنشطة</div></div><div class="kpi-box"><div class="kpi-num">${stats.today}</div><div class="kpi-lbl">نشاط اليوم</div></div><div class="kpi-box"><div class="kpi-num">${stats.users}</div><div class="kpi-lbl">الموظفون النشطون</div></div><div class="kpi-box"><div class="kpi-num">20</div><div class="kpi-lbl">آخر السجلات المعروضة</div></div></div><div class="log-grid"><div class="log-card"><div class="admin-header">آخر نشاطات النظام</div><div class="log-list">${last}</div></div><div class="log-card"><div class="admin-header">الأكثر نشاطاً</div><div class="log-list">${top}</div></div></div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px"><button class="btn bg" onclick="closeM()">إغلاق</button><button class="btn bp" onclick="exportActivityJSON()">تصدير نشاط المستخدمين</button></div>`;
+  document.getElementById('MB').innerHTML=`<div class="kpi-strip"><div class="kpi-box"><div class="kpi-num">${numGroup(stats.total)}</div><div class="kpi-lbl">إجمالي الأنشطة</div></div><div class="kpi-box"><div class="kpi-num">${numGroup(stats.today)}</div><div class="kpi-lbl">نشاط اليوم</div></div><div class="kpi-box"><div class="kpi-num">${stats.users}</div><div class="kpi-lbl">الموظفون النشطون</div></div><div class="kpi-box"><div class="kpi-num">20</div><div class="kpi-lbl">آخر السجلات المعروضة</div></div></div><div class="log-grid"><div class="log-card"><div class="admin-header">آخر نشاطات النظام</div><div class="log-list">${last}</div></div><div class="log-card"><div class="admin-header">الأكثر نشاطاً</div><div class="log-list">${top}</div></div></div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px"><button class="btn bg" onclick="closeM()">إغلاق</button><button class="btn bp" onclick="exportActivityJSON()">تصدير نشاط المستخدمين</button></div>`;
   document.getElementById('OV').classList.add('open');
 }
 async function openAuditLog(){
@@ -755,7 +756,7 @@ async function openAuditLog(){
   }
 
   document.getElementById('MB').innerHTML =
-    '<div style="font-size:13px;color:var(--text3);margin-bottom:12px">'+allRows.length+' عملية مسجلة من Supabase'+(localRows.length?' + '+localRows.length+' محلية':'')+'</div>'
+    '<div style="font-size:13px;color:var(--text3);margin-bottom:12px">'+numGroup(allRows.length)+' عملية مسجلة من Supabase'+(localRows.length?' + '+numGroup(localRows.length)+' محلية':'')+'</div>'
     + listHtml
     + '<div style="margin-top:14px;display:flex;gap:8px">'
     + '<button class="btn bg" onclick="closeM()" style="flex:1;justify-content:center">إغلاق</button>'
@@ -1008,10 +1009,10 @@ async function rmDoc(caseId,path){
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function rStats(){
-  document.getElementById('ST').textContent=cases.length;
-  document.getElementById('SP').textContent=cases.filter(c=>c.status==='in-progress').length;
-  document.getElementById('SH').textContent=cases.filter(c=>c.priority==='high'&&!['resolved','closed'].includes(c.status)).length;
-  document.getElementById('SR').textContent=cases.filter(c=>['resolved','closed'].includes(c.status)).length;
+  document.getElementById('ST').textContent=numGroup(cases.length);
+  document.getElementById('SP').textContent=numGroup(cases.filter(c=>c.status==='in-progress').length);
+  document.getElementById('SH').textContent=numGroup(cases.filter(c=>c.priority==='high'&&!['resolved','closed'].includes(c.status)).length);
+  document.getElementById('SR').textContent=numGroup(cases.filter(c=>['resolved','closed'].includes(c.status)).length);
   (function(){var _Rnb=getRoleCfg();var _vis=cases.filter(function(c){return _Rnb['type_'+(c.type||'complaint')]!==false;});document.getElementById('nb-all').textContent=_vis.length;})();
   document.getElementById('nb-web').textContent=cases.filter(c=>c.source==='website').length;
   document.getElementById('nb-pend').textContent=cases.filter(c=>c.approval_state==='pending').length;
