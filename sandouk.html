@@ -1744,7 +1744,8 @@ function bfShareText(){
   });
   const hasL=!!(iL||eL);
   const cmb=(u,l)=>bfFmt(u)+' دولار'+(hasL?(' + '+bfFmt(l)+' ل.ل.'):'');
-  return '*صندوق البلدية — بلدية وادي الست*\n'
+  const head='*صندوق البلدية — بلدية وادي الست*\n'
+    +'قضاء الشوف — جبل لبنان\n'
     +'التاريخ: '+new Date().toLocaleDateString('ar-LB')+'\n'
     +SEP+'\n'
     +'الرصيد الحالي: '+cmb(iU-eU,iL-eL)+'\n'
@@ -1752,6 +1753,32 @@ function bfShareText(){
     +'إجمالي المصروفات: '+cmb(eU,eL)+'\n'
     +'عدد الحركات: '+bfEntries.length+'\n'
     +SEP;
+  // تفاصيل الحركات سطراً سطراً تحت الترويسة، مرقّمة (حسب الفلاتر الحالية)
+  let list=[]; try{list=bfFiltered();}catch(_e){list=[];}
+  if(!list.length) return head+'\n*📒 تفاصيل الحركات*\nلا توجد حركات ضمن الفلاتر الحالية\n'+SEP;
+  const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
+  const MAXCH=3200; // سقف طول النص كي لا تُقصّ الرسالة عند مشاركتها عبر واتساب
+  let det='',shown=0,stop=false;
+  list.forEach((e,i)=>{
+    if(stop)return;
+    const d=e.entry_date?e.entry_date.split('-').reverse().join('/'):'';
+    const w=String(e.wassel_number||'').trim();
+    const blk=(i+1)+') '+d+' · سند '+(e.receipt_no||'—')+' · '+(w?('وصل '+w):'بلا وصل')+' · '+(TYPE_AR[e.entry_type]||e.entry_type||'')+'\n'
+      +'البيان: '+(e.description||'—')+(e.category?(' · الفئة: '+e.category):'')+'\n'
+      +(e.person?('الجهة: '+e.person+' · '):'')+bfPay(e)+'\n'
+      +'المبلغ: '+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)
+      +' · الرصيد: '+bfMoney(e.bal,e.currency)
+      +(e.voided?(' · ⛔ ملغى'+(e.void_reason?(': '+e.void_reason):'')):'')+'\n'
+      +SEP+'\n';
+    if(det.length+blk.length>MAXCH){stop=true;return;}
+    det+=blk;shown++;
+  });
+  const rest=list.length-shown;
+  return head+'\n'
+    +'*📒 تفاصيل الحركات ('+list.length+')*\n'
+    +SEP+'\n'
+    +det
+    +(rest?('… و'+rest+' حركة إضافية — راجع ملف التقرير PDF\n'+SEP):'');
 }
 function bfOpenWa(text){
   const enc=encodeURIComponent(text);
