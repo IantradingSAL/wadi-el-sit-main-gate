@@ -80,16 +80,47 @@ page therefore presents an empty service to residents.
 public navigation until it is populated. A published page that shows nothing costs
 credibility.
 
-### B4 · The cooperative cannot grow past trust 🟠
+### B4 · The shop was not dormant — it was shut 🔴 — fixed
 
-Sellers and delivery agents are identified from `localStorage`; only the admin path
-uses real authentication. Two consequences already recorded in yesterday's audit
-stand: buyer name, phone and address remain readable by anyone, and any signed-in
-account can modify any product or order.
+**The most serious correction in this audit.** The first draft read 11 orders in
+three months as low demand, and concluded the cooperative wasn't worth the
+effort. That was wrong, and the conclusion drawn from it was wrong too.
 
-With 11 orders in three months this is not urgent — but it is the reason the shop
-cannot be promoted to the whole village. It stays a decision, not a task: giving
-sellers real accounts changes how every seller signs in.
+Probed as `anon` — which is what every buyer in the shop is:
+
+```
+anon INSERT on coop_orders → "new row violates row-level security policy"
+```
+
+**A resident could not place an order at all.** Every INSERT policy on
+`coop_orders` carried `auth.uid() IS NOT NULL`. 10 of the 11 orders were placed
+within the last 30 days and the newest is dated 8 August — this is not a quiet
+shop, it is one that stopped taking orders. Sellers were in the same position
+from the other side: an anonymous seller's UPDATE changed **0 rows** and the
+page reported success, so confirming an order silently did nothing.
+
+Meanwhile the reads were wide open: two SELECT policies were `using (true)` for
+`anon`, so every buyer's name, phone and address was downloadable.
+
+**Both are fixed, and the fix is the identity the audit said was blocked.** The
+municipality's answer to the blocking question — *no email validation, keep it
+simple, use the phone number* — made it possible:
+
+- logging in (username **or** phone + password; agents phone + PIN) mints an
+  opaque **session token**. No email, no OTP, no SMS provider, nothing to
+  confirm;
+- every list and every status change resolves that token server-side and
+  returns or touches only what belongs to its holder;
+- `coop_orders` is closed to `anon` entirely — buyers place orders through
+  `coop_place_order()` and track them with `coop_buyer_orders(phone)`;
+- the available-delivery queue blanks the buyer's name, phone and address until
+  an agent claims the order.
+
+Verified end to end against the live database: seller logs in by username and
+by phone, agent by phone and PIN, a resident places an order as `anon`, the
+seller sees and confirms it, the queue hides the address, the agent claims it,
+the address appears, delivery completes, a stranger's token changes nothing,
+the buyer tracks by phone. Every probe row was removed afterwards.
 
 ### B5 · The app's sanad series and the paper book now run in parallel 🟡
 

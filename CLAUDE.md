@@ -46,6 +46,24 @@ agree about the same person.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 
+## Cooperative (`coop.html`)
+
+- **Sellers and delivery agents hold a session token**, not a `localStorage`
+  flag. Logging in (username *or* phone + password; agents: phone + PIN) calls
+  `coop_seller_login_v2` / `coop_agent_login`, which mint an opaque token.
+  Every order list and every status change goes through a security-definer
+  function scoped by that token — `coop_seller_orders`, `coop_agent_orders`,
+  `coop_order_set_status`, `coop_order_claim`, `coop_order_assign_agent`.
+- **No email and no OTP.** The municipality does not want sellers validating an
+  email address, and phone OTP means an SMS provider and a bill. The token
+  gives real identity without either.
+- **`coop_orders` is not readable by `anon`.** Buyers read their own orders
+  through `coop_buyer_orders(phone)`; placing an order goes through
+  `coop_place_order()` because `.insert().select()` needs to read the new row
+  back, and there is deliberately no anon SELECT policy to allow it.
+- The available-delivery queue blanks the buyer's name, phone and address until
+  an agent actually claims the order.
+
 ## House rules
 
 - **Migrations are numbered files at the repo root** (`07_…sql` … `12_…sql`),
