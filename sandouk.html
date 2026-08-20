@@ -522,7 +522,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc" list="bf-dl-desc">
     <div class="bf-g2">
       <div><label class="fl">🧾 رقم السند <span id="bf-ed-recnote" style="color:#8a95a3;font-weight:700">(مقفل)</span></label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
-      <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
+      <div id="bf-ed-karar-w"><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
     </div>
     <div class="bf-g2">
       <div><label class="fl">📄 رقم الإيصال</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
@@ -533,7 +533,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">المسلّم/المستلم</label><input type="text" class="fi" id="bf-ed-handled"></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
+      <div id="bf-ed-property-w"><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
     </div>
     <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-ed-notes">
     <div class="bf-err" id="bf-ed-err" style="margin-top:6px"></div>
@@ -2808,7 +2808,17 @@ function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
 
 // ── ✏️ EDIT (admin only) ──
 let bfEditId=null;
+// The entry forms ask a سند صرف for رقم القرار and a سند قبض for رقم العقار.
+// The edit window used to show both to every voucher, so a سند قبض offered a
+// decision number it can never have.
+function bfEditTypeFields(){
+  const type=document.getElementById('bf-ed-type').value;
+  const show=(id,on)=>{const el=document.getElementById(id); if(el)el.style.display=on?'':'none';};
+  show('bf-ed-karar-w',    type==='expense');
+  show('bf-ed-property-w', type!=='expense');
+}
 function bfEditRefreshCats(keep){
+  bfEditTypeFields();
   const type=document.getElementById('bf-ed-type').value;
   const sel=document.getElementById('bf-ed-cat');
   const cur=keep||sel.value;   // the voucher's own category survives a type change
@@ -2888,8 +2898,10 @@ async function bfEditSave__run(){
     currency:document.getElementById('bf-ed-cur').value||'USD',
     payment_method:document.getElementById('bf-ed-pay').value||'cash',
     category:cat||null,
-    karar_number:document.getElementById('bf-ed-karar').value.trim()||null,
-    property_number:document.getElementById('bf-ed-property').value.trim()||null,
+    karar_number:(document.getElementById('bf-ed-type').value==='expense'
+      ? (document.getElementById('bf-ed-karar').value.trim()||null) : null),
+    property_number:(document.getElementById('bf-ed-type').value!=='expense'
+      ? (document.getElementById('bf-ed-property').value.trim()||null) : null),
     wassel_number:document.getElementById('bf-ed-wassel-no').value.trim()||null,
     wassel_date:document.getElementById('bf-ed-wassel-date').value||null,
     person:document.getElementById('bf-ed-person').value.trim()||null,
