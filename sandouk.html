@@ -585,6 +585,23 @@ const BF_CATS={
   income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
   expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
 };
+// The fixed lists above are a starting point, not the whole truth: categories
+// typed into "أخرى" become real categories on their entries (تكليف العمال
+// السوريين is on 14 vouchers). A form that only knows the fixed list shows
+// those entries as أخرى, which reads as though the voucher were wrong. Every
+// category already used for that entry type is offered too.
+function bfCatList(type,extra){
+  const base=(type==='expense'?BF_CATS.expense:BF_CATS.income);
+  const used=(typeof bfEntries!=='undefined'&&Array.isArray(bfEntries))
+    ? bfEntries.filter(e=>(e.entry_type||'income')===type).map(e=>String(e.category||'').trim())
+    : [];
+  const out=[];
+  base.concat(used).concat(extra?[String(extra).trim()]:[]).forEach(c=>{
+    if(c && c!=='أخرى' && out.indexOf(c)<0) out.push(c);
+  });
+  out.push('أخرى');   // always last, and only once
+  return out;
+}
 function bfFmt(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:2});}
 function bfMoney(a,c){return (c==='LBP') ? bfFmt(a)+' ل.ل.' : '$'+bfFmt(a);}
 function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار أميركي';}
@@ -651,11 +668,20 @@ function bfStart(user){
 function bfInitForms(){
   document.getElementById('bf-i-date').value=bfToday();
   document.getElementById('bf-e-date').value=bfToday();
-  const fill=(id,list)=>document.getElementById(id).innerHTML=list.map(c=>'<option>'+c+'</option>').join('');
-  fill('bf-i-cat',BF_CATS.income); fill('bf-e-cat',BF_CATS.expense);
+  bfFillFormCats();
   bfWirePickers();
   bfUpdateTotal('i'); bfUpdateTotal('e');
   bfApplyLocks();
+}
+function bfFillFormCats(){
+  const fill=(id,list)=>{
+    const el=document.getElementById(id); if(!el)return;
+    const cur=el.value;
+    el.innerHTML=list.map(c=>'<option>'+c+'</option>').join('');
+    if(cur&&Array.from(el.options).some(o=>o.value===cur))el.value=cur;
+  };
+  fill('bf-i-cat',bfCatList('income'));
+  fill('bf-e-cat',bfCatList('expense'));
 }
 function bfApplyLocks(){
   const superOn=bfIsSuper();
@@ -803,7 +829,7 @@ async function bfLoad(){
   bfRefresh();
   bfViewsInit();
 }
-function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();bfRefreshAutoReceiptNos();}
+function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfFillFormCats();bfRenderLedger();bfRenderReports();bfRefreshAutoReceiptNos();}
 function bfKPIs(rowsArg){
   const rows=rowsArg||(typeof bfFiltered==='function'?bfFiltered():bfEntries);
   let iU=0,eU=0,iL=0,eL=0;
@@ -2782,11 +2808,11 @@ function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
 
 // ── ✏️ EDIT (admin only) ──
 let bfEditId=null;
-function bfEditRefreshCats(){
+function bfEditRefreshCats(keep){
   const type=document.getElementById('bf-ed-type').value;
   const sel=document.getElementById('bf-ed-cat');
-  const cur=sel.value;
-  const list=(type==='expense'?BF_CATS.expense:BF_CATS.income).concat(['أخرى']);
+  const cur=keep||sel.value;   // the voucher's own category survives a type change
+  const list=bfCatList(type,cur);
   sel.innerHTML='<option value="">—</option>'+list.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
   if(cur&&Array.from(sel.options).some(o=>o.value===cur))sel.value=cur;
   sel.onchange=function(){document.getElementById('bf-ed-cat-other-w').style.display=(sel.value==='أخرى')?'':'none';};
@@ -2806,10 +2832,12 @@ function bfOpenEdit(id){
   document.getElementById('bf-ed-stamp').value=Number(e.stamp_value)||'';
   document.getElementById('bf-ed-cur').value=e.currency||'USD';
   document.getElementById('bf-ed-pay').value=e.payment_method||'cash';
-  bfEditRefreshCats();
+  // pass the voucher's own category so it is in the list and can be selected —
+  // it no longer falls back to أخرى just because it is not one of the presets
+  bfEditRefreshCats(e.category||'');
   const sel=document.getElementById('bf-ed-cat');
   const known=Array.from(sel.options).some(o=>o.value===e.category);
-  if(known){sel.value=e.category||'';document.getElementById('bf-ed-cat-other-w').style.display='none';document.getElementById('bf-ed-cat-other').value='';}
+  if(known){sel.value=e.category||'';document.getElementById('bf-ed-cat-other-w').style.display=(e.category==='أخرى')?'':'none';document.getElementById('bf-ed-cat-other').value='';}
   else if(e.category){sel.value='أخرى';document.getElementById('bf-ed-cat-other-w').style.display='';document.getElementById('bf-ed-cat-other').value=e.category;}
   document.getElementById('bf-ed-desc').value=e.description||'';
   document.getElementById('bf-ed-receipt').value=e.receipt_no||'';
