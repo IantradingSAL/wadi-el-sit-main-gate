@@ -202,6 +202,7 @@ select.bf-colfilter{padding-inline-end:22px}
         <button class="bf-vbtn" onclick="bfViewRename()">✏️ إعادة تسمية</button>
         <button class="bf-vbtn danger" onclick="bfViewDelete()">🗑️ حذف</button>
         <button class="bf-vbtn" onclick="bfColsOpen()">⚙️ الأعمدة</button>
+        <button class="bf-vbtn" id="bf-series-btn" style="display:none" onclick="bfSeriesOpen()" title="بادئة السند ورقم البداية لكل سنة">🔢 ترقيم السندات</button>
         <button class="bf-vbtn" onclick="bfSortBy('receipt_no')" title="ترتيب الجدول حسب تسلسل رقم السند">🔢 ترتيب السند</button>
         <button class="bf-vbtn" onclick="bfSortClear()" title="العودة إلى الترتيب الطبيعي للدفتر">⇅ إلغاء الترتيب</button>
         <button class="bf-vbtn" onclick="bfViewReset()">↺ إعادة التعيين</button>
@@ -234,6 +235,23 @@ select.bf-colfilter{padding-inline-end:22px}
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#1f7a45,#2a9c5a);color:#fff;border:none;margin-bottom:0" onclick="bfColsApply()">✓ تطبيق</button>
           <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfColsClose()">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SANAD NUMBERING MODAL -->
+    <div class="bf-share-ov" id="bf-series-ov" onclick="if(event.target===this)bfSeriesClose()">
+      <div class="bf-share-box" style="max-width:520px">
+        <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">🔢 ترقيم السندات</div>
+        <div style="font-size:12px;color:#8a95a3;margin-bottom:12px">
+          شكل رقم السند: <span class="mono" style="direction:ltr;display:inline-block">البادئة-السنة-٠٠٠</span> — مثل <span style="direction:ltr;display:inline-block;font-weight:800;color:#0f4d82">Q-2026-026</span>.
+          يمكنك تحديد رقم بداية لسنة معيّنة — لبدء سلسلة جديدة في ٢٠٢٧ مثلاً. الرقم المستعمل سابقاً لا يُعاد إصداره أبداً.
+        </div>
+        <div id="bf-series-body"></div>
+        <div class="bf-err" id="bf-series-err"></div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#1f7a45,#2a9c5a);color:#fff;border:none;margin-bottom:0" onclick="bfSeriesSave()">✓ حفظ</button>
+          <button class="bf-share-btn" style="flex:1;justify-content:center;color:#999;margin-bottom:0" onclick="bfSeriesClose()">إلغاء</button>
         </div>
       </div>
     </div>
@@ -532,6 +550,11 @@ select.bf-colfilter{padding-inline-end:22px}
 <script>
 // ═══════════ 💰 BALADIEH FINANCE (صندوق البلدية) ═══════════
 let bfEntries=[], bfLoaded=false, bfLastSaved=null, bfShareCtx=null, bfUser=null, bfReadyFile=null;
+// Sanad numbering, as configured on the ترقيم السندات screen and stored in
+// `settings`. null until bfLoad returns — the defaults below stand in.
+let bfSeries=null, bfSeriesDraft=null;
+const BF_SERIES_KEY='sandouk_series';
+const BF_SERIES_DEFAULT={income:{prefix:'Q'},expense:{prefix:'S'}};
 // Full phonebook rows loaded from public.phonebook_entries — used by the
 // custom typeahead picker (bfMakePicker) on the المكلف/الجهة inputs.
 let bfPhonebookEntries=[];
@@ -591,6 +614,10 @@ function bfStart(user){
     const b=document.getElementById('bf-tab-'+k);
     if(b) b.style.display = bfCanAdd() ? '' : 'none';
   });
+  // Numbering is an administrative setting, not a cashier's: the database
+  // grants `settings` writes to mayor/admin only, and the button follows suit.
+  const sb2=document.getElementById('bf-series-btn');
+  if(sb2) sb2.style.display = WadiPerms.can('settings_edit') ? '' : 'none';
   if(!bfLoaded){bfLoaded=true;bfInitForms();bfLoad();}
   else{bfApplyLocks();}
 }
@@ -682,12 +709,16 @@ function bfCatOther(p){
   document.getElementById('bf-'+p+'-cat-other-w').style.display = v==='أخرى' ? '' : 'none';
 }
 async function bfLoad(){
-  const[fin, pb]=await Promise.all([
+  const[fin, pb, ser]=await Promise.all([
     sb.from('baladieh_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true}),
-    sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',BF_MUN_ID).eq('status','approved').eq('entry_hidden',false)
+    sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',BF_MUN_ID).eq('status','approved').eq('entry_hidden',false),
+    sb.from('settings').select('value').eq('key',BF_SERIES_KEY).limit(1)
   ]);
   if(fin.error){toast('⚠️ خطأ في تحميل الصندوق: '+fin.error.message,'err');return;}
   bfEntries=fin.data||[];
+  // Numbering rules live in `settings`, so every device and every clerk reads
+  // the same series. Missing or unreadable → the built-in Q/S defaults.
+  bfSeries=(!ser.error && ser.data && ser.data[0] && ser.data[0].value) ? ser.data[0].value : null;
 
   // Merge the municipal citizen registry (loaded from contacts-registry.js
   // as window.__CONTACTS — same source the phonebook page uses) with the
@@ -1403,27 +1434,172 @@ async function bfDel(id){
   }
   toast('✓ تم الحذف'); await bfLoad();
 }
-function bfNextNo(type,dateStr){
+// ── 🔢 SANAD NUMBERING ──
+// One format for every sanad: PREFIX-YEAR-NNN — Q-2026-026, S-2026-003. The
+// prefix and, per year, the number the series starts from are set on the
+// ترقيم السندات screen, so a fresh series can begin in January without a code
+// change. The legacy plain numbers from the paper book (income 472..1350) stay
+// in the ledger and are read as history; they no longer drive the next number.
+function bfSeriesCfg(type,year,src){
+  const all=src||bfSeries||BF_SERIES_DEFAULT;
+  const base=all[type]||BF_SERIES_DEFAULT[type]||{};
+  const per=(base.years&&base.years[String(year)])||{};
+  const prefix=String(per.prefix||base.prefix||BF_SERIES_DEFAULT[type].prefix||'Q').trim();
+  const start=parseInt(per.start,10);
+  return {prefix:prefix, start:(start>0?start:0)};
+}
+function bfNextNoFrom(type,dateStr,src){
   const y=(dateStr||bfToday()).slice(0,4);
-  const pre=(type==='income'?'Q':'S')+'-'+y+'-';
-  // Two numbering series existed side by side: the municipality's paper
-  // receipt book (plain numbers — income runs 472..1350) and a Q-/S- series
-  // this function started from 001, which only ever looked at its own
-  // prefix. An auditor comparing the app to the book found two sets of
-  // numbers. Carry on whichever series this entry type already uses.
-  let maxPlain=0, sawPlain=false, maxPrefixed=0;
+  const cfg=bfSeriesCfg(type,y,src);
+  const pre=cfg.prefix+'-'+y+'-';
+  let maxSeq=0;
   bfEntries.forEach(e=>{
     if(e.entry_type!==type)return;
     const r=String(e.receipt_no||'').trim();
-    if(/^\d+$/.test(r)){
-      sawPlain=true;
-      const n=parseInt(r,10); if(n>maxPlain)maxPlain=n;
-    }else if(r.indexOf(pre)===0){
-      const n=parseInt(r.slice(pre.length),10); if(n>maxPrefixed)maxPrefixed=n;
+    if(r.indexOf(pre)===0){
+      const n=parseInt(r.slice(pre.length),10);
+      if(n>maxSeq)maxSeq=n;
     }
   });
-  if(sawPlain)return String(maxPlain+1);
-  return pre+String(maxPrefixed+1).padStart(3,'0');
+  // A configured start only ever moves the series forward — it can open a new
+  // year at any number, but it can never hand out a number already issued.
+  const next=Math.max(maxSeq+1, cfg.start||1);
+  return pre+String(next).padStart(3,'0');
+}
+function bfNextNo(type,dateStr){return bfNextNoFrom(type,dateStr,null);}
+
+// ── 🔢 THE ترقيم السندات SCREEN ──
+// The draft keeps years as a list, not a map, so the year itself stays
+// editable while it is being typed. It becomes a map again on save.
+const BF_SERIES_TYPES=[['income','🟢 سند قبض — مقبوضات'],['expense','🔴 سند صرف — مصروفات']];
+function bfSeriesOpen(){
+  if(!WadiPerms.can('settings_edit')){toast('🔒 لا تملك صلاحية تعديل الإعدادات','err');return;}
+  const cur=bfSeries||{};
+  bfSeriesDraft={};
+  BF_SERIES_TYPES.forEach(function(t){
+    const c=cur[t[0]]||{}, years=c.years||{};
+    bfSeriesDraft[t[0]]={
+      prefix:String(c.prefix||BF_SERIES_DEFAULT[t[0]].prefix),
+      rows:Object.keys(years).sort().map(function(y){
+        return {year:String(y),prefix:String(years[y].prefix||''),start:String(years[y].start||'')};
+      })
+    };
+  });
+  document.getElementById('bf-series-err').textContent='';
+  bfSeriesRender();
+  document.getElementById('bf-series-ov').style.display='flex';
+}
+function bfSeriesClose(){document.getElementById('bf-series-ov').style.display='none';bfSeriesDraft=null;}
+function bfSeriesDraftValue(){
+  const out={};
+  BF_SERIES_TYPES.forEach(function(t){
+    const d=bfSeriesDraft[t[0]], years={};
+    d.rows.forEach(function(r){
+      const y=String(r.year||'').trim(), st=parseInt(r.start,10);
+      if(!/^\d{4}$/.test(y))return;
+      const one={};
+      if(String(r.prefix||'').trim())one.prefix=String(r.prefix).trim().toUpperCase();
+      if(st>0)one.start=st;
+      if(Object.keys(one).length)years[y]=one;
+    });
+    out[t[0]]={prefix:String(d.prefix||BF_SERIES_DEFAULT[t[0]].prefix).trim().toUpperCase()};
+    if(Object.keys(years).length)out[t[0]].years=years;
+  });
+  return out;
+}
+function bfSeriesPreview(){
+  const draft=bfSeriesDraftValue();
+  BF_SERIES_TYPES.forEach(function(t){
+    const el=document.getElementById('bf-series-nx-'+t[0]);
+    if(el)el.textContent=bfNextNoFrom(t[0],bfToday(),draft);
+    const d=bfSeriesDraft[t[0]];
+    d.rows.forEach(function(r,i){
+      const pv=document.getElementById('bf-series-rowpv-'+t[0]+'-'+i);
+      if(!pv)return;
+      pv.textContent=/^\d{4}$/.test(String(r.year||'').trim())
+        ? bfNextNoFrom(t[0],String(r.year).trim()+'-01-01',draft) : '—';
+    });
+  });
+}
+function bfSeriesSet(type,idx,field,val){
+  if(!bfSeriesDraft)return;
+  if(idx<0)bfSeriesDraft[type].prefix=val;
+  else bfSeriesDraft[type].rows[idx][field]=val;
+  bfSeriesPreview();
+}
+function bfSeriesAddYear(type){
+  const used=bfSeriesDraft[type].rows.map(function(r){return r.year;});
+  let y=parseInt(bfToday().slice(0,4),10)+1;
+  while(used.indexOf(String(y))>=0)y++;
+  bfSeriesDraft[type].rows.push({year:String(y),prefix:'',start:'1'});
+  bfSeriesRender();
+}
+function bfSeriesDelYear(type,idx){bfSeriesDraft[type].rows.splice(idx,1);bfSeriesRender();}
+function bfSeriesRender(){
+  const esc=function(s){return String(s==null?'':s).replace(/"/g,'&quot;');};
+  document.getElementById('bf-series-body').innerHTML=BF_SERIES_TYPES.map(function(t){
+    const type=t[0], d=bfSeriesDraft[type];
+    const rows=d.rows.map(function(r,i){
+      return '<tr>'
+        +'<td><input class="bf-colfilter" style="width:74px;direction:ltr" inputmode="numeric" value="'+esc(r.year)+'" oninput="bfSeriesSet(\''+type+'\','+i+',\'year\',this.value)"></td>'
+        +'<td><input class="bf-colfilter" style="width:64px;direction:ltr;text-transform:uppercase" maxlength="4" placeholder="'+esc(d.prefix)+'" value="'+esc(r.prefix)+'" oninput="bfSeriesSet(\''+type+'\','+i+',\'prefix\',this.value)"></td>'
+        +'<td><input class="bf-colfilter" style="width:84px;direction:ltr" inputmode="numeric" value="'+esc(r.start)+'" oninput="bfSeriesSet(\''+type+'\','+i+',\'start\',this.value)"></td>'
+        +'<td style="direction:ltr;font-weight:800;color:#0f4d82;white-space:nowrap" id="bf-series-rowpv-'+type+'-'+i+'">—</td>'
+        +'<td><button class="bf-vbtn danger" style="padding:2px 7px" title="حذف السنة" onclick="bfSeriesDelYear(\''+type+'\','+i+')">🗑️</button></td>'
+      +'</tr>';
+    }).join('');
+    return '<div style="border:1.5px solid #d5dfec;border-radius:10px;padding:10px 12px;margin-bottom:10px;background:#f8fbfe">'
+      +'<div style="font-weight:800;color:#0f4d82;margin-bottom:8px">'+t[1]+'</div>'
+      +'<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px">'
+        +'<label class="fl" style="margin:0">البادئة</label>'
+        +'<input class="bf-colfilter" style="width:70px;direction:ltr;text-transform:uppercase" maxlength="4" value="'+esc(d.prefix)+'" oninput="bfSeriesSet(\''+type+'\',-1,\'prefix\',this.value)">'
+        +'<span style="font-size:12.5px;color:#8a95a3">الرقم التالي الآن:</span>'
+        +'<span style="direction:ltr;font-weight:800;color:#1f7a45" id="bf-series-nx-'+type+'">—</span>'
+      +'</div>'
+      +(d.rows.length
+        ? '<div class="bf-tblwrap" style="overflow-x:auto"><table style="font-size:12.5px"><thead><tr>'
+            +'<th>السنة</th><th>بادئة خاصة</th><th>يبدأ من</th><th>أول رقم</th><th></th>'
+          +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+        : '<div style="font-size:12px;color:#8a95a3">لا توجد سنة بإعداد خاص — كل سنة تبدأ من ٠٠١ بالبادئة أعلاه.</div>')
+      +'<button class="bf-vbtn" style="margin-top:8px" onclick="bfSeriesAddYear(\''+type+'\')">➕ إضافة سنة</button>'
+    +'</div>';
+  }).join('');
+  bfSeriesPreview();
+}
+async function bfSeriesSave(){
+  const err=document.getElementById('bf-series-err');err.textContent='';
+  const draft=bfSeriesDraftValue();
+  // Validate what the user typed, not what survived the parse
+  for(let i=0;i<BF_SERIES_TYPES.length;i++){
+    const type=BF_SERIES_TYPES[i][0], d=bfSeriesDraft[type];
+    if(!/^[A-Za-z0-9]{1,4}$/.test(String(d.prefix||'').trim())){
+      err.textContent='البادئة يجب أن تكون من ١ إلى ٤ أحرف أو أرقام لاتينية — '+BF_SERIES_TYPES[i][1];return;
+    }
+    const seen=[];
+    for(let j=0;j<d.rows.length;j++){
+      const r=d.rows[j], y=String(r.year||'').trim();
+      if(!/^\d{4}$/.test(y)||+y<2020||+y>2100){err.textContent='السنة غير صحيحة: '+(y||'فارغة');return;}
+      if(seen.indexOf(y)>=0){err.textContent='السنة '+y+' مكرّرة';return;}
+      seen.push(y);
+      if(String(r.prefix||'').trim()&&!/^[A-Za-z0-9]{1,4}$/.test(String(r.prefix).trim())){
+        err.textContent='بادئة السنة '+y+' غير صحيحة';return;
+      }
+      const st=String(r.start||'').trim();
+      if(st&&!(parseInt(st,10)>0)){err.textContent='رقم البداية للسنة '+y+' يجب أن يكون رقماً أكبر من صفر';return;}
+    }
+  }
+  const{error}=await sb.from('settings').upsert(
+    {key:BF_SERIES_KEY,value:draft,municipality_id:BF_MUN_ID,updated_at:new Date().toISOString()},
+    {onConflict:'key'});
+  if(error){
+    err.textContent='⚠️ '+(/(policy|permission|denied)/i.test(error.message)?'لا تملك صلاحية حفظ الإعدادات':error.message);
+    return;
+  }
+  bfSeries=draft;
+  bfSeriesClose();
+  bfRefreshAutoReceiptNos();
+  bfAudit('series_edit','ترقيم السندات — قبض: '+bfNextNo('income',bfToday())+' · صرف: '+bfNextNo('expense',bfToday()));
+  toast('✓ تم حفظ ترقيم السندات');
 }
 // Re-entry guard. These handlers are wired straight to a button and await a
 // network insert, so a second tap before the first returns — routine on a
@@ -1594,7 +1770,7 @@ let bfAuditRows=[], bfAuditLoaded=false;
 const BF_ACT_AR={create:'➕ إضافة سند',update:'✏️ تعديل',void:'⛔ إلغاء',unvoid:'↩️ تراجع عن الإلغاء',
   sign:'✍️ توقيع',delete:'🗑️ حذف',export_pdf:'📄 تصدير تقرير PDF',export_csv:'⬇️ تصدير CSV',
   share_text:'📤 مشاركة نص',share_file:'📤 مشاركة ملف',copy_text:'📋 نسخ النص',print:'🖨️ طباعة',
-  receipt_pdf:'🧾 تصدير سند PDF',phonebook_add:'👤 إضافة اسم إلى الدليل',view_save:'👁️ حفظ عرض',view_delete:'👁️ حذف عرض'};
+  receipt_pdf:'🧾 تصدير سند PDF',phonebook_add:'👤 إضافة اسم إلى الدليل',view_save:'👁️ حفظ عرض',view_delete:'👁️ حذف عرض',series_edit:'🔢 ترقيم السندات'};
 const BF_FIELD_AR={entry_date:'التاريخ',receipt_no:'رقم السند',wassel_number:'رقم الإيصال',wassel_date:'تاريخ الإيصال',
   manual_receipt_no:'رقم الإيصال',entry_type:'النوع',category:'الفئة',payment_method:'طريقة الدفع',
   description:'البيان',person:'الجهة',handled_by:'المستلم/المسلّم',amount:'المبلغ',currency:'العملة',
