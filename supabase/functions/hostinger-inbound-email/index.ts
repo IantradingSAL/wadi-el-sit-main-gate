@@ -104,45 +104,107 @@ async function hostingerPost(path: string, apiToken: string, body: unknown): Pro
   });
 }
 
+// Municipality branding used in the signature block.
+// Edit SIGNATURE.phone / SIGNATURE.addressAr / SIGNATURE.addressEn once
+// available — they render only when non-empty, so leave blank until known.
+const SIGNATURE = {
+  nameAr: "بلدية وادي الست",
+  nameEn: "Municipality of Wadi El Sit",
+  site: "https://app.municipality-wadi-el-sitt.org",
+  logo: "https://app.municipality-wadi-el-sitt.org/icon-192.png",
+  phone: "", // e.g. "+961 3 000 000"
+  addressAr: "",
+  addressEn: "",
+  brandColor: "#1a6eb5",
+};
+
 function buildAutoReply(opts: {
   ticketId: string;
   originalSubject: string;
   fromName: string;
   fromAddr: string;
-  category: Category;
   mailboxAddr: string;
 }): { subject: string; text: string; html: string; displayName: string } {
   const salutation = opts.fromName || opts.fromAddr;
   const subject = `Re: ${opts.originalSubject || "(no subject)"} — ${opts.ticketId}`;
+  const mb = opts.mailboxAddr;
 
-  const text =
-    `مرحباً ${salutation}،\n\n` +
-    `شكراً لتواصلكم مع بلدية وادي الست. تم تسجيل رسالتكم برقم المرجع: ${opts.ticketId}.\n` +
-    `سيتم الرد عليكم في أقرب فرصة ممكنة.\n\n` +
-    `— بلدية وادي الست\n\n` +
-    `----\n\n` +
-    `Hello ${salutation},\n\n` +
-    `Thank you for contacting the Wadi El Sit Municipality. Your message has been logged under reference: ${opts.ticketId}.\n` +
-    `We will get back to you as soon as possible.\n\n` +
-    `— Municipality of Wadi El Sit`;
+  // ── Plain-text version ────────────────────────────────────────────
+  const textLines: string[] = [
+    `مرحباً ${salutation}،`,
+    ``,
+    `شكراً لتواصلكم مع ${SIGNATURE.nameAr}. تم تسجيل رسالتكم برقم المرجع: ${opts.ticketId}.`,
+    `سيتم الرد عليكم في أقرب فرصة ممكنة.`,
+    ``,
+    `— ${SIGNATURE.nameAr}`,
+    `✉ ${mb}`,
+    `🌐 ${SIGNATURE.site}`,
+  ];
+  if (SIGNATURE.phone)     textLines.push(`📞 ${SIGNATURE.phone}`);
+  if (SIGNATURE.addressAr) textLines.push(`📍 ${SIGNATURE.addressAr}`);
+  textLines.push(``, `----`, ``);
+  textLines.push(
+    `Hello ${salutation},`,
+    ``,
+    `Thank you for contacting the ${SIGNATURE.nameEn}. Your message has been logged under reference: ${opts.ticketId}.`,
+    `We will get back to you as soon as possible.`,
+    ``,
+    `— ${SIGNATURE.nameEn}`,
+    `✉ ${mb}`,
+    `🌐 ${SIGNATURE.site}`,
+  );
+  if (SIGNATURE.phone)     textLines.push(`📞 ${SIGNATURE.phone}`);
+  if (SIGNATURE.addressEn) textLines.push(`📍 ${SIGNATURE.addressEn}`);
+  const text = textLines.join("\n");
+
+  // ── HTML version — table-based, email-client-safe ─────────────────
+  const sigRow = (icon: string, label: string, valueHtml: string) =>
+    `<tr><td style="padding:3px 0;color:#8a95a3;font-size:12px;width:22px;vertical-align:top">${icon}</td>` +
+    `<td style="padding:3px 0;color:#4a5568;font-size:12.5px;vertical-align:top">${valueHtml}</td></tr>`;
+
+  const sigRowsAr = [
+    sigRow("✉", "Email", `<a href="mailto:${esc(mb)}" style="color:${SIGNATURE.brandColor};text-decoration:none">${esc(mb)}</a>`),
+    sigRow("🌐", "Web", `<a href="${SIGNATURE.site}" style="color:${SIGNATURE.brandColor};text-decoration:none">${esc(SIGNATURE.site.replace(/^https?:\/\//, ""))}</a>`),
+  ];
+  if (SIGNATURE.phone)     sigRowsAr.push(sigRow("📞", "Phone", `<span style="direction:ltr;unicode-bidi:embed">${esc(SIGNATURE.phone)}</span>`));
+  if (SIGNATURE.addressAr) sigRowsAr.push(sigRow("📍", "Address", esc(SIGNATURE.addressAr)));
+
+  const sigBlock =
+    `<table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:14px;border-collapse:collapse">` +
+      `<tr>` +
+        `<td style="padding-inline-end:14px;vertical-align:top">` +
+          `<img src="${SIGNATURE.logo}" width="64" height="64" alt="${esc(SIGNATURE.nameEn)}" style="width:64px;height:64px;border-radius:50%;display:block;border:2px solid ${SIGNATURE.brandColor}">` +
+        `</td>` +
+        `<td style="vertical-align:top">` +
+          `<div style="font-size:15px;font-weight:800;color:${SIGNATURE.brandColor};line-height:1.3">${esc(SIGNATURE.nameAr)}</div>` +
+          `<div style="font-size:12.5px;color:#8a95a3;font-weight:500;margin-bottom:6px">${esc(SIGNATURE.nameEn)}</div>` +
+          `<table role="presentation" cellspacing="0" cellpadding="0" style="border-collapse:collapse">${sigRowsAr.join("")}</table>` +
+        `</td>` +
+      `</tr>` +
+    `</table>`;
 
   const html =
-    `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;font-size:14px;line-height:1.6">` +
-    `<p>مرحباً ${escapeHtml(salutation)}،</p>` +
-    `<p>شكراً لتواصلكم مع <strong>بلدية وادي الست</strong>. تم تسجيل رسالتكم برقم المرجع: <strong>${opts.ticketId}</strong>.</p>` +
-    `<p>سيتم الرد عليكم في أقرب فرصة ممكنة.</p>` +
-    `<p>— بلدية وادي الست</p>` +
+    `<div dir="rtl" style="font-family:Tahoma,Arial,sans-serif;font-size:14px;line-height:1.6;color:#1a2332">` +
+      `<p>مرحباً ${esc(salutation)}،</p>` +
+      `<p>شكراً لتواصلكم مع <strong>${esc(SIGNATURE.nameAr)}</strong>. تم تسجيل رسالتكم برقم المرجع: ` +
+        `<strong style="color:${SIGNATURE.brandColor}">${esc(opts.ticketId)}</strong>.</p>` +
+      `<p>سيتم الرد عليكم في أقرب فرصة ممكنة.</p>` +
+      sigBlock +
     `</div>` +
-    `<hr>` +
-    `<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6">` +
-    `<p>Hello ${escapeHtml(salutation)},</p>` +
-    `<p>Thank you for contacting the <strong>Wadi El Sit Municipality</strong>. Your message has been logged under reference: <strong>${opts.ticketId}</strong>.</p>` +
-    `<p>We will get back to you as soon as possible.</p>` +
-    `<p>— Municipality of Wadi El Sit</p>` +
+    `<hr style="border:none;border-top:1px solid #e0e6ef;margin:24px 0">` +
+    `<div dir="ltr" style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#1a2332">` +
+      `<p>Hello ${esc(salutation)},</p>` +
+      `<p>Thank you for contacting the <strong>${esc(SIGNATURE.nameEn)}</strong>. Your message has been logged under reference: ` +
+        `<strong style="color:${SIGNATURE.brandColor}">${esc(opts.ticketId)}</strong>.</p>` +
+      `<p>We will get back to you as soon as possible.</p>` +
+      sigBlock +
     `</div>`;
 
-  return { subject, text, html, displayName: "Wadi El Sit Municipality" };
+  return { subject, text, html, displayName: SIGNATURE.nameEn };
 }
+
+// esc() is defined below — hoisted alias for use in buildAutoReply.
+function esc(s: string): string { return escapeHtml(s); }
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => (
@@ -325,7 +387,6 @@ serve(async (req: Request) => {
       originalSubject: subject,
       fromName,
       fromAddr,
-      category,
       mailboxAddr,
     });
 
