@@ -149,6 +149,20 @@ select.bf-colfilter{padding-inline-end:22px}
 .bf-colmenu-item .lbl{flex:1;font-weight:700;color:#0f4d82}
 .bf-colmenu-item .mv{padding:2px 8px;border:1px solid #d5dfec;border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;font-weight:800;color:#0f4d82}
 .bf-colmenu-item .mv:disabled{opacity:.35;cursor:not-allowed}
+/* ⋯ row actions — one button per row instead of five */
+.bf-rowmenu{border:1.5px solid #d5dfec;background:#fff;color:#0f4d82;border-radius:8px;cursor:pointer;font-family:inherit;font-size:16px;font-weight:800;line-height:1;padding:3px 9px;transition:background .15s,border-color .15s}
+.bf-rowmenu:hover,.bf-rowmenu.on{background:#eaf2fb;border-color:#1a6eb5}
+.bf-rowmenu:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+.bf-rowtag{font-size:11px;font-weight:800;color:#8a95a3;margin-inline-start:4px;white-space:nowrap}
+.bf-rowpop{position:fixed;z-index:9600;background:#fff;border:1.5px solid #d5dfec;border-radius:12px;box-shadow:0 12px 32px rgba(15,40,70,.20);padding:6px;min-width:196px}
+.bf-rowpop .hd{font-size:11.5px;font-weight:800;color:#8a95a3;padding:4px 10px 7px;border-bottom:1px solid #eef2f5;margin-bottom:5px;direction:ltr;text-align:right;unicode-bidi:embed}
+.bf-rowpop button{display:flex;align-items:center;gap:9px;width:100%;padding:9px 11px;border:none;background:none;border-radius:8px;font-family:inherit;font-size:13.5px;font-weight:700;color:#1a1a2e;cursor:pointer;text-align:right}
+.bf-rowpop button:hover{background:#f0f6fd}
+.bf-rowpop button:focus-visible{outline:2px solid #1a6eb5;outline-offset:-2px}
+.bf-rowpop button .ic{font-size:15px;width:20px;text-align:center;flex:0 0 auto}
+.bf-rowpop button.danger{color:#a83232}
+.bf-rowpop button.danger:hover{background:#fdecec}
+.bf-rowpop .sep{height:1px;background:#eef2f5;margin:5px 4px}
 </style>
 
 <div id="bf-screen">
@@ -621,23 +635,37 @@ function bfApplyLocks(){
     if(rc && !rc._bfSnap){
       rc._bfSnap=true;
       rc.addEventListener('input',function(){
-        if(bfIsSuper())return;
+        if(bfIsSuper()){
+          // The general supervisor may choose the number — from here on it is
+          // theirs, not the generator's, so stop overwriting it.
+          rc.dataset.bfAuto='';
+          return;
+        }
         // Recompute the auto-serial in case someone tried to override it
-        rc.value=bfNextNo(p==='i'?'income':'expense',bfToday());
+        bfSetAutoNo(rc,p==='i'?'income':'expense');
         toast('🔒 رقم السند تلقائي ومقفل — لا يمكن تعديله','err');
       });
     }
   });
   bfRefreshAutoReceiptNos();
 }
+// Writes the next serial into the box and marks it as the generator's, so a
+// later refresh may correct it. Anything the supervisor types clears the mark.
+function bfSetAutoNo(rc,type){
+  rc.value=bfNextNo(type,bfToday());
+  rc.dataset.bfAuto='1';
+}
 function bfRefreshAutoReceiptNos(){
-  const superOn=bfIsSuper();
   ['i','e'].forEach(p=>{
     const rc=document.getElementById('bf-'+p+'-receipt');
     if(!rc)return;
-    // Only auto-fill for non-super, or when super hasn't typed anything yet
-    if(!superOn || !rc.value){
-      rc.value=bfNextNo(p==='i'?'income':'expense',bfToday());
+    // Refresh whenever the box still holds a generated number — empty, or
+    // filled by an earlier pass. The first pass runs before the ledger has
+    // loaded, when bfEntries is still empty and every series therefore looks
+    // like it starts at 001; for the supervisor that stale 001 used to stay in
+    // the box for the rest of the session, on top of a number already issued.
+    if(!rc.value || rc.dataset.bfAuto==='1'){
+      bfSetAutoNo(rc,p==='i'?'income':'expense');
     }
   });
 }
@@ -975,7 +1003,7 @@ function bfShowTab(t){
 // ── 🧱 COLUMN DEFINITIONS ──
 const BF_COLS=[
   {key:'entry_date',label:'التاريخ',filter:'text',val:e=>e.entry_date||'',search:e=>e.entry_date||'',cell:e=>'<td>'+(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')+'</td>'},
-  {key:'receipt_no',label:'السند',filter:'text',val:e=>e.receipt_no||'',search:e=>String(e.receipt_no||''),cell:e=>'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' ✍️'+bfSigCount(e):'')+'</td>'},
+  {key:'receipt_no',label:'السند',filter:'text',val:e=>e.receipt_no||'',search:e=>String(e.receipt_no||''),cell:e=>'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' <span title="عدد التواقيع">✍️'+bfSigCount(e)+'</span>':'')+((e.documents&&e.documents.length)?' <span title="عدد المرفقات">📎'+e.documents.length+'</span>':'')+'</td>'},
   {key:'entry_type',label:'النوع',filter:'select',opts:[['income','مقبوضات'],['expense','مصروفات'],['opening','رصيد افتتاحي']],val:e=>e.entry_type||'',sortVal:e=>BF_TYPE_LABEL[e.entry_type]||e.entry_type||'',search:e=>e.entry_type||'',cell:e=>'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type||'')+(e.voided?' <span class="bf-badge" style="background:#fdecec;color:#c22">⛔ ملغى</span>':'')+'</td>'},
   {key:'category',label:'الفئة',filter:'text',val:e=>e.category||'',search:e=>e.category||'',cell:e=>'<td style="font-size:12px">'+(e.category||'')+'</td>'},
   {key:'payment_method',label:'الدفع',filter:'select',opts:[['cash','نقداً'],['transfer','حوالة'],['whish','Whish']],val:e=>e.payment_method||'cash',sortVal:e=>bfPay(e),search:e=>bfPay(e),cell:e=>'<td style="font-size:12px">'+bfPay(e)+'</td>'},
@@ -993,12 +1021,8 @@ const BF_COLS=[
   {key:'amount',label:'المبلغ',filter:'text',num:true,sortVal:e=>Number(e.signed)||0,val:e=>String(e.amount||''),search:e=>String(e.amount||''),cell:e=>'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'},
   {key:'balance',label:'الرصيد',filter:'none',num:true,sortVal:e=>Number(e.bal)||0,val:e=>String(e.bal||''),search:e=>'',cell:e=>'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'},
   {key:'created_by',label:'أدخلت بواسطة',filter:'text',val:e=>e.created_by||'',search:e=>e.created_by||'',cell:e=>'<td style="font-size:11px;color:#666">'+(e.created_by||'')+'</td>'},
-  {key:'actions',label:'',filter:'none',sort:'none',val:e=>'',search:e=>'',cell:e=>'<td style="white-space:nowrap" onclick="event.stopPropagation()">'
-      +((e.documents&&e.documents.length)?'<button class="bf-actbtn" title="المرفقات" onclick="bfDocsById(\''+e.id+'\')">📎'+e.documents.length+'</button>':'')
-      +'<button class="bf-actbtn" title="توقيع" onclick="bfOpenSign(\''+e.id+'\')">✍️</button>'
-      +'<button class="bf-actbtn" title="السند" onclick="bfReceiptById(\''+e.id+'\')">🧾</button>'
-      +'<button class="bf-actbtn" title="طباعة" onclick="bfPrintById(\''+e.id+'\')">🖨️</button>'
-      +(bfCanDel()?'<button class="bf-actbtn" title="حذف" onclick="bfDel(\''+e.id+'\')">🗑️</button>':'')
+  {key:'actions',label:'',filter:'none',sort:'none',val:e=>'',search:e=>'',cell:e=>'<td style="white-space:nowrap;width:1%" onclick="event.stopPropagation()">'
+      +'<button class="bf-rowmenu" title="إجراءات السند" aria-haspopup="menu" aria-expanded="false" onclick="bfRowMenu(event,\''+e.id+'\')">⋯</button>'
     +'</td>'}
 ];
 const BF_COL_DEFAULT_VISIBLE=['entry_date','receipt_no','wassel_number','entry_type','category','payment_method','description','person','amount','balance','actions'];
@@ -1162,7 +1186,7 @@ function bfRenderLedgerBody(){
   const cs=cols.length||1;
   document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="'+cs+'" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
 }
-function bfRenderLedger(){bfRenderLedgerHead();bfRenderLedgerBody();bfKPIs();}
+function bfRenderLedger(){bfCloseRowMenu();bfRenderLedgerHead();bfRenderLedgerBody();bfKPIs();}
 
 // ── ⚙️ COLUMNS MENU ──
 let bfColsDraft=null;
@@ -1418,8 +1442,13 @@ async function bfSave__run(type){
   // the next auto-serial. Any tampering with the DOM inputs is ignored here.
   const dateInputVal=document.getElementById('bf-'+p+'-date').value;
   const date=superOn?(dateInputVal||bfToday()):bfToday();
-  const recInputVal=(document.getElementById('bf-'+p+'-receipt')||{}).value||'';
-  const receiptNo=(superOn && recInputVal.trim()) ? recInputVal.trim() : bfNextNo(type,date);
+  const recEl=document.getElementById('bf-'+p+'-receipt');
+  const recInputVal=(recEl||{}).value||'';
+  // A number the supervisor typed is theirs and is used as typed. A number the
+  // generator put there is recomputed at save, so a box filled before the
+  // ledger loaded cannot hand out a serial that has since been issued.
+  const typedBySuper = superOn && !!recInputVal.trim() && !(recEl && recEl.dataset.bfAuto==='1');
+  const receiptNo = typedBySuper ? recInputVal.trim() : bfNextNo(type,date);
   const amount=parseFloat(document.getElementById('bf-'+p+'-amount').value);
   const stamp=parseFloat((document.getElementById('bf-'+p+'-stamp')||{}).value)||0;
   const desc=document.getElementById('bf-'+p+'-desc').value.trim();
@@ -1427,6 +1456,12 @@ async function bfSave__run(type){
   if(cat==='أخرى'){const o=document.getElementById('bf-'+p+'-cat-other').value.trim();if(o)cat=o;}
   const err=document.getElementById('bf-'+p+'-err');err.textContent='';
   if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة الفئة والبيان والمبلغ';return;}
+  // Last line of defence: never write a number this type already carries.
+  if(bfEntries.some(x=>x.entry_type===type && String(x.receipt_no||'').trim()===receiptNo)){
+    err.textContent='⚠️ رقم السند '+receiptNo+' مستعمل سابقاً — الرقم التالي المتاح هو '+bfNextNo(type,date);
+    if(recEl && !typedBySuper) bfSetAutoNo(recEl,type);
+    return;
+  }
   const kararEl=document.getElementById('bf-'+p+'-karar');
   const propEl=document.getElementById('bf-'+p+'-property');
   const wnEl=document.getElementById('bf-'+p+'-wassel-no');
@@ -1777,6 +1812,88 @@ function bfReceiptById(id){
 function bfPrintById(id){
   const e=bfEntries.find(x=>String(x.id)===String(id));
   if(e){bfShareCtx=e;bfPrint();}
+}
+
+// ── ⋯ ROW ACTIONS ──
+// Five bare icons per row cost a whole column of width on a table that is
+// already too wide for a phone, and an icon on its own never says what it
+// does. One ⋯ opens the same actions with their names written out. The
+// signature and attachment counts stay on the السند column, so the row still
+// says at a glance what it carries.
+// The menu is fixed-positioned on <body> rather than inside the cell: the
+// ledger scrolls sideways, and a menu inside it would be clipped by the wrapper.
+let bfRowPop=null;
+function bfCloseRowMenu(){
+  if(!bfRowPop)return;
+  if(bfRowPop.btn){bfRowPop.btn.classList.remove('on');bfRowPop.btn.setAttribute('aria-expanded','false');}
+  bfRowPop.el.remove();
+  bfRowPop=null;
+  document.removeEventListener('mousedown',bfRowMenuAway,true);
+  document.removeEventListener('keydown',bfRowMenuKey,true);
+  window.removeEventListener('scroll',bfCloseRowMenu,true);
+  window.removeEventListener('resize',bfCloseRowMenu);
+}
+function bfRowMenuAway(ev){if(bfRowPop&&!bfRowPop.el.contains(ev.target)&&!bfRowPop.btn.contains(ev.target))bfCloseRowMenu();}
+function bfRowMenuKey(ev){if(ev.key==='Escape'){bfCloseRowMenu();}}
+function bfRowMenu(ev,id){
+  ev.stopPropagation();
+  const btn=ev.currentTarget;
+  const sameRow=bfRowPop&&bfRowPop.id===String(id);
+  bfCloseRowMenu();
+  if(sameRow)return;           // a second tap on the same ⋯ closes it
+  const e=bfEntries.find(x=>String(x.id)===String(id));
+  if(!e)return;
+  const docs=(e.documents&&e.documents.length)||0;
+  const items=[
+    {ic:'🧾',label:'عرض السند',run:()=>bfReceiptById(id)},
+    {ic:'✍️',label:bfSigCount(e)?'إعادة التوقيع':'توقيع',run:()=>bfOpenSign(id)},
+    {ic:'🖨️',label:'طباعة',run:()=>bfPrintById(id)}
+  ];
+  if(docs)items.push({ic:'📎',label:'المرفقات ('+docs+')',run:()=>bfDocsById(id)});
+  if(bfCanDel())items.push({sep:true},{ic:'🗑️',label:'حذف الحركة',danger:true,run:()=>bfDel(id)});
+
+  const el=document.createElement('div');
+  el.className='bf-rowpop';
+  el.setAttribute('role','menu');
+  el.setAttribute('dir','rtl');
+  if(e.receipt_no){
+    const hd=document.createElement('div');
+    hd.className='hd';hd.textContent=e.receipt_no;
+    el.appendChild(hd);
+  }
+  items.forEach(it=>{
+    if(it.sep){el.appendChild(Object.assign(document.createElement('div'),{className:'sep'}));return;}
+    const b=document.createElement('button');
+    b.type='button';
+    b.setAttribute('role','menuitem');
+    if(it.danger)b.className='danger';
+    b.innerHTML='<span class="ic"></span><span class="tx"></span>';
+    b.querySelector('.ic').textContent=it.ic;
+    b.querySelector('.tx').textContent=it.label;
+    b.onclick=ev2=>{ev2.stopPropagation();bfCloseRowMenu();it.run();};
+    el.appendChild(b);
+  });
+  document.body.appendChild(el);
+
+  // Anchor under the button, right-aligned (RTL), flipped up when the row sits
+  // near the bottom of the screen, and never off either edge.
+  const r=btn.getBoundingClientRect(), m=el.getBoundingClientRect(), pad=8;
+  let top=r.bottom+6;
+  if(top+m.height>window.innerHeight-pad)top=Math.max(pad,r.top-m.height-6);
+  let left=r.right-m.width;
+  left=Math.min(Math.max(pad,left),window.innerWidth-m.width-pad);
+  el.style.top=top+'px';
+  el.style.left=left+'px';
+
+  btn.classList.add('on');
+  btn.setAttribute('aria-expanded','true');
+  bfRowPop={el:el,btn:btn,id:String(id)};
+  const first=el.querySelector('button');
+  if(first)first.focus();
+  document.addEventListener('mousedown',bfRowMenuAway,true);
+  document.addEventListener('keydown',bfRowMenuKey,true);
+  window.addEventListener('scroll',bfCloseRowMenu,true);
+  window.addEventListener('resize',bfCloseRowMenu);
 }
 function bfOpenReceiptShare(e){
   bfShareCtx=e;
