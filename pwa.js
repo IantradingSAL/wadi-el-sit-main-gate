@@ -30,6 +30,7 @@ function _t(key, ar){
         console.log('[PWA] Service worker registered.');
         // Check for updates every hour while page is open
         setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+        watchForUpdate(reg);
       }).catch((err) => console.warn('[PWA] SW registration failed:', err));
 
       // 🔄 AUTO-LINK push subscription with stored identity (every page load)
@@ -49,6 +50,66 @@ function _t(key, ar){
         }
       }, 4000);
     });
+  }
+
+  // ─── 1b. Offer the update instead of forcing it ─────────────────────────
+  // A new version used to take over the moment it finished installing, so a
+  // page could be replaced while a clerk was half-way through a form. Now the
+  // new worker waits, and the user chooses the moment.
+  let reloadingForUpdate = false;
+  function watchForUpdate(reg) {
+    const offer = (worker) => {
+      // Only when a worker is already in control — a first install is not an
+      // "update" and needs no prompt.
+      if (!navigator.serviceWorker.controller || reloadingForUpdate) return;
+      showUpdateBar(() => worker.postMessage({ type: 'SKIP_WAITING' }));
+    };
+    if (reg.waiting) offer(reg.waiting);
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed') offer(nw);
+      });
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloadingForUpdate) return;
+      reloadingForUpdate = true;
+      location.reload();
+    });
+  }
+
+  function showUpdateBar(onAccept) {
+    if (document.getElementById('wadi-update-bar')) return;
+    const bar = document.createElement('div');
+    bar.id = 'wadi-update-bar';
+    bar.dir = 'rtl';
+    bar.setAttribute('role', 'status');
+    bar.style.cssText = [
+      'position:fixed', 'left:12px', 'right:12px', 'bottom:12px', 'z-index:99999',
+      'display:flex', 'gap:10px', 'align-items:center', 'justify-content:space-between',
+      'flex-wrap:wrap', 'background:#0f4d82', 'color:#fff', 'border-radius:12px',
+      'padding:11px 14px', 'font-family:Tajawal,Tahoma,sans-serif', 'font-size:14px',
+      'font-weight:700', 'box-shadow:0 6px 24px rgba(0,0,0,.28)', 'max-width:560px',
+      'margin:0 auto'
+    ].join(';');
+    const msg = document.createElement('span');
+    msg.textContent = '🔄 نسخة جديدة من التطبيق متوفّرة';
+    const btns = document.createElement('span');
+    btns.style.cssText = 'display:flex;gap:8px;align-items:center';
+    const yes = document.createElement('button');
+    yes.type = 'button';
+    yes.textContent = 'تحديث الآن';
+    yes.style.cssText = 'background:#fff;color:#0f4d82;border:none;border-radius:8px;padding:7px 14px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit';
+    const later = document.createElement('button');
+    later.type = 'button';
+    later.textContent = 'لاحقاً';
+    later.style.cssText = 'background:transparent;color:#cfe0f0;border:none;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit';
+    yes.addEventListener('click', () => { bar.remove(); onAccept(); });
+    later.addEventListener('click', () => bar.remove());
+    btns.appendChild(yes); btns.appendChild(later);
+    bar.appendChild(msg); bar.appendChild(btns);
+    document.body.appendChild(bar);
   }
 
   // ─── 2. Install prompt handling ─────────────────────────────────────────

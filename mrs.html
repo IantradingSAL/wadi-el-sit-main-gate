@@ -183,7 +183,7 @@ async function boot(u){
     const res=await Promise.all(names.map(fetchAll));
     names.forEach((n,i)=>T[n]=res[i]);
     if(!T.mrs_mukallaf.length){
-      document.getElementById('bd').innerHTML='<tr><td style="text-align:center;color:#a83232;padding:24px;font-weight:700">⚠️ الأرشيف فارغ — افتح mrs-import.html أولاً (المشرف العام) لتعبئة البيانات</td></tr>';
+      document.getElementById('bd').innerHTML='<tr><td style="text-align:center;color:#a83232;padding:24px;font-weight:700">⚠️ الأرشيف فارغ — لم تُحمَّل بيانات المكلّفين بعد. راجع المشرف العام.</td></tr>';
       return;
     }
     T.fee={}; T.mrs_fee_types.forEach(f=>T.fee[f.fee_type_id]=f.fee_type_name);

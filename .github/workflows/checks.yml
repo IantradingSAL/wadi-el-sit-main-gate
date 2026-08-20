@@ -1,0 +1,27 @@
+name: checks
+
+# This repository publishes straight to app.municipality-wadi-el-sitt.org.
+# Anything that reaches main is live for the municipality, so the checks that
+# used to depend on someone remembering now run on every push and every PR.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # the cache-name check compares against the base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Pages parse, ids are unique, the cache name is bumped
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+        run: node .github/scripts/check.mjs

@@ -2737,13 +2737,20 @@ async function doTogBan(cb) {
   } catch(e) { cb.checked=!cb.checked; toast('⚠️ '+e.message,'err'); }
 }
 
-function doResetPw(btn) {
+async function doResetPw(btn) {
   var name=btn.dataset.nm, uid=btn.dataset.uid;
-  var pw=prompt('كلمة المرور الجديدة لـ '+name+' (8 أحرف على الأقل):');
-  if(!pw||pw.length<8){if(pw)alert('يجب أن تكون 8 أحرف على الأقل');return;}
-  adminAPI({action:'update',uid:uid,updates:{password:pw}})
-  .then(function(){toast('✅ تم تغيير كلمة مرور '+name);})
-  .catch(function(e){toast('⚠️ '+e.message,'err');});
+  // Masked and confirmed twice. prompt() showed the password in clear text on
+  // an administrator's screen, and asked for it only once — one typo locked
+  // the employee out of their own account.
+  var pw=await wadiAskPassword({
+    title:'🔑 كلمة مرور جديدة لـ '+name,
+    note:'لا تقل عن 8 أحرف — سيستخدمها '+name+' لتسجيل الدخول'
+  });
+  if(pw===null)return;
+  try {
+    await adminAPI({action:'update',uid:uid,updates:{password:pw}});
+    toast('✅ تم تغيير كلمة مرور '+name);
+  } catch(e) { toast('⚠️ '+e.message,'err'); }
 }
 
 async function doDelUser(btn) {
