@@ -551,6 +551,23 @@ let currentUser=null,userRole=null,cases=[],stF='open',tyF='all',srcF='all',sort
 const PER=12;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
+// Citizens' documents are no longer readable by anyone holding the URL: the
+// bucket's «Allow all storage» policy handed read, overwrite and delete to the
+// public, and case ids are sequential. A link is signed at the moment it is
+// clicked, for the person clicking it, and expires in five minutes.
+function docAttr(v){return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+async function openCaseDoc(ev, path, name){
+  if(ev){ ev.preventDefault(); ev.stopPropagation(); }
+  if(!path){ toast('المرفق بلا مسار محفوظ','err'); return; }
+  try{
+    const{data,error}=await sb.storage.from('case-documents')
+      .createSignedUrl(path, 300, name?{download:name}:undefined);
+    if(error||!data||!data.signedUrl){
+      toast('تعذّر فتح المرفق'+(error?': '+error.message:''),'err'); return;
+    }
+    window.open(data.signedUrl,'_blank','noopener');
+  }catch(e){ toast('تعذّر فتح المرفق','err'); }
+}
 function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show '+t;setTimeout(()=>el.className='toast',3000);}
 function sv(s){document.getElementById('SV').classList.toggle('show',s);}
 function tick(){
@@ -1165,8 +1182,8 @@ function openDetail(id){
   if(R.A&&na&&ip){ab=`<div class="ab"><div class="abt">⏳ هذا الطلب يحتاج إلى موافقتك</div><div class="abs">يستوجب موافقة رسمية قبل المتابعة</div><div class="abbs"><button class="btn bgr" style="flex:1;justify-content:center" onclick="doApprove('${id}','approved')">✓ منح الموافقة</button><button class="btn bd2" style="flex:1;justify-content:center" onclick="doApprove('${id}','rejected')">✗ رفض</button></div></div>`;}
   const isImg=ext=>['jpg','jpeg','png','gif','webp'].includes((ext||'').toLowerCase());
   const docsH=docs.length?docs.map(d=>`<div class="dcd">
-    ${isImg(d.type)?`<img class="dth" src="${d.url}" onclick="window.open('${d.url}','_blank')">`:`<div class="dpdf" onclick="window.open('${d.url}','_blank')">📄</div>`}
-    <div class="ddi"><span class="ddn" title="${d.name}">${d.name}</span><a href="${d.url}" download="${d.name}" target="_blank" style="color:var(--blue);font-size:13px;text-decoration:none;margin-left:4px" title="تحميل">⬇️</a>${R.edit?`<button class="ddrm" onclick="event.stopPropagation();rmDoc('${id}','${d.path}')">🗑</button>`:''}</div>
+    ${isImg(d.type)?`<img class="dth" src="${d.url}" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">`:`<div class="dpdf" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">📄</div>`}
+    <div class="ddi"><span class="ddn" title="${d.name}">${d.name}</span><a href="#" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')" style="color:var(--blue);font-size:13px;text-decoration:none;margin-left:4px;cursor:pointer" title="تحميل">⬇️</a>${R.edit?`<button class="ddrm" onclick="event.stopPropagation();rmDoc('${id}','${d.path}')">🗑</button>`:''}</div>
   </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:4px 0">لا توجد مستندات مرفقة</div>';
   const uz=R.edit?`<div class="uz" id="uz${id}" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hd(event,'${id}')"><input type="file" multiple accept="image/*,video/*,.pdf" onchange="hf(this.files,'${id}')"><div class="uzi">📎</div><div class="uzt">اسحب الملفات أو اضغط للاختيار</div><div class="uzs">صور JPG/PNG وPDF — حتى 10MB</div></div>`:'';
   document.getElementById('MB').innerHTML=`

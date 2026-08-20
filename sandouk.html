@@ -2575,6 +2575,23 @@ function bfDocBase(e){
 }
 function bfDocName(e,ext,i,total){return bfDocBase(e)+((total>1)?'-'+(i+1):'')+'.'+ext;}
 // رابط التنزيل يحمل الاسم النهائي حتى يُحفَظ الملف برقم الإيصال لا باسمه الأصلي.
+// The bucket is no longer public — cash-box attachments were readable by
+// anyone who had, or guessed, a URL. A link is signed at the moment it is
+// clicked, for the person clicking it, and expires. The url stored on older
+// documents is left alone as a record; it is no longer what opens the file.
+function bfAttr(v){return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+async function bfOpenDoc(ev, path, name){
+  if(ev){ ev.preventDefault(); }
+  if(!path){ toast('المرفق بلا مسار محفوظ','err'); return; }
+  try{
+    const{data,error}=await sb.storage.from('sandouk-docs')
+      .createSignedUrl(path, 300, name?{download:name}:undefined);
+    if(error||!data||!data.signedUrl){
+      toast('تعذّر فتح المرفق'+(error?': '+error.message:''),'err'); return;
+    }
+    window.open(data.signedUrl,'_blank','noopener');
+  }catch(e){ toast('تعذّر فتح المرفق','err'); }
+}
 function bfDocUrl(path,name){
   try{const{data}=sb.storage.from('sandouk-docs').getPublicUrl(path,{download:name});if(data&&data.publicUrl)return data.publicUrl;}catch(_e){}
   const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
@@ -2637,7 +2654,7 @@ function bfDocsById(id){
   const e=bfEntries.find(x=>String(x.id)===String(id));
   if(!e||!e.documents||!e.documents.length)return;
   document.getElementById('bf-docs-list').innerHTML=e.documents.map(d=>
-    '<a class="bf-share-btn" style="text-decoration:none" href="'+d.url+'" target="_blank" rel="noopener">📄 <span style="word-break:break-all">'+d.name+'</span></a>').join('');
+    '<a class="bf-share-btn" style="text-decoration:none;cursor:pointer" href="#" onclick="bfOpenDoc(event,\''+bfAttr(d.path)+'\',\''+bfAttr(d.name)+'\')">📄 <span style="word-break:break-all">'+d.name+'</span></a>').join('');
   document.getElementById('bf-docs-ov').style.display='flex';
 }
 function bfCloseDocs(){document.getElementById('bf-docs-ov').style.display='none';}
@@ -2701,7 +2718,7 @@ function bfOpenCase(id){
     +dr('التواقيع',(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k)+' ✓');return L.length?L.join(' · '):'';})())
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
-      +e.documents.map(d=>'<a href="'+d.url+'" target="_blank" rel="noopener" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all">📄 '+d.name+'</a>').join('')+'</div>'):'');
+      +e.documents.map(d=>'<a href="#" onclick="bfOpenDoc(event,\''+bfAttr(d.path)+'\',\''+bfAttr(d.name)+'\')" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all;cursor:pointer">📄 '+d.name+'</a>').join('')+'</div>'):'');
   document.getElementById('bf-case-delbtn').style.display = bfCanDel() ? '' : 'none';
   document.getElementById('bf-case-editrow').style.display = bfCanEdit() ? 'flex' : 'none';
   document.getElementById('bf-case-voidrow').innerHTML = e.voided
