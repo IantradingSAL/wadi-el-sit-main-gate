@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v85';
+const CACHE_NAME   = 'wadi-elsit-v88';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used by notificationclick to mark opens.
@@ -57,7 +57,12 @@ self.addEventListener('install', (event) => {
           cache.add(url).catch(err => console.warn('[SW] cache miss:', url))
         )
       );
-    }).then(() => self.skipWaiting())
+    })
+    // No skipWaiting here on purpose. With no worker in control — a first
+    // install — the browser activates this one immediately anyway. When a
+    // worker IS in control, this one waits, and pwa.js offers the user
+    // «نسخة جديدة متوفّرة» rather than swapping the app out from under
+    // someone half-way through entering a sanad.
   );
 });
 

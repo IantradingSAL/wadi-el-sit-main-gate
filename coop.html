@@ -2167,6 +2167,23 @@ let allSellers=[];
 let allCategories=[];
 let cart=[];
 let currentSeller=null;
+
+// ── Session tokens ─────────────────────────────────────────────────────────
+// A seller or agent proves who they are with an opaque token minted by the
+// database at login. It is not an identity the browser can invent: every list
+// and every status change is scoped server-side by this token. No email, no
+// OTP, nothing to confirm — the whole point of the exercise.
+function coopSetToken(kind, token){
+  try{ if(token) localStorage.setItem('coop_'+kind+'_token', token); }catch(e){}
+}
+function coopToken(kind){
+  try{ return localStorage.getItem('coop_'+kind+'_token') || null; }catch(e){ return null; }
+}
+async function coopClearToken(kind){
+  const t = coopToken(kind);
+  try{ localStorage.removeItem('coop_'+kind+'_token'); }catch(e){}
+  if(t){ try{ await sb.rpc('coop_session_end',{p_token:t}); }catch(e){} }
+}
 let currentAdmin=null;
 let currentProductDetail=null;
 let pendingQty=1;
@@ -2860,7 +2877,11 @@ async function placeOrder(){
   });
 
   try{
-    const res=await sb.from('coop_orders').insert(orders).select();
+    // Through a function, not a direct insert. The buyer must be able to read
+    // back the order they just placed — and the table can no longer be readable
+    // by anon, because that is what published every buyer's name, phone and
+    // address. This is the same shape citizen_track_case uses for requests.
+    const res=await sb.rpc('coop_place_order',{p_orders:orders});
     if(res.error){
       console.error('Order insert error:',res.error);
       toast(L().errFailed+': '+(res.error.message||L().errUnknown),'err');
@@ -2930,7 +2951,16 @@ async function renderOrdersPage(){
   }
   c.innerHTML='<div class="spinner"></div>';
   try{
-    const res=await sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp)').eq('customer_phone',u.phone).order('created_at',{ascending:false});
+    // The buyer proves the phone they ordered with, and gets back only those
+    // orders — the same thing the paper receipt does.
+    const res=await sb.rpc('coop_buyer_orders',{p_phone:u.phone});
+    // The function returns orders only. The shop already holds the seller
+    // directory, so the seller's name and number are attached here rather than
+    // joined in a query anon is no longer allowed to run.
+    if(res.data && Array.isArray(allSellers)){
+      const byId = {}; allSellers.forEach(x=>{ byId[x.id]=x; });
+      res.data.forEach(o=>{ if(o.seller_id && byId[o.seller_id]) o.coop_sellers = byId[o.seller_id]; });
+    }
     let orders=res.data||[];
     if(currentOrdersTab==='active') orders=orders.filter(o=>['pending','confirmed','out_for_delivery'].includes(o.status));
     else orders=orders.filter(o=>['delivered','cancelled'].includes(o.status));
@@ -3086,6 +3116,7 @@ function saveProfile(){
 function clearIdentity(){
   if(!confirm(((window.__wadi_t&&window.__wadi_t('logoutSellerConfirm'))||'هل تريد تسجيل الخروج؟ سيتمّ مسح بيانات الجلسة.'))) return;
   localStorage.removeItem('coop_seller');
+  coopClearToken('seller');   // revoke it server-side, not just locally
   localStorage.removeItem('coop_admin');
   currentSeller=null;currentAdmin=null;
   toast(L().loggedOut,'ok');
@@ -3197,21 +3228,15 @@ async function renderAgentPage(){
   }
   c.innerHTML = `<div style="padding:16px"><div class="spinner"></div></div>`;
   // Load three queues: active mine, delivered history, available in area
+  // Each queue is resolved from the agent's session token. The «available»
+  // queue comes back with the buyer's name, phone and address blanked — an
+  // unclaimed delivery is not a reason to hand every agent a resident's
+  // address; they arrive when the agent claims the order.
+  const tok = coopToken('agent');
   const [mine, done, avail] = await Promise.all([
-    sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
-      .eq('delivery_agent_id', currentAgent.id)
-      .not('delivery_status','eq','delivered')
-      .order('delivery_assigned_at',{ascending:false}),
-    sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
-      .eq('delivery_agent_id', currentAgent.id)
-      .eq('delivery_status','delivered')
-      .order('delivery_delivered_at',{ascending:false})
-      .limit(100),
-    sb.from('coop_orders').select('*,coop_sellers(display_name,phone,whatsapp,area)')
-      .eq('delivery_method','delivery')
-      .in('status',['pending','confirmed'])
-      .is('delivery_agent_id', null)
-      .order('created_at',{ascending:false}),
+    sb.rpc('coop_agent_orders',{p_token:tok,p_scope:'mine'}),
+    sb.rpc('coop_agent_orders',{p_token:tok,p_scope:'done'}),
+    sb.rpc('coop_agent_orders',{p_token:tok,p_scope:'available'}),
   ]);
   const mineRows = mine.data || [];
   const doneRows = done.data || [];
@@ -3350,15 +3375,22 @@ async function renderAgentPage(){
       b.disabled = true;
       const oldText = b.textContent;
       b.textContent = '⏳';
-      let patch = null;
-      const now = new Date().toISOString();
-      if(act==='accept')    patch = { delivery_agent_id: currentAgent.id, delivery_status: 'assigned', delivery_assigned_at: now };
-      else if(act==='pickup')    patch = { delivery_status: 'picked_up', delivery_picked_up_at: now, status: 'out_for_delivery' };
-      else if(act==='delivered') patch = { delivery_status: 'delivered', delivery_delivered_at: now, status: 'delivered' };
-      else if(act==='release')   patch = { delivery_agent_id: null, delivery_status: 'unassigned', delivery_assigned_at: null };
-      if(!patch){ b.disabled = false; b.textContent = oldText; return; }
-      const { error } = await sb.from('coop_orders').update(patch).eq('id', oid);
-      if(error){ b.disabled = false; b.textContent = oldText; toast('⚠️ '+error.message,'err'); return; }
+      // Every one of these used to be a direct UPDATE, which for a signed-out
+      // agent changed 0 rows and reported success. They now go through the
+      // token, which is both the permission and the proof.
+      const tok = coopToken('agent');
+      let call;
+      if(act==='accept')         call = sb.rpc('coop_order_claim',{p_token:tok,p_order:oid});
+      else if(act==='pickup')    call = sb.rpc('coop_order_set_status',{p_token:tok,p_kind:'agent',p_order:oid,p_status:'picked_up'});
+      else if(act==='delivered') call = sb.rpc('coop_order_set_status',{p_token:tok,p_kind:'agent',p_order:oid,p_status:'delivered'});
+      else if(act==='release')   call = sb.rpc('coop_order_set_status',{p_token:tok,p_kind:'agent',p_order:oid,p_status:'unassigned'});
+      if(!call){ b.disabled = false; b.textContent = oldText; return; }
+      const { data, error } = await call;
+      if(error || data === false){
+        b.disabled = false; b.textContent = oldText;
+        toast('⚠️ '+(error ? error.message : 'تعذّر تنفيذ العملية — سجّل الدخول من جديد'),'err');
+        return;
+      }
       toast('✅ تمّ التحديث','ok');
       renderAgentPage();
     };
@@ -3403,7 +3435,7 @@ async function doAgentLogin(){
     return;
   }
   try {
-    const { data, error } = await sb.rpc('coop_agent_verify_pin', { p_phone: phone, p_pin: pin });
+    const { data, error } = await sb.rpc('coop_agent_login', { p_phone: phone, p_pin: pin });
     if(error || !data || !data.length){
       err.textContent = 'بيانات الدخول غير صحيحة أو الحساب غير مفعّل';
       err.style.display = 'block';
@@ -3411,6 +3443,7 @@ async function doAgentLogin(){
     }
     const row = data[0];
     currentAgent = { id: row.agent_id, name: row.name, phone, area: row.area, vehicle: row.vehicle, status: row.status };
+    coopSetToken('agent', row.session_token);
     localStorage.setItem('coop_agent', JSON.stringify(currentAgent));
     updateAgentNav();
     closeDeliveryAgent();
@@ -3460,12 +3493,14 @@ async function openAssignAgentModal(orderId){
       const aid = b.dataset.aid, aname = b.dataset.aname;
       b.disabled = true;
       const now = new Date().toISOString();
-      const { error: e } = await sb.from('coop_orders').update({
-        delivery_agent_id: aid,
-        delivery_status: 'assigned',
-        delivery_assigned_at: now,
-      }).eq('id', orderId);
-      if(e){ b.disabled = false; toast('⚠️ '+e.message,'err'); return; }
+      // Scoped by the seller's token: their own order, to a real agent.
+      const { data: ok, error: e } = await sb.rpc('coop_order_assign_agent',
+        {p_token:coopToken('seller'), p_order:orderId, p_agent:aid});
+      if(e || ok === false){
+        b.disabled = false;
+        toast('⚠️ '+(e ? e.message : 'تعذّر تعيين العامل — سجّل الدخول من جديد'),'err');
+        return;
+      }
       toast('✅ تمّ تعيين '+aname,'ok');
       close();
       // Refresh the caller's view
@@ -3492,6 +3527,7 @@ function logoutAgent(){
   if(!confirm('تسجيل خروج عامل التوصيل؟')) return;
   currentAgent = null;
   localStorage.removeItem('coop_agent');
+  coopClearToken('agent');    // revoke it server-side, not just locally
   updateAgentNav();
   switchTab('home');
 }
@@ -3652,12 +3688,17 @@ async function doSellerLogin(){
     // The password is checked in the database. It used to be compared here,
     // against a row anyone could read — which meant every seller's hash was
     // downloadable, and the check itself could simply be skipped.
-    const res=await sb.rpc('coop_seller_login',{p_username:u,p_password:pw});
+    // Username or phone number, and the password the seller already has. The
+    // database checks it and hands back a session token; the token — not a
+    // localStorage flag — is what every order list is scoped by from here on.
+    // No email, nothing to confirm, no SMS.
+    const res=await sb.rpc('coop_seller_login_v2',{p_login:u,p_password:pw});
     const row=(res.data&&res.data[0])||null;
     if(res.error||!row){
       err.textContent=((window.__wadi_t&&window.__wadi_t('loginBadCreds'))||'بيانات الدخول غير صحيحة');err.style.display='block';return;
     }
     currentSeller=row;
+    coopSetToken('seller', row.session_token);
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
     toast('✅ '+((window.__wadi_t&&window.__wadi_t('sellerWelcomeBack'))||'مرحباً')+' '+(currentSeller.display_name||''),'ok');
     renderSellPage();
@@ -3811,7 +3852,10 @@ async function loadSellerStats(){
     if(myProdCntEl) myProdCntEl.textContent = products.length;
     
     // Load all orders for this seller
-    const oRes=await sb.from('coop_orders').select('*').eq('seller_id',currentSeller.id).order('created_at',{ascending:false});
+    // Scoped server-side by the session token — the page no longer asks for
+    // "orders where seller_id = me", which only worked because anyone could
+    // read every order.
+    const oRes=await sb.rpc('coop_seller_orders',{p_token:coopToken('seller')});
     const orders=oRes.data||[];
     
     // Statistics
@@ -3932,8 +3976,10 @@ function setStatNum(el, text){
 async function updateOrderStatus(orderId, newStatus){
   if(!confirm(`تأكيد تغيير حالة الطلب إلى "${newStatus}"؟`)) return;
   try{
-    const res = await sb.from('coop_orders').update({status: newStatus}).eq('id', orderId);
+    const res = await sb.rpc('coop_order_set_status',
+      {p_token:coopToken('seller'), p_kind:'seller', p_order:orderId, p_status:newStatus});
     if(res.error){toast('فشل: '+res.error.message,'err');return;}
+    if(res.data === false){toast('تعذّر تحديث الحالة — سجّل الدخول من جديد','err');return;}
     toast('✅ تمّ تحديث الحالة','ok');
     loadSellerStats();
   }catch(e){console.error(e);toast('حدث خطأ','err');}
@@ -4309,6 +4355,7 @@ function logoutSeller(){
   if(!confirm('تسجيل خروج البائع؟')) return;
   currentSeller=null;
   localStorage.removeItem('coop_seller');
+  coopClearToken('seller');   // revoke it server-side, not just locally
   renderSellPage();
 }
 
@@ -5660,10 +5707,8 @@ function shadeColor(c,p){
     if(!lang || (lang!=='ar' && lang!=='en' && lang!=='fr')) return;
     try{
       localStorage.setItem('wadi_lang', lang);
-      localStorage.setItem('lang', lang);
       localStorage.setItem('i18n_lang', lang);
       localStorage.setItem('i18nLang', lang);
-      localStorage.setItem('language', lang);
     }catch(e){}
     document.documentElement.lang = lang;
     document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
@@ -5708,10 +5753,8 @@ function shadeColor(c,p){
     /* Save to ALL possible localStorage keys so any i18n lib finds it */
     try{
       localStorage.setItem('wadi_lang', cur);
-      localStorage.setItem('lang', cur);
       localStorage.setItem('i18n_lang', cur);
       localStorage.setItem('i18nLang', cur);
-      localStorage.setItem('language', cur);
     }catch(e){}
     /* Apply NOW + at staggered intervals to override any late i18n.js auto-render */
     applyLangFully(cur);

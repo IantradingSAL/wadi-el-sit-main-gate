@@ -3093,21 +3093,19 @@ async function doLogin(){
 }
 async function doLogout(){await sb.auth.signOut({scope:'local'});location.reload();}
 async function bfChangePassword(){
-  const p1=prompt('كلمة المرور الجديدة (8 أحرف على الأقل):');
-  if(p1===null)return;
-  if(!p1||p1.length<8){alert('⚠️ كلمة المرور يجب أن تكون 8 أحرف على الأقل');return;}
-  const p2=prompt('أعد إدخال كلمة المرور الجديدة للتأكيد:');
-  if(p2===null)return;
-  if(p1!==p2){alert('⚠️ كلمتا المرور غير متطابقتين');return;}
-  const{error}=await sb.auth.updateUser({password:p1});
+  // Masked, and confirmed in the same dialog — prompt() used to put the new
+  // password on screen in clear text.
+  const pw=await wadiAskPassword({title:'🔑 تغيير كلمة المرور'});
+  if(pw===null)return;
+  const{error}=await sb.auth.updateUser({password:pw});
   if(error){
     if(/session|jwt|token|expired/i.test(error.message)){
-      alert('⚠️ انتهت صلاحية الجلسة. يرجى تسجيل الدخول من جديد ثم إعادة المحاولة.');
+      toast('⚠️ انتهت صلاحية الجلسة — سجّل الدخول ثم أعد المحاولة','err');
       await sb.auth.signOut({scope:'local'});
       location.reload();
       return;
     }
-    alert('⚠️ فشل تغيير كلمة المرور: '+error.message);return;
+    toast('⚠️ فشل تغيير كلمة المرور: '+error.message,'err');return;
   }
   toast('✓ تم تغيير كلمة المرور بنجاح');
 }

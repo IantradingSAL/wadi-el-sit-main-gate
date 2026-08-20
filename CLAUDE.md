@@ -36,8 +36,33 @@ agree about the same person.
   can never reissue a number.
 - The legacy plain numbers (the paper receipt book, income 472…1350) stay in
   the ledger as history and no longer drive the next number.
+- **The changeover, for the record:** the municipality's paper receipt book
+  closes at **1350**, and app numbering runs from **`Q-2026-001`** (income) and
+  **`S-2026-001`** (expenses). The two series are deliberately parallel, not
+  continuous — an auditor comparing the app to the book should expect exactly
+  that, and this line is the record of why.
+- **Vocabulary:** it is **إيصال**, never وصل — for the number, the date and the
+  document. #83 standardised the cash box; the home page followed later.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
+
+## Cooperative (`coop.html`)
+
+- **Sellers and delivery agents hold a session token**, not a `localStorage`
+  flag. Logging in (username *or* phone + password; agents: phone + PIN) calls
+  `coop_seller_login_v2` / `coop_agent_login`, which mint an opaque token.
+  Every order list and every status change goes through a security-definer
+  function scoped by that token — `coop_seller_orders`, `coop_agent_orders`,
+  `coop_order_set_status`, `coop_order_claim`, `coop_order_assign_agent`.
+- **No email and no OTP.** The municipality does not want sellers validating an
+  email address, and phone OTP means an SMS provider and a bill. The token
+  gives real identity without either.
+- **`coop_orders` is not readable by `anon`.** Buyers read their own orders
+  through `coop_buyer_orders(phone)`; placing an order goes through
+  `coop_place_order()` because `.insert().select()` needs to read the new row
+  back, and there is deliberately no anon SELECT policy to allow it.
+- The available-delivery queue blanks the buyer's name, phone and address until
+  an agent actually claims the order.
 
 ## House rules
 
