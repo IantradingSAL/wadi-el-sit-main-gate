@@ -322,6 +322,40 @@ The rest of the sweep, corrected:
 
 ---
 
+### P10 · Both document buckets were open to anyone 🔴 — fixed
+
+Probed as `anon`, with no session at all:
+
+| bucket | what it holds | listable by anyone |
+|---|---|---|
+| `case-documents` | what residents attach to a request | **74 documents** |
+| `sandouk-docs` | receipts, invoices, signed vouchers | **59 attachments** |
+
+`case-documents` carried a policy named **«Allow all storage» — cmd ALL, role
+public**: an anonymous visitor could read, overwrite and **delete** every
+document a resident had ever attached. Paths are `<case_id>/<timestamp>_n.jpg`
+and case ids are sequential, so the set could be walked — probing `199/`
+returned its document.
+
+`sandouk-docs` was a public bucket with a SELECT policy for `anon`.
+
+Closing the anonymous read on the cash box was not enough on its own:
+`sandouk_docs_auth_all` granted ALL to *any* authenticated account, so the
+water-only account could still open all 59 — the same "logged in, therefore
+allowed" pattern this platform has been shedding all week.
+
+**Fixed in 18.** Reading and removing documents now asks the same permissions
+the pages do (`cases_view` / `cases_edit` / `cases_delete`, `sandouk_view` /
+`sandouk_add` / `sandouk_edit`). Uploading stays open for residents filing a
+request. Verified afterwards: not signed in → 0 of either; water-only → 0;
+clerk → 59 and 0; mayor → 59 and 74. Product photos stay public, which is what
+a shop window is for.
+
+The pages sign a link at the moment it is clicked, for the person clicking it,
+expiring in five minutes.
+
+---
+
 ## 4. UI and UX
 
 ### U1 · 101 native dialogs, two of them collecting passwords 🔴
