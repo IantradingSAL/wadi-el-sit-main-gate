@@ -190,6 +190,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <button class="bf-tab" id="bf-tab-expense" onclick="bfShowTab('expense')">🔴 سند صرف</button>
       <button class="bf-tab" id="bf-tab-reports" onclick="bfShowTab('reports')">📊 التقارير</button>
       <button class="bf-tab" id="bf-tab-audit" onclick="bfShowTab('audit')">📜 سجل العمليات</button>
+      <button class="bf-tab" id="bf-tab-settings" style="display:none" onclick="bfShowTab('settings')">⚙️ الإعدادات</button>
     </div>
 
     <!-- LEDGER -->
@@ -202,7 +203,6 @@ select.bf-colfilter{padding-inline-end:22px}
         <button class="bf-vbtn" onclick="bfViewRename()">✏️ إعادة تسمية</button>
         <button class="bf-vbtn danger" onclick="bfViewDelete()">🗑️ حذف</button>
         <button class="bf-vbtn" onclick="bfColsOpen()">⚙️ الأعمدة</button>
-        <button class="bf-vbtn" id="bf-series-btn" style="display:none" onclick="bfSeriesOpen()" title="بادئة السند ورقم البداية لكل سنة">🔢 ترقيم السندات</button>
         <button class="bf-vbtn" onclick="bfSortBy('receipt_no')" title="ترتيب الجدول حسب تسلسل رقم السند">🔢 ترتيب السند</button>
         <button class="bf-vbtn" onclick="bfSortClear()" title="العودة إلى الترتيب الطبيعي للدفتر">⇅ إلغاء الترتيب</button>
         <button class="bf-vbtn" onclick="bfViewReset()">↺ إعادة التعيين</button>
@@ -400,6 +400,26 @@ select.bf-colfilter{padding-inline-end:22px}
         </table></div>
       </div>
     </div>
+
+    <!-- SETTINGS -->
+    <div id="bf-pane-settings" style="display:none">
+      <div class="bf-card">
+        <div class="bf-sumtitle">⚙️ إعدادات الصندوق</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">إعدادات تُطبَّق على كل الأجهزة وكل المستخدمين. متاحة للمشرف العام، أو لمن يمنحه المشرف العام الصلاحية من شاشة المستخدمين.</div>
+        <div id="bf-set-series-row" style="display:none;border:1.5px solid #d5dfec;border-radius:10px;padding:12px 14px;background:#f8fbfe;gap:12px;align-items:center;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px">
+            <div style="font-weight:800;color:#0f4d82;margin-bottom:2px">🔢 ترقيم السندات</div>
+            <div style="font-size:12.5px;color:#6b7280">بادئة رقم السند، ورقم البداية لكل سنة — لبدء سلسلة جديدة في سنة جديدة.</div>
+            <div style="font-size:12.5px;color:#8a95a3;margin-top:4px">
+              الرقم التالي — قبض: <span class="mono" style="direction:ltr;display:inline-block;font-weight:800;color:#1f7a45" id="bf-set-next-income">—</span>
+              · صرف: <span class="mono" style="direction:ltr;display:inline-block;font-weight:800;color:#a83232" id="bf-set-next-expense">—</span>
+            </div>
+          </div>
+          <button class="bf-vbtn primary" onclick="bfSeriesOpen()">⚙️ فتح الإعداد</button>
+        </div>
+        <div id="bf-set-empty" style="font-size:13px;color:#8a95a3;display:none">لا تملك صلاحية أي من إعدادات الصندوق.</div>
+      </div>
+    </div>
   </div>
 
   <datalist id="bf-dl-persons"></datalist>
@@ -580,6 +600,10 @@ function bfCanDel(){return !!bfUser && WadiPerms.can('sandouk_delete');}
 function bfCanEdit(){return !!bfUser && WadiPerms.can('sandouk_edit');}
 function bfCanAdd(){return !!bfUser && WadiPerms.can('sandouk_add');}
 function bfCanSign(){return !!bfUser && WadiPerms.can('sandouk_sign');}
+// Numbering decides what every future sanad is called, so it sits with the
+// super admin — or with whoever the super admin grants ترقيم السندات to from
+// the user screen. The `settings` policy enforces the same key.
+function bfCanSeries(){return !!bfUser && WadiPerms.can('sandouk_series');}
 function bfSigs(e){
   const s=(e.signatures&&typeof e.signatures==='object')?e.signatures:{};
   if(e.signature&&!(s.person&&s.person.img))return Object.assign({person:{img:e.signature,at:e.signed_at}},s);
@@ -614,10 +638,15 @@ function bfStart(user){
     const b=document.getElementById('bf-tab-'+k);
     if(b) b.style.display = bfCanAdd() ? '' : 'none';
   });
-  // Numbering is an administrative setting, not a cashier's: the database
-  // grants `settings` writes to mayor/admin only, and the button follows suit.
-  const sb2=document.getElementById('bf-series-btn');
-  if(sb2) sb2.style.display = WadiPerms.can('settings_edit') ? '' : 'none';
+  // The settings tab appears only for an account that holds at least one of
+  // the cash box's settings — today that is ترقيم السندات alone.
+  const st=document.getElementById('bf-tab-settings');
+  if(st) st.style.display = bfCanSeries() ? '' : 'none';
+  if(!bfCanSeries()){
+    // permission revoked between sessions — never leave the pane on screen
+    const sp=document.getElementById('bf-pane-settings');
+    if(sp && sp.style.display!=='none'){sp.style.display='none';bfShowTab('ledger');}
+  }
   if(!bfLoaded){bfLoaded=true;bfInitForms();bfLoad();}
   else{bfApplyLocks();}
 }
@@ -1017,8 +1046,13 @@ function bfShowTab(t){
     toast('🚫 هذا الحساب يطّلع على الصندوق ولا يُدخل سندات','err');
     return;
   }
+  if(t==='settings'&&!bfCanSeries()){
+    toast('🔒 الإعدادات متاحة للمشرف العام','err');
+    return;
+  }
   if(t==='audit')bfLoadAudit();
-  ['ledger','income','expense','reports','audit'].forEach(x=>{
+  if(t==='settings')bfSettingsRender();
+  ['ledger','income','expense','reports','audit','settings'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
@@ -1472,8 +1506,24 @@ function bfNextNo(type,dateStr){return bfNextNoFrom(type,dateStr,null);}
 // The draft keeps years as a list, not a map, so the year itself stays
 // editable while it is being typed. It becomes a map again on save.
 const BF_SERIES_TYPES=[['income','🟢 سند قبض — مقبوضات'],['expense','🔴 سند صرف — مصروفات']];
+// Every card on the settings tab shows its own state and appears only for an
+// account that holds its permission. New settings are added here — and to
+// WP_GROUPS on the user screen, so they can be granted per person.
+function bfSettingsRender(){
+  const row=document.getElementById('bf-set-series-row');
+  const empty=document.getElementById('bf-set-empty');
+  const on=bfCanSeries();
+  if(row)row.style.display=on?'flex':'none';
+  if(empty)empty.style.display=on?'none':'';
+  if(on){
+    const i=document.getElementById('bf-set-next-income');
+    const e=document.getElementById('bf-set-next-expense');
+    if(i)i.textContent=bfNextNo('income',bfToday());
+    if(e)e.textContent=bfNextNo('expense',bfToday());
+  }
+}
 function bfSeriesOpen(){
-  if(!WadiPerms.can('settings_edit')){toast('🔒 لا تملك صلاحية تعديل الإعدادات','err');return;}
+  if(!bfCanSeries()){toast('🔒 ترقيم السندات متاح للمشرف العام','err');return;}
   const cur=bfSeries||{};
   bfSeriesDraft={};
   BF_SERIES_TYPES.forEach(function(t){
@@ -1598,6 +1648,7 @@ async function bfSeriesSave(){
   bfSeries=draft;
   bfSeriesClose();
   bfRefreshAutoReceiptNos();
+  bfSettingsRender();
   bfAudit('series_edit','ترقيم السندات — قبض: '+bfNextNo('income',bfToday())+' · صرف: '+bfNextNo('expense',bfToday()));
   toast('✓ تم حفظ ترقيم السندات');
 }
