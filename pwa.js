@@ -488,11 +488,24 @@ function _t(key, ar){
       if (toUserPhone) payload.to_user_phone = (toUserPhone||'').toString().replace(/[^\d+]/g,'');
       if (toRole) payload.to_role = toRole;
       if (topics) payload.topics = topics;
+      // Send the signed-in staff member's own token when there is one. The
+      // function decides what may be sent from who is asking: a broadcast to
+      // the village needs push_send; telling the municipality something — what
+      // the citizen page does when a request is filed — does not, and that
+      // path has no session to offer.
+      let bearer = SUPABASE_KEY;
+      try {
+        if (window.sb && window.sb.auth && window.sb.auth.getSession) {
+          const { data } = await window.sb.auth.getSession();
+          if (data && data.session && data.session.access_token) bearer = data.session.access_token;
+        }
+      } catch (e) { /* no session — the anon key stands */ }
+
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Authorization': `Bearer ${bearer}`,
           'apikey': SUPABASE_KEY
         },
         body: JSON.stringify(payload)
