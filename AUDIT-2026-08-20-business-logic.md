@@ -218,6 +218,32 @@ into a screen that looks like it worked.
 surface the error): silence is only for work whose failure genuinely does not
 matter, and every silent catch carries a comment saying why.
 
+### P4b · The user screen and the server disagreed about who may manage users 🔴 — fixed
+
+The `admin-user` edge function authorised on a row in `employees` with role
+`manager` — a fourth identity system, and one nothing else consults.
+
+| account | role | `users_create` | manager row | before | after |
+|---|---|---|---|---|---|
+| imadaehn | super_admin | true | yes | allowed | allowed |
+| **mmerhej** | **admin** | **true** | **no** | **refused: «Managers only»** | **allowed** |
+| darghamf | mayor | false | no | refused | refused |
+| eliac | sandouk | false | no | refused | refused |
+| finance | finance | false | no | refused | refused |
+| m.merhej | water_only | false | no | refused | refused |
+
+So the dashboard showed the admin account user management, and the server
+refused every call. One account in the municipality — the owner's — had a
+manager row, which meant only the owner could ever create or delete a user,
+whatever the user screen said.
+
+**Fixed.** The function now asks `user_has_perm(caller, 'users_create')` — the
+same resolution as `has_perm()`, for an explicit user id. Exactly one account
+gains what the user screen already promised it; nobody else gains anything.
+Recorded as `17_user_has_perm.sql`, and the function's source is now in the
+repository at `supabase/functions/admin-user/index.ts` — it had never been
+committed anywhere.
+
 ### P5 · Three identity systems, down from five 🟡
 
 Supabase Auth + `user_roles` now governs the staff pages (10 files) — a real
