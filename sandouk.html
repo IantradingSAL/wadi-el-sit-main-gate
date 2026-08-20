@@ -522,7 +522,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <label class="fl">البيان *</label><input type="text" class="fi" id="bf-ed-desc" list="bf-dl-desc">
     <div class="bf-g2">
       <div><label class="fl">🧾 رقم السند <span id="bf-ed-recnote" style="color:#8a95a3;font-weight:700">(مقفل)</span></label><input type="text" class="fi" id="bf-ed-receipt" style="direction:ltr"></div>
-      <div><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
+      <div id="bf-ed-karar-w"><label class="fl">رقم القرار</label><input type="text" class="fi" id="bf-ed-karar" style="direction:ltr"></div>
     </div>
     <div class="bf-g2">
       <div><label class="fl">📄 رقم الإيصال</label><input type="text" class="fi" id="bf-ed-wassel-no" placeholder="اتركه فارغاً إن لم يُصدَر بعد" style="direction:ltr"></div>
@@ -533,7 +533,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <div><label class="fl">المسلّم/المستلم</label><input type="text" class="fi" id="bf-ed-handled"></div>
     </div>
     <div class="bf-g2">
-      <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
+      <div id="bf-ed-property-w"><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
     </div>
     <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-ed-notes">
     <div class="bf-err" id="bf-ed-err" style="margin-top:6px"></div>
@@ -585,6 +585,23 @@ const BF_CATS={
   income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
   expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
 };
+// The fixed lists above are a starting point, not the whole truth: categories
+// typed into "أخرى" become real categories on their entries (تكليف العمال
+// السوريين is on 14 vouchers). A form that only knows the fixed list shows
+// those entries as أخرى, which reads as though the voucher were wrong. Every
+// category already used for that entry type is offered too.
+function bfCatList(type,extra){
+  const base=(type==='expense'?BF_CATS.expense:BF_CATS.income);
+  const used=(typeof bfEntries!=='undefined'&&Array.isArray(bfEntries))
+    ? bfEntries.filter(e=>(e.entry_type||'income')===type).map(e=>String(e.category||'').trim())
+    : [];
+  const out=[];
+  base.concat(used).concat(extra?[String(extra).trim()]:[]).forEach(c=>{
+    if(c && c!=='أخرى' && out.indexOf(c)<0) out.push(c);
+  });
+  out.push('أخرى');   // always last, and only once
+  return out;
+}
 function bfFmt(n){return Number(n).toLocaleString('en-US',{maximumFractionDigits:2});}
 function bfMoney(a,c){return (c==='LBP') ? bfFmt(a)+' ل.ل.' : '$'+bfFmt(a);}
 function bfCurWord(c){return c==='LBP' ? 'ليرة لبنانية' : 'دولار أميركي';}
@@ -651,11 +668,20 @@ function bfStart(user){
 function bfInitForms(){
   document.getElementById('bf-i-date').value=bfToday();
   document.getElementById('bf-e-date').value=bfToday();
-  const fill=(id,list)=>document.getElementById(id).innerHTML=list.map(c=>'<option>'+c+'</option>').join('');
-  fill('bf-i-cat',BF_CATS.income); fill('bf-e-cat',BF_CATS.expense);
+  bfFillFormCats();
   bfWirePickers();
   bfUpdateTotal('i'); bfUpdateTotal('e');
   bfApplyLocks();
+}
+function bfFillFormCats(){
+  const fill=(id,list)=>{
+    const el=document.getElementById(id); if(!el)return;
+    const cur=el.value;
+    el.innerHTML=list.map(c=>'<option>'+c+'</option>').join('');
+    if(cur&&Array.from(el.options).some(o=>o.value===cur))el.value=cur;
+  };
+  fill('bf-i-cat',bfCatList('income'));
+  fill('bf-e-cat',bfCatList('expense'));
 }
 function bfApplyLocks(){
   const superOn=bfIsSuper();
@@ -803,7 +829,7 @@ async function bfLoad(){
   bfRefresh();
   bfViewsInit();
 }
-function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfRenderLedger();bfRenderReports();bfRefreshAutoReceiptNos();}
+function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfFillFormCats();bfRenderLedger();bfRenderReports();bfRefreshAutoReceiptNos();}
 function bfKPIs(rowsArg){
   const rows=rowsArg||(typeof bfFiltered==='function'?bfFiltered():bfEntries);
   let iU=0,eU=0,iL=0,eL=0;
@@ -2575,27 +2601,40 @@ function bfDocBase(e){
 }
 function bfDocName(e,ext,i,total){return bfDocBase(e)+((total>1)?'-'+(i+1):'')+'.'+ext;}
 // رابط التنزيل يحمل الاسم النهائي حتى يُحفَظ الملف برقم الإيصال لا باسمه الأصلي.
-// The bucket is no longer public — cash-box attachments were readable by
-// anyone who had, or guessed, a URL. A link is signed at the moment it is
-// clicked, for the person clicking it, and expires. The url stored on older
-// documents is left alone as a record; it is no longer what opens the file.
-function bfAttr(v){return String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
-async function bfOpenDoc(ev, path, name){
-  if(ev){ ev.preventDefault(); }
-  if(!path){ toast('المرفق بلا مسار محفوظ','err'); return; }
-  try{
-    const{data,error}=await sb.storage.from('sandouk-docs')
-      .createSignedUrl(path, 300, name?{download:name}:undefined);
-    if(error||!data||!data.signedUrl){
-      toast('تعذّر فتح المرفق'+(error?': '+error.message:''),'err'); return;
-    }
-    window.open(data.signedUrl,'_blank','noopener');
-  }catch(e){ toast('تعذّر فتح المرفق','err'); }
-}
+//
+// sandouk-docs is a private bucket, and getPublicUrl() only string-builds a
+// /object/public/… address without ever asking the server: that link answers
+// 404 "Bucket not found" for every private bucket, which is why attachments
+// would not open. The stored url is kept for older readers, but nothing opens
+// it — bfOpenDoc mints a short-lived signed link at the moment of the click,
+// so the file stays reachable only to an account the bucket's policy admits
+// (has_perm('sandouk_view')).
 function bfDocUrl(path,name){
-  try{const{data}=sb.storage.from('sandouk-docs').getPublicUrl(path,{download:name});if(data&&data.publicUrl)return data.publicUrl;}catch(_e){}
-  const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
-  return pd.publicUrl;
+  const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path,{download:name});
+  return (pd&&pd.publicUrl)||'';
+}
+async function bfSignedDocUrl(path,name){
+  const{data,error}=await sb.storage.from('sandouk-docs')
+    .createSignedUrl(path,3600,name?{download:name}:undefined);
+  if(error)throw error;
+  return data.signedUrl;
+}
+async function bfOpenDoc(path,name,ev){
+  if(ev&&ev.preventDefault)ev.preventDefault();
+  if(!path){toast('⚠️ هذا المرفق قديم ولا يحمل مساراً — أعد رفعه','err');return;}
+  try{
+    const url=await bfSignedDocUrl(path,name);
+    window.open(url,'_blank','noopener');
+  }catch(e){
+    toast('⚠️ تعذّر فتح المرفق: '+(e.message||e),'err');
+  }
+}
+function bfDocLink(d,style){
+  const path=String((d&&d.path)||'').replace(/'/g,"\\'");
+  const name=String((d&&d.name)||'مرفق').replace(/'/g,"\\'");
+  const label=String((d&&d.name)||'مرفق').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return '<a href="#" onclick="bfOpenDoc(\''+path+'\',\''+name+'\',event)" '
+    +'style="'+(style||'')+'">📄 <span style="word-break:break-all">'+label+'</span></a>';
 }
 // يُعيد تسمية كل المرفقات المُسمّاة آلياً بعد تغيّر رقم الإيصال، فلا يضطرّ
 // المستخدم لتصحيحها واحداً واحداً.
@@ -2654,7 +2693,7 @@ function bfDocsById(id){
   const e=bfEntries.find(x=>String(x.id)===String(id));
   if(!e||!e.documents||!e.documents.length)return;
   document.getElementById('bf-docs-list').innerHTML=e.documents.map(d=>
-    '<a class="bf-share-btn" style="text-decoration:none;cursor:pointer" href="#" onclick="bfOpenDoc(event,\''+bfAttr(d.path)+'\',\''+bfAttr(d.name)+'\')">📄 <span style="word-break:break-all">'+d.name+'</span></a>').join('');
+    bfDocLink(d,'text-decoration:none').replace('<a ','<a class="bf-share-btn" ')).join('');
   document.getElementById('bf-docs-ov').style.display='flex';
 }
 function bfCloseDocs(){document.getElementById('bf-docs-ov').style.display='none';}
@@ -2718,7 +2757,7 @@ function bfOpenCase(id){
     +dr('التواقيع',(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k)+' ✓');return L.length?L.join(' · '):'';})())
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
-      +e.documents.map(d=>'<a href="#" onclick="bfOpenDoc(event,\''+bfAttr(d.path)+'\',\''+bfAttr(d.name)+'\')" style="display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all;cursor:pointer">📄 '+d.name+'</a>').join('')+'</div>'):'');
+      +e.documents.map(d=>bfDocLink(d,'display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all')).join('')+'</div>'):'');
   document.getElementById('bf-case-delbtn').style.display = bfCanDel() ? '' : 'none';
   document.getElementById('bf-case-editrow').style.display = bfCanEdit() ? 'flex' : 'none';
   document.getElementById('bf-case-voidrow').innerHTML = e.voided
@@ -2799,11 +2838,21 @@ function bfCaseDel(){const id=bfCaseId;bfCloseCase();if(id)bfDel(id);}
 
 // ── ✏️ EDIT (admin only) ──
 let bfEditId=null;
-function bfEditRefreshCats(){
+// The entry forms ask a سند صرف for رقم القرار and a سند قبض for رقم العقار.
+// The edit window used to show both to every voucher, so a سند قبض offered a
+// decision number it can never have.
+function bfEditTypeFields(){
+  const type=document.getElementById('bf-ed-type').value;
+  const show=(id,on)=>{const el=document.getElementById(id); if(el)el.style.display=on?'':'none';};
+  show('bf-ed-karar-w',    type==='expense');
+  show('bf-ed-property-w', type!=='expense');
+}
+function bfEditRefreshCats(keep){
+  bfEditTypeFields();
   const type=document.getElementById('bf-ed-type').value;
   const sel=document.getElementById('bf-ed-cat');
-  const cur=sel.value;
-  const list=(type==='expense'?BF_CATS.expense:BF_CATS.income).concat(['أخرى']);
+  const cur=keep||sel.value;   // the voucher's own category survives a type change
+  const list=bfCatList(type,cur);
   sel.innerHTML='<option value="">—</option>'+list.map(c=>'<option value="'+c+'">'+c+'</option>').join('');
   if(cur&&Array.from(sel.options).some(o=>o.value===cur))sel.value=cur;
   sel.onchange=function(){document.getElementById('bf-ed-cat-other-w').style.display=(sel.value==='أخرى')?'':'none';};
@@ -2823,10 +2872,12 @@ function bfOpenEdit(id){
   document.getElementById('bf-ed-stamp').value=Number(e.stamp_value)||'';
   document.getElementById('bf-ed-cur').value=e.currency||'USD';
   document.getElementById('bf-ed-pay').value=e.payment_method||'cash';
-  bfEditRefreshCats();
+  // pass the voucher's own category so it is in the list and can be selected —
+  // it no longer falls back to أخرى just because it is not one of the presets
+  bfEditRefreshCats(e.category||'');
   const sel=document.getElementById('bf-ed-cat');
   const known=Array.from(sel.options).some(o=>o.value===e.category);
-  if(known){sel.value=e.category||'';document.getElementById('bf-ed-cat-other-w').style.display='none';document.getElementById('bf-ed-cat-other').value='';}
+  if(known){sel.value=e.category||'';document.getElementById('bf-ed-cat-other-w').style.display=(e.category==='أخرى')?'':'none';document.getElementById('bf-ed-cat-other').value='';}
   else if(e.category){sel.value='أخرى';document.getElementById('bf-ed-cat-other-w').style.display='';document.getElementById('bf-ed-cat-other').value=e.category;}
   document.getElementById('bf-ed-desc').value=e.description||'';
   document.getElementById('bf-ed-receipt').value=e.receipt_no||'';
@@ -2877,8 +2928,10 @@ async function bfEditSave__run(){
     currency:document.getElementById('bf-ed-cur').value||'USD',
     payment_method:document.getElementById('bf-ed-pay').value||'cash',
     category:cat||null,
-    karar_number:document.getElementById('bf-ed-karar').value.trim()||null,
-    property_number:document.getElementById('bf-ed-property').value.trim()||null,
+    karar_number:(document.getElementById('bf-ed-type').value==='expense'
+      ? (document.getElementById('bf-ed-karar').value.trim()||null) : null),
+    property_number:(document.getElementById('bf-ed-type').value!=='expense'
+      ? (document.getElementById('bf-ed-property').value.trim()||null) : null),
     wassel_number:document.getElementById('bf-ed-wassel-no').value.trim()||null,
     wassel_date:document.getElementById('bf-ed-wassel-date').value||null,
     person:document.getElementById('bf-ed-person').value.trim()||null,
