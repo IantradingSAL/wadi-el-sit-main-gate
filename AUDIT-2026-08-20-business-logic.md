@@ -193,23 +193,37 @@ admin-push, inbox) is Arabic-only.
 Arabic-only for staff is a legitimate choice — say so explicitly, and fold coop's
 dictionary into `i18n.js` so the public side has one home.
 
-### P9 · The published web root still carries files that are not the portal 🟠
+### P9 · The web root published the entire tax archive 🔴 — fixed the same day
 
-| file | size | what it is |
-|---|---|---|
-| `mrs-import.html` | **3.5 MB** | a one-off import tool with the data embedded |
-| `wadi-el-sit-demo.html` | 124 KB | a demo |
-| `bus-trip` | 37 KB | extensionless duplicate of `bus-trip.html` |
-| `wadi-dashboard.html` | 306 B | redirect stub |
-| `water-finance.html` | 667 B | stub |
+What began as a tidiness item turned out to be the most serious finding of the
+audit, so it is recorded at its true weight.
 
-All are publicly reachable on the municipality's domain. This is the third time
-stray files have been found in the root — the rule is already written in
-`CLAUDE.md`.
+`mrs-import.html` was 3.5 MB, of which **3.28 MB was a single `const DATA={…}`
+literal**: 28 tables, **30,258 rows** of the municipal tax archive — taxpayer
+names, addresses, telephone numbers, emails and tax identifiers, 3,595
+assessments, 5,215 payment transactions, 1,615 receipts.
 
-**Recommendation.** Move `mrs-import.html` and the demo out of the repository (they
-are tools, not the portal), delete the extensionless duplicate, and keep the two
-redirect stubs only if something still links to them.
+It was a **static file on the municipality's public domain**, readable with no
+login, no session and no row-level security. Migration `09` locked the `mrs_*`
+tables behind `mrs_view` — a policy cannot protect a file. Two doors, one
+locked.
+
+Every embedded table matched the live database row for row, so the one-off
+import it was written for had long since completed and nothing operational
+depended on it.
+
+**Fixed the same day:** the file is deleted and `mrs.html`'s empty-state hint no
+longer points at it. **Not fixed by deletion:** this repository is *public*, so
+the file remains in git history until the history is rewritten or the
+repository is made private. That is the owner's decision and it is still open.
+
+The rest of the sweep, corrected:
+
+| file | verdict |
+|---|---|
+| `bus-trip` (37 KB, no extension) | out-of-date copy of `bus-trip.html`, nothing linked to it — **deleted** |
+| `wadi-el-sit-demo.html` | **not stray** — it is the جولة إرشادية, linked from the home page and part of the cached app shell. The audit was wrong to list it; kept |
+| `wadi-dashboard.html`, `water-finance.html` | sub-kilobyte redirect stubs that catch old bookmarks; they cost nothing — kept |
 
 ---
 
@@ -288,7 +302,7 @@ The cash box is the standard the other modules should be measured against.
 | 3 | **Assignee + ageing badge + oldest-first** on citizen requests | 1–2 days | 36 residents waiting, 6 of them over a month |
 | 4 | **Update prompt** in the service worker instead of silent takeover | hours | stops the app changing under a cashier mid-entry |
 | 5 | **Session-expiry guard** in `auth-common.js` | hours | one place, all 25 pages |
-| 6 | **Clean the web root** (P9) | hours | 3.5 MB tool published on the municipal domain |
+| 6 | ~~**Clean the web root** (P9)~~ — **done**, and it was a data exposure, not tidiness | done | the tax archive was public; the git-history question remains open |
 | 7 | **Citizen timeline** instead of a single status word | days | makes tracking worth using |
 | 8 | **Decide the irrigation register**: populate or unpublish | decision | a public page showing one row |
 | 9 | **Language key + coop dictionary consolidation** | days | one preference, one translation home |
