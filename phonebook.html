@@ -4018,10 +4018,8 @@ document.addEventListener('wadi:langchange', function(){
     if(!lang || (lang!=='ar' && lang!=='en' && lang!=='fr')) return;
     try{
       localStorage.setItem('wadi_lang', lang);
-      localStorage.setItem('lang', lang);
       localStorage.setItem('i18n_lang', lang);
       localStorage.setItem('i18nLang', lang);
-      localStorage.setItem('language', lang);
     }catch(e){}
     document.documentElement.lang = lang;
     document.documentElement.dir = (lang==='ar') ? 'rtl' : 'ltr';
@@ -4066,10 +4064,8 @@ document.addEventListener('wadi:langchange', function(){
     /* Save to ALL possible localStorage keys so any i18n lib finds it */
     try{
       localStorage.setItem('wadi_lang', cur);
-      localStorage.setItem('lang', cur);
       localStorage.setItem('i18n_lang', cur);
       localStorage.setItem('i18nLang', cur);
-      localStorage.setItem('language', cur);
     }catch(e){}
     /* Apply NOW + at staggered intervals to override any late i18n.js auto-render */
     applyLangFully(cur);

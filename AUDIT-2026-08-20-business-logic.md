@@ -32,39 +32,44 @@ polishing the cooperative buys nothing today. Effort spent making citizen reques
 
 ## 2. Business logic
 
-### B1 · Citizen requests are received and then nothing happens 🔴
+### B1 · Requests are received and then nothing happens 🔴 — acted on
 
 36 of 39 requests sit at `new`. The oldest is **96 days old**; the average open
 request is **25 days old**; 6 are past 30 days.
 
-The status vocabulary is not the problem — seven states exist
-(`new`, `in-progress`, `pending-approval`, `approved`, `rejected`, `resolved`,
-`closed`) and `citizen.html` and `dashboard.html` agree on all of them. What is
-missing is everything that makes a queue move:
+**Correction to the first draft of this audit.** It claimed there was no owner
+field and no assignment. That was wrong: `cases.assigned` exists, the detail
+view has a dropdown that writes it, the change is recorded on the request's
+timeline, the list shows it, and there is even a filter by assignee. The
+tooling was there all along.
 
-- **no owner** — no assignment field, so no request is anybody's job;
-- **no age** — nothing on screen says a request has been waiting 96 days;
-- **no escalation** — nothing changes when it has.
+What the live data shows instead is sharper: **0 of 39 requests have ever been
+assigned**, only 2 have any timeline entry beyond their creation, and just 4
+were touched at all after being filed. The queue was not failing for want of a
+field — it was failing because nothing on screen ever said a request was old,
+and the view opened on *everything, newest first*, which put the 96-day-old
+request on the last page.
 
-**Recommendation.** Three small additions, in this order:
-1. an **assignee** on each request, set from the dashboard;
-2. an **ageing badge** on the request card — green under 7 days, amber under 30,
-   red beyond — and a default dashboard filter of *"open, oldest first"*;
-3. a weekly digest to the mayor: opened, closed, still waiting.
+**Done.** The queue now opens on **🔔 المفتوحة — oldest first**; every open
+request carries an ageing badge (green under 7 days, amber under 30, red
+beyond); and a request with no owner reads **«بلا مسؤول»** in amber instead of
+a quiet dash. The 96-day request is now the first thing a clerk sees.
 
-Nothing here needs new infrastructure — push notification on status change is
-already wired (`dashboard.html` → `PWA.sendPush`).
+**Still recommended, not built:** a weekly digest to the mayor — opened, closed,
+still waiting. It needs a scheduled sender, which is a different kind of change
+from a page edit.
 
-### B2 · The tracking screen tells the citizen nothing 🔴
+### B2 · The tracking screen has nothing to show 🟠 — corrected
 
-Yesterday's work made request tracking safe (phone verification moved into the
-database). But because of B1, a citizen who tracks a request almost always sees
-`new` — the same answer on day 1 and day 96. A tracking feature that never changes
-its answer trains people to stop using it, and to phone the municipality instead,
-which is the cost the portal exists to remove.
+**Correction.** The first draft said the tracking screen shows the citizen a
+single word. It does not: it already renders the status, a progress bar keyed
+to the stage, and the request's timeline.
 
-**Recommendation.** Fix B1, and show the citizen a dated timeline
-(received → under review → decision) rather than a single word.
+The screen is fine. What is missing is anything to put in it — only 2 of 39
+requests have a timeline entry beyond creation. A citizen tracking a request
+sees an accurate picture of a request nobody has touched.
+
+Fixing B1 is what fills this screen. No change was needed here.
 
 ### B3 · The irrigation register holds one row 🟠
 
@@ -92,9 +97,9 @@ Today's change (#85) made the app continue its own `Q-2026-…` series, as asked
 paper book's plain numbers (472…1350) remain in the ledger as history. That is
 coherent, but an auditor comparing app to book will see two sequences.
 
-**Recommendation.** Record the changeover once — a dated note in the ledger, or a
-line in the annual report — stating that app numbering starts at `Q-2026-001` and
-the book closes at 1350. One sentence now prevents a long conversation later.
+**Done.** Recorded in `CLAUDE.md`: the book closes at 1350, app numbering runs
+from `Q-2026-001` and `S-2026-001`, and the two series are deliberately
+parallel. An auditor comparing the app to the book should expect exactly that.
 
 ### B6 · Two receipts whose number is ambiguous 🟡
 
@@ -181,8 +186,11 @@ page can be opened and understood on its own.
 Pages write `lang`, `language` *and* `wadi_lang` — 32 writes across the repository.
 A resident switching language on one page can find it unchanged on another.
 
-**Recommendation.** `wadi_lang` wins; the other two become read-only fallbacks for
-one release, then go.
+**Done.** `wadi_lang` is now the only key written — 20 redundant writes removed
+across five pages. Measured first: `language` was written ten times and **read
+nowhere**; `lang` was written ten times and read once, by a line that already
+tried `wadi_lang` first. That one reader keeps `lang` as a fallback for anyone
+whose browser still holds the old key.
 
 ### P8 · Translation is split three ways 🟡
 
@@ -251,22 +259,24 @@ field — that is a small, self-contained job worth doing on its own. The remain
 dialogs migrate to the toast and modal patterns the pages already have; the cash
 box is the reference.
 
-### U2 · Loading and empty states are uneven 🟡
+### U2 · Loading and empty states — withdrawn
 
-`dashboard.html` (27 indicators), `coop.html` (23) and `citizen.html` (21) are well
-covered; `phonebook.html` has 3, `water.html` 4, and **`news.html` has none** — on a
-slow village connection it shows an empty page with no explanation.
+**Correction.** The first draft reported that `news.html` had no loading state
+at all. It has one: a spinner with a refreshing label, and an error block
+beside it. The original sweep counted only «جاري التحميل» and ⏳ and missed
+`class="spin"`.
 
-Empty states matter more than usual here because three modules genuinely have
-almost no data (B3, B4): "لا توجد بيانات بعد" is a better answer than blankness.
+Re-measured properly, **every page has both a loading and an empty or error
+state**. `inbox.html` is the thinnest of them, and even that is serviceable.
+This finding is withdrawn.
 
 ### U3 · Terminology drifted back on the home page 🟡
 
 `#83` standardised the cash box on **إيصال**. `index.html` still uses **وصل** in 4
 places alongside إيصال in 4 others.
 
-**Recommendation.** One pass over `index.html`; add the pair to a short glossary in
-`CLAUDE.md` so it stops recurring.
+**Done.** All five occurrences on the home page now read إيصال, and `CLAUDE.md`
+carries the rule — «it is إيصال, never وصل» — so it stops recurring.
 
 ### U4 · Number formatting is not uniform 🟡
 
@@ -299,13 +309,13 @@ The cash box is the standard the other modules should be measured against.
 |---|---|---|---|
 | 1 | **Masked password forms** replacing the two `prompt()` calls | hours | passwords are on screen in clear text today |
 | 2 | **CI on push** — `node --check`, duplicate-id check, auto-stamp `CACHE_NAME` | hours | nothing checks the government domain today; also fixes P1's forgotten bump |
-| 3 | **Assignee + ageing badge + oldest-first** on citizen requests | 1–2 days | 36 residents waiting, 6 of them over a month |
+| 3 | ~~Assignee~~ (it already existed) + **ageing badge + open-first default** — **done** | done | the 96-day request is now the first row, not the last page |
 | 4 | **Update prompt** in the service worker instead of silent takeover | hours | stops the app changing under a cashier mid-entry |
 | 5 | **Session-expiry guard** in `auth-common.js` | hours | one place, all 25 pages |
 | 6 | ~~**Clean the web root** (P9)~~ — **done**, and it was a data exposure, not tidiness | done | the tax archive was public; the git-history question remains open |
-| 7 | **Citizen timeline** instead of a single status word | days | makes tracking worth using |
+| 7 | ~~Citizen timeline~~ — **it already exists**; B1 is what fills it | — | no change needed |
 | 8 | **Decide the irrigation register**: populate or unpublish | decision | a public page showing one row |
-| 9 | **Language key + coop dictionary consolidation** | days | one preference, one translation home |
+| 9 | **Language key** — **done** (one key, 20 redundant writes removed). Coop dictionary — deferred, see P8 | part done | a preference that follows the resident between pages |
 | 10 | **Cooperative real accounts** | project | unblocks B4 and P5 together; needs the auth decision first |
 
 Items 1, 2, 4, 5 and 6 are all small, independent, and can ship this week. Item 3 is

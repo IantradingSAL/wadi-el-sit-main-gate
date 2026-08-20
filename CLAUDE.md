@@ -36,6 +36,13 @@ agree about the same person.
   can never reissue a number.
 - The legacy plain numbers (the paper receipt book, income 472…1350) stay in
   the ledger as history and no longer drive the next number.
+- **The changeover, for the record:** the municipality's paper receipt book
+  closes at **1350**, and app numbering runs from **`Q-2026-001`** (income) and
+  **`S-2026-001`** (expenses). The two series are deliberately parallel, not
+  continuous — an auditor comparing the app to the book should expect exactly
+  that, and this line is the record of why.
+- **Vocabulary:** it is **إيصال**, never وصل — for the number, the date and the
+  document. #83 standardised the cash box; the home page followed later.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 

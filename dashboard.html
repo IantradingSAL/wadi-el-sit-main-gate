@@ -83,6 +83,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .c1 .scv{color:var(--blue);}.c2 .scv{color:var(--warn);}.c3 .scv{color:var(--danger);}.c4 .scv{color:var(--green);}
 .fb2{display:flex;align-items:center;gap:7px;margin-bottom:13px;flex-wrap:wrap;}
 .fb{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:#fff;cursor:pointer;font-size:13px;font-family:var(--font);color:var(--text2);font-weight:500;transition:all .13s;}
+/* Ageing badge — how long an open request has been waiting. */
+.age{display:inline-block;margin-top:2px;padding:1px 6px;border-radius:20px;font-size:10.5px;font-weight:800;direction:rtl}
+.age-green{background:#e4ede6;color:#2f5d3f}
+.age-amber{background:#f7eedc;color:#8a5a0b}
+.age-red{background:#f6e6e4;color:#a32f2b}
+.age-done{background:transparent;color:var(--text3);font-weight:600}
+.noown{color:#8a5a0b;background:#f7eedc;padding:1px 6px;border-radius:20px;font-size:11px;font-weight:700}
+
 .fb:hover{border-color:var(--blue);color:var(--blue);}
 .fb.on{background:var(--blue);border-color:var(--blue);color:#fff;}
 .fsp{width:1px;height:22px;background:var(--border);margin:0 2px;}
@@ -330,7 +338,8 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
         <div class="sc c4"><span class="sci">✅</span><div class="scv" id="SR">—</div><div class="scl">منجز / مغلق</div></div>
       </div>
       <div class="fb2">
-        <button class="fb on" onclick="sf('all',this)">الكل</button>
+        <button class="fb on" onclick="sf('open',this)">🔔 المفتوحة</button>
+        <button class="fb" onclick="sf('all',this)">الكل</button>
         <button class="fb" onclick="sf('new',this)">جديد</button>
         <button class="fb" onclick="sf('in-progress',this)">قيد المعالجة</button>
         <button class="fb" onclick="sf('review',this)">مراجعة</button>
@@ -535,7 +544,10 @@ let sb=null,dbR=false;
 try{sb=window.supabase.createClient('https://onjbwhkmmtqnymhjnplw.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4',{realtime:{enabled:false}});dbR=true;}catch(e){console.error(e);}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let currentUser=null,userRole=null,cases=[],stF='all',tyF='all',srcF='all',sortM='date-desc',qF='',page=1;
+// The queue opens on what is waiting, oldest first. It used to open on
+// everything, newest first — which put the request that had waited 96 days on
+// the last page, and 36 of 39 requests had never moved past «جديد».
+let currentUser=null,userRole=null,cases=[],stF='open',tyF='all',srcF='all',sortM='date-asc',qF='',page=1;
 const PER=12;
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -1022,6 +1034,22 @@ function rStats(){
 const AVS=[['#1a6eb5','#d6e9f8'],['#8a6200','#f5edca'],['#bf2424','#fdeaea'],['#6535a8','#ede8f8'],['#9a5500','#fce8ca'],['#0f5470','#d4eaf5']];
 function avc(n){if(!n)return AVS[0];let h=0;for(let c of n)h=(h*31+c.charCodeAt(0))&0xffff;return AVS[h%AVS.length];}
 function ini(n){if(!n)return'?';return n.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('');}
+// How long this request has been waiting, and how loudly to say so. Nothing on
+// screen used to show age at all, so a request could sit for three months
+// without anyone noticing it was old.
+function caseAgeDays(c){
+  const t=Date.parse(c.created_at||'');
+  if(!t)return null;
+  return Math.floor((Date.now()-t)/86400000);
+}
+function ageH(c){
+  if(['resolved','closed'].includes(c.status))return '<span class="age age-done">—</span>';
+  const d=caseAgeDays(c);
+  if(d===null)return '<span class="age age-done">—</span>';
+  const cls = d>=30 ? 'age-red' : d>=7 ? 'age-amber' : 'age-green';
+  const txt = d===0 ? 'اليوم' : d===1 ? 'أمس' : numGroup(d)+' يوم';
+  return `<span class="age ${cls}" title="مفتوح منذ ${numGroup(d)} يوم">${txt}</span>`;
+}
 function bH(s){const m={new:'bn','in-progress':'bip',review:'br2','pending-approval':'bpa',resolved:'bdo',closed:'bc'};return`<span class="badge ${m[s]||'bc'}"><span class="bd"></span>${SL[s]||s}</span>`;}
 function pH(p){const c={high:'ph',medium:'pm',low:'pl'};const i={high:'▲',medium:'●',low:'▼'};return`<span class="pr2 ${c[p]||'pm'}">${i[p]||'●'} ${PL[p]||p}</span>`;}
 function tH(t){const cl={complaint:'tc',welfare:'tw2',permit:'tp',inquiry:'ti',ifada:'tp'};const labels={complaint:'⚠️ شكوى',welfare:'🤝 رعاية اجتماعية',permit:'🏗️ ترخيص',inquiry:'❓ استفسار',ifada:'📜 إفادة عقارية'};return`<span class="tt ${cl[t]||''}">${labels[t]||TL[t]||t}</span>`;}
@@ -1061,7 +1089,8 @@ function filtered(){
   });
   // ── Standard filters ───────────────────────────────────────────────────────
   if(srcF!=='all')d=d.filter(c=>c.source===srcF);
-  if(stF!=='all')d=d.filter(c=>c.status===stF);
+  if(stF==='open')d=d.filter(c=>!['resolved','closed'].includes(c.status));
+  else if(stF!=='all')d=d.filter(c=>c.status===stF);
   if(tyF!=='all')d=d.filter(c=>c.type===tyF);
   if(qF){const q=qF;d=d.filter(c=>(c.name||'').includes(q)||(c.id||'').toString().includes(q)||(c.description||'').includes(q)||(c.phone||'').includes(q));}
   const po={high:0,medium:1,low:2};
@@ -1089,8 +1118,8 @@ function render(){
       <div class="pc"><div class="av" style="background:${bc};color:${fc}">${ini(c.name)}</div>
         <div><div class="pn">${wsrc}${c.name||''}</div><div class="pi">${sh}</div></div></div>
       <div>${tH(c.type)}</div>
-      <div style="font-size:13px;color:var(--text2)">${c.assigned||'—'}</div>
-      <div style="font-size:11.5px;color:var(--text3);direction:ltr">${(c.created_at||'').slice(0,10)}</div>
+      <div style="font-size:13px;color:var(--text2)">${c.assigned ? c.assigned : '<span class="noown">بلا مسؤول</span>'}</div>
+      <div style="font-size:11.5px;color:var(--text3);direction:ltr">${(c.created_at||'').slice(0,10)}<br>${ageH(c)}</div>
       <div>${bH(c.status)}</div>
       <div>${dc>0?`<span class="dp">📎 ${dc}</span>`:'<span style="color:var(--text3);font-size:12px">—</span>'}</div>
       <div>${aH(c)}</div>
