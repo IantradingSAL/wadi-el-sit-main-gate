@@ -633,23 +633,37 @@ function bfApplyLocks(){
     if(rc && !rc._bfSnap){
       rc._bfSnap=true;
       rc.addEventListener('input',function(){
-        if(bfIsSuper())return;
+        if(bfIsSuper()){
+          // The general supervisor may choose the number — from here on it is
+          // theirs, not the generator's, so stop overwriting it.
+          rc.dataset.bfAuto='';
+          return;
+        }
         // Recompute the auto-serial in case someone tried to override it
-        rc.value=bfNextNo(p==='i'?'income':'expense',bfToday());
+        bfSetAutoNo(rc,p==='i'?'income':'expense');
         toast('🔒 رقم السند تلقائي ومقفل — لا يمكن تعديله','err');
       });
     }
   });
   bfRefreshAutoReceiptNos();
 }
+// Writes the next serial into the box and marks it as the generator's, so a
+// later refresh may correct it. Anything the supervisor types clears the mark.
+function bfSetAutoNo(rc,type){
+  rc.value=bfNextNo(type,bfToday());
+  rc.dataset.bfAuto='1';
+}
 function bfRefreshAutoReceiptNos(){
-  const superOn=bfIsSuper();
   ['i','e'].forEach(p=>{
     const rc=document.getElementById('bf-'+p+'-receipt');
     if(!rc)return;
-    // Only auto-fill for non-super, or when super hasn't typed anything yet
-    if(!superOn || !rc.value){
-      rc.value=bfNextNo(p==='i'?'income':'expense',bfToday());
+    // Refresh whenever the box still holds a generated number — empty, or
+    // filled by an earlier pass. The first pass runs before the ledger has
+    // loaded, when bfEntries is still empty and every series therefore looks
+    // like it starts at 001; for the supervisor that stale 001 used to stay in
+    // the box for the rest of the session, on top of a number already issued.
+    if(!rc.value || rc.dataset.bfAuto==='1'){
+      bfSetAutoNo(rc,p==='i'?'income':'expense');
     }
   });
 }
@@ -1426,8 +1440,13 @@ async function bfSave__run(type){
   // the next auto-serial. Any tampering with the DOM inputs is ignored here.
   const dateInputVal=document.getElementById('bf-'+p+'-date').value;
   const date=superOn?(dateInputVal||bfToday()):bfToday();
-  const recInputVal=(document.getElementById('bf-'+p+'-receipt')||{}).value||'';
-  const receiptNo=(superOn && recInputVal.trim()) ? recInputVal.trim() : bfNextNo(type,date);
+  const recEl=document.getElementById('bf-'+p+'-receipt');
+  const recInputVal=(recEl||{}).value||'';
+  // A number the supervisor typed is theirs and is used as typed. A number the
+  // generator put there is recomputed at save, so a box filled before the
+  // ledger loaded cannot hand out a serial that has since been issued.
+  const typedBySuper = superOn && !!recInputVal.trim() && !(recEl && recEl.dataset.bfAuto==='1');
+  const receiptNo = typedBySuper ? recInputVal.trim() : bfNextNo(type,date);
   const amount=parseFloat(document.getElementById('bf-'+p+'-amount').value);
   const stamp=parseFloat((document.getElementById('bf-'+p+'-stamp')||{}).value)||0;
   const desc=document.getElementById('bf-'+p+'-desc').value.trim();
@@ -1435,6 +1454,12 @@ async function bfSave__run(type){
   if(cat==='أخرى'){const o=document.getElementById('bf-'+p+'-cat-other').value.trim();if(o)cat=o;}
   const err=document.getElementById('bf-'+p+'-err');err.textContent='';
   if(!date||!desc||!(amount>0)||!cat){err.textContent='يرجى تعبئة الفئة والبيان والمبلغ';return;}
+  // Last line of defence: never write a number this type already carries.
+  if(bfEntries.some(x=>x.entry_type===type && String(x.receipt_no||'').trim()===receiptNo)){
+    err.textContent='⚠️ رقم السند '+receiptNo+' مستعمل سابقاً — الرقم التالي المتاح هو '+bfNextNo(type,date);
+    if(recEl && !typedBySuper) bfSetAutoNo(recEl,type);
+    return;
+  }
   const kararEl=document.getElementById('bf-'+p+'-karar');
   const propEl=document.getElementById('bf-'+p+'-property');
   const wnEl=document.getElementById('bf-'+p+'-wassel-no');
