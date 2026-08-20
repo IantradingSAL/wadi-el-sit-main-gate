@@ -138,6 +138,36 @@ parallel. An auditor comparing the app to the book should expect exactly that.
 receipt numbers. The duplicate field is now removed (#87) but the stored values
 remain. **Only the paper book can settle these two.**
 
+### B7 · The same fault, three more times 🔴 — fixed
+
+The blocked shop was not a one-off. Every table the public pages write to was
+probed as `anon` — the role those pages actually run as. Three more found:
+
+| who | doing what | what actually happened |
+|---|---|---|
+| a seller | adding a product | `42501`, violates row-level security |
+| a seller | editing their own product | **0 rows changed, reported as success** |
+| a resident | signing up for a bus trip | `42501`, violates row-level security |
+| any visitor | subscribing to notifications | `42501`, violates row-level security |
+
+The last one means the notification system had stopped accepting new devices
+altogether — the 23 subscriptions it has are all it could ever have.
+
+Each was the same shape: a policy written `to authenticated`, or checking
+`auth.uid() IS NOT NULL`, standing in front of something only an anonymous
+visitor ever does. One was even named `allow_anyone_insert` while allowing
+nobody anonymous.
+
+**Fixed in 16.** Devices manage their own subscription; residents sign up for
+trips and can see how many seats are taken but not who took them; sellers write
+their own products through their session token. Stock also comes off inside
+`coop_place_order()` now — it used to be the buyer's browser issuing an UPDATE
+against the seller's product row, refused by RLS and swallowed by an empty
+catch, so stock never moved.
+
+**Probed and found healthy**, for the avoidance of doubt: filing a municipal
+request, registering as a seller, submitting a directory entry.
+
 ---
 
 ## 3. Protocol and architecture
@@ -187,6 +217,32 @@ into a screen that looks like it worked.
 **Recommendation.** Adopt the rule the cash box already follows (49 of its paths
 surface the error): silence is only for work whose failure genuinely does not
 matter, and every silent catch carries a comment saying why.
+
+### P4b · The user screen and the server disagreed about who may manage users 🔴 — fixed
+
+The `admin-user` edge function authorised on a row in `employees` with role
+`manager` — a fourth identity system, and one nothing else consults.
+
+| account | role | `users_create` | manager row | before | after |
+|---|---|---|---|---|---|
+| imadaehn | super_admin | true | yes | allowed | allowed |
+| **mmerhej** | **admin** | **true** | **no** | **refused: «Managers only»** | **allowed** |
+| darghamf | mayor | false | no | refused | refused |
+| eliac | sandouk | false | no | refused | refused |
+| finance | finance | false | no | refused | refused |
+| m.merhej | water_only | false | no | refused | refused |
+
+So the dashboard showed the admin account user management, and the server
+refused every call. One account in the municipality — the owner's — had a
+manager row, which meant only the owner could ever create or delete a user,
+whatever the user screen said.
+
+**Fixed.** The function now asks `user_has_perm(caller, 'users_create')` — the
+same resolution as `has_perm()`, for an explicit user id. Exactly one account
+gains what the user screen already promised it; nobody else gains anything.
+Recorded as `17_user_has_perm.sql`, and the function's source is now in the
+repository at `supabase/functions/admin-user/index.ts` — it had never been
+committed anywhere.
 
 ### P5 · Three identity systems, down from five 🟡
 
