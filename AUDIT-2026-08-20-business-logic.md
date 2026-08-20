@@ -138,6 +138,36 @@ parallel. An auditor comparing the app to the book should expect exactly that.
 receipt numbers. The duplicate field is now removed (#87) but the stored values
 remain. **Only the paper book can settle these two.**
 
+### B7 · The same fault, three more times 🔴 — fixed
+
+The blocked shop was not a one-off. Every table the public pages write to was
+probed as `anon` — the role those pages actually run as. Three more found:
+
+| who | doing what | what actually happened |
+|---|---|---|
+| a seller | adding a product | `42501`, violates row-level security |
+| a seller | editing their own product | **0 rows changed, reported as success** |
+| a resident | signing up for a bus trip | `42501`, violates row-level security |
+| any visitor | subscribing to notifications | `42501`, violates row-level security |
+
+The last one means the notification system had stopped accepting new devices
+altogether — the 23 subscriptions it has are all it could ever have.
+
+Each was the same shape: a policy written `to authenticated`, or checking
+`auth.uid() IS NOT NULL`, standing in front of something only an anonymous
+visitor ever does. One was even named `allow_anyone_insert` while allowing
+nobody anonymous.
+
+**Fixed in 16.** Devices manage their own subscription; residents sign up for
+trips and can see how many seats are taken but not who took them; sellers write
+their own products through their session token. Stock also comes off inside
+`coop_place_order()` now — it used to be the buyer's browser issuing an UPDATE
+against the seller's product row, refused by RLS and swallowed by an empty
+catch, so stock never moved.
+
+**Probed and found healthy**, for the avoidance of doubt: filing a municipal
+request, registering as a seller, submitting a directory entry.
+
 ---
 
 ## 3. Protocol and architecture

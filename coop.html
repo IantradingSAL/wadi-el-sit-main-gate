@@ -2893,15 +2893,10 @@ async function placeOrder(){
       return;
     }
     
-    // Update stock
-    for(const c of cart){
-      try{
-        const cp=await sb.from('coop_products').select('stock').eq('id',c.id).single();
-        if(cp.data){
-          await sb.from('coop_products').update({stock:Math.max(0,(parseInt(cp.data.stock)||0)-c.qty)}).eq('id',c.id);
-        }
-      }catch(e){}
-    }
+    // Stock is taken off inside coop_place_order, in the same breath as the
+    // order. It used to be done here — the buyer's own browser issuing an
+    // UPDATE against the seller's product, which RLS quietly refused, so stock
+    // never moved and the failure was swallowed by the empty catch below.
 
     // Send WhatsApp notifications to sellers
     Object.values(bySeller).forEach(g=>{
@@ -4120,8 +4115,10 @@ function editSellerProduct(productId){
 async function deleteSellerProduct(productId){
   if(!confirm('هل تريد حذف هذا المنتج نهائياً؟ لا يمكن التراجع عن العمليّة.')) return;
   try{
-    const res = await sb.from('coop_products').delete().eq('id', productId);
+    const res = await sb.rpc('coop_product_delete',
+      {p_token: coopToken('seller'), p_id: productId});
     if(res.error){toast('فشل الحذف: '+res.error.message,'err');return;}
+    if(res.data === false){toast('تعذّر الحذف — سجّل الدخول من جديد','err');return;}
     toast('✅ تمّ حذف المنتج','ok');
     refreshAfterProductChange();
   }catch(e){console.error(e);toast('حدث خطأ','err');}
@@ -4319,11 +4316,16 @@ async function saveProduct(){
       status: 'active'
     };
     
-    let res;
-    if(editingProductId){
-      res = await sb.from('coop_products').update(productData).eq('id', editingProductId).select().single();
-    }else{
-      res = await sb.from('coop_products').insert([productData]).select().single();
+    // Through the seller's session token: the database decides the product is
+    // theirs. A direct insert or update was refused outright for a seller, who
+    // is not a signed-in Supabase user.
+    if(editingProductId) productData.id = editingProductId;
+    let res = await sb.rpc('coop_product_save',
+      {p_token: coopToken('seller'), p_product: productData});
+    if(!res.error && (!res.data || !res.data.length)){
+      res = { error: { message: 'تعذّر حفظ المنتج — سجّل الدخول من جديد' } };
+    } else if(!res.error){
+      res = { data: res.data[0] };
     }
     
     if(res.error){
