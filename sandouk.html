@@ -280,6 +280,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
       <label class="fl">📎 مستندات مرفقة (اختياري — صور أو PDF)</label>
       <input type="file" class="fi" id="bf-i-files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
+      <div style="font-size:11.5px;color:#8a95a3;font-weight:700;margin:-4px 0 8px">📄 تُسمّى المرفقات تلقائياً برقم الإيصال المُدخَل أعلاه (أو رقم السند إن لم يُصدَر الإيصال بعد)</div>
       <div id="bf-i-upl" style="display:none;font-size:12px;color:#0f4d82;font-weight:700;margin-bottom:8px"></div>
       <div class="bf-err" id="bf-i-err"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -327,6 +328,7 @@ select.bf-colfilter{padding-inline-end:22px}
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-e-notes" placeholder="اختياري">
       <label class="fl">📎 مستندات مرفقة — القرار / فواتير (اختياري — صور أو PDF)</label>
       <input type="file" class="fi" id="bf-e-files" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">
+      <div style="font-size:11.5px;color:#8a95a3;font-weight:700;margin:-4px 0 8px">📄 تُسمّى المرفقات تلقائياً برقم الإيصال المُدخَل أعلاه (أو رقم السند إن لم يُصدَر الإيصال بعد)</div>
       <div id="bf-e-upl" style="display:none;font-size:12px;color:#0f4d82;font-weight:700;margin-bottom:8px"></div>
       <div class="bf-err" id="bf-e-err"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2334,6 +2336,53 @@ function bfDownloadReady(){
   toast('✓ تم تنزيل الملف');
 }
 
+// ── 📄 تسمية المرفقات برقم الإيصال ──
+// المستند المرفق يجب أن يحمل رقم الإيصال الذي أُدخِل يدوياً — لا اسم
+// الملف الآتي من الهاتف أو الماسح ("farid.jpg"). إن لم يُصدَر الإيصال بعد
+// يُستخدم رقم السند مؤقتاً، ثم تُعاد التسمية تلقائياً فور إدخال رقم الإيصال.
+function bfSlug(v){return bfNormDigits(v).trim().replace(/[\\\/:*?"<>|\s]+/g,'-').replace(/^-+|-+$/g,'');}
+// مفتاح التخزين يبقى ASCII خالصاً حتى لا ينكسر مسار الملف في Supabase Storage.
+function bfDocKey(n){const k=String(n||'').replace(/[^A-Za-z0-9._-]+/g,'-').replace(/-{2,}/g,'-').replace(/^-+|-+$/g,'');return k||'doc';}
+function bfDocExt(n){const x=(String(n||'').split('.').pop()||'').toLowerCase();return /^[a-z0-9]{1,8}$/.test(x)?x:'bin';}
+function bfDocBase(e){
+  const wn=bfSlug(e&&e.wassel_number);
+  if(wn)return 'wassel-'+wn;
+  const rn=bfSlug(e&&e.receipt_no);
+  return rn?'sanad-'+rn:'doc';
+}
+function bfDocName(e,ext,i,total){return bfDocBase(e)+((total>1)?'-'+(i+1):'')+'.'+ext;}
+// رابط التنزيل يحمل الاسم النهائي حتى يُحفَظ الملف برقم الإيصال لا باسمه الأصلي.
+function bfDocUrl(path,name){
+  try{const{data}=sb.storage.from('sandouk-docs').getPublicUrl(path,{download:name});if(data&&data.publicUrl)return data.publicUrl;}catch(_e){}
+  const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
+  return pd.publicUrl;
+}
+// يُعيد تسمية كل المرفقات المُسمّاة آلياً بعد تغيّر رقم الإيصال، فلا يضطرّ
+// المستخدم لتصحيحها واحداً واحداً.
+function bfRenameDocs(e,docs){
+  const list=Array.isArray(docs)?docs.slice():[];
+  const auto=list.filter(d=>d&&d.auto_name!==false&&d.path);
+  return list.map(d=>{
+    if(!d||d.auto_name===false||!d.path)return d;
+    const ext=d.type||bfDocExt(d.path);
+    const name=bfDocName(e,ext,auto.indexOf(d),auto.length);
+    return Object.assign({},d,{name:name,url:bfDocUrl(d.path,name),auto_name:true,
+      wassel_number:(e&&e.wassel_number)||null,wassel_date:(e&&e.wassel_date)||null});
+  });
+}
+// يُزامن أسماء مرفقات سند واحد مع رقم الإيصال المحفوظ حالياً.
+async function bfSyncDocNames(id){
+  try{
+    const{data:cur,error}=await sb.from('baladieh_finance').select('documents,receipt_no,wassel_number,wassel_date').eq('id',id).single();
+    if(error||!cur)return;
+    const docs=Array.isArray(cur.documents)?cur.documents:[];
+    if(!docs.length)return;
+    const named=bfRenameDocs(cur,docs);
+    if(JSON.stringify(named)!==JSON.stringify(docs))
+      await sb.from('baladieh_finance').update({documents:named}).eq('id',id);
+  }catch(_e){}
+}
+
 // ── 📎 ATTACHMENTS ──
 async function bfUploadDocs(saved,p){
   const inp=document.getElementById('bf-'+p+'-files');
@@ -2345,12 +2394,14 @@ async function bfUploadDocs(saved,p){
   for(let i=0;i<files.length;i++){
     const f=files[i];
     st.textContent='⏳ رفع الملف '+(i+1)+' من '+files.length+': '+f.name;
-    const ext=(f.name.split('.').pop()||'bin').toLowerCase();
-    const path=saved.id+'/'+Date.now()+'_'+i+'.'+ext;
+    const ext=bfDocExt(f.name);
+    // 📄 الاسم النهائي = رقم الإيصال المُدخَل في شاشة الإدخال نفسها.
+    const name=bfDocName(saved,ext,i,files.length);
+    const path=saved.id+'/'+Date.now()+'_'+i+'_'+bfDocKey(name);
     const{error}=await sb.storage.from('sandouk-docs').upload(path,f);
     if(error){toast('⚠️ فشل رفع '+f.name+': '+error.message,'err');continue;}
-    const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
-    docs.push({name:f.name,path:path,url:pd.publicUrl,type:ext,size:f.size});
+    docs.push({name:name,path:path,url:bfDocUrl(path,name),type:ext,size:f.size,orig_name:f.name,auto_name:true,
+      wassel_number:saved.wassel_number||null,wassel_date:saved.wassel_date||null});
   }
   st.style.display='none'; inp.value='';
   if(docs.length){
@@ -2413,7 +2464,8 @@ function bfOpenCase(id){
         +'<div style="flex:1;min-width:120px"><label class="fl">تاريخ الإيصال</label><input type="date" class="fi" id="bf-case-wassel-date" value="'+wd+'"></div>'
         +'</div>'
         +'<div style="margin-top:8px"><label class="fl">📎 مستند الإيصال (اختياري — صورة أو PDF)</label>'
-          +'<input type="file" class="fi" id="bf-case-wassel-file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"></div>'
+          +'<input type="file" class="fi" id="bf-case-wassel-file" multiple accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx">'
+          +'<div style="font-size:11.5px;color:#8a6d1a;font-weight:700;margin-top:4px">📄 تُسمّى المرفقات تلقائياً برقم الإيصال عند الحفظ</div></div>'
         +'<div id="bf-case-wassel-upl" style="display:none;font-size:12px;color:#8a6d1a;font-weight:700;margin-top:4px"></div>'
         +'<div style="display:flex;gap:8px;margin-top:8px;align-items:center">'
         +'<button class="bf-share-btn" id="bf-case-wassel-save" style="flex:1;justify-content:center;background:linear-gradient(135deg,#c9a227,#a88818);color:#fff;border:none;margin-bottom:0" onclick="bfSaveWasselFromCase()">💾 حفظ الإيصال</button>'
@@ -2454,27 +2506,29 @@ async function bfSaveWasselFromCase(){
     const{error:e1}=await sb.from('baladieh_finance').update({wassel_number:wn||null,wassel_date:wd}).eq('id',bfCaseId);
     if(e1){if(err)err.textContent='⚠️ '+e1.message;return;}
     // 2) If a file was chosen, upload it and append to the entry's documents array.
-    //    Naming follows the user's instruction: the wassel's manually-entered
-    //    number becomes the human-readable label on the attachment ("الإيصال — رقم <N>").
+    //    The attachment is named after the manually-entered wassel number
+    //    ("wassel-15.pdf") — never the scanner/phone filename.
     const files=(fileInp&&fileInp.files)?Array.from(fileInp.files):[];
     if(files.length){
-      const{data:cur,error:eCur}=await sb.from('baladieh_finance').select('documents').eq('id',bfCaseId).single();
+      const{data:cur,error:eCur}=await sb.from('baladieh_finance').select('documents,receipt_no').eq('id',bfCaseId).single();
       if(eCur){if(err)err.textContent='⚠️ '+eCur.message;return;}
       const docs=Array.isArray(cur&&cur.documents)?cur.documents.slice():[];
+      const ctx={wassel_number:wn||null,wassel_date:wd,receipt_no:(cur&&cur.receipt_no)||null};
       for(let i=0;i<files.length;i++){
         const f=files[i];
         if(upl){upl.style.display='block';upl.textContent='⏳ رفع مستند الإيصال '+(i+1)+' من '+files.length+': '+f.name;}
-        const ext=(f.name.split('.').pop()||'bin').toLowerCase();
-        const path=bfCaseId+'/wassel_'+Date.now()+'_'+i+'.'+ext;
+        const ext=bfDocExt(f.name);
+        const name=bfDocBase(ctx)+'.'+ext;
+        const path=bfCaseId+'/'+Date.now()+'_'+i+'_'+bfDocKey(name);
         const{error:eUp}=await sb.storage.from('sandouk-docs').upload(path,f);
         if(eUp){toast('⚠️ فشل رفع '+f.name+': '+eUp.message,'err');continue;}
-        const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path);
-        const label='📄 الإيصال'+(wn?' — رقم '+wn:'')+' — '+f.name;
-        docs.push({name:label,path:path,url:pd.publicUrl,type:ext,size:f.size,kind:'wassel',wassel_number:wn||null,wassel_date:wd||null});
+        docs.push({name:name,path:path,url:bfDocUrl(path,name),type:ext,size:f.size,orig_name:f.name,auto_name:true,kind:'wassel',wassel_number:wn||null,wassel_date:wd||null});
       }
       const{error:eUpd}=await sb.from('baladieh_finance').update({documents:docs}).eq('id',bfCaseId);
       if(eUpd){if(err)err.textContent='⚠️ '+eUpd.message;return;}
     }
+    // 🔄 تُعاد تسمية كل مرفقات السند برقم الإيصال الجديد — بلا تصحيح يدوي.
+    await bfSyncDocNames(bfCaseId);
     toast('✓ تم حفظ الإيصال'+(files.length?' مع '+files.length+' مستند':''));
   } finally {
     if(upl)upl.style.display='none';
@@ -2491,6 +2545,8 @@ async function bfClearWasselFromCase(){
   if(!confirm('مسح رقم الإيصال وتاريخه من هذا السند؟'))return;
   const{error}=await sb.from('baladieh_finance').update({wassel_number:null,wassel_date:null}).eq('id',bfCaseId);
   if(error){toast('⚠️ '+error.message,'err');return;}
+  // تُعاد تسمية المرفقات إلى رقم السند بعد مسح رقم الإيصال.
+  await bfSyncDocNames(bfCaseId);
   toast('✓ تم المسح');
   const id=bfCaseId;
   bfCloseCase();
@@ -2599,6 +2655,8 @@ async function bfEditSave__run(){
   }
   const{error}=await sb.from('baladieh_finance').update(patch).eq('id',bfEditId).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
+  // 🔄 إن تغيّر رقم الإيصال هنا تُعاد تسمية المرفقات تلقائياً كذلك.
+  await bfSyncDocNames(bfEditId);
   toast('✓ تم حفظ التعديلات');
   bfCloseEdit();
   await bfLoad();
