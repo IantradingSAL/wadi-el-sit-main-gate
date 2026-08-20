@@ -293,7 +293,6 @@ select.bf-colfilter{padding-inline-end:22px}
       </div>
       <div class="bf-g2">
         <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-i-property" placeholder="اختياري — مثال: 1245/شوف" style="direction:ltr"></div>
-        <div><label class="fl">🧾 رقم الإيصال اليدوي (داخلي)</label><input type="text" class="fi" id="bf-i-manual" placeholder="اختياري — رقم الإيصال المطبوع" style="direction:ltr"></div>
       </div>
       <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-i-notes" placeholder="اختياري">
       <label class="fl">📎 مستندات مرفقة (اختياري — صور أو PDF)</label>
@@ -535,7 +534,6 @@ select.bf-colfilter{padding-inline-end:22px}
     </div>
     <div class="bf-g2">
       <div><label class="fl">رقم العقار</label><input type="text" class="fi" id="bf-ed-property" style="direction:ltr"></div>
-      <div><label class="fl">🧾 رقم الإيصال اليدوي</label><input type="text" class="fi" id="bf-ed-manual" style="direction:ltr"></div>
     </div>
     <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-ed-notes">
     <div class="bf-err" id="bf-ed-err" style="margin-top:6px"></div>
@@ -1703,14 +1701,13 @@ async function bfSave__run(type){
     notes:document.getElementById('bf-'+p+'-notes').value.trim()||null,
     karar_number:(kararEl&&kararEl.value.trim())||null,
     property_number:(propEl&&propEl.value.trim())||null,
-    manual_receipt_no:(function(){const el=document.getElementById('bf-'+p+'-manual');return (el&&el.value.trim())||null;})(),
     wassel_number:(wnEl&&wnEl.value.trim())||null,
     wassel_date:(wdEl&&wdEl.value)||null,
     created_by:bfUser?bfUser.email:null};
   const{data,error}=await sb.from('baladieh_finance').insert(rec).select();
   if(error){err.textContent='⚠️ '+error.message;return;}
   toast('✓ تم الحفظ — السند رقم '+rec.receipt_no);
-  ['amount','stamp','desc','person','notes','manual','wassel-no','wassel-date'].forEach(f=>{const el=document.getElementById('bf-'+p+'-'+f); if(el)el.value='';});
+  ['amount','stamp','desc','person','notes','wassel-no','wassel-date'].forEach(f=>{const el=document.getElementById('bf-'+p+'-'+f); if(el)el.value='';});
   bfUpdateTotal(p);
   if(kararEl)kararEl.value='';
   if(propEl)propEl.value='';
@@ -1823,7 +1820,7 @@ const BF_ACT_AR={create:'➕ إضافة سند',update:'✏️ تعديل',void:
   share_text:'📤 مشاركة نص',share_file:'📤 مشاركة ملف',copy_text:'📋 نسخ النص',print:'🖨️ طباعة',
   receipt_pdf:'🧾 تصدير سند PDF',phonebook_add:'👤 إضافة اسم إلى الدليل',view_save:'👁️ حفظ عرض',view_delete:'👁️ حذف عرض',series_edit:'🔢 ترقيم السندات'};
 const BF_FIELD_AR={entry_date:'التاريخ',receipt_no:'رقم السند',wassel_number:'رقم الإيصال',wassel_date:'تاريخ الإيصال',
-  manual_receipt_no:'رقم الإيصال',entry_type:'النوع',category:'الفئة',payment_method:'طريقة الدفع',
+  manual_receipt_no:'رقم الإيصال اليدوي (متوقف)',entry_type:'النوع',category:'الفئة',payment_method:'طريقة الدفع',
   description:'البيان',person:'الجهة',handled_by:'المستلم/المسلّم',amount:'المبلغ',currency:'العملة',
   stamp_value:'قيمة الطوابع',karar_number:'رقم القرار',property_number:'رقم العقار',notes:'ملاحظات',
   voided:'ملغى',void_reason:'سبب الإلغاء',voided_at:'تاريخ الإلغاء',voided_by:'أُلغي بواسطة',
@@ -1990,7 +1987,6 @@ function bfReceiptHTML(e){
       +row('طريقة الدفع',bfPay(e))
       +row('رقم القرار',(e.karar_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.karar_number+'</span>':''))
       +row('رقم العقار',(e.property_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.property_number+'</span>':''))
-      +row('رقم الإيصال اليدوي',(e.manual_receipt_no?'<span style="direction:ltr;unicode-bidi:embed">'+e.manual_receipt_no+'</span>':''))
       +row('رقم الإيصال',e.wassel_number?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_number+'</span>':'<span style="color:#c22;font-weight:800">— بلا إيصال —</span>')
       +row('تاريخ الإيصال',e.wassel_date?'<span style="direction:ltr;unicode-bidi:embed">'+e.wassel_date.split('-').reverse().join('/')+'</span>':'')
       +row('ملاحظات',e.notes)
@@ -2821,7 +2817,6 @@ function bfOpenEdit(id){
   document.getElementById('bf-ed-person').value=e.person||'';
   document.getElementById('bf-ed-handled').value=e.handled_by||'';
   document.getElementById('bf-ed-property').value=e.property_number||'';
-  document.getElementById('bf-ed-manual').value=e.manual_receipt_no||'';
   document.getElementById('bf-ed-wassel-no').value=e.wassel_number||'';
   document.getElementById('bf-ed-wassel-date').value=e.wassel_date||'';
   document.getElementById('bf-ed-notes').value=e.notes||'';
@@ -2867,7 +2862,6 @@ async function bfEditSave__run(){
     category:cat||null,
     karar_number:document.getElementById('bf-ed-karar').value.trim()||null,
     property_number:document.getElementById('bf-ed-property').value.trim()||null,
-    manual_receipt_no:document.getElementById('bf-ed-manual').value.trim()||null,
     wassel_number:document.getElementById('bf-ed-wassel-no').value.trim()||null,
     wassel_date:document.getElementById('bf-ed-wassel-date').value||null,
     person:document.getElementById('bf-ed-person').value.trim()||null,
