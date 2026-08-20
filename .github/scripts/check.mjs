@@ -78,7 +78,18 @@ if (base) {
   const published = changed.filter(f =>
     (f.endsWith('.html') || f.endsWith('.js')) && f !== 'sw.js' && !f.startsWith('.github/'));
   if (published.length && !changed.includes('sw.js')) {
-    note('sw.js', `CACHE_NAME not bumped, but these ship to users: ${published.join(', ')}`);
+    // Say exactly what to type. The first time this fired it cost a second
+    // pull request to change one character.
+    let hint = '';
+    try {
+      const cur = readFileSync('sw.js', 'utf8').match(/CACHE_NAME\s*=\s*'([^']+)'/);
+      if (cur) {
+        const next = cur[1].replace(/(\d+)$/, (d) => String(Number(d) + 1));
+        hint = `\n      → in sw.js, change '${cur[1]}' to '${next}'`;
+      }
+    } catch { /* sw.js unreadable — the message below still stands */ }
+    note('sw.js', `CACHE_NAME not bumped, but these ship to users: ${published.join(', ')}`
+                  + `${hint}\n      (without it, everyone who already has the app keeps the old copy)`);
   }
 }
 
