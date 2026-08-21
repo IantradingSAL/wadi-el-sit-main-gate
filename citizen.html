@@ -762,6 +762,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-shell.js" defer></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">بوابة المواطن — بلدية وادي الست</h1>
 
 <div id="CP" style="display:block">
 <div style="min-height:100vh;background:var(--bg)">
@@ -915,7 +916,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <div id="wn-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeWnModal()">
   <div style="background:#fff;border-radius:20px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:1;border-radius:20px 20px 0 0">
-      <button onclick="closeWnModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'">✕</button>
+      <button onclick="closeWnModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background='none'" aria-label="إغلاق">✕</button>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:18px;font-weight:800;color:#1a1a2e">ما الجديد</span>
         <span style="font-size:22px">✨</span>
@@ -1663,7 +1664,7 @@ function renderCitFiles() {
     +'<span style="font-size:20px">'+ico(f)+'</span>'
     +'<span style="flex:1;font-size:13px;font-weight:600;color:var(--blue2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.name+'</span>'
     +'<span style="font-size:11px;color:var(--text3);flex-shrink:0">'+fmt(f.size)+'</span>'
-    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px">✕</button>'
+    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px" aria-label="إغلاق">✕</button>'
     +'</div>'
   ).join('');
 }
@@ -2071,7 +2072,7 @@ function escHtml(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g
 
 function openHelp(p){
   var c='<b style="color:#1a6eb5;font-size:14px">👥 بوابة المواطن</b><br><br>📋 <b>تقديم طلب</b>: اسمك+هاتفك إلزاميان، اختر النوع لترى المستندات، احتفظ بالرقم المرجعي.<br><br>🔍 <b>متابعة طلب</b>: أدخل الرقم المرجعي ← أدخل هاتفك للتحقق ← ترى الحالة.<br><br>⚠️ شكوى(3-5أيام) | 🤝 رعاية(5-7) | 🏗️ ترخيص(7-14) | ❓ استفسار(1-2) | 📜 إفادة(5-10) | 💧 ري(2-4)';
-  var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل بوابة المواطن</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';
+  var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل بوابة المواطن</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer" aria-label="إغلاق">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';
 }
 
 // Re-entry guard. These handlers are wired straight to a button and await a
@@ -2145,7 +2146,7 @@ function showCitUpdateFiles(input) {
   if (!el) return;
   el.innerHTML = citUpdateFiles.map(function(f, i) {
     return '<div style="font-size:12px;color:var(--text2);padding:3px 0">📎 ' + f.name + 
-      ' <button onclick="citUpdateFiles.splice('+i+',1);showCitUpdateFiles({files:citUpdateFiles})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px">✕</button></div>';
+      ' <button onclick="citUpdateFiles.splice('+i+',1);showCitUpdateFiles({files:citUpdateFiles})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:11px" aria-label="إغلاق">✕</button></div>';
   }).join('');
 }
 </script>

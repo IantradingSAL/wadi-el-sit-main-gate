@@ -228,7 +228,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal-x">
     <div class="modal-h">
       <h3 id="MOD_TITLE">إعلان جديد</h3>
-      <button class="modal-close" onclick="closeEditor()">✕</button>
+      <button class="modal-close" onclick="closeEditor()" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-b">
       <div class="row2">
@@ -310,7 +310,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal-x" style="max-width:480px">
     <div class="modal-h">
       <h3>👁️ إحصاءات الخبر</h3>
-      <button class="modal-close" onclick="closeStats()">✕</button>
+      <button class="modal-close" onclick="closeStats()" aria-label="إغلاق">✕</button>
     </div>
     <div class="modal-b" id="STATS_BODY"></div>
   </div>
@@ -574,7 +574,7 @@ async function uploadCover(){
 function renderCoverPreview(){
   const preview = document.getElementById('COVER_PREVIEW');
   if (!coverImage) { preview.innerHTML = ''; return; }
-  preview.innerHTML = `<div class="img-preview"><img src="${esc(coverImage)}" alt=""><button class="img-preview-rm" onclick="removeCover()">✕</button></div>`;
+  preview.innerHTML = `<div class="img-preview"><img src="${esc(coverImage)}" alt=""><button class="img-preview-rm" onclick="removeCover()" aria-label="إغلاق">✕</button></div>`;
 }
 function removeCover(){coverImage=null;renderCoverPreview();}
 
@@ -599,7 +599,7 @@ function renderGalleryPreview(){
   const wrap = document.getElementById('GAL_PREVIEW');
   if (!gallery.length) { wrap.innerHTML = ''; return; }
   wrap.innerHTML = gallery.map((url, idx) =>
-    `<div class="gal-item"><img src="${esc(url)}" alt=""><button class="gal-rm" onclick="removeGalleryItem(${idx})" type="button">✕</button></div>`
+    `<div class="gal-item"><img src="${esc(url)}" alt=""><button class="gal-rm" onclick="removeGalleryItem(${idx})" type="button" aria-label="إغلاق">✕</button></div>`
   ).join('');
 }
 function removeGalleryItem(idx){gallery.splice(idx,1);renderGalleryPreview();}

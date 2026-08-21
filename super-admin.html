@@ -83,6 +83,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-shell.js" defer></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">الإدارة الكلّية للبلديات</h1>
 
 <!-- ROUND BALADIEH LOGO (floating, always visible, click → main gate) -->
 <a href="index.html" class="wadi-logo-float" title="البوابة الرئيسية">
@@ -153,7 +154,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <div class="fg" style="grid-column:1/-1">
             <div class="fl">معاينة</div>
             <div id="me-prev-hdr" style="border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;color:#fff;">
-              <img id="me-prev-logo" src="" style="height:32px;display:none">
+              <img id="me-prev-logo" src="" alt="" style="height:32px;display:none">
               <span id="me-prev-name" style="font-weight:800;font-size:14px;">اسم البلدية</span>
             </div>
           </div>
@@ -410,7 +411,7 @@ async function loadMunicipalities() {
     muns.forEach(function(m) {
       html += '<div class="mun-card" data-munid="' + m.id + '">';
       html += '<div style="width:44px;height:44px;border-radius:10px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-      html += m.logo_base64 ? '<img src="' + m.logo_base64 + '" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:24px">🏛</span>';
+      html += m.logo_base64 ? '<img src="' + m.logo_base64 + '" alt="" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:24px">🏛</span>';
       html += '</div><div style="flex:1"><div style="font-weight:700;font-size:14px">' + m.name + '</div>';
       html += '<div style="font-size:12px;color:var(--text3)">' + (m.region||'') + '</div></div>';
       html += '<div class="color-swatch" style="background:' + (m.primary_color||'#1a6eb5') + '"></div>';
@@ -444,7 +445,7 @@ async function editMunicipality(id) {
   document.getElementById('me-c2').value = m.secondary_color || '#1e5429';
   document.getElementById('me-c2t').value = m.secondary_color || '#1e5429';
   var lp = document.getElementById('me-logo-prev');
-  lp.innerHTML = editLogoB64 ? '<img src="' + editLogoB64 + '" style="height:50px;border-radius:8px;">' : '<span style="font-size:12px;color:var(--text3)">لا يوجد شعار</span>';
+  lp.innerHTML = editLogoB64 ? '<img src="' + editLogoB64 + '" alt="" style="height:50px;border-radius:8px;">' : '<span style="font-size:12px;color:var(--text3)">لا يوجد شعار</span>';
   document.getElementById('mun-edit-title').textContent = '✏️ تعديل: ' + m.name;
   document.getElementById('mun-edit-card').style.display = 'block';
   document.getElementById('me-msg').textContent = '';
@@ -469,7 +470,7 @@ function previewEditLogo(input) {
   reader.onload = function(e) {
     editLogoB64 = e.target.result;
     var lp = document.getElementById('me-logo-prev');
-    lp.innerHTML = '<img src="' + editLogoB64 + '" style="height:50px;border-radius:8px;">';
+    lp.innerHTML = '<img src="' + editLogoB64 + '" alt="" style="height:50px;border-radius:8px;">';
     updateEditPreview();
   };
   reader.readAsDataURL(f);
@@ -480,7 +481,7 @@ function previewNewLogo(input) {
   var reader = new FileReader();
   reader.onload = function(e) {
     newLogoB64 = e.target.result;
-    document.getElementById('nm-logo-prev').innerHTML = '<img src="' + newLogoB64 + '" style="height:44px;border-radius:8px;">';
+    document.getElementById('nm-logo-prev').innerHTML = '<img src="' + newLogoB64 + '" alt="" style="height:44px;border-radius:8px;">';
   };
   reader.readAsDataURL(f);
 }

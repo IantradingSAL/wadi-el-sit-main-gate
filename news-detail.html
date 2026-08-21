@@ -269,7 +269,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </div>
 
 <div class="lightbox" id="LIGHTBOX" onclick="closeLightbox()">
-  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-close" onclick="closeLightbox()" aria-label="إغلاق">✕</button>
   <img id="LIGHTBOX_IMG" src="" alt="">
 </div>
 
@@ -363,7 +363,7 @@ function renderArticle(a){
     </div>
     <article class="article">
       <div class="title-bar">
-        <h1 class="title">${esc(a.title)}</h1>
+        <h2 class="title">${esc(a.title)}</h2>
         <div class="meta">
           ${a.author_name ? `<span>✍️ ${esc(a.author_name)}</span><span class="meta-dot"></span>` : ''}
           <span>📅 ${dateStr}</span>

@@ -1828,12 +1828,12 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </nav>
 
 <!-- ═══════════════════════ CART DRAWER ═══════════════════════ -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeCart()"></div>
+<div aria-hidden="true" tabindex="-1" class="drawer-overlay" id="drawer-overlay" onclick="closeCart()"></div>
 <div class="drawer" id="cart-drawer">
   <div class="drawer-handle"></div>
   <div class="drawer-hdr">
     <div class="drawer-title" data-i18n="yourCart">🛒 سلّتك</div>
-    <button class="drawer-close" onclick="closeCart()">×</button>
+    <button class="drawer-close" onclick="closeCart()" aria-label="إغلاق">×</button>
   </div>
   <div class="drawer-body" id="cart-items"></div>
   <div class="drawer-foot" id="cart-foot" style="display:none">
@@ -1851,7 +1851,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="completeOrder">إتمام الطلب</div>
-      <button class="drawer-close" onclick="closeCheckout()">×</button>
+      <button class="drawer-close" onclick="closeCheckout()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -1930,7 +1930,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" id="modal-product-title" data-i18n="addProduct">إضافة منتج جديد</div>
-      <button class="drawer-close" onclick="closeProductModal()">×</button>
+      <button class="drawer-close" onclick="closeProductModal()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -1997,7 +1997,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="profile">الملف الشخصي</div>
-      <button class="drawer-close" onclick="closeProfileModal()">×</button>
+      <button class="drawer-close" onclick="closeProfileModal()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -2026,7 +2026,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal" style="max-width:380px">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="adminLoginTitle">🔐 دخول الإدارة</div>
-      <button class="drawer-close" onclick="closeAdminLogin()">×</button>
+      <button class="drawer-close" onclick="closeAdminLogin()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <p style="color:var(--text3);font-size:13px;margin-bottom:16px;text-align:center" data-i18n="adminLoginSub">للموظّفين المخوّلين فقط</p>
@@ -2052,7 +2052,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title">🚚 انضمّ كعامل توصيل</div>
-      <button class="drawer-close" onclick="closeDeliveryAgent()">×</button>
+      <button class="drawer-close" onclick="closeDeliveryAgent()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div id="da-status"></div>
@@ -2132,7 +2132,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="orderDetails">تفاصيل الطلب</div>
-      <button class="drawer-close" onclick="closeOrderModal()">×</button>
+      <button class="drawer-close" onclick="closeOrderModal()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body" id="order-modal-body"></div>
   </div>
@@ -2143,7 +2143,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
   <div class="modal" style="max-width:380px">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="aboutApp">حول التطبيق</div>
-      <button class="drawer-close" onclick="document.getElementById('modal-about').classList.remove('on')">×</button>
+      <button class="drawer-close" onclick="document.getElementById('modal-about').classList.remove('on')" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body" style="text-align:center">
       <div style="width:90px;height:90px;border-radius:50%;background:var(--primary4);margin:10px auto 14px;display:flex;align-items:center;justify-content:center;font-size:40px">🛒</div>
@@ -2613,7 +2613,7 @@ function openProductDetail(p){
     <div class="pdetail-img">${img}</div>
     <div class="pdetail-body">
       <div class="pdetail-brand">${escapeHtml(seller.display_name||'')}</div>
-      <h1 class="pdetail-name">${escapeHtml(p.name)}</h1>
+      <h2 class="pdetail-name">${escapeHtml(p.name)}</h2>
       ${cat?`<div class="pdetail-cat">${cat.icon} ${(typeof cat.name==="object"?pickLang(cat.name):cat.name)}</div>`:''}
       <div class="pdetail-price-row">
         <div class="pdetail-price">${formatPriceDual(p.price, p.currency)}</div>
@@ -2771,7 +2771,7 @@ function renderCart(){
   cart.forEach((item,idx)=>{
     const el=document.createElement('div');
     el.className='cart-item';
-    const img=item.photo?`<img src="${escapeAttr(item.photo)}">`:getCategoryIcon(item.category_id);
+    const img=item.photo?`<img src="${escapeAttr(item.photo)}" alt="${escapeAttr(item.name||'')}">`:getCategoryIcon(item.category_id);
     el.innerHTML=`
       <div class="cart-item-img">${img}</div>
       <div class="cart-item-info">
@@ -3482,7 +3482,7 @@ async function openAssignAgentModal(orderId){
   ov.innerHTML = `<div style="background:#fff;border-radius:14px;padding:18px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div style="font-size:15px;font-weight:900;color:#0f4d82">🚚 اختر عامل التوصيل</div>
-      <button class="drawer-close" style="background:#eef2f7">×</button>
+      <button class="drawer-close" style="background:#eef2f7" aria-label="إغلاق">×</button>
     </div>
     ${agents.map(a => `<button class="order-card" data-aid="${escapeAttr(a.id)}" data-aname="${escapeAttr(a.name||'')}" style="width:100%;text-align:start;display:flex;align-items:center;gap:10px;cursor:pointer;border:1px solid var(--border);margin-bottom:8px">
       <div style="font-size:22px">${vehMap[a.vehicle]||'🚚'}</div>
@@ -3907,7 +3907,7 @@ async function loadSellerStats(){
       products.forEach(p=>{
         const el=document.createElement('div');
         el.className='product-mgr-card';
-        const img=p.photo_urls?.[0]?`<img src="${escapeAttr(p.photo_urls[0])}">`:getCategoryIcon(p.category_id);
+        const img=p.photo_urls?.[0]?`<img src="${escapeAttr(p.photo_urls[0])}" alt="${escapeAttr(p.name||'')}">`:getCategoryIcon(p.category_id);
         const stockColor = p.stock > 0 ? 'var(--green)' : 'var(--red)';
         const stockTxt = p.stock > 0 ? ((window.__wadi_t&&window.__wadi_t('inStockN'))||'✓ متوفّر: ')+p.stock : ((window.__wadi_t&&window.__wadi_t('outOfStock'))||'✗ نفذ');
         el.innerHTML=`
@@ -4183,7 +4183,7 @@ function renderPhotoThumbs(){
   pendingPhotos.forEach((p, idx) => {
     const div = document.createElement('div');
     div.className = 'photo-thumb';
-    div.innerHTML = `<img src="${p.preview}" alt=""><button type="button" class="photo-thumb-rm" onclick="removePendingPhoto(${idx})" title="حذف">×</button>`;
+    div.innerHTML = `<img src="${p.preview}" alt=""><button type="button" class="photo-thumb-rm" onclick="removePendingPhoto(${idx})" title="حذف" aria-label="إغلاق">×</button>`;
     wrap.appendChild(div);
   });
   // Update button text

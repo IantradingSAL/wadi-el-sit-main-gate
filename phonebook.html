@@ -879,6 +879,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-shell.js" defer></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">دليل وادي الست — الصفحات الصفراء</h1>
 
 <!-- ═══════════ HEADER ═══════════ -->
 <header class="hd">
@@ -1052,7 +1053,7 @@ window.addEventListener('error', e => {
   if(m.includes('could not be cloned') || m.includes('DataCloneError')){ e.preventDefault(); }
 }, true);
 
-// LOGO — used both by the header <img id="LOGO"> and by the "About" modal
+// LOGO — used both by the header <img id="LOGO" alt=""> and by the "About" modal
 const LOGO_B64 = "icons/apple-touch-icon.png";
 { const _lg = document.getElementById('LOGO'); if (_lg) _lg.src = LOGO_B64; }
 
@@ -3101,7 +3102,7 @@ function admRenderEntries(){
         ${e.work_address?`<div>🏢 العمل: ${escHtml(e.work_address)}</div>`:''}
         ${e.email?`<div>✉️ ${escHtml(e.email)}</div>`:''}
         ${e.notes?`<div>📝 ${escHtml(e.notes)}</div>`:''}
-        ${e.image?`<div style="margin-top:7px"><img src="${e.image}" style="max-width:80px;border-radius:8px"></div>`:''}
+        ${e.image?`<div style="margin-top:7px"><img src="${e.image}" alt="${escHtml(e.name||'')}" style="max-width:80px;border-radius:8px"></div>`:''}
       </div>
       <div class="adm-itm-actions">
         <button class="btn btn-grn btn-sm" style="flex:1" onclick="admApproveEntry('${e.id}')">✅ موافقة</button>
@@ -3719,7 +3720,7 @@ function renderInfoModal(){
   const aboutBody = `
     <div style="text-align:center;padding:14px 0">
       <div style="width:84px;height:84px;border-radius:50%;background:#fff;padding:6px;margin:0 auto 14px;box-shadow:var(--shadow);border:2px solid var(--blue-soft)">
-        <img src="${LOGO_B64}" style="width:100%;height:100%;object-fit:contain">
+        <img src="${LOGO_B64}" alt="" style="width:100%;height:100%;object-fit:contain">
       </div>
       <h3 style="font-size:18px;color:var(--blue2);margin-bottom:5px">📒 دليل وادي الست</h3>
       <p style="font-size:13px;color:var(--text2)">دليل البلدية الرسمي — Yellow Pages</p>

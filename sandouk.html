@@ -50,6 +50,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-shell.js" defer></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">صندوق البلدية</h1>
 <a href="index.html" class="back-to-gate" title="العودة للبوابة الرئيسية"><img src="icons/apple-touch-icon.png" alt="شعار بلدية وادي الست" width="48" height="48" style="height:48px;width:48px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 3px 10px rgba(0,0,0,.16);border:2px solid rgba(255,255,255,.85);"></a>
 <!-- LOGIN -->
 <div id="login-screen" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
@@ -1129,7 +1130,7 @@ const BF_COLS=[
   {key:'balance',label:'الرصيد',filter:'none',num:true,sortVal:e=>Number(e.bal)||0,val:e=>String(e.bal||''),search:e=>'',cell:e=>'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'},
   {key:'created_by',label:'أدخلت بواسطة',filter:'text',val:e=>e.created_by||'',search:e=>e.created_by||'',cell:e=>'<td style="font-size:11px;color:#666">'+(e.created_by||'')+'</td>'},
   {key:'actions',label:'',filter:'none',sort:'none',val:e=>'',search:e=>'',cell:e=>'<td style="white-space:nowrap;width:1%" onclick="event.stopPropagation()">'
-      +'<button class="bf-rowmenu" title="إجراءات السند" aria-haspopup="menu" aria-expanded="false" onclick="bfRowMenu(event,\''+e.id+'\')">⋯</button>'
+      +'<button class="bf-rowmenu" title="إجراءات السند" aria-label="إجراءات السند" aria-haspopup="menu" aria-expanded="false" onclick="bfRowMenu(event,\''+e.id+'\')">⋯</button>'
     +'</td>'}
 ];
 const BF_COL_DEFAULT_VISIBLE=['entry_date','receipt_no','wassel_number','entry_type','category','payment_method','description','person','amount','balance','actions'];
@@ -1996,7 +1997,7 @@ function bfReceiptHTML(e){
   const sigBlock=(label,role)=>{
     const s=sigs[role];
     return '<div style="flex:1">'+label+'<br>'
-      +(s&&s.img?'<img src="'+s.img+'" style="height:44px;margin:1px 0">':'<br>')
+      +(s&&s.img?'<img src="'+s.img+'" alt="" style="height:44px;margin:1px 0">':'<br>')
       +'<div style="border-top:1.5px solid #bbb;margin:0 12px"></div>'
       +(s&&s.img?'<div style="font-size:8.5px;color:#1f7a45;margin-top:2px;font-weight:700">✓ موقّع إلكترونياً'+(s.at?' · '+new Date(s.at).toLocaleDateString('ar-LB'):'')+'</div>':'')
     +'</div>';
@@ -2005,10 +2006,10 @@ function bfReceiptHTML(e){
   return ''
   +'<div style="position:relative;border:2.5px solid #0f4d82;border-radius:4px;padding:5px;background:#fff">'
   +'<div style="position:relative;border:1.5px solid #c9a227;border-radius:2px;padding:18px 22px;overflow:hidden">'
-    +(BF_LOGO?'<img src="'+BF_LOGO+'" style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:270px;opacity:.05;pointer-events:none">':'')
+    +(BF_LOGO?'<img src="'+BF_LOGO+'" alt="" style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:270px;opacity:.05;pointer-events:none">':'')
     +(e.voided?'<div style="position:absolute;top:46%;left:50%;transform:translate(-50%,-50%) rotate(-16deg);border:4px solid #c22;color:#c22;font-size:46px;font-weight:800;padding:4px 34px;border-radius:12px;opacity:.8;z-index:5;letter-spacing:0">ملغى</div>':'')
     +'<div style="display:flex;align-items:center;gap:14px;border-bottom:2.5px solid #c9a227;padding-bottom:12px;position:relative">'
-      +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:58px">':'')
+      +(BF_LOGO?'<img src="'+BF_LOGO+'" alt="" style="height:58px">':'')
       +'<div style="flex:1">'
         +'<div style="font-size:11px;color:#8a8f9c;font-weight:700">الجمهورية اللبنانية</div>'
         +'<div style="font-size:19px;font-weight:800;color:#0f4d82">بلدية وادي الست</div>'
@@ -2315,7 +2316,7 @@ function bfBuildReportEl(){
   el.innerHTML=
     // ── page 1: title block + summary ──
     '<div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid #c9a227;padding-bottom:12px;margin-bottom:14px">'
-    +(BF_LOGO?'<img src="'+BF_LOGO+'" style="height:64px">':'')
+    +(BF_LOGO?'<img src="'+BF_LOGO+'" alt="" style="height:64px">':'')
     +'<div style="flex:1"><div style="font-size:13px;color:#8a8f9c;font-weight:700">الجمهورية اللبنانية — محافظة جبل لبنان — قضاء الشوف</div>'
     +'<div style="font-size:24px;font-weight:800;color:#0f4d82">بلدية وادي الست — صندوق البلدية</div>'
     +'<div style="font-size:15px;font-weight:800;color:#c9a227">تقرير المقبوضات والمصروفات</div></div>'

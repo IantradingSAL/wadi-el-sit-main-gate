@@ -333,7 +333,7 @@ function showDetail(id){
     <div class="detail-bg" id="detail-bg">
       <div class="detail-card" onclick="event.stopPropagation()">
         <div class="detail-head" style="position:relative">
-          <button class="detail-close" id="detail-close">×</button>
+          <button class="detail-close" id="detail-close" aria-label="إغلاق">×</button>
           <h2>${esc(r.subject || '(بدون موضوع)')}</h2>
           <div style="opacity:.85;font-size:12.5px">${fmtWhen(r.received_at)} · <span class="ticket" style="background:rgba(255,255,255,.2);color:#fff">${esc(r.ticket_id || '—')}</span></div>
         </div>

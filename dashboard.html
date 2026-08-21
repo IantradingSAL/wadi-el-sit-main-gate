@@ -244,6 +244,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-shell.js" defer></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">بلدية وادي الست — نظام متابعة الطلبات والمراسلات</h1>
 <!-- Back to Main Gate (floating) -->
 <style>
 .back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
@@ -376,7 +377,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <div id="toast" class="toast"></div>
 <div class="ov" id="OV" onclick="mc(event)">
   <div class="mo" onclick="event.stopPropagation()">
-    <div class="mh"><div class="mht" id="MT">—</div><button class="mcl" onclick="closeM()">✕</button></div>
+    <div class="mh"><div class="mht" id="MT">—</div><button class="mcl" onclick="closeM()" aria-label="إغلاق">✕</button></div>
     <div class="mb" id="MB"></div>
   </div>
 </div>
@@ -1196,7 +1197,7 @@ function openDetail(id){
   if(R.A&&na&&ip){ab=`<div class="ab"><div class="abt">⏳ هذا الطلب يحتاج إلى موافقتك</div><div class="abs">يستوجب موافقة رسمية قبل المتابعة</div><div class="abbs"><button class="btn bgr" style="flex:1;justify-content:center" onclick="doApprove('${id}','approved')">✓ منح الموافقة</button><button class="btn bd2" style="flex:1;justify-content:center" onclick="doApprove('${id}','rejected')">✗ رفض</button></div></div>`;}
   const isImg=ext=>['jpg','jpeg','png','gif','webp'].includes((ext||'').toLowerCase());
   const docsH=docs.length?docs.map(d=>`<div class="dcd">
-    ${isImg(d.type)?`<img class="dth" src="${d.url}" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">`:`<div class="dpdf" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">📄</div>`}
+    ${isImg(d.type)?`<img class="dth" alt="${docAttr(d.name)}" src="${d.url}" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">`:`<div class="dpdf" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">📄</div>`}
     <div class="ddi"><span class="ddn" title="${d.name}">${d.name}</span><a href="#" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')" style="color:var(--blue);font-size:13px;text-decoration:none;margin-left:4px;cursor:pointer" title="تحميل">⬇️</a>${R.edit?`<button class="ddrm" onclick="event.stopPropagation();rmDoc('${id}','${d.path}')">🗑</button>`:''}</div>
   </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:4px 0">لا توجد مستندات مرفقة</div>';
   const uz=R.edit?`<div class="uz" id="uz${id}" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hd(event,'${id}')"><input type="file" multiple accept="image/*,video/*,.pdf" onchange="hf(this.files,'${id}')"><div class="uzi">📎</div><div class="uzt">اسحب الملفات أو اضغط للاختيار</div><div class="uzs">صور JPG/PNG وPDF — حتى 10MB</div></div>`:'';
@@ -1902,7 +1903,7 @@ function renderCitFiles() {
     +'<span style="font-size:20px">'+ico(f)+'</span>'
     +'<span style="flex:1;font-size:13px;font-weight:600;color:var(--blue2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.name+'</span>'
     +'<span style="font-size:11px;color:var(--text3);flex-shrink:0">'+fmt(f.size)+'</span>'
-    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px">✕</button>'
+    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px" aria-label="إغلاق">✕</button>'
     +'</div>'
   ).join('');
 }
@@ -2092,7 +2093,7 @@ function renderCitFileList(){
       <span style="font-size:17px">${icon(f)}</span>
       <span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
       <span style="font-size:11px;color:var(--text3);white-space:nowrap">${fmt(f.size)}</span>
-      <button onclick="removeCitFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text3)'">✕</button>
+      <button onclick="removeCitFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text3)'" aria-label="إغلاق">✕</button>
     </div>`).join('');
 }
 
@@ -3737,7 +3738,7 @@ function showWhatsNewPopup(items) {
     '<div style="background:linear-gradient(120deg,#0f4d82,#1a6eb5);color:#fff;padding:18px 22px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between">' +
     '<div><div style="font-size:16px;font-weight:800">🚀 ما الجديد في هذا الإصدار</div>' +
     '<div style="font-size:12px;opacity:.8;margin-top:2px">' + (items[0] ? items[0].date : '') + '</div></div>' +
-    '<button onclick="document.getElementById(\'news-popup\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>' +
+    '<button onclick="document.getElementById(\'news-popup\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px" aria-label="إغلاق">×</button>' +
     '</div>' +
     '<div style="padding:16px 20px">' +
     items.map(function(item) {
@@ -5027,7 +5028,7 @@ function irrNotifyNow(id){
   ov2.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;max-width:380px;width:100%">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
     '<div style="font-size:15px;font-weight:800">📧 إشعار: '+o.name+'</div>'+
-    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999">✕</button>'+
+    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999" aria-label="إغلاق">✕</button>'+
     '</div>'+
     Object.keys(NOTIF_TEMPLATES).map(function(k){
       var t=NOTIF_TEMPLATES[k];
@@ -5101,11 +5102,11 @@ function irTab(id){var mb=document.getElementById('MB');if(!mb)return;mb.querySe
 
 async function openHelp(page){
   var content='<div style="padding:0 0 10px;border-bottom:2px solid #e8f0fc;margin-bottom:12px"><h3 style="color:#1a6eb5;margin:0;font-size:15px;font-weight:800">⚙️ لوحة تحكم موظفي البلدية</h3></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">📋 الطلبات</div><div style="font-size:13px;color:#444;padding-right:11px">جميع الطلبات — طلبات الموقع — تنتظر الموافقة</div></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">➕ إضافة طلب</div><div style="font-size:13px;color:#444;padding-right:11px">الاسم والهاتف والنوع إلزامية</div></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">👥 إدارة المستخدمين + 🎭 الأدوار</div><div style="font-size:13px;color:#444;padding-right:11px">للمدير ورئيس البلدية — YES/NO لكل ميزة وتصنيف</div></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">💧 دورة المياه</div><div style="font-size:13px;color:#444;padding-right:11px">تسجيل المشتركين، الجدول، إشعارات البريد</div></div><div style="background:#f0f7ff;border:1px solid #bee3f8;border-radius:8px;padding:10px 12px;font-size:13px"><b style="color:#1a6eb5">⚠️</b> كل تعديل يُسجَّل في سجل التدقيق</div>';
-  var m=document.getElementById('_hm_d');if(!m){m=document.createElement('div');m.id='_hm_d';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:20px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1"><div style="font-size:15px;font-weight:800;color:#1a6eb5">📖 دليل لوحة التحكم</div><button onclick="document.getElementById(\'_hm_d\').remove()" style="background:#f0f4f8;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px">✕</button></div><div id="_hb_d" style="padding:20px"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb_d').innerHTML=content;m.style.display='flex';
+  var m=document.getElementById('_hm_d');if(!m){m=document.createElement('div');m.id='_hm_d';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:20px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1"><div style="font-size:15px;font-weight:800;color:#1a6eb5">📖 دليل لوحة التحكم</div><button onclick="document.getElementById(\'_hm_d\').remove()" style="background:#f0f4f8;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px" aria-label="إغلاق">✕</button></div><div id="_hb_d" style="padding:20px"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb_d').innerHTML=content;m.style.display='flex';
 }
 
 
-function openHelp(p){var c='<b style="color:#1a6eb5;font-size:14px">⚙️ لوحة تحكم موظفي البلدية</b><br><br>📋 <b>الطلبات</b>: ترى فقط التصنيفات المسموحة.<br>➕ <b>إضافة طلب</b>: الاسم والهاتف والنوع إلزامية.<br>👥 <b>المستخدمين</b>: للمدير ورئيس البلدية فقط.<br>🎭 <b>الأدوار</b>: YES/NO لكل ميزة وتصنيف.<br>💧 <b>دورة المياه</b>: المشتركين والجدول والإشعارات.';var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%"><div style="display:flex;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل لوحة التحكم</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';}
+function openHelp(p){var c='<b style="color:#1a6eb5;font-size:14px">⚙️ لوحة تحكم موظفي البلدية</b><br><br>📋 <b>الطلبات</b>: ترى فقط التصنيفات المسموحة.<br>➕ <b>إضافة طلب</b>: الاسم والهاتف والنوع إلزامية.<br>👥 <b>المستخدمين</b>: للمدير ورئيس البلدية فقط.<br>🎭 <b>الأدوار</b>: YES/NO لكل ميزة وتصنيف.<br>💧 <b>دورة المياه</b>: المشتركين والجدول والإشعارات.';var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%"><div style="display:flex;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل لوحة التحكم</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer" aria-label="إغلاق">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';}
 </script>
 
 
