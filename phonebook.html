@@ -15,6 +15,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="i18n.js"></script>
 <script src="wadi-strings.js"></script>
+<script src="number-format.js"></script>
 <link rel="stylesheet" href="wadi-help.css">
 <script>
 if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
@@ -1452,7 +1453,24 @@ function avatarColor(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCode
 function initials(name){ const p=(name||'').trim().split(/\s+/); return p.length>=2?(p[0][0]||'')+(p[p.length-1][0]||''):(p[0]||'').slice(0,2); }
 function toast(msg, type='ok'){ const t=document.getElementById('TST'); t.textContent=msg; t.className='toast show '+type; setTimeout(()=>t.className='toast',3200); }
 function escHtml(s){ return (s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function fmtPhone(p){ if(!p) return ''; let s=p.toString().replace(/\s+/g,''); if(s.startsWith('+961') && s.length===12) return '+961 '+s.slice(4,5)+' '+s.slice(5,8)+' '+s.slice(8,12); return s; }
+// ☎️ One shape for every number in the directory: +961 3 922 209 /
+// +961 76 789 039. This used to keep the national trunk 0 and slice blindly at
+// twelve characters, so 03922209 was shown as “+961 0 392 2209” — a number
+// nobody can dial, wrongly grouped on top of it. number-format.js owns the rule.
+function fmtPhone(p){
+  if(!p) return '';
+  if(window.phoneDisplay) return phoneDisplay(p);
+  return String(p).replace(/\s+/g,'');
+}
+function telHref(p){ return (window.phoneE164 ? phoneE164(p) : String(p||'')); }
+function waNum(c){
+  const src=(c && (c.wa || c.phone)) || '';
+  return window.phoneWa ? phoneWa(src) : String(src).replace(/\D/g,'');
+}
+// A Lebanese number is one number-format.js can resolve to +961; the stored
+// `cc` column was set from the raw text and read 'other' for every number saved
+// in national form, which is what silently hid the WhatsApp button.
+function isLbPhone(p){ return window.phoneParts ? !!(phoneParts(p).lb && phoneParts(p).ok) : false; }
 function fmtTime(d){ if(!d) return ''; const dt=new Date(d); return dt.toLocaleString('ar-LB',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
 
 // Merge a registry person with whatever overlay we hold for them.
@@ -1687,7 +1705,7 @@ function renderCard(c){
     : `<div class="av ${cls}">${escHtml(init)}</div>`;
   const phoneOk = !!c.phone && !c.phone_hidden;
   const callOk  = phoneOk && !c.disable_call;
-  const waOk    = phoneOk && c.cc === 'lb' && !c.disable_wa;
+  const waOk    = phoneOk && (c.cc === 'lb' || isLbPhone(c.phone)) && !c.disable_wa;
   const mapOk   = (c.lat && c.lng) && !c.address_hidden;
   const occHtml = c.occupation ? `<div class="card-occ">${escHtml(c.occupation)}</div>` : '';
   const addrHtml = (c.address && !c.address_hidden) ? `<div class="card-addr">${escHtml(c.address)}</div>` : '';
@@ -1715,8 +1733,8 @@ function renderCard(c){
     ${phoneBlock}
     ${addrHtml}
     <div class="card-actions">
-      <a class="qa qa-tel ${callOk?'':'dis'}" href="${callOk?`tel:${c.phone}`:'#'}" aria-label="${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}"><span class="qa-i">📞</span><span class="qa-l">${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}</span></a>
-      <a class="qa qa-wa ${waOk?'':'dis'}" href="${waOk?`https://wa.me/${c.wa}`:'#'}" target="_blank" rel="noopener" aria-label="${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}"><span class="qa-i">💬</span><span class="qa-l">${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}</span></a>
+      <a class="qa qa-tel ${callOk?'':'dis'}" href="${callOk?`tel:${telHref(c.phone)}`:'#'}" aria-label="${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}"><span class="qa-i">📞</span><span class="qa-l">${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}</span></a>
+      <a class="qa qa-wa ${waOk?'':'dis'}" href="${waOk?`https://wa.me/${waNum(c)}`:'#'}" target="_blank" rel="noopener" aria-label="${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}"><span class="qa-i">💬</span><span class="qa-l">${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}</span></a>
       <a class="qa qa-map ${mapOk?'':'dis'}" href="${mapOk?`https://www.google.com/maps?q=${c.lat},${c.lng}`:'#'}" target="_blank" rel="noopener" aria-label="${(window.__wadi_t&&window.__wadi_t('qaMap'))||'الموقع'}"><span class="qa-i">📍</span><span class="qa-l">${(window.__wadi_t&&window.__wadi_t('qaMap'))||'الموقع'}</span></a>
       <button class="qa qa-edit" onclick='event.stopPropagation();openEdit(${JSON.stringify(c).replace(/'/g,"&apos;")})' aria-label="${(window.__wadi_t&&window.__wadi_t('qaEdit'))||'تعديل'}"><span class="qa-i">✏️</span><span class="qa-l">${(window.__wadi_t&&window.__wadi_t('qaEdit'))||'تعديل'}</span></button>
     </div>
@@ -1905,7 +1923,7 @@ function openDetail(c){
     : `<div class="dt-av ${cls}">${escHtml(init)}</div>`;
   const phoneOk = !!c.phone && !c.phone_hidden;
   const callOk  = phoneOk && !c.disable_call;
-  const waOk    = phoneOk && c.cc === 'lb' && !c.disable_wa;
+  const waOk    = phoneOk && (c.cc === 'lb' || isLbPhone(c.phone)) && !c.disable_wa;
   const mapOk   = (c.lat && c.lng) && !c.address_hidden;
   const workMapOk = c.work_lat && c.work_lng;
 
@@ -2029,8 +2047,8 @@ function openDetail(c){
       </div>
 
       <div class="dt-actions">
-        <a class="dt-action tel ${callOk?'':'dis'}" href="${callOk?`tel:${c.phone}`:'#'}"><span class="dt-action-i">📞</span>${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}</a>
-        <a class="dt-action wa ${waOk?'':'dis'}" href="${waOk?`https://wa.me/${c.wa}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">💬</span>${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}</a>
+        <a class="dt-action tel ${callOk?'':'dis'}" href="${callOk?`tel:${telHref(c.phone)}`:'#'}"><span class="dt-action-i">📞</span>${(window.__wadi_t&&window.__wadi_t('qaCall'))||'اتصال'}</a>
+        <a class="dt-action wa ${waOk?'':'dis'}" href="${waOk?`https://wa.me/${waNum(c)}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">💬</span>${(window.__wadi_t&&window.__wadi_t('qaWA'))||'واتساب'}</a>
         <a class="dt-action map ${mapOk?'':'dis'}" href="${mapOk?`https://www.google.com/maps?q=${c.lat},${c.lng}`:'#'}" target="_blank" rel="noopener"><span class="dt-action-i">📍</span>${(window.__wadi_t&&window.__wadi_t('dtMap'))||'خريطة'}</a>
         <button class="dt-action edit" onclick='closeModal();setTimeout(()=>openEdit(${JSON.stringify(c).replace(/'/g,"&apos;")}),200)'><span class="dt-action-i">✏️</span>${(window.__wadi_t&&window.__wadi_t('qaEdit'))||'تعديل'}</button>
       </div>
@@ -2059,7 +2077,7 @@ function openDetail(c){
             ${f.copy ? `<button class="dt-field-btn" onclick="copyText('${f.copy}')">📋</button>` : ''}
           </div>`).join('')}
           ${c.work_phone ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:5px">
-            <a class="btn btn-prim btn-sm" href="tel:${c.work_phone}">${(window.__wadi_t&&window.__wadi_t('workCall'))||'📞 اتصال بالعمل'}</a>
+            <a class="btn btn-prim btn-sm" href="tel:${telHref(c.work_phone)}">${(window.__wadi_t&&window.__wadi_t('workCall'))||'📞 اتصال بالعمل'}</a>
             ${workMapOk ? `<a class="btn btn-grn btn-sm" href="https://www.google.com/maps?q=${c.work_lat},${c.work_lng}" target="_blank" rel="noopener">${(window.__wadi_t&&window.__wadi_t('workMapBtn'))||'📍 موقع العمل'}</a>` : '<span></span>'}
           </div>` : workMapOk ? `<a class="btn btn-grn btn-sm btn-block" href="https://www.google.com/maps?q=${c.work_lat},${c.work_lng}" target="_blank" rel="noopener">${(window.__wadi_t&&window.__wadi_t('workMapOnMap'))||'📍 موقع العمل على الخريطة'}</a>` : ''}
         </div>` : ''}
@@ -2431,7 +2449,7 @@ function openEdit(c){
         </div>
         <div class="fm-grp">
           <label class="fm-l">رقم الهاتف الشخصي</label>
-          <input class="fm-i ltr" id="ED_PH" value="${escHtml(c.phone||'')}" inputmode="tel">
+          <input class="fm-i ltr" id="ED_PH" value="${escHtml(c.phone||'')}" inputmode="tel" data-phone>
         </div>
         <div class="fm-grp">
           <label class="fm-l">العنوان</label>
@@ -2456,7 +2474,7 @@ function openEdit(c){
         </div>
         <div class="fm-grp">
           <label class="fm-l">☎️ هاتف العمل</label>
-          <input class="fm-i ltr" id="ED_WPH" value="${escHtml(c.work_phone||'')}" inputmode="tel">
+          <input class="fm-i ltr" id="ED_WPH" value="${escHtml(c.work_phone||'')}" inputmode="tel" data-phone>
         </div>
         <div class="fm-grp">
           <label class="fm-l">🏢 عنوان العمل</label>
@@ -2486,7 +2504,7 @@ function openEdit(c){
           </div>
           <div>
             <label class="fm-l">هاتفك <span class="req">*</span></label>
-            <input class="fm-i ltr" id="ED_BY_PH" required placeholder="+961..." inputmode="tel">
+            <input class="fm-i ltr" id="ED_BY_PH" required placeholder="+961..." inputmode="tel" data-phone>
           </div>
         </div>
 
@@ -2618,7 +2636,7 @@ function openCorrect(c){
         </div>
         <div class="fm-grp row2">
           <div><label class="fm-l"><span data-i18n="yourName">اسمك</span> <span class="req">*</span></label><input class="fm-i" id="CR_NAME" required></div>
-          <div><label class="fm-l"><span data-i18n="yourPhone">هاتفك</span> <span class="req">*</span></label><input class="fm-i ltr" id="CR_PH" required inputmode="tel"></div>
+          <div><label class="fm-l"><span data-i18n="yourPhone">هاتفك</span> <span class="req">*</span></label><input class="fm-i ltr" id="CR_PH" required inputmode="tel" data-phone></div>
         </div>
         <div id="CR_ERR"></div>
         <button type="submit" class="btn btn-sun btn-block" id="CR_SUB" data-i18n="sendCorrection">✏️ إرسال طلب التصحيح</button>
@@ -2709,7 +2727,7 @@ function openAdd(){
         </div>
         <div class="fm-grp">
           <label class="fm-l"><span data-i18n="fldPhone">رقم الهاتف الشخصي</span> <span class="req">*</span></label>
-          <input class="fm-i ltr" id="AD_PH" placeholder="+961 76 ..." data-i18n-placeholder="phEx_phone" inputmode="tel">
+          <input class="fm-i ltr" id="AD_PH" placeholder="+961 76 ..." data-i18n-placeholder="phEx_phone" inputmode="tel" data-phone>
         </div>
         <div class="fm-grp">
           <label class="fm-l"><span data-i18n="fldAddress">العنوان</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
@@ -2734,7 +2752,7 @@ function openAdd(){
         </div>
         <div class="fm-grp">
           <label class="fm-l"><span data-i18n="fldWorkPhone">☎️ هاتف العمل</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
-          <input class="fm-i ltr" id="AD_WPH" placeholder="+961..." inputmode="tel">
+          <input class="fm-i ltr" id="AD_WPH" placeholder="+961..." inputmode="tel" data-phone>
         </div>
         <div class="fm-grp">
           <label class="fm-l"><span data-i18n="fldWorkAddr">🏢 عنوان العمل</span> <span class="opt">(<span data-i18n="optional">اختياري</span>)</span></label>
@@ -2772,7 +2790,7 @@ function openAdd(){
         <div class="fm-info">👤 معلوماتك للتحقق:</div>
         <div class="fm-grp row2">
           <div><label class="fm-l"><span data-i18n="yourName">اسمك</span> <span class="req">*</span></label><input class="fm-i" id="AD_BY_NM"></div>
-          <div><label class="fm-l"><span data-i18n="yourPhone">هاتفك</span> <span class="req">*</span></label><input class="fm-i ltr" id="AD_BY_PH" inputmode="tel"></div>
+          <div><label class="fm-l"><span data-i18n="yourPhone">هاتفك</span> <span class="req">*</span></label><input class="fm-i ltr" id="AD_BY_PH" inputmode="tel" data-phone></div>
         </div>
 
         <div id="AD_ERR"></div>
@@ -3036,12 +3054,12 @@ async function submitAdd__run(e){
   let work_lat=null, work_lng=null;
   if(wll){ const p=wll.split(',').map(s=>parseFloat(s.trim())); if(p.length===2&&!isNaN(p[0])&&!isNaN(p[1])){ work_lat=p[0]; work_lng=p[1]; } }
 
-  // Normalize Arabic-Indic / Persian digits to Latin so wa link works
-  const phoneNorm = toLatinDigits(phone).replace(/\s+/g,'').trim();
-  const wa = digitsOnly(phoneNorm);
-  const cc = phoneNorm.startsWith('+961') ? 'lb' : 'other';
-  // Also normalize work_phone digits
-  const wphNorm = wph ? toLatinDigits(wph).replace(/\s+/g,'').trim() : '';
+  // Stored in international form (+961 3 922 209 → +9613922209), whatever the
+  // resident typed: Arabic digits, a national 03…, or a pasted 00961…
+  const phoneNorm = window.phoneE164 ? phoneE164(phone) : toLatinDigits(phone).replace(/\s+/g,'').trim();
+  const wa = window.phoneWa ? phoneWa(phone) : digitsOnly(phoneNorm);
+  const cc = (window.phoneParts && phoneParts(phone).lb) ? 'lb' : (phoneNorm ? 'other' : null);
+  const wphNorm = wph ? (window.phoneE164 ? phoneE164(wph) : toLatinDigits(wph).replace(/\s+/g,'').trim()) : '';
 
   // The resident's own visibility choices. Stored as the same five columns an
   // administrator would set from the detail card, so there is one set of rules
@@ -3252,7 +3270,7 @@ function admRenderTab(){
 function admRenderEntries(){
   if(PENDING_ENTRIES_ADM.length === 0) return `<div class="adm-empty"><div class="adm-empty-i">✅</div>لا توجد إضافات معلّقة</div>`;
   return `<div class="adm-list">${PENDING_ENTRIES_ADM.map(e => `
-    <div class="adm-itm">
+    <div class="adm-itm" id="rev-${e.id}">
       <div class="adm-itm-hd">
         <div class="adm-itm-info">
           <div class="adm-itm-t">${escHtml(e.name)}${e.family?` <span class="card-fam-pill">${escHtml(e.family)}</span>`:''}</div>
@@ -3283,7 +3301,7 @@ function admRenderEdits(){
   return `<div class="adm-list">${PENDING_EDITS.map(e => {
     const fields = Object.keys(e.proposed||{});
     const target = e.target_type==='registry' ? `جهة من السجل #${e.ref_id}` : 'جهة مُضافة';
-    return `<div class="adm-itm">
+    return `<div class="adm-itm" id="rev-${e.id}">
       <div class="adm-itm-hd">
         <div class="adm-itm-info">
           <div class="adm-itm-t">${escHtml(target)}</div>
@@ -3366,10 +3384,10 @@ async function fixWhatsappLink(meta){
   if(!isAdmin || !sb){ toast('⚠️ ميزة للأدمن فقط','err'); return; }
   if(!meta.phone){ toast('⚠️ لا يوجد رقم لإصلاحه','err'); return; }
 
-  // Normalize: convert any Arabic-Indic / Persian digits to Latin, strip spaces
-  const phoneNorm = toLatinDigits(meta.phone).replace(/\s+/g,'').trim();
-  const wa = digitsOnly(phoneNorm);
-  const cc = phoneNorm.startsWith('+961') ? 'lb' : 'other';
+  // Same rule as everywhere else: whatever it was typed as, it is stored as +961…
+  const phoneNorm = window.phoneE164 ? phoneE164(meta.phone) : toLatinDigits(meta.phone).replace(/\s+/g,'').trim();
+  const wa = window.phoneWa ? phoneWa(meta.phone) : digitsOnly(phoneNorm);
+  const cc = (window.phoneParts && phoneParts(meta.phone).lb) ? 'lb' : 'other';
 
   if(wa.length < 8){
     toast(`⚠️ الرقم بعد التنظيف قصير جداً (${wa.length} رقم) — عدّله يدوياً`, 'err');
@@ -3578,9 +3596,9 @@ async function submitAdminEdit(e, c){
     first: document.getElementById('ED_FIRST').value.trim(),
     family: document.getElementById('ED_FAM').value.trim(),
     name: document.getElementById('ED_FULL').value.trim(),
-    phone,
-    wa: digitsOnly(phone),
-    cc: phone.startsWith('+961') ? 'lb' : (phone ? 'other' : null),
+    phone: window.phoneE164 ? phoneE164(phone) : phone,
+    wa: window.phoneWa ? phoneWa(phone) : digitsOnly(phone),
+    cc: (window.phoneParts && phoneParts(phone).lb) ? 'lb' : (phone ? 'other' : null),
     address: document.getElementById('ED_ADDR').value.trim(),
     email: document.getElementById('ED_EMAIL').value.trim(),
     occupation: document.getElementById('ED_OCC').value.trim(),
@@ -4175,7 +4193,38 @@ async function init(){
   // is missing from their own screen — so fetch it again now that we do.
   if(isAdmin) await loadRegistry();
   await loadFromServer();
+  phbHashRoute();
 }
+
+// 🎯 #review=<id> — تفتح لوحة الإدارة على السجل المطلوب بالذات، و
+// #contact=<id> تفتح بطاقة جهة بعينها. روابط بريد التبليغ تعتمد عليها: البريد
+// يجب أن يوصلك إلى السجل، لا إلى قائمة تبحث فيها.
+function phbFlash(el){
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth', block:'center'});
+  el.style.transition='box-shadow .3s, background .3s';
+  el.style.boxShadow='0 0 0 3px var(--sun, #f5a623)';
+  setTimeout(function(){ el.style.boxShadow=''; }, 2600);
+}
+async function phbHashRoute(){
+  const h = location.hash || '';
+  const m = h.match(/^#(review|contact)=(.+)$/);
+  if(!m) return;
+  const kind = m[1], id = decodeURIComponent(m[2]);
+  if(kind === 'contact'){
+    const list = (typeof getAllPublic === 'function') ? getAllPublic() : [];
+    const c = list.find(x => String(x.id) === id || String(x.ref_id) === id);
+    if(c) openDetail(c); else toast('⚠️ الجهة غير موجودة أو غير منشورة بعد','err');
+    return;
+  }
+  if(!isAdmin){ toast('🔒 هذا السجل يحتاج حساب إدارة','err'); return; }
+  // the pending item may be an addition or a proposed edit — open the tab it is in
+  const inEntries = (PENDING_ENTRIES_ADM||[]).some(e => String(e.id) === id);
+  admActiveTab = inEntries ? 'entries' : 'edits';
+  openAdmin();
+  setTimeout(function(){ phbFlash(document.getElementById('rev-'+id)); }, 450);
+}
+window.addEventListener('hashchange', phbHashRoute);
 
 function markWhatsNewSeen(){
   lsSet('whatsnew_seen', 'v2.1');

@@ -107,6 +107,23 @@ agree about the same person.
 - Every trigger swallows its own errors: a registration must never fail because
   the queue or the mailer is having a bad day.
 
+## Phone numbers are Lebanese, and `number-format.js` owns the rule
+
+- One shape everywhere: **`+961 3 922 209`**, **`+961 76 789 039`**. Lebanon
+  writes a number nationally with a trunk **0** (03, 70, 71, 76, 78, 79, 81,
+  01/04–09) and that 0 is **dropped** after the country code. Keeping it is what
+  printed `+961 0 392 2209` in the directory — a number no phone can dial.
+- `phoneDisplay()` / `phoneE164()` / `phoneWa()` / `phoneValid()` live in
+  `number-format.js`; every page that shows or takes a number loads it. Storage
+  is `+9613922209`, display is grouped, `wa.me` gets bare digits.
+- **`data-phone` on an input** opens it with `+961 ` already there and formats it
+  on blur (not on every keystroke — that fights the caret). PIN boxes are
+  `type=tel` too: they carry `inputmode="numeric"` and are deliberately skipped.
+- The security-definer RPCs (`coop_agent_login`, `coop_buyer_orders`,
+  `citizen_track_case`, `coop_seller_login_v2`) already compare
+  digits-minus-961-minus-0 on both sides, so old national values and new
+  international ones match each other. Keep any new phone lookup on that rule.
+
 ## Nothing in the web root is protected
 
 GitHub Pages serves every file in this repository to anyone who asks. There is

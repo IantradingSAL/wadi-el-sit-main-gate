@@ -1851,7 +1851,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       </div>
       <div class="field">
         <label class="field-label" data-i18n="phone">رقم الهاتف *</label>
-        <input class="field-input" id="ck-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
+        <input class="field-input" id="ck-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right" data-phone>
       </div>
       <div class="field">
         <label class="field-label" data-i18n="addressDelivery">العنوان (للتوصيل)</label>
@@ -1997,7 +1997,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       </div>
       <div class="field">
         <label class="field-label" data-i18n="profPhone">رقم الهاتف</label>
-        <input class="field-input" id="prof-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
+        <input class="field-input" id="prof-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right" data-phone>
       </div>
       <div class="field">
         <label class="field-label" data-i18n="profAddr">العنوان (اختياري)</label>
@@ -2057,11 +2057,11 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
         </div>
         <div class="field">
           <label class="field-label">رقم الهاتف *</label>
-          <input class="field-input" id="da-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
+          <input class="field-input" id="da-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right" data-phone>
         </div>
         <div class="field">
           <label class="field-label">رقم الواتساب *</label>
-          <input class="field-input" id="da-wa" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
+          <input class="field-input" id="da-wa" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right" data-phone>
         </div>
         <div class="field">
           <label class="field-label">المنطقة المخدومة *</label>
@@ -2098,7 +2098,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
         <p style="color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:14px">أدخل رقم هاتفك ورمز PIN للوصول إلى طلبات التوصيل.</p>
         <div class="field">
           <label class="field-label">رقم الهاتف</label>
-          <input class="field-input" id="dl-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right">
+          <input class="field-input" id="dl-phone" type="tel" placeholder="03xxxxxx" style="direction:ltr;text-align:right" data-phone>
         </div>
         <div class="field">
           <label class="field-label">رمز PIN</label>
@@ -2852,7 +2852,7 @@ function closeCheckout(){
 
 async function placeOrder(){
   const name=document.getElementById('ck-name').value.trim();
-  const phone=document.getElementById('ck-phone').value.trim();
+  const phone=phoneE164(document.getElementById('ck-phone').value.trim());
   const addr=document.getElementById('ck-addr').value.trim();
   const dlvRadio=document.querySelector('input[name="ck-delivery"]:checked');
   const delivery=dlvRadio?dlvRadio.value:'pickup';
@@ -3112,7 +3112,7 @@ function closeProfileModal(){
 
 function saveProfile(){
   const n=document.getElementById('prof-name').value.trim();
-  const p=document.getElementById('prof-phone').value.trim();
+  const p=phoneE164(document.getElementById('prof-phone').value.trim());
   const a=document.getElementById('prof-addr').value.trim();
   if(!n){toast(L().errNameReq,'err');return;}
   if(!p||p.length<7){toast(L().errPhoneInvalid,'err');return;}
@@ -3550,8 +3550,8 @@ async function logoutAgent(){
 
 async function submitDeliveryAgent(){
   const name=document.getElementById('da-name').value.trim();
-  const phone=document.getElementById('da-phone').value.trim();
-  const wa=document.getElementById('da-wa').value.trim();
+  const phone=phoneE164(document.getElementById('da-phone').value.trim());
+  const wa=phoneE164(document.getElementById('da-wa').value.trim());
   const area=document.getElementById('da-area').value.trim();
   const vehicle=document.getElementById('da-vehicle').value;
   const pin=document.getElementById('da-pin').value.trim();
@@ -3676,7 +3676,7 @@ function showSellerRegister(){
         <div class="field"><label class="field-label">الاسم الأوّل *</label><input class="field-input" id="sr-fname" value="${escapeAttr((u.name||'').split(/\s+/)[0]||'')}"></div>
         <div class="field"><label class="field-label">العائلة *</label><input class="field-input" id="sr-lname" value="${escapeAttr((u.name||'').split(/\s+/).slice(1).join(' '))}"></div>
       </div>
-      <div class="field"><label class="field-label">رقم الهاتف *</label><input class="field-input" id="sr-phone" type="tel" value="${escapeAttr(u.phone||'')}" style="direction:ltr;text-align:right"></div>
+      <div class="field"><label class="field-label">رقم الهاتف *</label><input class="field-input" id="sr-phone" type="tel" value="${escapeAttr(u.phone||'')}" style="direction:ltr;text-align:right" data-phone></div>
       <div class="field"><label class="field-label">المنطقة</label><input class="field-input" id="sr-area" placeholder="وادي الست"></div>
       <div class="field"><label class="field-label">وصف نشاطك (اختياري)</label><textarea class="field-textarea" id="sr-bio" placeholder="مثلاً: ألبان وأجبان منزليّة"></textarea></div>
       <div class="row-2">
@@ -3724,7 +3724,7 @@ async function doSellerLogin(){
 async function doSellerRegister(){
   const f=document.getElementById('sr-fname').value.trim();
   const l=document.getElementById('sr-lname').value.trim();
-  const phone=document.getElementById('sr-phone').value.trim();
+  const phone=phoneE164(document.getElementById('sr-phone').value.trim());
   const area=document.getElementById('sr-area').value.trim();
   const bio=document.getElementById('sr-bio').value.trim();
   const u=document.getElementById('sr-user').value.trim().toLowerCase();

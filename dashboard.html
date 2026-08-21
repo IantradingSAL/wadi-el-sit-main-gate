@@ -435,7 +435,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <input type="tel" id="popup-phone" placeholder="مثال: 03xxxxxx"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;outline:none;direction:ltr;margin-bottom:8px"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')confirmPhone()">
+            onkeydown="if(event.key==='Enter')confirmPhone()" data-phone>
           <div id="popup-err" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
             <button onclick="closePhonePopup()" style="flex:1;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;color:var(--text2)">إلغاء</button>
@@ -453,7 +453,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <input type="tel" id="modal-phone" placeholder="مثال: 03xxxxxx"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;direction:ltr;outline:none;margin-bottom:8px;box-sizing:border-box"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')confirmPhone()">
+            onkeydown="if(event.key==='Enter')confirmPhone()" data-phone>
           <div id="phone-err" style="color:var(--danger);font-size:13px;min-height:20px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
             <button onclick="confirmPhone()" style="flex:2;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">✓ تأكيد</button>
@@ -473,7 +473,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">الاسم الكامل *</div>
           <input type="text" id="c-name" class="fi" placeholder="اسمك الكامل"></div>
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">رقم الهاتف *</div>
-          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" style="direction:ltr"></div>
+          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" style="direction:ltr" data-phone></div>
       </div>
       <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">البريد الإلكتروني</div>
         <input type="email" id="c-email" class="fi" placeholder="email@example.com" style="direction:ltr"></div>
@@ -869,7 +869,17 @@ function exportActivityCSV(){
 // notify-approval function. This screen is where the decision is taken, and the
 // decision is one RPC that moves BOTH the queue row and the thing it stands for,
 // so the two can never drift apart.
-let APR_ROWS=[], APR_TAB='pending';
+let APR_ROWS=[], APR_TAB='pending', APR_FOCUS='';
+// Where the record itself lives. The email points at
+// dashboard.html#approval=<id>, which opens that one record with its decision
+// buttons; this is the second hop, into the screen that owns it.
+function aprRecordLink(r){
+  if(!r) return '';
+  if(r.kind==='phonebook_new')  return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
+  if(r.kind==='phonebook_edit') return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
+  if(r.kind==='coop_seller'||r.kind==='coop_agent') return 'coop.html';
+  return '';
+}
 const APR_KIND={
   coop_seller:   {emoji:'🛒', label:'بائع في التعاونية',      yes:'اعتماد البائع',   no:'رفض الطلب'},
   coop_agent:    {emoji:'🚚', label:'عامل توصيل',             yes:'اعتماد العامل',   no:'رفض الطلب'},
@@ -887,8 +897,9 @@ async function aprCount(){
     if(b){b.textContent=count||0;b.style.display=count?'inline':'none';}
   }catch(_e){}
 }
-function openApprovals(){
+function openApprovals(focusId){
   if(!guard('approvals','🚫 شاشة طلبات التحقق متاحة للإدارة فقط')) return;
+  APR_FOCUS = focusId || '';
   document.getElementById('MT').textContent='🔔 طلبات التحقق';
   document.getElementById('MB').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ جاري التحميل…</div>';
   document.getElementById('OV').classList.add('open');
@@ -900,6 +911,11 @@ async function loadApprovals(){
     const{data,error}=await sb.from('approval_requests').select('*').order('requested_at',{ascending:false}).limit(500);
     if(error)throw error;
     APR_ROWS=data||[];
+    // a link from an old email may point past the window we just loaded
+    if(APR_FOCUS && !APR_ROWS.some(r=>r.id===APR_FOCUS)){
+      const one=await sb.from('approval_requests').select('*').eq('id',APR_FOCUS).maybeSingle();
+      if(one&&one.data)APR_ROWS.unshift(one.data);
+    }
     renderApprovals();
     aprCount();
   }catch(e){
@@ -907,7 +923,8 @@ async function loadApprovals(){
       +'<div style="margin-top:12px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
   }
 }
-function aprTab(t){APR_TAB=t;renderApprovals();}
+function aprTab(t){APR_TAB=t;APR_FOCUS='';renderApprovals();}
+function aprFocus(id){APR_FOCUS=id;renderApprovals();}
 function renderApprovals(){
   const pend=APR_ROWS.filter(r=>r.status==='pending');
   const done=APR_ROWS.filter(r=>r.status!=='pending');
@@ -937,10 +954,23 @@ function renderApprovals(){
       +(decided?'':'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'
         +'<button class="btn bp" style="font-size:12.5px" onclick="aprDecide(\''+r.id+'\',\'approved\')">✅ '+k.yes+'</button>'
         +'<button class="btn" style="font-size:12.5px;background:#a83232;color:#fff" onclick="aprDecide(\''+r.id+'\',\'rejected\')">⛔ '+k.no+'</button>'
-        +(r.link?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(r.link)+'" target="_blank" rel="noopener">↗️ فتح الشاشة المعنيّة</a>'):'')
+        +(aprRecordLink(r)?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(aprRecordLink(r))+'" target="_blank" rel="noopener">↗️ فتح السجل في شاشته</a>'):'')
+        +(APR_FOCUS?'':'<button class="btn bg" style="font-size:12.5px" onclick="aprFocus(\''+r.id+'\')">🔎 عرض هذا الطلب وحده</button>')
         +'</div>')
       +'</div>';
   };
+  // 🎯 the email links to one record — show exactly that record, not a list
+  //    to hunt through. Everything else is one click away.
+  if(APR_FOCUS){
+    const one=APR_ROWS.find(r=>r.id===APR_FOCUS);
+    document.getElementById('MB').innerHTML=
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">'
+      +'<button class="btn bg" style="font-size:12.5px" onclick="aprTab(\'pending\')">↩︎ كل الطلبات ('+pend.length+')</button>'
+      +'<span style="font-size:12px;color:var(--text3)">وصلتَ إلى هذا السجل من بريد التبليغ</span></div>'
+      +(one?card(one):'<div style="padding:20px;color:var(--text3);font-size:13px">⚠️ هذا الطلب لم يعد موجوداً — ربما حُذف السجل الأصلي.</div>')
+      +'<div style="margin-top:14px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
+    return;
+  }
   document.getElementById('MB').innerHTML=
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+tab('pending','⏳ بانتظار القرار',pend.length)+tab('done','📚 مبتوتة',done.length)
       +'<button class="btn" style="font-size:12px" onclick="loadApprovals()">🔄 تحديث</button>'
@@ -1150,8 +1180,14 @@ async function setupUser(user){
   document.getElementById('APP').style.display='block';
   trackActivity('تسجيل الدخول','دخول إلى لوحة البلدية — '+R.l);
   aprCount();
-  // 🔔 the email links to dashboard.html#approvals — open the screen on arrival
-  try{ if((location.hash||'').replace('#','')==='approvals' && R.approvals) setTimeout(openApprovals,400); }catch(_e){}
+  // 🔔 the email links to dashboard.html#approval=<id> — land on that very
+  //    record, decision buttons and all. #approvals alone opens the whole queue.
+  try{
+    const h=(location.hash||'').replace('#','');
+    const m=h.match(/^approval=(.+)$/);
+    if(R.approvals && m) setTimeout(function(){ openApprovals(decodeURIComponent(m[1])); },400);
+    else if(R.approvals && h==='approvals') setTimeout(function(){ openApprovals(); },400);
+  }catch(_e){}
   loadViewPrefs();
   applyPrefsToUI();
   await load();
@@ -1617,7 +1653,7 @@ function openAdd(){
   document.getElementById('MB').innerHTML=`
     <div class="g2">
       <div class="fg"><div class="fl">الاسم الكامل *</div><input type="text" class="fi" id="an" placeholder="اسم المواطن"></div>
-      <div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="aph" placeholder="03xxxxxx" style="direction:ltr"></div>
+      <div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="aph" placeholder="03xxxxxx" style="direction:ltr" data-phone></div>
     </div>
     <div class="g2">
       <div class="fg"><div class="fl">البريد الإلكتروني</div><input type="email" class="fi" id="aem" placeholder="email@example.com" style="direction:ltr"></div>
@@ -1647,7 +1683,7 @@ function can(){const t=document.getElementById('at').value;document.getElementBy
 async function subAdd(){
   trackActivity('فتح إضافة طلب','بدء إنشاء طلب جديد');
   if(!guard('add','🚫 لا تملك صلاحية إضافة طلب جديد')) return;
-  const name=document.getElementById('an').value.trim(),phone=document.getElementById('aph').value.trim(),email=document.getElementById('aem').value.trim(),address=document.getElementById('aad').value.trim(),type=getDbType(document.getElementById('at').value),description=document.getElementById('ad').value.trim(),priority=document.getElementById('ap').value,assigned=document.getElementById('ao').value,notes=document.getElementById('ano').value.trim();
+  const name=document.getElementById('an').value.trim(),phone=phoneE164(document.getElementById('aph').value.trim()),email=document.getElementById('aem').value.trim(),address=document.getElementById('aad').value.trim(),type=getDbType(document.getElementById('at').value),description=document.getElementById('ad').value.trim(),priority=document.getElementById('ap').value,assigned=document.getElementById('ao').value,notes=document.getElementById('ano').value.trim();
   if(!name||!description){alert('يرجى إدخال الاسم والوصف');return;}
   const today=new Date().toISOString().slice(0,10);const na=NA.includes(type);
   const by=currentUser?.user_metadata?.name||currentUser?.email||'—';
@@ -2180,7 +2216,7 @@ function renderCitFiles() {
 
 async function doSubmitCit(){
   const name=document.getElementById('c-name').value.trim();
-  const phone=document.getElementById('c-phone').value.trim();
+  const phone=phoneE164(document.getElementById('c-phone').value.trim());
   const email=document.getElementById('c-email').value.trim();
   const typeRaw=document.getElementById('c-type').value;
   const type=getDbType(typeRaw);
@@ -2836,7 +2872,7 @@ function openUsers() {
     '<div class="fg"><div class="fl">الاسم الكامل *</div><input type="text" class="fi" id="nu-name" placeholder="اسم الموظف"></div>' +
     '<div class="fg"><div class="fl">البريد الإلكتروني *</div><input type="email" class="fi" id="nu-email" placeholder="email@" style="direction:ltr"></div>' +
     '<div class="fg"><div class="fl">كلمة المرور *</div><input type="password" class="fi" id="nu-pw" placeholder="8 أحرف على الأقل" style="direction:ltr"></div>' +
-    '<div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="nu-phone" placeholder="03xxxxxx" style="direction:ltr"></div>' +
+    '<div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="nu-phone" placeholder="03xxxxxx" style="direction:ltr" data-phone></div>' +
     '<div class="fg"><div class="fl">الدور</div>' +
     '<select class="fi" id="nu-role" onchange="showRolePrev(this.value)">' + roleOpts + '</select></div>' +
     '<div id="role-prev" style="margin:8px 0;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;min-height:24px"></div>' +
@@ -5002,7 +5038,7 @@ function renderWaterModal(){
     '<div id="ir-add" style="display:none">',
     '<div class="admin-section"><div class="admin-header">➕ إضافة صاحب حق ري</div>',
     '<div class="fg"><div class="fl">الاسم *</div><input type="text" class="fi" id="ir-name"></div>',
-    '<div class="fg"><div class="fl">الهاتف *</div><input type="tel" class="fi" id="ir-phone" style="direction:ltr"></div>',
+    '<div class="fg"><div class="fl">الهاتف *</div><input type="tel" class="fi" id="ir-phone" style="direction:ltr" data-phone></div>',
     '<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="ir-email" style="direction:ltr"></div>',
     '<div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="ir-area"></div>',
     '<div class="fg"><div class="fl">القطعة</div><input type="text" class="fi" id="ir-land"></div>',
@@ -5188,7 +5224,7 @@ function editIrrOwner(id){
   var mb=document.getElementById('MB'); if(!mb) return;
   mb.innerHTML='<div class="admin-section"><div class="admin-header">✏️ تعديل: '+o.name+'</div>'+
     '<div class="fg"><div class="fl">الاسم</div><input type="text" class="fi" id="ire-name" value="'+(o.name||'')+'"></div>'+
-    '<div class="fg"><div class="fl">الهاتف</div><input type="tel" class="fi" id="ire-phone" value="'+(o.phone||'')+'" style="direction:ltr"></div>'+
+    '<div class="fg"><div class="fl">الهاتف</div><input type="tel" class="fi" id="ire-phone" value="'+(o.phone||'')+'" style="direction:ltr" data-phone></div>'+
     '<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="ire-email" value="'+(o.email||'')+'" style="direction:ltr"></div>'+
     '<div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="ire-area" value="'+(o.area||'')+'"></div>'+
     '<div class="fg"><div class="fl">القطعة</div><input type="text" class="fi" id="ire-land" value="'+(o.landName||'')+'"></div>'+
