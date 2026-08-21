@@ -89,6 +89,24 @@ agree about the same person.
   suppliers, invoices and employees — it belongs to the other application
   sharing the Supabase project. Never point a municipality screen at it.
 
+## Anything awaiting validation (🔔 طلبات التحقق)
+
+- A coop seller, a delivery agent, a phonebook entry, a proposed phonebook edit
+  and a new account all queue a row in **`approval_requests`** (migration 27)
+  from a **database trigger**, and `approval_notify()` hands it to `pg_net`,
+  which calls the `notify-approval` edge function (Brevo). The browser is not in
+  that path on purpose: `coop.html` used to fire the old
+  `notify-coop-registration` itself, so a closed tab lost the notification.
+- Recipients are `settings.approval_notify` **plus every super_admin**, resolved
+  live by `approval_recipients()`. `notified_at` is stamped only on a successful
+  send, and the `approval-notify-sweep` pg_cron job retries the rest for a week.
+- **`approval_decide()` is the only way to decide.** It moves the queue row and
+  the thing it stands for in one call — approving a seller sets
+  `coop_sellers.status`, approving an edit applies `proposed` onto the target —
+  so the two can never disagree. The key is **`approvals_manage`**.
+- Every trigger swallows its own errors: a registration must never fail because
+  the queue or the mailer is having a bad day.
+
 ## Nothing in the web root is protected
 
 GitHub Pages serves every file in this repository to anyone who asks. There is
