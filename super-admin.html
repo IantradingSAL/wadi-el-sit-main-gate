@@ -618,8 +618,15 @@ async function loadSuperAdmins() {
       if (a.user_id) html += '<div style="font-size:10px;color:var(--green2);margin-top:2px">✅ مربوط بـ Supabase Auth</div>';
       else html += '<div style="font-size:10px;color:#e67e22;margin-top:2px">⚠️ غير مربوط — يحتاج user_id</div>';
       html += '</div>';
-      if (a.email === 'imadaehn@gmail.com') {
-        html += '<span style="font-size:11px;background:#daeaf8;color:var(--blue2);padding:2px 8px;border-radius:10px">مدير النظام</span>';
+      // The row you are signed in as gets a badge instead of a delete button,
+      // so nobody removes their own access by accident. This used to compare
+      // against one hardcoded address, which meant the protection followed a
+      // person rather than the session — and anyone else who became super
+      // admin was offered a button that deleted themselves.
+      var isMe = (a.user_id && currentUser && a.user_id === currentUser.id) ||
+                 (a.email && currentUser && String(a.email).toLowerCase() === String(currentUser.email||'').toLowerCase());
+      if (isMe) {
+        html += '<span style="font-size:11px;background:#daeaf8;color:var(--blue2);padding:2px 8px;border-radius:10px">أنت — مدير النظام</span>';
       } else {
         html += '<button class="btn" data-rmadm-id="'+a.id+'" data-rmadm-em="'+a.email+'" style="color:var(--danger);padding:5px 10px;font-size:12px">🗑️</button>';
       }
