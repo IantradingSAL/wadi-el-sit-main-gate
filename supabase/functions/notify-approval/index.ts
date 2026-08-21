@@ -151,18 +151,26 @@ Deno.serve(async (req: Request) => {
        </div>`
     : "";
 
-  // The link must land ON THE RECORD, not on a list to hunt through:
-  // dashboard.html#approval=<id> opens that one request with its decision
-  // buttons. For a directory row we can go one hop further and name the record
-  // inside the phonebook's own review panel.
-  const link = `${PORTAL}/dashboard.html#approval=${encodeURIComponent(row.id)}`;
-  // row.link points at the record in the screen that owns it — for a directory
-  // row that is the person's own card, opened by name rather than by queue id.
-  const deep = (row.link && row.link !== "dashboard.html")
-    ? `${PORTAL}/${String(row.link).replace(/^\//, "")}`
+  // The link must land ON THE RECORD — and for the directory that means the
+  // review popup itself, the one with تطبيق/رفض in it, opened on this very
+  // item. Signed out, phonebook.html shows its admin login first and resumes
+  // the link the moment the session is real.
+  const pbReview = (row.kind === "phonebook_new" || row.kind === "phonebook_edit")
+    ? `${PORTAL}/phonebook.html#review=${encodeURIComponent(row.ref_id)}`
     : "";
-  const deepLabel = (row.kind === "phonebook_new" || row.kind === "phonebook_edit")
-    ? "افتح بطاقة صاحب السجل في الدليل ←"
+  const dash = `${PORTAL}/dashboard.html#approval=${encodeURIComponent(row.id)}`;
+  const link = pbReview || dash;
+  const linkLabel = pbReview ? "\u{1F3AF} فتح السجل في نافذة المراجعة" : "\u{1F3AF} فتح هذا السجل للتحقق";
+
+  // the second row: the municipality dashboard for a directory item (it can be
+  // decided from there too), or the record's own screen for everything else
+  const deep = pbReview
+    ? dash
+    : ((row.link && row.link !== "dashboard.html")
+        ? `${PORTAL}/${String(row.link).replace(/^\//, "")}`
+        : "");
+  const deepLabel = pbReview
+    ? "أو من شاشة طلبات التحقق في لوحة البلدية ←"
     : "افتح الشاشة المعنيّة ←";
   const htmlContent = `<!doctype html><html dir="rtl" lang="ar"><body style="margin:0;background:#f1f5f9;padding:24px;font-family:Tahoma,Arial,sans-serif">
 <div style="max-width:560px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden">
@@ -177,11 +185,11 @@ Deno.serve(async (req: Request) => {
     ${changesHtml}
     <p style="margin:14px 0 4px;font-size:12px;color:#94a3b8">وصل الطلب: ${esc(whenAr(row.requested_at))}</p>
     <div style="margin-top:18px;text-align:center">
-      <a href="${link}" style="display:inline-block;background:#0f4d82;color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:12px 22px;border-radius:10px">🎯 فتح هذا السجل للتحقق</a>
+      <a href="${link}" style="display:inline-block;background:#0f4d82;color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:12px 22px;border-radius:10px">${linkLabel}</a>
       ${deep ? `<div style="margin-top:10px"><a href="${deep}" style="color:#0f4d82;font-size:12.5px;font-weight:700">${deepLabel}</a></div>` : ""}
     </div>
     <p style="margin:16px 0 0;font-size:11.5px;color:#94a3b8;line-height:1.7">
-      يفتح الزرّ أعلاه هذا الطلب بعينه في لوحة البلدية، بأزرار الموافقة والرفض. هذه رسالة آلية — لا حاجة للرد عليها.
+      يفتح الزرّ أعلاه هذا الطلب بعينه، بأزرار الموافقة والرفض. هذه رسالة آلية — لا حاجة للرد عليها.
     </p>
   </div>
 </div>

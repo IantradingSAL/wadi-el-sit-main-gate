@@ -3196,6 +3196,7 @@ async function submitLogin(e){
     await loadFromServer();
     await loadAdminQueues();
     openAdmin();
+    phbHashRoute();          // ← إن جئتَ من رابط بريد التبليغ، يُفتح السجل نفسه الآن
   } catch(ex){
     console.error(ex);
     err.innerHTML='<div class="fm-error">⚠️ بريد أو كلمة مرور خاطئة</div>';
@@ -3300,20 +3301,23 @@ function admRenderEdits(){
   if(PENDING_EDITS.length === 0) return `<div class="adm-empty"><div class="adm-empty-i">✅</div>لا توجد تعديلات معلّقة</div>`;
   return `<div class="adm-list">${PENDING_EDITS.map(e => {
     const fields = Object.keys(e.proposed||{});
-    const target = e.target_type==='registry' ? `جهة من السجل #${e.ref_id}` : 'جهة مُضافة';
+    const who = admEditPerson(e);
+    const target = (who.name || (e.target_type==='registry' ? 'جهة من السجل' : 'جهة مُضافة'))
+                 + (e.target_type==='registry' ? ` (سجل #${e.ref_id})` : '');
     return `<div class="adm-itm" id="rev-${e.id}">
       <div class="adm-itm-hd">
         <div class="adm-itm-info">
           <div class="adm-itm-t">${escHtml(target)}</div>
-          <div class="adm-itm-s">من: ${escHtml(e.submitter_name)} • ${escHtml(e.submitter_phone)}</div>
+          ${who.phone?`<div class="adm-itm-s">📞 ${escHtml(fmtPhone(who.phone))}${who.occupation?` • ${escHtml(who.occupation)}`:''}</div>`:''}
+          <div class="adm-itm-s">من: ${escHtml(e.submitter_name)} • ${escHtml(fmtPhone(e.submitter_phone))}</div>
           ${e.reason?`<div style="font-size:12px;color:var(--text2);margin-top:4px"><em>"${escHtml(e.reason)}"</em></div>`:''}
         </div>
         <div class="adm-itm-time">${fmtTime(e.created_at)}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
         ${fields.map(f => `<div class="adm-diff">
-          <div class="adm-diff-side adm-diff-old"><div class="adm-diff-l">${admFieldLabel(f)} (قديم)</div><div class="adm-diff-v">${escHtml(e.original?.[f] ?? '—')}</div></div>
-          <div class="adm-diff-side adm-diff-new"><div class="adm-diff-l">جديد</div><div class="adm-diff-v">${escHtml(e.proposed?.[f] ?? '—')}</div></div>
+          <div class="adm-diff-side adm-diff-old"><div class="adm-diff-l">${admFieldLabel(f)} (قديم)</div><div class="adm-diff-v">${escHtml(admFieldValue(f, e.original?.[f]))}</div></div>
+          <div class="adm-diff-side adm-diff-new"><div class="adm-diff-l">جديد</div><div class="adm-diff-v">${escHtml(admFieldValue(f, e.proposed?.[f]))}</div></div>
         </div>`).join('')}
       </div>
       <div class="adm-itm-actions">
@@ -3324,6 +3328,22 @@ function admRenderEdits(){
   }).join('')}</div>`;
 }
 
+// من هو صاحب السجل الذي يقترح أحدهم تعديله
+function admEditPerson(e){
+  if(!e) return {};
+  if(e.target_type === 'registry'){
+    const r = (typeof REGISTRY !== 'undefined' ? REGISTRY : []).find(x => String(x.id) === String(e.ref_id));
+    const x = (typeof EXTRAS !== 'undefined' ? (EXTRAS[e.ref_id]||{}) : {});
+    return r ? {name:r.name, phone:(x.phone||r.phone), occupation:x.occupation} : {};
+  }
+  const a = (typeof ADDED !== 'undefined' ? ADDED : []).find(x => String(x.id) === String(e.target_entry_id));
+  return a ? {name:a.name, phone:a.phone, occupation:a.occupation} : {};
+}
+function admFieldValue(f, v){
+  const s = (v === null || v === undefined || String(v).trim() === '') ? '' : String(v);
+  if(!s) return '—';
+  return (f === 'phone' || f === 'wa' || f === 'work_phone') ? fmtPhone(s) : s;
+}
 function admFieldLabel(f){
   const map = {name:'الاسم', first:'الاسم الأول', family:'العائلة', phone:'الهاتف', address:'العنوان', email:'البريد', occupation:'المهنة', work_phone:'هاتف العمل', work_address:'عنوان العمل', lat:'خط العرض', lng:'خط الطول', work_lat:'خط عرض العمل', work_lng:'خط طول العمل'};
   return map[f] || f;
@@ -4217,7 +4237,11 @@ async function phbHashRoute(){
     if(c) openDetail(c); else toast('⚠️ الجهة غير موجودة أو غير منشورة بعد','err');
     return;
   }
-  if(!isAdmin){ toast('🔒 هذا السجل يحتاج حساب إدارة','err'); return; }
+  if(!isAdmin){
+    toast('🔒 سجّل الدخول لعرض السجل المطلوب');
+    openAdmin();            // ← يفتح نافذة تسجيل الدخول، ثم يُستأنف الرابط بعدها
+    return;
+  }
   // the pending item may be an addition or a proposed edit — open the tab it is in
   const inEntries = (PENDING_ENTRIES_ADM||[]).some(e => String(e.id) === id);
   admActiveTab = inEntries ? 'entries' : 'edits';
