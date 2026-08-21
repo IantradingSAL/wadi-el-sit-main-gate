@@ -40,7 +40,7 @@ const KIND: Record<string, { emoji: string; label: string; blurb: string; screen
                     blurb: "أُضيفت جهة جديدة إلى الدليل ولن تظهر للعامة قبل التحقق منها.",
                     screen: "dashboard.html" },
   phonebook_edit: { emoji: "✏️", label: "تعديل مقترح على الدليل",
-                    blurb: "اقترح أحدهم تعديلاً على جهة في الدليل، ولن يُطبَّق قبل موافقتكم.",
+                    blurb: "اقترح أحدهم تعديلاً على بيانات شخص في الدليل، ولن يُطبَّق قبل موافقتكم.",
                     screen: "dashboard.html" },
   user_account:   { emoji: "👤", label: "حساب جديد على البوابة",
                     blurb: "أُنشئ حساب جديد على بوابة البلدية — يُرجى التأكّد من صاحبه.",
@@ -115,26 +115,55 @@ Deno.serve(async (req: Request) => {
   }
 
   const k = KIND[row.kind] ?? { emoji: "🔔", label: row.kind, blurb: "طلب ينتظر التحقق.", screen: "dashboard.html" };
-  const subject = `${k.emoji} ${k.label} بانتظار التحقق — ${row.title}`;
+  const subject = `${k.emoji} ${k.label} — ${row.title}`;
 
   const summary = (row.summary && typeof row.summary === "object") ? row.summary : {};
+
+  // __changes carries the field-by-field before/after of a proposed edit. A
+  // reviewer needs to see WHOSE record and WHAT changes without opening
+  // anything — "المهنة: — ← موظف" answers the question in the inbox.
+  const changes: Array<{ field?: string; from?: string; to?: string }> =
+    Array.isArray((summary as any).__changes) ? (summary as any).__changes : [];
+
   const detailRows = Object.entries(summary)
-    .filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== "")
+    .filter(([k2, v]) => k2 !== "__changes" && v !== null && v !== undefined && String(v).trim() !== "")
     .map(([key, v]) =>
       `<tr><td style="padding:7px 12px;color:#64748b;white-space:nowrap;border-bottom:1px solid #eef2f7">${esc(key)}</td>` +
       `<td style="padding:7px 12px;font-weight:700;border-bottom:1px solid #eef2f7">${esc(v)}</td></tr>`)
     .join("") ||
     `<tr><td style="padding:7px 12px;color:#94a3b8">لا تفاصيل إضافية</td></tr>`;
 
+  const changesHtml = changes.length
+    ? `<div style="margin-top:16px">
+         <div style="font-size:13px;font-weight:800;color:#0f4d82;margin-bottom:6px">✏️ المطلوب تغييره</div>
+         <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #eef2f7">
+           <tr style="background:#f8fafc">
+             <th style="padding:6px 10px;text-align:right;color:#64748b;font-size:11.5px">الحقل</th>
+             <th style="padding:6px 10px;text-align:right;color:#a83232;font-size:11.5px">القيمة الحالية</th>
+             <th style="padding:6px 10px;text-align:right;color:#1f7a45;font-size:11.5px">القيمة المقترَحة</th>
+           </tr>
+           ${changes.map(c => `<tr>
+             <td style="padding:7px 10px;border-top:1px solid #eef2f7;color:#334155">${esc(c.field)}</td>
+             <td style="padding:7px 10px;border-top:1px solid #eef2f7;color:#a83232;text-decoration:line-through">${esc(c.from)}</td>
+             <td style="padding:7px 10px;border-top:1px solid #eef2f7;color:#1f7a45;font-weight:800">${esc(c.to)}</td>
+           </tr>`).join("")}
+         </table>
+       </div>`
+    : "";
+
   // The link must land ON THE RECORD, not on a list to hunt through:
   // dashboard.html#approval=<id> opens that one request with its decision
   // buttons. For a directory row we can go one hop further and name the record
   // inside the phonebook's own review panel.
   const link = `${PORTAL}/dashboard.html#approval=${encodeURIComponent(row.id)}`;
-  const deep =
-    (row.kind === "phonebook_new" || row.kind === "phonebook_edit")
-      ? `${PORTAL}/phonebook.html#review=${encodeURIComponent(row.ref_id)}`
-      : "";
+  // row.link points at the record in the screen that owns it — for a directory
+  // row that is the person's own card, opened by name rather than by queue id.
+  const deep = (row.link && row.link !== "dashboard.html")
+    ? `${PORTAL}/${String(row.link).replace(/^\//, "")}`
+    : "";
+  const deepLabel = (row.kind === "phonebook_new" || row.kind === "phonebook_edit")
+    ? "افتح بطاقة صاحب السجل في الدليل ←"
+    : "افتح الشاشة المعنيّة ←";
   const htmlContent = `<!doctype html><html dir="rtl" lang="ar"><body style="margin:0;background:#f1f5f9;padding:24px;font-family:Tahoma,Arial,sans-serif">
 <div style="max-width:560px;margin:auto;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden">
   <div style="background:#0f4d82;color:#fff;padding:16px 18px">
@@ -145,10 +174,11 @@ Deno.serve(async (req: Request) => {
     <p style="margin:0 0 6px;font-size:14px;color:#334155;line-height:1.7">${esc(k.blurb)}</p>
     <p style="margin:0 0 14px;font-size:15px;font-weight:800;color:#0f4d82">${esc(row.title)}</p>
     <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #eef2f7;border-radius:8px">${detailRows}</table>
+    ${changesHtml}
     <p style="margin:14px 0 4px;font-size:12px;color:#94a3b8">وصل الطلب: ${esc(whenAr(row.requested_at))}</p>
     <div style="margin-top:18px;text-align:center">
       <a href="${link}" style="display:inline-block;background:#0f4d82;color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:12px 22px;border-radius:10px">🎯 فتح هذا السجل للتحقق</a>
-      ${deep ? `<div style="margin-top:10px"><a href="${deep}" style="color:#0f4d82;font-size:12.5px;font-weight:700">أو افتحه في شاشة الدليل ←</a></div>` : ""}
+      ${deep ? `<div style="margin-top:10px"><a href="${deep}" style="color:#0f4d82;font-size:12.5px;font-weight:700">${deepLabel}</a></div>` : ""}
     </div>
     <p style="margin:16px 0 0;font-size:11.5px;color:#94a3b8;line-height:1.7">
       يفتح الزرّ أعلاه هذا الطلب بعينه في لوحة البلدية، بأزرار الموافقة والرفض. هذه رسالة آلية — لا حاجة للرد عليها.

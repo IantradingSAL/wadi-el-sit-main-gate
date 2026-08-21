@@ -106,6 +106,16 @@ agree about the same person.
   so the two can never disagree. The key is **`approvals_manage`**.
 - Every trigger swallows its own errors: a registration must never fail because
   the queue or the mailer is having a bad day.
+- **The notice names the subject, not the submitter.** A proposed directory edit
+  resolves the person it is about (`approval_pb_person`) and carries the change
+  field by field — `المهنة: — ← موظف` — with phone numbers already in `+961`
+  form (`lb_phone_display`, migration 28). The first version said only "من
+  IMAD", which told a reviewer nothing about whose record it was.
+- **Every link lands on a record**: the email's button opens
+  `dashboard.html#approval=<id>` — that one request with its decision buttons —
+  and a directory row also carries `phonebook.html#contact=<id>` for the
+  person's own card. `#review=<id>` opens the phonebook's review panel with the
+  item highlighted.
 
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
 

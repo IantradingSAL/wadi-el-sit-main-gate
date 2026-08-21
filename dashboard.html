@@ -875,9 +875,17 @@ let APR_ROWS=[], APR_TAB='pending', APR_FOCUS='';
 // buttons; this is the second hop, into the screen that owns it.
 function aprRecordLink(r){
   if(!r) return '';
-  if(r.kind==='phonebook_new')  return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
-  if(r.kind==='phonebook_edit') return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
+  // the trigger stores where the record itself lives (a person's own card in
+  // the directory, for instance); fall back to the review queue of that screen
+  if(r.link && r.link!=='dashboard.html') return r.link;
+  if(r.kind==='phonebook_new'||r.kind==='phonebook_edit') return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
   if(r.kind==='coop_seller'||r.kind==='coop_agent') return 'coop.html';
+  return '';
+}
+// a proposed edit is also worth opening in the phonebook's own review panel
+function aprReviewLink(r){
+  if(!r) return '';
+  if(r.kind==='phonebook_new'||r.kind==='phonebook_edit') return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
   return '';
 }
 const APR_KIND={
@@ -933,9 +941,24 @@ function renderApprovals(){
   const when=v=>{try{return new Date(v).toLocaleString('ar-LB');}catch(_e){return v||'';}};
   const card=r=>{
     const k=APR_KIND[r.kind]||{emoji:'🔔',label:r.kind,yes:'موافقة',no:'رفض'};
-    const det=Object.entries(r.summary||{}).filter(([,v])=>v!==null&&v!==undefined&&String(v).trim()!=='')
-      .map(([a,b])=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:var(--text3);min-width:92px">'+aprEsc(a)+'</span><span style="font-weight:700">'+aprEsc(b)+'</span></div>').join('')
+    const sum=r.summary||{};
+    // __changes is the field-by-field before/after of a proposed edit — the
+    // reviewer must see WHOSE record and WHAT changes without opening anything
+    const chg=Array.isArray(sum.__changes)?sum.__changes:[];
+    const det=Object.entries(sum).filter(([a,v])=>a!=='__changes'&&v!==null&&v!==undefined&&String(v).trim()!=='')
+      .map(([a,b])=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:var(--text3);min-width:110px">'+aprEsc(a)+'</span><span style="font-weight:700">'+aprEsc(b)+'</span></div>').join('')
       || '<div style="font-size:12px;color:var(--text3)">لا تفاصيل إضافية</div>';
+    const chgHtml=chg.length
+      ? '<div style="margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden">'
+        +'<div style="background:var(--bg);padding:5px 10px;font-size:11.5px;font-weight:800;color:var(--blue2)">✏️ المطلوب تغييره</div>'
+        +chg.map(c=>'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 10px;border-top:1px solid var(--border);font-size:12.5px">'
+          +'<span style="min-width:110px;color:var(--text3)">'+aprEsc(c.field)+'</span>'
+          +'<span style="color:#a83232;text-decoration:line-through">'+aprEsc(c.from)+'</span>'
+          +'<span style="color:var(--text3)">←</span>'
+          +'<span style="color:#1f7a45;font-weight:800">'+aprEsc(c.to)+'</span>'
+          +'</div>').join('')
+        +'</div>'
+      : '';
     const decided = r.status!=='pending';
     const badge = r.status==='approved' ? '<span style="background:#e7f6ec;color:#1f7a45;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800">✅ تمّت الموافقة</span>'
                 : r.status==='rejected' ? '<span style="background:#fdecec;color:#a83232;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800">⛔ مرفوض</span>'
@@ -946,7 +969,7 @@ function renderApprovals(){
         +'<span style="font-weight:800;font-size:14px">'+aprEsc(r.title)+'</span>'
         +'<span style="font-size:11.5px;color:var(--text3)">'+aprEsc(k.label)+'</span>'
         +'<span style="margin-inline-start:auto">'+badge+'</span></div>'
-      +det
+      +det+chgHtml
       +'<div style="font-size:11px;color:var(--text3);margin-top:8px">🕒 '+when(r.requested_at)
         +(r.notified_at?' · 📧 أُبلغت البلدية':' · <span style="color:#a83232">📧 لم يُرسَل البريد بعد</span>')
         +(decided?(' · قرار: '+aprEsc(r.decided_email||'—')+' — '+when(r.decided_at)):'')
@@ -954,7 +977,8 @@ function renderApprovals(){
       +(decided?'':'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'
         +'<button class="btn bp" style="font-size:12.5px" onclick="aprDecide(\''+r.id+'\',\'approved\')">✅ '+k.yes+'</button>'
         +'<button class="btn" style="font-size:12.5px;background:#a83232;color:#fff" onclick="aprDecide(\''+r.id+'\',\'rejected\')">⛔ '+k.no+'</button>'
-        +(aprRecordLink(r)?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(aprRecordLink(r))+'" target="_blank" rel="noopener">↗️ فتح السجل في شاشته</a>'):'')
+        +(aprRecordLink(r)?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(aprRecordLink(r))+'" target="_blank" rel="noopener">👤 بطاقة صاحب السجل</a>'):'')
+        +(aprReviewLink(r)&&aprReviewLink(r)!==aprRecordLink(r)?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(aprReviewLink(r))+'" target="_blank" rel="noopener">↗️ شاشة المراجعة</a>'):'')
         +(APR_FOCUS?'':'<button class="btn bg" style="font-size:12.5px" onclick="aprFocus(\''+r.id+'\')">🔎 عرض هذا الطلب وحده</button>')
         +'</div>')
       +'</div>';
