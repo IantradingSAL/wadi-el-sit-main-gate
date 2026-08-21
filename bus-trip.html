@@ -165,6 +165,23 @@ textarea.fm-i{resize:vertical;min-height:60px}
 }
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+/* ── touch targets ────────────────────────────────────────────────────────
+   Apple asks for 44pt, Android for 48dp. These controls measured 13-38px in
+   Chromium at iPhone size. The hit area is grown with a transparent overlay
+   rather than by resizing the control, so nothing moves on screen.
+   Side-by-side controls (the AR/EN/FR pills) grow only in height, because
+   widening them would make neighbouring targets overlap. */
+@media (max-width:820px){
+  .wadi-lang-btn,.hdr-btn,.cat,.section-link,.chip,.pill{position:relative}
+  .wadi-lang-btn::after,.hdr-btn::after,.cat::after,.section-link::after{
+    content:'';position:absolute;left:0;right:0;top:50%;
+    transform:translateY(-50%);height:44px;pointer-events:auto}
+  /* isolated round buttons have room to grow both ways */
+  .wadi-help-trigger,.drawer-close,.photo-thumb-rm{position:relative}
+  .wadi-help-trigger::after,.drawer-close::after,.photo-thumb-rm::after{
+    content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:44px;height:44px}
+}
 *:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
 </style>
 <script src="wadi-nav.js" defer></script>
