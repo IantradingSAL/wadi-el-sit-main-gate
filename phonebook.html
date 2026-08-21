@@ -4070,8 +4070,31 @@ async function loadFromServer(){
       console.warn('loadFromServer:', m);
     }
   }
+  _lastServerLoad = Date.now();
   renderStats(); renderLettersBar(); renderFiltersBar(); renderGrid();
 }
+
+// ── come back to a directory that is actually current ──────────────────────
+// The list is fetched once, when the page loads. A phone does not reload:
+// the tab sits in the background for hours and comes back exactly as it was.
+// So somebody added at the municipality and approved five minutes ago is
+// simply not in the copy the phone is holding, and searching for their number
+// gives «0 نتائج» — while the same search on the laptop, which was reloaded,
+// finds them. Nothing is broken; the phone is just looking at an old answer.
+//
+// Re-fetch when the app is brought back to the front, and when the connection
+// returns. Not on every switch — once a minute at most.
+let _lastServerLoad = 0;
+const REFRESH_AFTER_MS = 60000;
+async function refreshIfStale(force){
+  if(!force && Date.now() - _lastServerLoad < REFRESH_AFTER_MS) return;
+  await loadRegistry();
+  await loadFromServer();
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState === 'visible') refreshIfStale(false);
+});
+window.addEventListener('online', function(){ refreshIfStale(true); });
 
 async function loadAdminQueues(){
   if(!sb || !isAdmin){ updateAdmBadge(); return; }
