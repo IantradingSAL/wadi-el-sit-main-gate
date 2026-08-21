@@ -220,6 +220,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -434,7 +435,7 @@ async function doLogin(){
   if(error){err.innerHTML=`<div class="alert err">⚠️ ${esc(error.message)}</div>`;return;}
   await checkSession();
 }
-async function doLogout(){if(!confirm('تسجيل خروج؟'))return;await sb.auth.signOut();show('LOGIN_VIEW');}
+async function doLogout(){if(!await wadiConfirm('تسجيل خروج؟'))return;await sb.auth.signOut();show('LOGIN_VIEW');}
 
 function setTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===name));
@@ -533,20 +534,20 @@ async function sendNotification(){
       ? `الفئات المحدّدة: ${currentTopics.join(', ') || '(لا شيء)'}\nلا يوجد أيّ مشترك مسجَّل في هذه الفئات.`
       : `الدور المحدّد: ${audLabel}\nلا يوجد أيّ مشترك بهذا الدور.`;
     result.innerHTML = `<div class="alert err">⚠️ <strong>0 مستلمين!</strong><br>${esc(targetingInfo).replace(/\n/g,'<br>')}<br><br>💡 جرّب تغيير الجمهور إلى <strong>الجميع</strong> أو اختر فئة فيها مشتركون مثل <strong>📢 عام</strong> أو <strong>📰 أخبار</strong>.</div>`;
-    if(!confirm(`⚠️ تحذير: لا يوجد مستلمون!\n\n${targetingInfo}\n\nالإشعار لن يصل لأحد. هل تريد المتابعة على أيّ حال؟`)) return;
+    if(!await wadiConfirm(`⚠️ تحذير: لا يوجد مستلمون!\n\n${targetingInfo}\n\nالإشعار لن يصل لأحد. هل تريد المتابعة على أيّ حال؟`)) return;
   } else if (recipientCount === -1) {
     // Count failed, fall back to old confirm without count
-    if(!confirm(`إرسال إلى ${audLabel}؟\n\n"${title}"`)) return;
+    if(!await wadiConfirm(`إرسال إلى ${audLabel}؟\n\n"${title}"`)) return;
   } else {
     // Normal: show the actual count in the confirm
-    if(!confirm(`📤 إرسال إلى ${recipientCount} مستلم (${audLabel})؟\n\n"${title}"`)) return;
+    if(!await wadiConfirm(`📤 إرسال إلى ${recipientCount} مستلم (${audLabel})؟\n\n"${title}"`)) return;
   }
 
   await doSend({title,body,url,target:'audience'});
 }
 
 async function testSelf(){
-  if(!confirm('سيُرسل لجهازك الحالي فقط (إن كنت مشتركاً). متابعة؟'))return;
+  if(!await wadiConfirm('سيُرسل لجهازك الحالي فقط (إن كنت مشتركاً). متابعة؟'))return;
   const title=document.getElementById('N_TITLE').value.trim()||'🧪 اختبار';
   const body=document.getElementById('N_BODY').value.trim()||'هذا إشعار تجريبي ✅';
   const url=document.getElementById('N_URL').value.trim();

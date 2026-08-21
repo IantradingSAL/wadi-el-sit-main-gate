@@ -894,6 +894,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">دليل وادي الست — الصفحات الصفراء</h1>
@@ -3187,7 +3188,7 @@ function admRenderCorrections(){
 
 // Admin actions
 async function admApproveEntry(id){
-  if(!confirm('الموافقة على هذه الإضافة وعرضها للعموم؟')) return;
+  if(!await wadiConfirm('الموافقة على هذه الإضافة وعرضها للعموم؟')) return;
   try {
     const { error } = await sb.from('phonebook_entries').update({ status:'approved', approved_at: new Date().toISOString(), approved_by: currentUser.id }).eq('id', id);
     if(error) throw error;
@@ -3199,7 +3200,7 @@ async function admApproveEntry(id){
 }
 
 async function admRejectEntry(id){
-  if(!confirm('رفض هذه الإضافة؟ (ستبقى في قاعدة البيانات لكن لن تظهر)')) return;
+  if(!await wadiConfirm('رفض هذه الإضافة؟ (ستبقى في قاعدة البيانات لكن لن تظهر)')) return;
   try {
     const { error } = await sb.from('phonebook_entries').update({ status:'rejected' }).eq('id', id);
     if(error) throw error;
@@ -3353,7 +3354,7 @@ async function executeDelete(meta){
 async function admApproveEdit(id){
   const ed = PENDING_EDITS.find(e => e.id === id);
   if(!ed){ toast('⚠️ غير موجود','err'); return; }
-  if(!confirm('تطبيق هذا التعديل على الجهة؟')) return;
+  if(!await wadiConfirm('تطبيق هذا التعديل على الجهة؟')) return;
   try {
     if(ed.target_type === 'registry'){
       // Upsert into phonebook_extras
@@ -3377,7 +3378,7 @@ async function admApproveEdit(id){
 }
 
 async function admRejectEdit(id){
-  if(!confirm('رفض هذا التعديل؟')) return;
+  if(!await wadiConfirm('رفض هذا التعديل؟')) return;
   try {
     await sb.from('phonebook_pending_edits').update({ status:'rejected', resolved_at: new Date().toISOString(), resolved_by: currentUser.id }).eq('id', id);
     await loadAdminQueues();
@@ -3852,7 +3853,7 @@ async function enablePushNow(){
 }
 
 async function disablePushNow(){
-  if(!confirm('هل أنت متأكّد من إيقاف الإشعارات؟ لن تستلم تنبيهات البلدية بعد ذلك.')) return;
+  if(!await wadiConfirm('هل أنت متأكّد من إيقاف الإشعارات؟ لن تستلم تنبيهات البلدية بعد ذلك.')) return;
   try {
     await window.PWA.disablePush();
     toast('✅ تمّ إيقاف الإشعارات');

@@ -98,6 +98,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">الإدارة الكلّية للبلديات</h1>
@@ -379,7 +380,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
-  if (!confirm('تسجيل خروج؟')) return;
+  if (!await wadiConfirm('تسجيل خروج؟')) return;
   await sb.auth.signOut();
   location.reload();
 }
@@ -591,7 +592,7 @@ async function addSuperAdmin() {
 }
 
 async function removeSuperAdmin(id, email) {
-  if(!confirm('حذف '+email+' من جدول super_admins؟'))return;
+  if(!await wadiConfirm('حذف '+email+' من جدول super_admins؟'))return;
   var r = await sb.from('super_admins').delete().eq('id',id);
   if(r.error){toast('خطأ: '+r.error.message,'err');return;}
   loadSuperAdmins(); toast('🗑️ تم الحذف');

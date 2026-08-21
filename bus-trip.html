@@ -186,6 +186,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -458,7 +459,7 @@ async function doLogin(){
     setTimeout(async()=>{closeLogin();await checkAdmin();await refreshLogin();if(ADMIN)alert('✅ اضغط على 🛡️ في الأسفل لعرض المسجَّلين');else alert('ℹ️ حسابك بدون صلاحيات إدارية')},600);
   }catch(ex){err.innerHTML='<div class="lg-err">⚠️ '+esc(ex.message||'خطأ')+'</div>';sub.disabled=false;sub.innerHTML='🔓 تسجيل الدخول'}
 }
-async function doLogout(){if(!confirm('تسجيل الخروج؟'))return;await sb.auth.signOut();$('AD_FAB').classList.remove('on');ADMIN=false;await refreshLogin();closeLogin()}
+async function doLogout(){if(!await wadiConfirm('تسجيل الخروج؟'))return;await sb.auth.signOut();$('AD_FAB').classList.remove('on');ADMIN=false;await refreshLogin();closeLogin()}
 
 async function checkAdmin(){
   if(!sb)return;
@@ -501,7 +502,7 @@ function renderList(){
     return '<div class="ad-row"><div class="ad-num">'+(i+1)+'</div><div class="ad-body"><div class="ad-name">'+esc(s.participant_name)+'<span class="ad-bus-badge">🚌 '+bn(busOf[s.id]||1)+'</span></div><div class="ad-meta"><span class="ad-phone">📞 '+esc(s.participant_phone)+'</span><span class="ad-seats">🎟️ '+s.seats_count+'</span></div>'+(s.notes?'<div class="ad-notes">📝 '+esc(s.notes)+'</div>':'')+'<div class="ad-time">'+dt+'</div></div><div class="ad-acts"><a href="tel:'+pc+'" class="ad-act call">📞</a><a href="https://wa.me/'+wa+'" target="_blank" class="ad-act wa">💬</a><button onclick="delSignup(\''+s.id+'\')" class="ad-act del">🗑️</button></div></div>'
   }).join('');
 }
-async function delSignup(id){if(!confirm('حذف؟'))return;try{await sb.from('bus_trip_signups').delete().eq('id',id);await loadList()}catch(e){alert('فشل: '+(e.message||''))}}
+async function delSignup(id){if(!await wadiConfirm('حذف؟'))return;try{await sb.from('bus_trip_signups').delete().eq('id',id);await loadList()}catch(e){alert('فشل: '+(e.message||''))}}
 function exportCSV(){
   if(SIGNUPS.length===0){alert('لا توجد بيانات');return}
   const SPB=(TRIP&&TRIP.max_seats)||30;
@@ -515,9 +516,18 @@ function exportCSV(){
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='bus-trip-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 async function sendReminder(){
-  const t=prompt('العنوان:','🕯️ تذكير: مسيرة حمل مشعل الإيمان');if(!t)return;
-  const b=prompt('النصّ:','الباص ينطلق قريباً من أمام كنيسة مار متى. لا تنسوا 🙏');if(!b)return;
-  if(!confirm('إرسال؟'))return;
+  const _r = await wadiForm({
+    title:'🔔 إرسال تذكير',
+    okText:'متابعة',
+    fields:[
+      {key:'t', label:'العنوان', value:'🕯️ تذكير: مسيرة حمل مشعل الإيمان', required:true},
+      {key:'b', label:'النصّ',   value:'الباص ينطلق قريباً من أمام كنيسة مار متى. لا تنسوا الحضور!', required:true}
+    ]
+  });
+  if(!_r) return;
+  const t=_r.t;
+  const b=_r.b;
+  if(!await wadiConfirm('إرسال؟'))return;
   const{data:{session}}=await sb.auth.getSession();if(!session){alert('الجلسة منتهية');return}
   try{
     const r=await fetch(SB_URL+'/functions/v1/send-push',{method:'POST',headers:{'Authorization':'Bearer '+session.access_token,'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({topic:'events',title:t,body:b,url:'/bus-trip.html'})});

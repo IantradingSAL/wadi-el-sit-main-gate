@@ -359,6 +359,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -718,7 +719,7 @@ async function coopAdminLogin() {
 }
 
 async function coopAdminLogout() {
-  if (!confirm(t('logoutConfirm'))) return;
+  if (!await wadiConfirm(t('logoutConfirm'))) return;
   const token = tokGet();
   if (token) { try { await client.rpc('coop_admin_logout', { p_token: token }); } catch {} }
   tokClear(); showLogin();
@@ -1072,7 +1073,7 @@ function switchTab(name) {
 
 /* ─── Actions (exact RPC signatures from production) ─── */
 async function actApprove(id) {
-  if (!confirm(t('confirm.approve'))) return;
+  if (!await wadiConfirm(t('confirm.approve'))) return;
   try {
     const { error } = await client.rpc('coop_admin_approve_seller', { p_admin_token: tokGet(), p_seller_id: id });
     if (error) throw error;
@@ -1095,7 +1096,7 @@ async function actSuspend(id, name) {
 async function actChangePassword(id, username) {
   const pwd = await openPrompt(t('prompt.pwdTitle'), t('prompt.pwdSub') + ' — @'+username, 'password');
   if (!pwd || pwd.length < 4) return;
-  if (!confirm(t('confirm.pwd'))) return;
+  if (!await wadiConfirm(t('confirm.pwd'))) return;
   try {
     const hash = await sha256Hex(pwd);
     const { error } = await client.rpc('coop_admin_change_seller_password', { p_admin_token: tokGet(), p_seller_id: id, p_new_password_hash: hash });
@@ -1105,7 +1106,7 @@ async function actChangePassword(id, username) {
 }
 
 async function actDelete(id, name) {
-  if (!confirm(t('confirm.delete') + (name ? '\n— '+name : ''))) return;
+  if (!await wadiConfirm(t('confirm.delete') + (name ? '\n— '+name : ''))) return;
   let force = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -1117,7 +1118,7 @@ async function actDelete(id, name) {
     } catch (e) {
       const msg = e?.message || String(e);
       if (msg.includes('seller_has_orders') && attempt === 0) {
-        if (confirm(t('confirm.deleteForce'))) { force = true; continue; }
+        if (await wadiConfirm(t('confirm.deleteForce'), { danger: true })) { force = true; continue; }
         return;
       }
       if (!handleRpcError(e)) toast(t('toast.errOp')+': '+msg,'err');

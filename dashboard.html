@@ -259,6 +259,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">بلدية وادي الست — نظام متابعة الطلبات والمراسلات</h1>
@@ -821,7 +822,7 @@ async function openAuditLog(){
     + listHtml
     + '<div style="margin-top:14px;display:flex;gap:8px">'
     + '<button class="btn bg" onclick="closeM()" style="flex:1;justify-content:center">إغلاق</button>'
-    + '<button class="btn" onclick="if(confirm(\'حذف السجل المحلي؟\')){localStorage.removeItem(APP_AUDIT_KEY);openAuditLog();}" style="font-size:12px">🗑️ مسح المحلي</button>'
+    + '<button class="btn" onclick="wadiConfirm(\'حذف السجل المحلي؟\',{danger:true}).then(function(ok){if(ok){localStorage.removeItem(APP_AUDIT_KEY);openAuditLog();}})" style="font-size:12px">🗑️ مسح المحلي</button>'
     + '</div>';
 }
 function openWhatsAppRoles(){
@@ -1057,7 +1058,8 @@ async function addDoc(caseId,file){
 
 async function rmDoc(caseId,path){
   if(!guard('edit','🚫 لا تملك صلاحية تعديل الطلبات')) return;
-  const c=cases.find(x=>String(x.id)===String(caseId));if(!c||!confirm('حذف هذا المستند؟'))return;
+  const c=cases.find(x=>String(x.id)===String(caseId));if(!c)return;
+  if(!await wadiConfirm('حذف هذا المستند؟',{danger:true}))return;
   sv(true);
   try{
     if(dbR)await sb.storage.from('case-documents').remove([path]);
@@ -1359,7 +1361,7 @@ async function doApprove(id,dec){
   }
 }
 
-async function cd(id){if(!confirm('حذف هذا الطلب نهائياً؟'))return;await delC(id);closeM();}
+async function cd(id){if(!await wadiConfirm('حذف هذا الطلب نهائياً؟'))return;await delC(id);closeM();}
 
 // ── ADD ───────────────────────────────────────────────────────────────────────
 function openAdd(){
@@ -1610,7 +1612,7 @@ async function saveEmp(uid) {
 async function delEmp(btn) {
   if(!guard('admin','🚫 حذف الموظفين متاح للإدارة فقط')) return;
   const uid = btn.dataset.uid, name = btn.dataset.nm;
-  if (!confirm('حذف ' + name + '؟')) return;
+  if (!await wadiConfirm('حذف ' + name + '؟')) return;
   try {
     await adminAPI({ action: 'delete', uid: uid });
     toast('🗑 تم حذف ' + name); setTimeout(loadEmp, 700);
@@ -2312,7 +2314,6 @@ async function loadCatsFromSupabase() {
       localStorage.setItem('wadi_cats', JSON.stringify(cats));
       renderCatsNav();
       updateCitizenTypeSelect();
-      console.log('✅ Cats loaded from Supabase:', cats.length);
     }
   } catch(e) { console.log('loadCatsFromSupabase:', e.message); }
 }
@@ -2834,7 +2835,7 @@ async function doResetPw(btn) {
 async function doDelUser(btn) {
   var uid=btn.dataset.uid, name=btn.dataset.nm;
   if(!WadiPerms.can('users_delete')){toast('🚫 حذف الحسابات غير مسموح لهذا الحساب','err');return;}
-  if(!confirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
+  if(!await wadiConfirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
   try {
     await adminAPI({action:'delete',uid:uid});
     // leave no orphan role or permission rows behind
@@ -2946,9 +2947,9 @@ function doSaveEditRole(rid, ico) {
   toast('✅ تم حفظ الدور');openUsers();
 }
 
-function doDeleteRole(btn) {
+async function doDeleteRole(btn) {
   var rid=btn.dataset.rid, r=getAdvRoleCfg(rid);
-  if(!confirm('حذف دور "'+r.label+'"?'))return;
+  if(!await wadiConfirm('حذف دور "'+r.label+'"?'))return;
   var custom=getCustomRoles();delete custom[rid];saveCustomRoles(custom);
   toast('🗑️ تم حذف الدور');renderRolesList();
 }
@@ -3098,10 +3099,8 @@ async function sendBrevoEmail(toEmail, toName, subject, htmlBody) {
       body: payload
     });
     const status = r.status;
-    console.log('Brevo:', status, toEmail);
     return status === 201 || status === 200;
   } catch(e) {
-    console.log('sendBrevoEmail error:', e.message);
     return false;
   }
 }
@@ -3161,7 +3160,6 @@ async function loadCatsFromDB() {
       if (cats && cats.length) {
         localStorage.setItem('wadi_cats', JSON.stringify(cats));
         renderCatsNav();
-        console.log('✅ Cats loaded from Supabase:', cats.length);
       }
     }
   } catch(e) { console.log('loadCatsFromDB:', e.message); }
@@ -3175,7 +3173,6 @@ async function loadCatsFromDB() {
     const {data, error} = await sb.from('settings').select('value').eq('key','wadi_cats').single();
     if (!error && data && data.value && data.value.length) {
       localStorage.setItem('wadi_cats', JSON.stringify(data.value));
-      console.log('✅ التصنيفات محمّلة من Supabase:', data.value.length);
       renderCatsNav();
       // Update type select if open
       var sel = document.getElementById('at');
@@ -4692,7 +4689,6 @@ async function openWaterSchedule(){
           email:o.email||null,area:o.area||null,land_name:o.landName||null,
           crop:o.crop||null,hours:o.hours||0,sort_order:o.order||o.sort_order||1,notes:o.notes||null};
       }),{onConflict:'id'}).then(function(){
-        console.log('Synced '+lsOwners.length+' owners from localStorage to Supabase');
       }).catch(function(e){console.log('sync err:',e);});
     }
   }
@@ -4926,8 +4922,8 @@ function saveIrrOwner(){
   }
 }
 
-function delIrrOwner(id,name){
-  if(!confirm('حذف '+name+'؟')) return;
+async function delIrrOwner(id,name){
+  if(!await wadiConfirm('حذف '+name+'؟')) return;
   saveIrrOwners(irrOwners().filter(function(o){return o.id!==id;}));
   if(dbR&&sb) sb.from('irr_owners').delete().eq('id',id).catch(function(){});
   renderIrrList(); updateWaterBadge(); toast('🗑️ '+name);

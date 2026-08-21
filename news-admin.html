@@ -188,6 +188,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -373,7 +374,7 @@ async function doLogin(){
   if(error){err.innerHTML=`<div class="alert err">⚠️ ${esc(error.message)}</div>`;return;}
   await checkSession();
 }
-async function doLogout(){if(!confirm('تسجيل خروج؟'))return;await sb.auth.signOut();show('LOGIN_VIEW');}
+async function doLogout(){if(!await wadiConfirm('تسجيل خروج؟'))return;await sb.auth.signOut();show('LOGIN_VIEW');}
 
 async function loadList(){
   try {
@@ -690,7 +691,7 @@ async function saveArticle(){
 
 async function deleteArticle(){
   if (!editingId) return;
-  if (!confirm('⚠️ هل تريد فعلاً حذف هذا الخبر نهائياً؟ لا يمكن التراجع.')) return;
+  if (!await wadiConfirm('⚠️ هل تريد فعلاً حذف هذا الخبر نهائياً؟ لا يمكن التراجع.')) return;
   const btn = document.getElementById('DEL_BTN');
   btn.disabled = true;
   try {

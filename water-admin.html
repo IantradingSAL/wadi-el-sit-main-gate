@@ -108,6 +108,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">إدارة الري وصندوق لجنة المياه</h1>
@@ -401,7 +402,6 @@ async function loadIrrOwners() {
     localStorage.setItem('wadi_irr_owners',JSON.stringify(best));
     return _irrOwnersCache;
   } catch(e) {
-    console.log('loadIrrOwners (table may not exist yet):', e.message);
     var fallback=[];try{fallback=JSON.parse(localStorage.getItem('wadi_irr_owners')||'[]');}catch(x){}
     _irrOwnersCache = fallback;
     return fallback;
@@ -462,7 +462,6 @@ async function loadIrrConfig() {
     localStorage.setItem('wadi_irr_config', JSON.stringify(_irrConfigCache));
     return _irrConfigCache;
   } catch(e) {
-    console.log('loadIrrConfig:', e.message);
     // Fallback to localStorage — set cache too
     var fallback = getIrrConfig();
     _irrConfigCache = fallback;
@@ -1066,8 +1065,8 @@ function saveIrrOwner(){
   updateWaterBadge();
 }
 
-function deleteIrrOwner(id,name){
-  if(!confirm('حذف '+name+'؟'))return;
+async function deleteIrrOwner(id,name){
+  if(!await wadiConfirm('حذف '+name+'؟'))return;
   var updated = getIrrOwners().filter(function(o){return o.id!==id;});
   _irrOwnersCache = updated;
   localStorage.setItem('wadi_irr_owners', JSON.stringify(updated));
@@ -1341,10 +1340,22 @@ function wfMakePicker(inputId){
 }
 function wfWirePickers(){ wfMakePicker('c-person'); }
 async function wfShowAddPhonebookModal(prefillName, targetInputId){
-  const nm=(prompt('👤 اسم الشخص الكامل:',prefillName||'')||'').trim();
+  // Was three native dialogs in a row — name, then phone, then a yes/no —
+  // with no way back if you mistyped the first. One form now.
+  const _p = await wadiForm({
+    title: '👤 إضافة شخص جديد',
+    okText: 'إضافة',
+    fields: [
+      { key:'nm',   label:'الاسم الكامل',            value: prefillName||'', required:true },
+      { key:'ph',   label:'رقم الهاتف (اختياري)',    inputmode:'tel', dir:'ltr', required:false },
+      { key:'wadi', label:'🏡 مواطن من بلدة وادي الست', type:'checkbox', value:true }
+    ]
+  });
+  if(!_p) return;
+  const nm=(_p.nm||'').trim();
   if(!nm) return;
-  const ph=(prompt('📞 رقم الهاتف (اختياري):','')||'').trim();
-  const wadi=confirm('🏡 هل هو مواطن من بلدة وادي الست؟');
+  const ph=(_p.ph||'').trim();
+  const wadi=!!_p.wadi;
   const parts=nm.split(/\s+/);
   // phonebook_entries.phone is NOT NULL — store an omitted number as an empty string
   const D={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9',
@@ -1414,7 +1425,7 @@ function renderLedger(){
   document.getElementById('ledger-body').innerHTML=rows||'<tr><td colspan="10" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
 }
 async function wfDel(id){
-  if(!confirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
+  if(!await wadiConfirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
   const{error}=await sb.from('water_finance').delete().eq('id',id);
   if(error){toast('⚠️ فشل الحذف: '+error.message,'err');return;}
   toast('✓ تم الحذف'); wfLoaded=true; await loadFinance();
@@ -1771,7 +1782,7 @@ function wfShareWhatsText(){
 }
 async function wfShareEmail(){
   closeSendModal();
-  const to=prompt('البريد الإلكتروني للمستلم:');
+  const to=await wadiPrompt('البريد الإلكتروني للمستلم:',{title:'📧 إرسال بالبريد',type:'email',dir:'ltr'});
   if(!to)return;
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to.trim())){alert('⚠️ بريد إلكتروني غير صالح');return;}
   var s={};

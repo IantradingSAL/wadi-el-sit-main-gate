@@ -517,6 +517,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <div class="header">
@@ -641,7 +642,6 @@ window.addEventListener('DOMContentLoaded', async function(){
   }catch(e){
     /* Silently swallow DataCloneError — it's harmless noise from a buggy SW/extension */
     if(e && e.name !== 'DataCloneError' && (!e.message || e.message.indexOf('postMessage')<0 && e.message.indexOf('clone')<0)){
-      console.log('irr_owners table:',e.message,'— trying settings fallback');
     }
     try{
       var rs=await sb.from('settings').select('value').eq('key','wadi_irr_owners').single();
@@ -653,11 +653,9 @@ window.addEventListener('DOMContentLoaded', async function(){
             land_ref:o.landRef||o.land_ref||'',crop:o.crop||'',
             hours:parseFloat(o.hours)||0,sort_order:parseInt(o.order||o.sort_order)||1,notes:o.notes||''};
         });
-        console.log('Loaded '+_owners.length+' owners from settings fallback');
       }
     }catch(e2){
       if(e2 && e2.name !== 'DataCloneError' && (!e2.message || e2.message.indexOf('postMessage')<0 && e2.message.indexOf('clone')<0)){
-        console.log('settings fallback failed:',e2.message);
       }
     }
     // Final fallback: localStorage (same GitHub Pages domain as dashboard.html)
@@ -678,7 +676,6 @@ window.addEventListener('DOMContentLoaded', async function(){
               var k=(o.phone||'').replace(/[^0-9]/g,'');
               if(seen[k])return false; seen[k]=true; return true;
             });
-            console.log('Loaded '+_owners.length+' owners from localStorage (deduped from '+rawOwners.length+')');
           }
         }
       }catch(e3){console.log('localStorage fail:',e3);}

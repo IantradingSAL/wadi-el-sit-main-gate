@@ -777,6 +777,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">بوابة المواطن — بلدية وادي الست</h1>
@@ -1156,7 +1157,6 @@ async function loadCatsFromSupabase() {
       const cats = JSON.parse(data.value);
       localStorage.setItem('wadi_cats', JSON.stringify(cats));
       updateCitizenTypeSelect();
-      console.log('✅ Cats loaded from Supabase:', cats.length);
     }
   } catch(e) { console.log('loadCatsFromSupabase:', e.message); }
 }

@@ -27,7 +27,6 @@ function _t(key, ar){
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').then((reg) => {
-        console.log('[PWA] Service worker registered.');
         // Check for updates every hour while page is open
         setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
         watchForUpdate(reg);
@@ -136,7 +135,6 @@ function _t(key, ar){
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     hideInstallBanner();
-    console.log('[PWA] App installed.');
   });
 
   function showInstallBanner() {
@@ -411,7 +409,6 @@ function _t(key, ar){
             user_role: role || 'citizen'
           })
         });
-        console.log('[PWA] Subscription linked to user:', userName, phoneNorm);
         return true;
       } catch (e) {
         console.warn('linkToUser failed:', e);
@@ -466,7 +463,6 @@ function _t(key, ar){
         const ok = await window.PWA.linkToUser(u.phone, u.name || '', u.role || 'citizen');
         if (ok) {
           localStorage.setItem('wadi_push_linked', currentSig);
-          console.log('[PWA] Auto-linked subscription on page load');
         }
         return ok;
       } catch (e) {
@@ -563,7 +559,7 @@ function _t(key, ar){
     },
 
     _disableFromToggle: async (containerId, opts) => {
-      if (!confirm(_t('pushConfirmDisable','هل تريد فعلاً إيقاف الإشعارات؟ لن تستلم تحديثات البلدية.'))) return;
+      if (!await wadiConfirm(_t('pushConfirmDisable','هل تريد فعلاً إيقاف الإشعارات؟ لن تستلم تحديثات البلدية.'))) return;
       try {
         await window.PWA.disablePush();
         window.PWA.renderToggle(containerId, opts);

@@ -65,6 +65,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">صندوق البلدية</h1>
@@ -1469,7 +1470,7 @@ function bfViewLoad(id){
 }
 async function bfViewSaveNew(){
   if(!bfUser){toast('🚫 يجب تسجيل الدخول','err');return;}
-  const name=prompt('اسم العرض الجديد:',''); if(!name||!name.trim())return;
+  const name=await wadiPrompt('اسم العرض الجديد:',{title:'💾 حفظ عرض'}); if(!name||!name.trim())return;
   const state=bfCollectState();
   const{data,error}=await sb.from('sandouk_views').insert({name:name.trim(),state:state}).select();
   if(error){toast('⚠️ '+error.message,'err');return;}
@@ -1489,7 +1490,7 @@ async function bfViewSaveOver(){
 async function bfViewRename(){
   if(!bfCurrentViewId){toast('⚠️ اختر عرضاً أولاً','err');return;}
   const v=bfViews.find(x=>x.id===bfCurrentViewId); if(!v)return;
-  const name=prompt('الاسم الجديد:',v.name); if(!name||!name.trim()||name.trim()===v.name)return;
+  const name=await wadiPrompt('الاسم الجديد:',{title:'✏️ إعادة تسمية العرض',value:v.name}); if(!name||!name.trim()||name.trim()===v.name)return;
   const{data,error}=await sb.from('sandouk_views').update({name:name.trim(),updated_at:new Date().toISOString()}).eq('id',v.id).select();
   if(error){toast('⚠️ '+error.message,'err');return;}
   const nv=(data&&data[0]); if(nv){const i=bfViews.findIndex(x=>x.id===nv.id); if(i>=0)bfViews[i]=nv;}
@@ -1499,7 +1500,7 @@ async function bfViewRename(){
 async function bfViewDelete(){
   if(!bfCurrentViewId){toast('⚠️ اختر عرضاً أولاً','err');return;}
   const v=bfViews.find(x=>x.id===bfCurrentViewId); if(!v)return;
-  if(!confirm('حذف العرض "'+v.name+'"؟'))return;
+  if(!await wadiConfirm('حذف العرض "'+v.name+'"؟'))return;
   const{error}=await sb.from('sandouk_views').delete().eq('id',v.id);
   if(error){toast('⚠️ '+error.message,'err');return;}
   bfViews=bfViews.filter(x=>x.id!==v.id);
@@ -1519,7 +1520,7 @@ function bfViewReset(silent){
 }
 async function bfDel(id){
   if(!bfCanDel()){toast('🚫 صلاحية الحذف محصورة بالمشرف العام','err');return;}
-  if(!confirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
+  if(!await wadiConfirm('هل أنت متأكد من حذف هذه الحركة؟ لا يمكن التراجع.'))return;
   const e=bfEntries.find(x=>String(x.id)===String(id));
   const{error}=await sb.from('baladieh_finance').delete().eq('id',id);
   if(error){toast('⚠️ فشل الحذف: '+error.message,'err');return;}
@@ -2857,7 +2858,7 @@ async function bfSaveWasselFromCase(){
 async function bfClearWasselFromCase(){
   if(!bfCaseId)return;
   if(!bfCanEdit()){toast('🚫 لا تملك صلاحية تعديل الإيصال','err');return;}
-  if(!confirm('مسح رقم الإيصال وتاريخه من هذا السند؟'))return;
+  if(!await wadiConfirm('مسح رقم الإيصال وتاريخه من هذا السند؟'))return;
   const{error}=await sb.from('baladieh_finance').update({wassel_number:null,wassel_date:null}).eq('id',bfCaseId);
   if(error){toast('⚠️ '+error.message,'err');return;}
   // تُعاد تسمية المرفقات إلى رقم السند بعد مسح رقم الإيصال.
@@ -3018,7 +3019,7 @@ async function bfVoidConfirm(){
 async function bfCaseUnvoid(){
   if(!bfCanDel()){toast('🚫 استعادة السندات محصورة بالمشرف العام','err');return;}
   const id=bfCaseId; bfCloseCase(); if(!id)return;
-  if(!confirm('استعادة هذا السند؟ سيعود مبلغه إلى الرصيد والتقارير.'))return;
+  if(!await wadiConfirm('استعادة هذا السند؟ سيعود مبلغه إلى الرصيد والتقارير.'))return;
   const{error}=await sb.from('baladieh_finance')
     .update({voided:false,void_reason:null,voided_at:null,voided_by:null})
     .eq('id',id);
@@ -3073,7 +3074,7 @@ async function bfSignRemove(){
   const role=bfSignRole;
   const cur=bfSigs(e)[role];
   if(!(cur&&cur.img)){toast('لا يوجد توقيع محفوظ لهذا الدور','err');return;}
-  if(!confirm('حذف توقيع '+bfSignRoleLabel(e,role)+'؟')) return;
+  if(!await wadiConfirm('حذف توقيع '+bfSignRoleLabel(e,role)+'؟')) return;
   const sigs=Object.assign({},bfSigs(e));
   delete sigs[role];
   // The person slot is also fed by the legacy `signature` column, so clearing

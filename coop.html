@@ -1526,6 +1526,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 </style>
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -3139,8 +3140,8 @@ function saveProfile(){
   }catch(e){console.error(e);toast(L().saveFailed,'err');}
 }
 
-function clearIdentity(){
-  if(!confirm(((window.__wadi_t&&window.__wadi_t('logoutSellerConfirm'))||'هل تريد تسجيل الخروج؟ سيتمّ مسح بيانات الجلسة.'))) return;
+async function clearIdentity(){
+  if(!await wadiConfirm(((window.__wadi_t&&window.__wadi_t('logoutSellerConfirm'))||'هل تريد تسجيل الخروج؟ سيتمّ مسح بيانات الجلسة.'))) return;
   localStorage.removeItem('coop_seller');
   coopClearToken('seller');   // revoke it server-side, not just locally
   localStorage.removeItem('coop_admin');
@@ -3549,8 +3550,8 @@ function requestAgentPayout(amount, count){
   toast('✅ تمّ إرسال طلب الصرف','ok');
 }
 
-function logoutAgent(){
-  if(!confirm('تسجيل خروج عامل التوصيل؟')) return;
+async function logoutAgent(){
+  if(!await wadiConfirm('تسجيل خروج عامل التوصيل؟')) return;
   currentAgent = null;
   localStorage.removeItem('coop_agent');
   coopClearToken('agent');    // revoke it server-side, not just locally
@@ -4000,7 +4001,7 @@ function setStatNum(el, text){
 }
 
 async function updateOrderStatus(orderId, newStatus){
-  if(!confirm(`تأكيد تغيير حالة الطلب إلى "${newStatus}"؟`)) return;
+  if(!await wadiConfirm(`تأكيد تغيير حالة الطلب إلى "${newStatus}"؟`)) return;
   try{
     const res = await sb.rpc('coop_order_set_status',
       {p_token:coopToken('seller'), p_kind:'seller', p_order:orderId, p_status:newStatus});
@@ -4021,13 +4022,13 @@ function contactCustomerWA(phone, name, item, total){
   openWhatsApp('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg));
 }
 
-function requestPayout(){
+async function requestPayout(){
   const due = window._sellerAmountDue || 0;
   if(due <= 0){
     toast('لا يوجد رصيد قابل للسحب حالياً','err');
     return;
   }
-  if(!confirm(`طلب سحب الرصيد المستحقّ: ${formatPrice(due)} ل.ل.؟\n\nسيتمّ التواصل معك من قبل البلدية لتنسيق التسليم.`)) return;
+  if(!await wadiConfirm(`طلب سحب الرصيد المستحقّ: ${formatPrice(due)} ل.ل.؟\n\nسيتمّ التواصل معك من قبل البلدية لتنسيق التسليم.`)) return;
   // Send WhatsApp to municipality
   const msg = `📥 طلب سحب رصيد — تعاونيّة بلدية وادي الست\n\n`+
               `البائع: ${currentSeller.display_name}\n`+
@@ -4144,7 +4145,7 @@ function editSellerProduct(productId){
 }
 
 async function deleteSellerProduct(productId){
-  if(!confirm('هل تريد حذف هذا المنتج نهائياً؟ لا يمكن التراجع عن العمليّة.')) return;
+  if(!await wadiConfirm('هل تريد حذف هذا المنتج نهائياً؟ لا يمكن التراجع عن العمليّة.')) return;
   try{
     const res = await sb.rpc('coop_product_delete',
       {p_token: coopToken('seller'), p_id: productId});
@@ -4384,8 +4385,8 @@ async function saveProduct(){
   }
 }
 
-function logoutSeller(){
-  if(!confirm('تسجيل خروج البائع؟')) return;
+async function logoutSeller(){
+  if(!await wadiConfirm('تسجيل خروج البائع؟')) return;
   currentSeller=null;
   localStorage.removeItem('coop_seller');
   coopClearToken('seller');   // revoke it server-side, not just locally
@@ -4855,11 +4856,20 @@ async function loadAdminPanel(){
           if(btn){
             btn.onclick = async () => {
               const suggest = btn.dataset.max;
-              const raw = window.prompt(`${dashT('payoutPrompt')} ${btn.dataset.sname} (${dashT('payoutOwed')} ${suggest}):`, suggest);
-              if(raw === null) return;
-              const amt = Number(raw);
+              // Was two native dialogs back to back — amount, then note.
+              const _pay = await wadiForm({
+                title: `${dashT('payoutPrompt')} ${btn.dataset.sname}`,
+                note:  `${dashT('payoutOwed')} ${suggest}`,
+                okText: dashT('payoutPrompt'),
+                fields: [
+                  { key:'amt',  label: dashT('payoutOwed'), value: suggest, inputmode:'decimal', required:true },
+                  { key:'note', label: dashT('payoutNote'), required:false }
+                ]
+              });
+              if(!_pay) return;
+              const amt = Number(_pay.amt);
               if(!(amt>0)){ toast('⚠️ '+dashT('payoutInvalid'),'err'); return; }
-              const note = window.prompt(dashT('payoutNote')+':','')||'';
+              const note = _pay.note || '';
               const { error } = await sb.from('coop_transactions').insert({
                 seller_id: btn.dataset.sid,
                 type: 'withdrawal',
@@ -4928,7 +4938,7 @@ async function loadAdminPanel(){
           ev.stopPropagation();
           const id = b.dataset.catId;
           if(b.dataset.act === 'del-cat'){
-            if(!confirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
+            if(!await wadiConfirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
             b.disabled = true; b.textContent = '⏳';
             // Was a direct DELETE. The table's write policies were open to anon,
             // so anyone on the internet could empty the shop's category list.
@@ -5053,7 +5063,7 @@ async function loadAdminPanel(){
             e.stopPropagation();
             const act=b.dataset.act,id=b.dataset.id;
             if(act==='delete-seller'){
-              if(!confirm('حذف البائع "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له منتجات أو طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              if(!await wadiConfirm('حذف البائع "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له منتجات أو طلبات — استخدم الحظر بدلاً من ذلك.'))return;
               b.disabled=true; b.textContent='⏳';
               const{error}=await sb.from('coop_sellers').delete().eq('id',id);
               if(error){b.disabled=false;b.textContent='🗑️ حذف';toast('⚠️ '+error.message,'err');return;}
@@ -5107,7 +5117,7 @@ async function loadAdminPanel(){
             const busy=(txt)=>{b.disabled=true;b.dataset._t=b.textContent;b.textContent=txt||'⏳';};
             const done=()=>{b.disabled=false;if(b.dataset._t){b.textContent=b.dataset._t;delete b.dataset._t;}};
             if(act==='delete-agent'){
-              if(!confirm('حذف عامل التوصيل "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              if(!await wadiConfirm('حذف عامل التوصيل "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات — استخدم الحظر بدلاً من ذلك.'))return;
               busy('⏳ حذف');
               const{error}=await sb.from('coop_delivery_agents').delete().eq('id',id);
               if(error){done();toast('⚠️ '+error.message,'err');return;}
@@ -5173,7 +5183,7 @@ async function loadAdminPanel(){
         el.querySelectorAll('button[data-act="delete-product"]').forEach(b=>{
           b.onclick=async(e)=>{
             e.stopPropagation();
-            if(!confirm('حذف المنتج "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات مرتبطة.'))return;
+            if(!await wadiConfirm('حذف المنتج "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات مرتبطة.'))return;
             b.disabled=true; b.textContent='⏳ حذف';
             const{error}=await sb.from('coop_products').delete().eq('id',b.dataset.id);
             if(error){b.disabled=false;b.textContent='🗑️ حذف المنتج';toast('⚠️ '+error.message,'err');return;}
@@ -5216,7 +5226,7 @@ async function loadAdminPanel(){
             e.stopPropagation();
             const act=b.dataset.act,id=b.dataset.id;
             if(act==='delete-order'){
-              if(!confirm('حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع.'))return;
+              if(!await wadiConfirm('حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع.'))return;
               b.disabled=true; b.textContent='⏳ حذف';
               const{error}=await sb.from('coop_orders').delete().eq('id',id);
               if(error){b.disabled=false;b.textContent='🗑️ حذف نهائي';toast('⚠️ '+error.message,'err');return;}
@@ -5224,7 +5234,7 @@ async function loadAdminPanel(){
               el.remove();
               return;
             } else {
-              if(!confirm('إلغاء الطلب؟'))return;
+              if(!await wadiConfirm('إلغاء الطلب؟'))return;
               b.disabled=true;
               const{error}=await sb.from('coop_orders').update({status:'cancelled'}).eq('id',id);
               b.disabled=false;
@@ -5299,7 +5309,7 @@ async function renderAgentPayouts(agents){
   }).join('');
   box.querySelectorAll('button[data-act="mark-paid"]').forEach(btn => {
     btn.onclick = async () => {
-      if(!confirm('تأكيد صرف جميع المستحقّات المعلّقة لهذا العامل؟')) return;
+      if(!await wadiConfirm('تأكيد صرف جميع المستحقّات المعلّقة لهذا العامل؟')) return;
       btn.disabled = true; btn.textContent = '⏳';
       const now = new Date().toISOString();
       const { error } = await sb.from('coop_orders')
@@ -5576,8 +5586,8 @@ function populateCurrencyAdmin(){
   }
 }
 
-function logoutAdmin(){
-  if(!confirm('تسجيل خروج الإدارة؟')) return;
+async function logoutAdmin(){
+  if(!await wadiConfirm('تسجيل خروج الإدارة؟')) return;
   currentAdmin=null;
   localStorage.removeItem('coop_admin');
   exitAdmin();
@@ -5623,7 +5633,6 @@ async function loadCurrencyRate(){
     if (!error && data) {
       window.currencyRate = parseFloat(data.rate_usd_to_lbp) || 89500;
       window.currencyRateUpdatedAt = data.updated_at;
-      console.log('💱 Currency rate loaded:', window.currencyRate, 'LBP/USD');
     }
   } catch(e) { console.warn('Could not load currency rate, using default 89500'); window.currencyRate = 89500; }
 }
