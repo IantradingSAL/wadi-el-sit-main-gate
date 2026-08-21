@@ -632,6 +632,7 @@ function getRoleCfg(){
     export:WadiPerms.can('export_data'),
     settings:WadiPerms.can('settings_edit'),
     audit:WadiPerms.can('audit_view'),
+    activity:WadiPerms.can('activity_view'),
     f_water:WadiPerms.can('water_view')
   });
 }
@@ -703,10 +704,30 @@ function readLS(k,fallback=[]){try{return JSON.parse(localStorage.getItem(k)||JS
 function writeLS(k,v){localStorage.setItem(k,JSON.stringify(v));}
 function nowISO(){return new Date().toISOString();}
 function fmtDT(v){if(!v) return '—'; const d=new Date(v); return d.toLocaleString('ar-LB');}
-function trackActivity(action, details=''){
+// 📊 نشاط الموظفين — يُكتب في قاعدة البيانات، لا في متصفّح الموظف
+//
+// This used to write to localStorage alone, which is one device's private
+// storage: the supervisor's screen showed zeros because it was reading the
+// supervisor's own browser, and clearing site data erased the record. Rows now
+// go to public.app_activity (migration 26) — insert-only, each account writing
+// its own rows, readable by whoever holds activity_view. The local copy is kept
+// as an offline mirror so an activity is not simply lost when the network is.
+function trackActivity(action, details='', opts){
+  opts=opts||{};
   const rows=readLS(APP_ACTIVITY_KEY,[]);
   rows.unshift({id:Date.now()+Math.random(), user:appUserName(), role:userRole, action, details, at:nowISO()});
   writeLS(APP_ACTIVITY_KEY, rows.slice(0,300));
+  try{
+    if(!sb||!currentUser)return;
+    sb.from('app_activity').insert({
+      actor_email:currentUser.email||null,
+      role:userRole||null,
+      page:opts.page||'dashboard',
+      action:action,
+      target:opts.target||null,
+      detail:details||null
+    }).then(r=>{ if(r&&r.error)console.warn('activity:',r.error.message); },()=>{});
+  }catch(_e){}
 }
 function logAudit(entity, action, ref='—', details=''){
   const rows=readLS(APP_AUDIT_KEY,[]);
@@ -732,23 +753,110 @@ function maybeWhatsAppNotify(targetRole,eventName,caseRef='—'){
   rows.unshift({id:Date.now()+Math.random(), user:appUserName(), role:userRole, entity:'whatsapp_notification', action:'queued', ref:caseRef, details:`إشعار واتساب مجدول للدور ${targetRole}: ${eventName}`, at:nowISO()});
   writeLS(APP_AUDIT_KEY, rows.slice(0,500));
 }
-function getActivityStats(){
-  const rows=readLS(APP_ACTIVITY_KEY,[]);
-  const today=new Date().toDateString();
-  const todayRows=rows.filter(r=>new Date(r.at).toDateString()===today);
-  const uniq=new Set(rows.map(r=>r.user));
-  return {total:rows.length, today:todayRows.length, users:uniq.size};
+// ── 📊 تتبع نشاط الموظفين ──────────────────────────────────────────────────
+let ACT_ROWS=[], ACT_LOADED=false;
+function actFilters(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  return {from:g('act-from'),to:g('act-to'),user:g('act-user'),action:g('act-action'),q:(g('act-q')||'').trim().toLowerCase()};
 }
+function actFiltered(){
+  const f=actFilters();
+  return ACT_ROWS.filter(r=>{
+    const day=String(r.at||'').slice(0,10);
+    if(f.from&&day<f.from)return false;
+    if(f.to&&day>f.to)return false;
+    if(f.user&&(r.actor_email||'')!==f.user)return false;
+    if(f.action&&(r.action||'')!==f.action)return false;
+    if(f.q){
+      const hay=[r.actor_email,r.role,r.page,r.action,r.target,r.detail].join(' ').toLowerCase();
+      if(hay.indexOf(f.q)<0)return false;
+    }
+    return true;
+  });
+}
+function actEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+const ACT_PAGE_AR={dashboard:'لوحة البلدية',sandouk:'صندوق البلدية',water:'الري',coop:'التعاونية',news:'الأخبار',users:'المستخدمون'};
 function openActivityTracking(){
-  if(!guard('activity','🚫 هذه الصفحة متاحة للإدارة فقط')) return;
-  const rows=readLS(APP_ACTIVITY_KEY,[]);
-  const stats=getActivityStats();
-  const last=rows.slice(0,20).map(r=>`<div class="log-item"><div class="log-title">${r.action}</div><div class="log-meta">👤 ${r.user} — ${r.role}<br>📝 ${r.details||'—'}<br>🕒 ${fmtDT(r.at)}</div></div>`).join('') || '<div class="em">لا يوجد نشاط بعد</div>';
-  const users={}; rows.forEach(r=>{users[r.user]=(users[r.user]||0)+1;});
-  const top=Object.entries(users).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([u,c])=>`<div class="log-item"><div class="log-title">${u}</div><div class="log-meta">عدد الأنشطة المسجّلة: ${numGroup(c)}</div></div>`).join('') || '<div class="em">لا بيانات</div>';
+  if(!guard('activity','🚫 هذه الشاشة متاحة للإدارة فقط')) return;
   document.getElementById('MT').textContent='📊 تتبع نشاط الموظفين';
-  document.getElementById('MB').innerHTML=`<div class="kpi-strip"><div class="kpi-box"><div class="kpi-num">${numGroup(stats.total)}</div><div class="kpi-lbl">إجمالي الأنشطة</div></div><div class="kpi-box"><div class="kpi-num">${numGroup(stats.today)}</div><div class="kpi-lbl">نشاط اليوم</div></div><div class="kpi-box"><div class="kpi-num">${stats.users}</div><div class="kpi-lbl">الموظفون النشطون</div></div><div class="kpi-box"><div class="kpi-num">20</div><div class="kpi-lbl">آخر السجلات المعروضة</div></div></div><div class="log-grid"><div class="log-card"><div class="admin-header">آخر نشاطات النظام</div><div class="log-list">${last}</div></div><div class="log-card"><div class="admin-header">الأكثر نشاطاً</div><div class="log-list">${top}</div></div></div><div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px"><button class="btn bg" onclick="closeM()">إغلاق</button><button class="btn bp" onclick="exportActivityJSON()">تصدير نشاط المستخدمين</button></div>`;
+  document.getElementById('MB').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ جاري تحميل النشاط…</div>';
   document.getElementById('OV').classList.add('open');
+  trackActivity('فتح تتبع النشاط','عرض نشاط الموظفين');
+  loadActivity(true);
+}
+async function loadActivity(force){
+  if(ACT_LOADED&&!force){renderActivity();return;}
+  try{
+    const{data,error}=await sb.from('app_activity').select('*').order('at',{ascending:false}).limit(3000);
+    if(error)throw error;
+    ACT_ROWS=data||[]; ACT_LOADED=true;
+    renderActivity();
+  }catch(e){
+    document.getElementById('MB').innerHTML=
+      '<div style="padding:18px;color:var(--text3);font-size:13px">⚠️ تعذّر تحميل النشاط: '+actEsc(e.message||e)+'</div>'
+      +'<div style="margin-top:12px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
+  }
+}
+function renderActivity(){
+  const rows=actFiltered();
+  const today=new Date().toISOString().slice(0,10);
+  const todayN=rows.filter(r=>String(r.at||'').slice(0,10)===today).length;
+  const users=[...new Set(ACT_ROWS.map(r=>r.actor_email).filter(Boolean))].sort();
+  const actions=[...new Set(ACT_ROWS.map(r=>r.action).filter(Boolean))].sort();
+  const f=actFilters();
+  const opts=(list,cur)=>'<option value="">— الكل —</option>'+list.map(v=>'<option value="'+actEsc(v)+'"'+(cur===v?' selected':'')+'>'+actEsc(v)+'</option>').join('');
+  const inp='padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--bg);color:var(--text)';
+  const filters='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px">'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">من تاريخ</div><input type="date" id="act-from" value="'+actEsc(f.from)+'" onchange="renderActivity()" style="'+inp+'"></div>'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">إلى تاريخ</div><input type="date" id="act-to" value="'+actEsc(f.to)+'" onchange="renderActivity()" style="'+inp+'"></div>'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">الموظف</div><select id="act-user" onchange="renderActivity()" style="'+inp+'">'+opts(users,f.user)+'</select></div>'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">نوع النشاط</div><select id="act-action" onchange="renderActivity()" style="'+inp+'">'+opts(actions,f.action)+'</select></div>'
+    +'<div style="flex:1;min-width:150px"><div style="font-size:11px;font-weight:800;color:var(--text3)">بحث</div><input type="text" id="act-q" value="'+actEsc(f.q)+'" oninput="renderActivity()" placeholder="اسم، صفحة، تفاصيل…" style="'+inp+';width:100%"></div>'
+    +'<button class="btn" onclick="loadActivity(true)" style="font-size:12px">🔄 تحديث</button>'
+    +'<button class="btn" onclick="actClearFilters()" style="font-size:12px">↺ مسح الفلاتر</button>'
+    +'</div>';
+  const kpis='<div class="kpi-strip">'
+    +'<div class="kpi-box"><div class="kpi-num">'+numGroup(rows.length)+'</div><div class="kpi-lbl">الأنشطة المعروضة</div></div>'
+    +'<div class="kpi-box"><div class="kpi-num">'+numGroup(todayN)+'</div><div class="kpi-lbl">نشاط اليوم</div></div>'
+    +'<div class="kpi-box"><div class="kpi-num">'+new Set(rows.map(r=>r.actor_email)).size+'</div><div class="kpi-lbl">الموظفون النشطون</div></div>'
+    +'<div class="kpi-box"><div class="kpi-num" style="font-size:15px">'+(rows.length?fmtDT(rows[0].at):'—')+'</div><div class="kpi-lbl">آخر نشاط</div></div>'
+    +'</div>';
+  const last=rows.slice(0,60).map(r=>
+    '<div class="log-item"><div class="log-title">'+actEsc(r.action)+(r.target?(' — '+actEsc(r.target)):'')+'</div>'
+    +'<div class="log-meta">👤 '+actEsc(r.actor_email||'—')+(r.role?(' — '+actEsc(r.role)):'')
+    +'<br>🗂️ '+actEsc(ACT_PAGE_AR[r.page]||r.page||'—')
+    +'<br>📝 '+actEsc(r.detail||'—')
+    +'<br>🕒 '+fmtDT(r.at)+'</div></div>').join('')
+    || '<div class="em">لا يوجد نشاط مطابق للفلاتر</div>';
+  const per={}; rows.forEach(r=>{const k=r.actor_email||'—';per[k]=(per[k]||0)+1;});
+  const top=Object.entries(per).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([u,c])=>
+    '<div class="log-item"><div class="log-title">'+actEsc(u)+'</div><div class="log-meta">عدد الأنشطة: '+numGroup(c)+'</div></div>').join('')
+    || '<div class="em">لا بيانات</div>';
+  const localN=readLS(APP_ACTIVITY_KEY,[]).length;
+  document.getElementById('MB').innerHTML=filters+kpis
+    +'<div class="log-grid"><div class="log-card"><div class="admin-header">آخر نشاطات النظام ('+numGroup(Math.min(rows.length,60))+')</div><div class="log-list">'+last+'</div></div>'
+    +'<div class="log-card"><div class="admin-header">الأكثر نشاطاً</div><div class="log-list">'+top+'</div></div></div>'
+    +'<div style="font-size:11.5px;color:var(--text3);margin-top:10px">يُسجَّل النشاط في قاعدة البيانات ولا يمكن تعديله أو حذفه من التطبيق'
+    +(localN?(' · نسخة محلية على هذا الجهاز: '+numGroup(localN)+' سجل'):'')+'</div>'
+    +'<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">'
+    +'<button class="btn bg" onclick="closeM()">إغلاق</button>'
+    +'<button class="btn bp" onclick="exportActivityCSV()">⬇️ تصدير CSV</button>'
+    +'<button class="btn" onclick="exportActivityJSON()" style="font-size:12px">تصدير JSON</button>'
+    +'</div>';
+}
+function actClearFilters(){
+  ['act-from','act-to','act-user','act-action','act-q'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderActivity();
+}
+function exportActivityCSV(){
+  const rows=actFiltered();
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const lines=['التاريخ والوقت,الموظف,الدور,الشاشة,النشاط,الهدف,التفاصيل'];
+  rows.forEach(r=>lines.push([q(fmtDT(r.at)),q(r.actor_email),q(r.role),q(ACT_PAGE_AR[r.page]||r.page),q(r.action),q(r.target),q(r.detail)].join(',')));
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='wadi-staff-activity-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
+  trackActivity('تصدير نشاط الموظفين',numGroup(rows.length)+' سجل');
 }
 async function openAuditLog(){
   if(!guard('audit','🚫 سجل التدقيق غير متاح لهذا الدور')) return;
@@ -841,7 +949,7 @@ function saveWhatsAppRolesFromModal(){
   roles.forEach(r=>{data[r]={enabled:document.getElementById(`wa-enabled-${r}`).value==='1', phones:document.getElementById(`wa-phones-${r}`).value.trim(), template:document.getElementById(`wa-template-${r}`).value.trim()};});
   saveWhatsAppSettings(data); toast('✓ تم حفظ إعدادات واتساب حسب الدور'); closeM();
 }
-function exportActivityJSON(){const blob=new Blob([JSON.stringify(readLS(APP_ACTIVITY_KEY,[]),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='user_activity.json';a.click();URL.revokeObjectURL(a.href);}
+function exportActivityJSON(){const blob=new Blob([JSON.stringify(actFiltered(),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='user_activity.json';a.click();URL.revokeObjectURL(a.href);}
 function exportAuditJSON(){const blob=new Blob([JSON.stringify(readLS(APP_AUDIT_KEY,[]),null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='audit_log.json';a.click();URL.revokeObjectURL(a.href);}
 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
@@ -910,6 +1018,7 @@ async function setupUser(user){
   // Switch screens
   document.getElementById('LS').style.display='none';
   document.getElementById('APP').style.display='block';
+  trackActivity('تسجيل الدخول','دخول إلى لوحة البلدية — '+R.l);
   loadViewPrefs();
   applyPrefsToUI();
   await load();
@@ -928,6 +1037,8 @@ async function setupUser(user){
 }
 
 async function doLogout(){
+  trackActivity('تسجيل الخروج','');
+  await new Promise(r=>setTimeout(r,120));   // let the activity row land first
   if(dbR)await sb.auth.signOut();
   currentUser=null;userRole=null;cases=[];
   document.getElementById('APP').style.display='none';
@@ -1019,6 +1130,8 @@ async function delC(id){
     const{error}=await sb.from('cases').delete().eq('id',id);
     if(error)throw error;
     cases=cases.filter(x=>String(x.id)!==String(id));
+    logAudit('case','delete',id,'حذف طلب');
+    trackActivity('حذف طلب','الطلب رقم '+id,{target:'#'+id});
     toast('🗑 تم الحذف');rStats();render();
   }catch(e){toast('خطأ: '+e.message,'err');}
   finally{sv(false);}
@@ -1345,6 +1458,7 @@ async function doApprove(id,dec){
   if(dec==='approved')c.status='resolved';else c.status='closed';
   const tl=[...(c.timeline||[]),{a:dec==='approved'?'تمت الموافقة الرسمية':'تم رفض الطلب',by,d:today,cls:dec==='approved'?'g':'r'}];
   c.timeline=tl;await saveC(c);closeM();rStats();render();
+  trackActivity(dec==='approved'?'موافقة رسمية':'رفض طلب','الطلب رقم '+c.id+' — '+(TL[c.type]||c.type||''),{target:'#'+c.id});
 
   // Send push notification to the citizen
   if(c.phone && window.PWA && window.PWA.sendPush){
@@ -1513,6 +1627,7 @@ function exportCSV(){
   const rows=cases.map(c=>[c.id,c.name,c.phone||'',c.email||'',c.address||'',TL[c.type]||c.type,c.description,c.assigned,(c.created_at||'').slice(0,10),SL[c.status]||c.status,PL[c.priority]||c.priority,c.approval_state||'—',(c.documents||[]).length,c.source==='website'?'موقع':'موظف']);
   const csv='\uFEFF'+[h,...rows].map(r=>r.map(x=>`"${x||''}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download='بلدية_وادي_الست.csv';a.click();
+  trackActivity('تصدير البيانات','ملف CSV — '+rows.length+' طلب');
 }
 
 
@@ -1659,6 +1774,7 @@ async function refreshData(){
 }
 function printFiltered(){
   if(!guard('print','🚫 لا تملك صلاحية الطباعة')) return;
+  trackActivity('طباعة قائمة الطلبات',filtered().length+' طلب');
   const rows=filtered().map(c=>`
     <tr>
       <td>${String(c.id).slice(-4)}</td>
@@ -1678,6 +1794,7 @@ function printFiltered(){
 }
 function exportJSON(){
   if(!guard('export','🚫 لا تملك صلاحية تصدير البيانات')) return;
+  trackActivity('تصدير البيانات','ملف JSON — '+filtered().length+' طلب');
   const blob=new Blob([JSON.stringify(filtered(),null,2)],{type:'application/json;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -1686,6 +1803,7 @@ function exportJSON(){
 }
 function openSettings(){
   if(!guard('settings','🚫 إعدادات النظام متاحة للإدارة فقط')) return;
+  trackActivity('فتح إعدادات النظام','');
   document.getElementById('MT').textContent='إعدادات الاتصال';
   document.getElementById('MB').innerHTML=`
     <div class="admin-section">
@@ -2546,6 +2664,7 @@ function getCheckedNotifs(prefix) {
 // ── MAIN openUsers ─────────────────────────────────────────────────────────────
 function openUsers() {
   if(!guard('admin','🚫 إدارة المستخدمين متاحة للإدارة فقط')) return;
+  trackActivity('فتح إدارة المستخدمين','',{page:'users'});
   document.getElementById('MT').textContent = 'إدارة المستخدمين والأدوار';
   var allR = getAllRoles();
   var roleOpts = Object.entries(allR).map(function(e){ return '<option value="'+e[0]+'">'+e[1].label+'</option>'; }).join('');
@@ -2711,7 +2830,7 @@ const WP_GROUPS=[
   {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
   {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل'],['phonebook_registry','سجل النفوس الكامل (اسم الأم وسنة الولادة)']]},
   {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['inbox_read','البريد الوارد']]},
-  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات']]}
+  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين']]}
 ];
 let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}}
 
@@ -2783,6 +2902,7 @@ async function wpSave(){
       if(error)throw error;
     }
     toast('✅ حُفظت صلاحيات '+c.name+(keys.length?(' ('+keys.length+' مخصّصة)'):' (كلها حسب الدور)'));
+    trackActivity('تعديل صلاحيات مستخدم',c.name+' — '+(keys.length?(keys.length+' صلاحية مخصّصة'):'كلها حسب الدور'),{target:c.name,page:'users'});
     const p=document.getElementById('wp-panel'); if(p)p.remove();
   }catch(e){ toast('⚠️ '+e.message,'err'); }
 }
@@ -3191,6 +3311,7 @@ async function loadCatsFromDB() {
 function printCase(id) {
   const c = cases.find(function(x){ return String(x.id) === String(id); });
   if (!c) { toast('الطلب غير موجود', 'err'); return; }
+  trackActivity('طباعة طلب','الطلب رقم '+c.id,{target:'#'+c.id});
   
   const typeLabel = getTLabel ? getTLabel(c.type) : (TL[c.type] || c.type);
   const statusLabel = SL[c.status] || c.status;

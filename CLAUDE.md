@@ -75,6 +75,20 @@ agree about the same person.
 - The available-delivery queue blanks the buyer's name, phone and address until
   an agent actually claims the order.
 
+## Staff activity (📊 تتبع نشاط الموظفين)
+
+- Activity rows live in **`app_activity`** (migration 26), not in
+  `localStorage`. The screen showed zeros for exactly that reason: it was
+  reading the supervisor's own browser, and every employee's actions stayed on
+  their own device.
+- The key is **`activity_view`** — super_admin, mayor and admin by default,
+  explicit `false` for every other role, grantable per person from the user
+  screen. The read policy asks `has_perm('activity_view')`; INSERT is limited to
+  `actor_id = auth.uid()`, and there is no UPDATE or DELETE policy.
+- **`public.audit_log` on this project is not ours.** Its pages are inventory,
+  suppliers, invoices and employees — it belongs to the other application
+  sharing the Supabase project. Never point a municipality screen at it.
+
 ## Nothing in the web root is protected
 
 GitHub Pages serves every file in this repository to anyone who asks. There is
