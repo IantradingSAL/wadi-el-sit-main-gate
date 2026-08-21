@@ -17,6 +17,8 @@
 <script src="auth-common.js" defer></script>
 <script src="number-format.js"></script>
 <script src="i18n.js"></script>
+<script src="wadi-strings.js"></script>
+<link rel="stylesheet" href="wadi-help.css">
 <script>
 if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
@@ -814,18 +816,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
 }); }catch(e){} }
 
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
-window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
-(function(){
-  var _d = {
-    ar: {"wadiMunName": "بلدية وادي الست", "wadiQadaa": "قضاء الشوف", "wadiHomeAria": "العودة للبوابة الرئيسية", "wadiHelpAria": "مساعدة ودليل الاستخدام", "wadiLangAria": "تغيير اللغة", "whTitle": "❓ دليل وادي الست — كيف تعمل المنصّة؟", "whIntro": "مرحباً بك في المنصّة الرقميّة لبلدية وادي الست. هذا الدليل يشرح أهم الميزات في كل صفحة.", "whLangT": "🌐 تغيير اللغة", "whLangD": "اضغط على AR / EN / FR في أعلى الصفحة لتغيير لغة الواجهة. اللغة تُحفظ تلقائياً وتُطبَّق في كل صفحات المنصّة عند زيارتك التالية.", "whNotifT": "🔔 الإشعارات (Push)", "whNotifD": "فعّل الإشعارات لتستلم تحديثات طلبك، تذكير دورة الري، وأخبار البلدية فوراً على هاتفك دون فتح التطبيق. اضغط على زر «تفعيل الإشعارات» في الصفحة المعنية ووافق على الإذن.", "whCurrT": "💵 العملتان: ليرة لبنانيّة (LBP) ودولار أمريكي (USD)", "whCurrD": "تَستخدم التعاونيّة والخدمات المدفوعة الليرة اللبنانيّة (LBP) والدولار الأمريكي (USD). الأسعار قابلة للتحويل بسعر الصرف المُحدَّث من البلديّة.", "whReqT": "📋 بوابة المواطن (الطلبات)", "whReqD": "قدِّم: شكوى، طلب رعاية اجتماعيّة، طلب ترخيص بناء، استفسار، إفادة عقاريّة، أو شكوى ريّ. ستحصل على رقم مرجعيّ لمتابعة طلبك.", "whCoopT": "🛒 التعاونيّة (Coop)", "whCoopD": "سوق إلكترونيّ للمنتجات المحلّيّة. تصفّح المنتجات، أضِفها للسلّة، وأكمل الطلب عبر واتساب مع البائع.", "whDirT": "📒 الدليل (Yellow Pages)", "whDirD": "دليل أرقام أهالي وادي الست. ابحث بالاسم، العائلة، المهنة، أو المنطقة. احفظ جهة الاتصال كـ vCard أو اتّصل بضغطة واحدة.", "whFoot": "للاستفسار أو الإبلاغ عن مشكلة — توجّه لمركز البلديّة أو استخدم بوابة المواطن.", "whClose": "إغلاق"},
-    en: {"wadiMunName": "Wadi El Sit Municipality", "wadiQadaa": "Chouf District", "wadiHomeAria": "Back to main gate", "wadiHelpAria": "Help & user guide", "wadiLangAria": "Change language", "whTitle": "❓ Wadi El Sit Guide — How does the platform work?", "whIntro": "Welcome to the digital platform of Wadi El Sit Municipality. This guide explains the main features across all pages.", "whLangT": "🌐 Change language", "whLangD": "Tap AR / EN / FR at the top of any page to change the interface language. Your choice is saved automatically and applied across all pages.", "whNotifT": "🔔 Push notifications", "whNotifD": "Enable notifications to receive request updates, irrigation reminders, and municipality news instantly on your phone.", "whCurrT": "💵 Two currencies: Lebanese Pound (LBP) & US Dollar (USD)", "whCurrD": "The cooperative and paid services use both Lebanese Pound (LBP) and US Dollar (USD). Prices convert at the rate set by the municipality.", "whReqT": "📋 Citizen Portal (requests)", "whReqD": "Submit complaints, welfare requests, building permits, inquiries, attestations, or irrigation complaints. Keep your reference number.", "whCoopT": "🛒 Cooperative (Coop)", "whCoopD": "Online marketplace for local products. Browse, add to cart, and complete the order via WhatsApp directly with the seller.", "whDirT": "📒 Directory (Yellow Pages)", "whDirD": "Directory of Wadi El Sit residents. Search by name, family, profession, or area. Save the contact as a vCard or call with one tap.", "whFoot": "For questions or to report an issue — visit the municipality office or use the Citizen Portal.", "whClose": "Close"},
-    fr: {"wadiMunName": "Municipalité de Wadi El Sit", "wadiQadaa": "Caza du Chouf", "wadiHomeAria": "Retour au portail principal", "wadiHelpAria": "Aide & guide d'utilisation", "wadiLangAria": "Changer de langue", "whTitle": "❓ Guide Wadi El Sit — Comment fonctionne la plateforme ?", "whIntro": "Bienvenue sur la plateforme numérique de la Municipalité de Wadi El Sit.", "whLangT": "🌐 Changer de langue", "whLangD": "Appuyez sur AR / EN / FR en haut de la page. Votre choix est sauvegardé automatiquement.", "whNotifT": "🔔 Notifications push", "whNotifD": "Activez les notifications pour recevoir les mises à jour, rappels d'irrigation et actualités sur votre téléphone.", "whCurrT": "💵 Deux monnaies : Livre libanaise (LBP) & Dollar (USD)", "whCurrD": "La coopérative utilise LBP et USD. Les prix sont convertibles au taux fixé par la municipalité.", "whReqT": "📋 Portail citoyen (demandes)", "whReqD": "Soumettez : plaintes, aide sociale, permis, demandes, attestations, ou plaintes d'irrigation. Conservez votre numéro de référence.", "whCoopT": "🛒 Coopérative (Coop)", "whCoopD": "Marché en ligne pour produits locaux. Parcourez, ajoutez au panier, et finalisez via WhatsApp avec le vendeur.", "whDirT": "📒 Annuaire (Yellow Pages)", "whDirD": "Annuaire des habitants. Recherchez par nom, famille, profession ou région. Enregistrez en vCard ou appelez d'un geste.", "whFoot": "Pour toute question ou problème — rendez-vous au bureau de la municipalité ou utilisez le Portail Citoyen.", "whClose": "Fermer"}
-  };
-  for(var lng in _d){ for(var k in _d[lng]){ window.__WADI_STRINGS__[lng][k] = _d[lng][k]; } }
-  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){
-    try{ I18N.extend(_d); }catch(e){ /* swallow */ }
-  }
-})();
+/* the shared dictionary now lives in wadi-strings.js */
 
 </script>
 
@@ -1459,26 +1450,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 .wadi-help-trigger{background:rgba(255,255,255,.18);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0;transition:all .15s;font-weight:800;}
 .wadi-help-trigger:hover,.wadi-help-trigger:active{background:rgba(255,255,255,.32);}
 /* ═══════════ UNIFIED WADI HELP MODAL ═══════════ */
-.wadi-help-ov{position:fixed;inset:0;background:rgba(15,30,60,.58);z-index:99500;display:none;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto;}
-.wadi-help-ov.open{display:flex;}
-.wadi-help-mo{background:#fff;border-radius:18px;max-width:560px;width:100%;margin:auto;box-shadow:0 24px 60px rgba(0,0,0,.32);font-family:'Tajawal',sans-serif;direction:rtl;color:#191c24;animation:wadiHelpPop .22s ease;}
-html[lang="en"] .wadi-help-mo,html[lang="fr"] .wadi-help-mo{direction:ltr;}
-@keyframes wadiHelpPop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
-.wadi-help-mh{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#fff;border-radius:18px 18px 0 0;z-index:1;}
-.wadi-help-mh-i{font-size:24px;}
-.wadi-help-mh-t{flex:1;font-size:17px;font-weight:800;color:#0f4d82;line-height:1.25;}
-.wadi-help-mh-x{background:none;border:none;cursor:pointer;font-size:22px;color:#8d93a6;padding:4px 9px;border-radius:7px;line-height:1;font-family:inherit;}
-.wadi-help-mh-x:hover{background:#eef0f6;color:#191c24;}
-.wadi-help-mb{padding:18px 22px 24px;}
-.wadi-help-intro{font-size:13.5px;color:#515668;line-height:1.7;margin-bottom:16px;padding:11px 13px;background:linear-gradient(135deg,#daeaf8,#eef5fc);border-radius:11px;border:1px solid #c7dff5;}
-.wadi-help-sec{margin-bottom:14px;border-right:3px solid #1a6eb5;padding-right:12px;}
-html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;border-left:3px solid #1a6eb5;padding-right:0;padding-left:12px;}
-.wadi-help-sec:last-child{margin-bottom:2px;}
-.wadi-help-sec-t{font-size:14.5px;font-weight:800;color:#0f4d82;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
-.wadi-help-sec-d{font-size:13.5px;color:#515668;line-height:1.72;}
-.wadi-help-foot{margin-top:18px;padding:11px 13px;background:#fff8e6;border:1px solid #f5d481;border-radius:10px;font-size:12.5px;color:#7a5500;line-height:1.55;text-align:center;}
-@media(max-width:540px){.wadi-help-ov{padding:14px 10px;}.wadi-help-mh{padding:14px 16px;}.wadi-help-mh-t{font-size:15.5px;}.wadi-help-mb{padding:14px 16px 20px;}}
-@media print{.wadi-help-ov,.wadi-help-trigger,.wadi-lang-pill{display:none!important;}}
+/* the help modal styles now live in wadi-help.css */
 
 /* ═══════════ COOP FLOATING TOP STRIP ═══════════ */
 .wadi-coop-strip{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;left:8px;z-index:200;display:flex;align-items:center;gap:8px;pointer-events:none;}

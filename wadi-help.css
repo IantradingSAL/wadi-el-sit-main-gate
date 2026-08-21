@@ -1,0 +1,27 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   wadi-help.css — the help modal, the language pill and the help trigger.
+
+   These 2,258 characters were identical in citizen.html, coop.html,
+   news.html, phonebook.html and water.html. One copy now, cached once and
+   shared by all five.
+   ═══════════════════════════════════════════════════════════════════════ */
+.wadi-help-ov{position:fixed;inset:0;background:rgba(15,30,60,.58);z-index:99500;display:none;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto;}
+.wadi-help-ov.open{display:flex;}
+.wadi-help-mo{background:#fff;border-radius:18px;max-width:560px;width:100%;margin:auto;box-shadow:0 24px 60px rgba(0,0,0,.32);font-family:'Tajawal',sans-serif;direction:rtl;color:#191c24;animation:wadiHelpPop .22s ease;}
+html[lang="en"] .wadi-help-mo,html[lang="fr"] .wadi-help-mo{direction:ltr;}
+@keyframes wadiHelpPop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+.wadi-help-mh{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#fff;border-radius:18px 18px 0 0;z-index:1;}
+.wadi-help-mh-i{font-size:24px;}
+.wadi-help-mh-t{flex:1;font-size:17px;font-weight:800;color:#0f4d82;line-height:1.25;}
+.wadi-help-mh-x{background:none;border:none;cursor:pointer;font-size:22px;color:#8d93a6;padding:4px 9px;border-radius:7px;line-height:1;font-family:inherit;}
+.wadi-help-mh-x:hover{background:#eef0f6;color:#191c24;}
+.wadi-help-mb{padding:18px 22px 24px;}
+.wadi-help-intro{font-size:13.5px;color:#515668;line-height:1.7;margin-bottom:16px;padding:11px 13px;background:linear-gradient(135deg,#daeaf8,#eef5fc);border-radius:11px;border:1px solid #c7dff5;}
+.wadi-help-sec{margin-bottom:14px;border-right:3px solid #1a6eb5;padding-right:12px;}
+html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;border-left:3px solid #1a6eb5;padding-right:0;padding-left:12px;}
+.wadi-help-sec:last-child{margin-bottom:2px;}
+.wadi-help-sec-t{font-size:14.5px;font-weight:800;color:#0f4d82;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
+.wadi-help-sec-d{font-size:13.5px;color:#515668;line-height:1.72;}
+.wadi-help-foot{margin-top:18px;padding:11px 13px;background:#fff8e6;border:1px solid #f5d481;border-radius:10px;font-size:12.5px;color:#7a5500;line-height:1.55;text-align:center;}
+@media(max-width:540px){.wadi-help-ov{padding:14px 10px;}.wadi-help-mh{padding:14px 16px;}.wadi-help-mh-t{font-size:15.5px;}.wadi-help-mb{padding:14px 16px 20px;}}
+@media print{.wadi-help-ov,.wadi-help-trigger,.wadi-lang-pill{display:none!important;}}
