@@ -1223,7 +1223,14 @@ async function loadFinance(){
   document.getElementById('c-date').value=wfToday();
   const[fin,pb,reg]=await Promise.all([
     sb.from('water_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true}),
-    sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',MUN_ID).eq('status','approved').eq('entry_hidden',false),
+    // The user-added half of the directory. Read through
+    // phonebook_added_public(), not off the table: migration 23 closed
+    // `phonebook_entries` to everyone but staff holding `phonebook_edit` —
+    // which the irrigation clerk does not hold — and the function applies the
+    // per-person settings, so a resident who asked for their number to be
+    // hidden is listed by name here with no number attached, rather than
+    // having it read straight out of the row.
+    sb.rpc('phonebook_added_public'),
     // Same registry, same permission key, same reason as sandouk.
     sb.rpc('phonebook_registry_full')
   ]);
