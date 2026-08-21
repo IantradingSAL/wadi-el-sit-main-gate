@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>تحديث أرشيف الرسوم — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 body{font-family:Tajawal,Tahoma,sans-serif;direction:rtl;background:#f2f5f9;margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;color:#1a1a2e}
 .card{background:#fff;border-radius:16px;padding:28px;max-width:560px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,.08)}
@@ -19,6 +19,23 @@ body{font-family:Tajawal,Tahoma,sans-serif;direction:rtl;background:#f2f5f9;marg
 #log{font-size:12px;color:#555;max-height:230px;overflow-y:auto;background:#f8fafc;border-radius:8px;padding:8px 10px;margin-top:10px;line-height:1.9}
 .ok{color:#1f7a45;font-weight:800}.wr{color:#a83232;font-weight:800}
 </style><script src="pwa-ios.js" defer></script>
+<meta name="theme-color" content="#0f4d82">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+</style>
 </head>
 <body><div class="card">
 <div style="text-align:center"><img src="icons/apple-touch-icon.png" alt="شعار بلدية وادي الست" width="48" height="48" style="height:48px;width:48px;border-radius:50%;background:#fff;object-fit:cover;box-shadow:0 3px 10px rgba(0,0,0,.16);border:2px solid rgba(255,255,255,.85);"></div>

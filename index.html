@@ -2,25 +2,25 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title data-i18n="pageTitle">بلدية وادي الست — البوابة الإلكترونية</title>
 
 <!-- PWA Meta Tags -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a6eb5">
+<meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="وادي الست">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-72.png">
 
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;
-  --green:#2d7a3e;--green2:#1e5429;--green3:#d4f0dc;
+  --green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
   --teal:#0891b2;--teal3:#e0f7ff;
   --coop:#2d5a27;--coop3:#e8f3e6;
   --dir:#d88e0a;--dir2:#a06700;--dir3:#fff4e0;
@@ -203,6 +203,18 @@ html[lang="ar"] input, html[lang="ar"] textarea, html[lang="ar"] select{directio
 html[lang="ar"] input[type="tel"], html[lang="ar"] input[inputmode="tel"]{direction:ltr;text-align:right}
 </style>
 
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+</style>
 </head>
 <body>
 
@@ -501,12 +513,13 @@ html[lang="ar"] input[type="tel"], html[lang="ar"] input[inputmode="tel"]{direct
   <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1);font-size:10.5px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
     <a href="news-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm1">📝 إدارة الأخبار</a>
     <a href="admin-push.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm2">📢 إشعارات الأدمن</a>
-    <a href="news-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm3">📰 إدارة الأخبار</a>
     <a href="super-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm4">🛡️ الإدارة الكلّية</a>
     <a href="water-admin.html" style="color:rgba(255,255,255,.55);text-decoration:none" data-i18n="adm5">💧 إدارة الري</a>
     <a href="water-admin.html#finance" style="color:rgba(255,255,255,.55);text-decoration:none">💰 صندوق لجنة المياه</a>
     <a href="sandouk.html" style="color:rgba(255,255,255,.55);text-decoration:none">💰 صندوق البلدية</a>
     <a href="mrs.html" style="color:rgba(255,255,255,.55);text-decoration:none">🗄️ أرشيف الرسوم</a>
+    <a href="admin-panel.html" style="color:rgba(255,255,255,.55);text-decoration:none">🛒 إدارة التعاونية</a>
+    <a href="privacy.html" style="color:rgba(255,255,255,.55);text-decoration:none">🔒 سياسة الخصوصية</a>
   </div>
 </footer>
 

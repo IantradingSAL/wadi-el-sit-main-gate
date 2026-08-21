@@ -2,11 +2,11 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title data-i18n="pageTitle">تعاونية وادي الست — متجر القرية</title>
 <meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="تعاونية وادي الست">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -994,7 +994,7 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
 :root{
   --primary:#0f4d82;--primary2:#1a6eb5;--primary3:#daeaf8;--primary4:#eef5fc;
   --accent:#c8910a;--accent2:#fff8e1;
-  --green:#2d7a3e;--green2:#1e5429;--green3:#e8f3e6;
+  --green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
   --red:#c0392b;--red3:#fdf0ee;
   --bg:#ffffff;--surface:#ffffff;--surface2:#f5f7fa;
   --text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--text4:#bcc4cf;
@@ -1494,6 +1494,18 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
 @media(max-width:540px){.appbar{padding-top:calc(var(--safe-top) + 48px) !important;}}
 @media print{.wadi-coop-strip{display:none;}}
 
+</style>
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
 </style>
 </head>
 <body>
@@ -5079,7 +5091,15 @@ async function loadAdminPanel(){
               el.remove();
               return;
             } else if(act==='set-pin'){
-              const pin = prompt('أدخل رمز PIN جديد (4 أرقام) للعامل "'+(b.dataset.name||'')+'":');
+              // A PIN is a credential. prompt() puts it on the screen in clear
+              // text, in front of whoever is standing at the counter, and leaves
+              // it in the browser's autofill history. wadiAskPassword masks it
+              // and asks for it twice.
+              const pin = await window.wadiAskPassword({
+                title:'🔑 رمز PIN جديد للعامل "'+(b.dataset.name||'')+'"',
+                note:'4 أرقام — يُكتب مرّتين للتأكيد',
+                min:4
+              });
               if(!pin) return;
               if(!/^\d{4}$/.test(pin)){ toast('رمز PIN يجب أن يكون 4 أرقام','err'); return; }
               busy('⏳ حفظ');
