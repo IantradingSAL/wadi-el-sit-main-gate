@@ -174,6 +174,106 @@
     if (root.matches && root.matches('input[data-num]')) enhance(root);
     var list = root.querySelectorAll('input[data-num]');
     for (var i = 0; i < list.length; i++) enhance(list[i]);
+    if (root.matches && root.matches('input[data-phone]')) phoneEnhance(root);
+    var tel = root.querySelectorAll('input[data-phone]');
+    for (var k = 0; k < tel.length; k++) phoneEnhance(tel[k]);
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ☎️  Lebanese phone numbers — one shape for the whole portal
+
+       stored / typed            shown              wa.me / tel:
+       03922209                  +961 3 922 209     9613922209
+       +96103922209              +961 3 922 209     9613922209
+       76 789 039                +961 76 789 039    96176789039
+       ٠٣٩٢٢٢٠٩                  +961 3 922 209     9613922209
+
+     Lebanon writes a number nationally with a trunk 0 — 03, 70, 71, 76,
+     78, 79, 81 for mobiles, 01/04/05/06/07/08/09 for landlines — and that
+     0 is DROPPED after the country code. Keeping it is what produced
+     “+961 0 392 2209” in the directory: a number no phone can dial, wrongly
+     grouped on top. The national significant number is 7 digits (3 XXXXXX,
+     1 XXXXXX) or 8 (7X XXXXXX, 81 XXXXXX), and that length alone decides
+     the grouping.
+
+     A number that is plainly foreign (+33…, +971…) is left as it is.
+     ══════════════════════════════════════════════════════════════════ */
+  var LB_CC = '961';
+
+  // → { ok, lb, cc, nsn, raw }   nsn carries no trunk 0
+  function phoneParts(v) {
+    var raw = toLatin(v == null ? '' : v).replace(/[\s\u00a0()\-\.\u2010-\u2015]/g, '').trim();
+    if (!raw) return { ok: false, lb: false, cc: '', nsn: '', raw: '' };
+    if (raw.slice(0, 2) === '00') raw = '+' + raw.slice(2);
+
+    var rest;
+    if (raw.charAt(0) === '+') {
+      if (raw.slice(1, 4) === LB_CC) rest = raw.slice(4);
+      else return { ok: false, lb: false, cc: '', nsn: '', raw: raw };   // foreign, hands off
+    } else if (raw.slice(0, 3) === LB_CC && raw.replace(/\D/g, '').length >= 10) {
+      rest = raw.slice(3);
+    } else {
+      rest = raw;
+    }
+
+    var nsn = rest.replace(/\D/g, '').replace(/^0+/, '');
+    return { ok: nsn.length === 7 || nsn.length === 8, lb: true, cc: LB_CC, nsn: nsn, raw: raw };
+  }
+
+  // +9613922209 — what to store and what tel: should carry
+  function phoneE164(v) {
+    var p = phoneParts(v);
+    if (!p.lb) return p.raw;
+    if (!p.nsn) return '';
+    return '+' + LB_CC + p.nsn;
+  }
+
+  // +961 3 922 209 — what a human reads
+  function phoneDisplay(v) {
+    var p = phoneParts(v);
+    if (!p.lb) return p.raw;
+    if (!p.nsn) return '';
+    var head = p.nsn.length === 8 ? p.nsn.slice(0, 2) : p.nsn.slice(0, 1);
+    var body = p.nsn.slice(head.length);
+    var mid  = body.slice(0, 3), tail = body.slice(3);
+    return '+' + LB_CC + ' ' + head + (mid ? ' ' + mid : '') + (tail ? ' ' + tail : '');
+  }
+
+  // 9613922209 — wa.me wants digits only, no plus
+  function phoneWa(v) {
+    var e = phoneE164(v);
+    return e ? e.replace(/\D/g, '') : '';
+  }
+
+  // Is this a number we can actually dial?
+  function phoneValid(v) {
+    var p = phoneParts(v);
+    return p.lb ? p.ok : /^\+?\d{7,15}$/.test(p.raw);
+  }
+
+  /* Inputs marked `data-phone` open with +961 already in them and settle into
+     the display shape when the field is left. Formatting on blur rather than on
+     every keystroke keeps the caret where the person put it. */
+  var PH_PLACEHOLDER = '+961 3 000 000';
+  function phoneEnhance(el) {
+    if (!el || el.__phoneReady) return;
+    el.__phoneReady = true;
+    if (!el.getAttribute('placeholder')) el.setAttribute('placeholder', PH_PLACEHOLDER);
+    if (!el.getAttribute('inputmode')) el.setAttribute('inputmode', 'tel');
+    el.setAttribute('dir', 'ltr');
+    if (el.value) el.value = phoneDisplay(el.value);
+
+    el.addEventListener('focus', function () {
+      if (!el.value.trim()) el.value = '+' + LB_CC + ' ';
+      try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {}
+    });
+    el.addEventListener('blur', function () {
+      var v = el.value.trim();
+      if (!v || v === '+' + LB_CC || v === '+' + LB_CC + ' ') { el.value = ''; return; }
+      var shown = phoneDisplay(v);
+      if (shown) el.value = shown;
+    });
   }
 
   function boot() {
@@ -200,4 +300,13 @@
   global.numVal     = numVal;
   global.numEnhance = enhance;
   global.numScan    = scan;
+
+  global.phoneParts   = phoneParts;
+  global.phoneE164    = phoneE164;
+  global.phoneDisplay = phoneDisplay;
+  global.phoneWa      = phoneWa;
+  global.phoneValid   = phoneValid;
+  global.phoneEnhance = phoneEnhance;
+  global.WadiPhone    = { parts: phoneParts, e164: phoneE164, display: phoneDisplay,
+                          wa: phoneWa, valid: phoneValid, enhance: phoneEnhance, cc: LB_CC };
 })(window);

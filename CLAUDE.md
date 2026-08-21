@@ -89,6 +89,51 @@ agree about the same person.
   suppliers, invoices and employees — it belongs to the other application
   sharing the Supabase project. Never point a municipality screen at it.
 
+## Anything awaiting validation (🔔 طلبات التحقق)
+
+- A coop seller, a delivery agent, a phonebook entry, a proposed phonebook edit
+  and a new account all queue a row in **`approval_requests`** (migration 27)
+  from a **database trigger**, and `approval_notify()` hands it to `pg_net`,
+  which calls the `notify-approval` edge function (Brevo). The browser is not in
+  that path on purpose: `coop.html` used to fire the old
+  `notify-coop-registration` itself, so a closed tab lost the notification.
+- Recipients are `settings.approval_notify` **plus every super_admin**, resolved
+  live by `approval_recipients()`. `notified_at` is stamped only on a successful
+  send, and the `approval-notify-sweep` pg_cron job retries the rest for a week.
+- **`approval_decide()` is the only way to decide.** It moves the queue row and
+  the thing it stands for in one call — approving a seller sets
+  `coop_sellers.status`, approving an edit applies `proposed` onto the target —
+  so the two can never disagree. The key is **`approvals_manage`**.
+- Every trigger swallows its own errors: a registration must never fail because
+  the queue or the mailer is having a bad day.
+- **The notice names the subject, not the submitter.** A proposed directory edit
+  resolves the person it is about (`approval_pb_person`) and carries the change
+  field by field — `المهنة: — ← موظف` — with phone numbers already in `+961`
+  form (`lb_phone_display`, migration 28). The first version said only "من
+  IMAD", which told a reviewer nothing about whose record it was.
+- **Every link lands on a record**: the email's button opens
+  `dashboard.html#approval=<id>` — that one request with its decision buttons —
+  and a directory row also carries `phonebook.html#contact=<id>` for the
+  person's own card. `#review=<id>` opens the phonebook's review panel with the
+  item highlighted.
+
+## Phone numbers are Lebanese, and `number-format.js` owns the rule
+
+- One shape everywhere: **`+961 3 922 209`**, **`+961 76 789 039`**. Lebanon
+  writes a number nationally with a trunk **0** (03, 70, 71, 76, 78, 79, 81,
+  01/04–09) and that 0 is **dropped** after the country code. Keeping it is what
+  printed `+961 0 392 2209` in the directory — a number no phone can dial.
+- `phoneDisplay()` / `phoneE164()` / `phoneWa()` / `phoneValid()` live in
+  `number-format.js`; every page that shows or takes a number loads it. Storage
+  is `+9613922209`, display is grouped, `wa.me` gets bare digits.
+- **`data-phone` on an input** opens it with `+961 ` already there and formats it
+  on blur (not on every keystroke — that fights the caret). PIN boxes are
+  `type=tel` too: they carry `inputmode="numeric"` and are deliberately skipped.
+- The security-definer RPCs (`coop_agent_login`, `coop_buyer_orders`,
+  `citizen_track_case`, `coop_seller_login_v2`) already compare
+  digits-minus-961-minus-0 on both sides, so old national values and new
+  international ones match each other. Keep any new phone lookup on that rule.
+
 ## Nothing in the web root is protected
 
 GitHub Pages serves every file in this repository to anyone who asks. There is

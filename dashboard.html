@@ -324,6 +324,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       <div class="ni" id="nav-whats-new" onclick="openWhatsNew()"><span class="nii">🆕</span> ما الجديد <span id="wn-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">!</span></div>
       <div class="ni" id="nav-add" onclick="openAdd()"><span class="nii">➕</span> إضافة طلب</div>
       <div class="ni" id="nav-users" onclick="openUsers()" style="display:none"><span class="nii">👥</span> إدارة المستخدمين</div>
+      <div class="ni" id="nav-approvals" onclick="openApprovals()" style="display:none"><span class="nii">🔔</span> طلبات التحقق <span id="apr-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">0</span></div>
       <div class="ni" id="nav-activity" onclick="openActivityTracking()" style="display:none"><span class="nii">📊</span> نشاط الموظفين</div>
       <div class="ni" id="nav-cit-updates" onclick="openCitizenUpdates()" style="display:none"><span class="nii">📬</span> تحديثات المواطنين <span id="cit-updates-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">!</span></div>
       <div class="ni" id="nav-audit" onclick="openAuditLog()" style="display:none"><span class="nii">🧾</span> سجل التعديلات</div>
@@ -434,7 +435,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <input type="tel" id="popup-phone" placeholder="مثال: 03xxxxxx"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;outline:none;direction:ltr;margin-bottom:8px"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')confirmPhone()">
+            onkeydown="if(event.key==='Enter')confirmPhone()" data-phone>
           <div id="popup-err" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
             <button onclick="closePhonePopup()" style="flex:1;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;color:var(--text2)">إلغاء</button>
@@ -452,7 +453,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <input type="tel" id="modal-phone" placeholder="مثال: 03xxxxxx"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;direction:ltr;outline:none;margin-bottom:8px;box-sizing:border-box"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')confirmPhone()">
+            onkeydown="if(event.key==='Enter')confirmPhone()" data-phone>
           <div id="phone-err" style="color:var(--danger);font-size:13px;min-height:20px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
             <button onclick="confirmPhone()" style="flex:2;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">✓ تأكيد</button>
@@ -472,7 +473,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">الاسم الكامل *</div>
           <input type="text" id="c-name" class="fi" placeholder="اسمك الكامل"></div>
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">رقم الهاتف *</div>
-          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" style="direction:ltr"></div>
+          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" style="direction:ltr" data-phone></div>
       </div>
       <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">البريد الإلكتروني</div>
         <input type="email" id="c-email" class="fi" placeholder="email@example.com" style="direction:ltr"></div>
@@ -604,6 +605,7 @@ async function openCaseDoc(ev, path, name){
 function toast(m,t='ok'){const el=document.getElementById('toast');el.textContent=m;el.className='toast show '+t;setTimeout(()=>el.className='toast',3000);}
 function sv(s){document.getElementById('SV').classList.toggle('show',s);}
 function tick(){
+  aprCount();
   // Check for citizen updates badge
   try{
     var hasUpdates=(cases||[]).some(function(c){
@@ -633,6 +635,7 @@ function getRoleCfg(){
     settings:WadiPerms.can('settings_edit'),
     audit:WadiPerms.can('audit_view'),
     activity:WadiPerms.can('activity_view'),
+    approvals:WadiPerms.can('approvals_manage'),
     f_water:WadiPerms.can('water_view')
   });
 }
@@ -651,6 +654,7 @@ function applyRoleVisibility(){
   show('#nav-users',R.admin,'flex');
   show('#nav-cit-updates',(R.admin||R.A),'flex');
   show('#nav-whats-new',true,'flex'); // visible to all
+  show('#nav-approvals',R.approvals,'flex');
   show('#nav-activity',R.activity,'flex');
   show('#nav-audit',R.audit,'flex');
   show('#nav-wa',R.wa,'flex');
@@ -664,7 +668,7 @@ function applyRoleVisibility(){
   // water_only: hide everything except water nav
   if (userRole === 'water_only') {
     ['#nav-pend','#nav-add','#BADD','#nav-users','#nav-cit-updates',
-     '#nav-whats-new','#nav-activity','#nav-audit','#nav-wa','#nav-cit-msgs',
+     '#nav-whats-new','#nav-activity','#nav-approvals','#nav-audit','#nav-wa','#nav-cit-msgs',
      '#nav-whatsnew'].forEach(function(sel){
       document.querySelectorAll(sel).forEach(function(el){el.style.display='none';});
     });
@@ -858,6 +862,186 @@ function exportActivityCSV(){
   a.download='wadi-staff-activity-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
   trackActivity('تصدير نشاط الموظفين',numGroup(rows.length)+' سجل');
 }
+// ═══════════ 🔔 طلبات التحقق (approval_requests) ═══════════
+// Everything that needs a municipal decision — a coop seller or delivery agent
+// registering, a phonebook entry or a proposed edit, a new account — is queued
+// by a database trigger (migration 27) and emailed to the municipality by the
+// notify-approval function. This screen is where the decision is taken, and the
+// decision is one RPC that moves BOTH the queue row and the thing it stands for,
+// so the two can never drift apart.
+let APR_ROWS=[], APR_TAB='pending', APR_FOCUS='';
+// Where the record itself lives. The email points at
+// dashboard.html#approval=<id>, which opens that one record with its decision
+// buttons; this is the second hop, into the screen that owns it.
+function aprRecordLink(r){
+  if(!r) return '';
+  // the trigger stores where the record itself lives (a person's own card in
+  // the directory, for instance); fall back to the review queue of that screen
+  if(r.link && r.link!=='dashboard.html') return r.link;
+  if(r.kind==='phonebook_new'||r.kind==='phonebook_edit') return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
+  if(r.kind==='coop_seller'||r.kind==='coop_agent') return 'coop.html';
+  return '';
+}
+// a proposed edit is also worth opening in the phonebook's own review panel
+function aprReviewLink(r){
+  if(!r) return '';
+  if(r.kind==='phonebook_new'||r.kind==='phonebook_edit') return 'phonebook.html#review='+encodeURIComponent(r.ref_id);
+  return '';
+}
+const APR_KIND={
+  coop_seller:   {emoji:'🛒', label:'بائع في التعاونية',      yes:'اعتماد البائع',   no:'رفض الطلب'},
+  coop_agent:    {emoji:'🚚', label:'عامل توصيل',             yes:'اعتماد العامل',   no:'رفض الطلب'},
+  phonebook_new: {emoji:'📇', label:'جهة جديدة في الدليل',    yes:'نشر الجهة',       no:'رفض الإضافة'},
+  phonebook_edit:{emoji:'✏️', label:'تعديل مقترح على الدليل', yes:'تطبيق التعديل',   no:'رفض التعديل'},
+  user_account:  {emoji:'👤', label:'حساب جديد',              yes:'تمّت المراجعة',   no:'يحتاج متابعة'}
+};
+function aprEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+async function aprCount(){
+  if(!sb||!currentUser||!canDo('approvals')) return;
+  try{
+    const{count,error}=await sb.from('approval_requests').select('id',{count:'exact',head:true}).eq('status','pending');
+    if(error)return;
+    const b=document.getElementById('apr-badge');
+    if(b){b.textContent=count||0;b.style.display=count?'inline':'none';}
+  }catch(_e){}
+}
+function openApprovals(focusId){
+  if(!guard('approvals','🚫 شاشة طلبات التحقق متاحة للإدارة فقط')) return;
+  APR_FOCUS = focusId || '';
+  document.getElementById('MT').textContent='🔔 طلبات التحقق';
+  document.getElementById('MB').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ جاري التحميل…</div>';
+  document.getElementById('OV').classList.add('open');
+  trackActivity('فتح طلبات التحقق','');
+  loadApprovals();
+}
+async function loadApprovals(){
+  try{
+    const{data,error}=await sb.from('approval_requests').select('*').order('requested_at',{ascending:false}).limit(500);
+    if(error)throw error;
+    APR_ROWS=data||[];
+    // a link from an old email may point past the window we just loaded
+    if(APR_FOCUS && !APR_ROWS.some(r=>r.id===APR_FOCUS)){
+      const one=await sb.from('approval_requests').select('*').eq('id',APR_FOCUS).maybeSingle();
+      if(one&&one.data)APR_ROWS.unshift(one.data);
+    }
+    renderApprovals();
+    aprCount();
+  }catch(e){
+    document.getElementById('MB').innerHTML='<div style="padding:18px;color:var(--text3);font-size:13px">⚠️ تعذّر التحميل: '+aprEsc(e.message||e)+'</div>'
+      +'<div style="margin-top:12px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
+  }
+}
+function aprTab(t){APR_TAB=t;APR_FOCUS='';renderApprovals();}
+function aprFocus(id){APR_FOCUS=id;renderApprovals();}
+function renderApprovals(){
+  const pend=APR_ROWS.filter(r=>r.status==='pending');
+  const done=APR_ROWS.filter(r=>r.status!=='pending');
+  const rows=APR_TAB==='pending'?pend:done;
+  const tab=(k,lbl,n)=>'<button class="btn '+(APR_TAB===k?'bp':'bg')+'" style="font-size:12.5px" onclick="aprTab(\''+k+'\')">'+lbl+' ('+n+')</button>';
+  const when=v=>{try{return new Date(v).toLocaleString('ar-LB');}catch(_e){return v||'';}};
+  const card=r=>{
+    const k=APR_KIND[r.kind]||{emoji:'🔔',label:r.kind,yes:'موافقة',no:'رفض'};
+    const sum=r.summary||{};
+    // __changes is the field-by-field before/after of a proposed edit — the
+    // reviewer must see WHOSE record and WHAT changes without opening anything
+    const chg=Array.isArray(sum.__changes)?sum.__changes:[];
+    const det=Object.entries(sum).filter(([a,v])=>a!=='__changes'&&v!==null&&v!==undefined&&String(v).trim()!=='')
+      .map(([a,b])=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:var(--text3);min-width:110px">'+aprEsc(a)+'</span><span style="font-weight:700">'+aprEsc(b)+'</span></div>').join('')
+      || '<div style="font-size:12px;color:var(--text3)">لا تفاصيل إضافية</div>';
+    const chgHtml=chg.length
+      ? '<div style="margin-top:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden">'
+        +'<div style="background:var(--bg);padding:5px 10px;font-size:11.5px;font-weight:800;color:var(--blue2)">✏️ المطلوب تغييره</div>'
+        +chg.map(c=>'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 10px;border-top:1px solid var(--border);font-size:12.5px">'
+          +'<span style="min-width:110px;color:var(--text3)">'+aprEsc(c.field)+'</span>'
+          +'<span style="color:#a83232;text-decoration:line-through">'+aprEsc(c.from)+'</span>'
+          +'<span style="color:var(--text3)">←</span>'
+          +'<span style="color:#1f7a45;font-weight:800">'+aprEsc(c.to)+'</span>'
+          +'</div>').join('')
+        +'</div>'
+      : '';
+    const decided = r.status!=='pending';
+    const badge = r.status==='approved' ? '<span style="background:#e7f6ec;color:#1f7a45;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800">✅ تمّت الموافقة</span>'
+                : r.status==='rejected' ? '<span style="background:#fdecec;color:#a83232;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800">⛔ مرفوض</span>'
+                : '<span style="background:#fff4e0;color:#8a6d1a;border-radius:8px;padding:2px 8px;font-size:11px;font-weight:800">⏳ بانتظار القرار</span>';
+    return '<div style="border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--bg2)">'
+      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">'
+        +'<span style="font-size:17px">'+k.emoji+'</span>'
+        +'<span style="font-weight:800;font-size:14px">'+aprEsc(r.title)+'</span>'
+        +'<span style="font-size:11.5px;color:var(--text3)">'+aprEsc(k.label)+'</span>'
+        +'<span style="margin-inline-start:auto">'+badge+'</span></div>'
+      +det+chgHtml
+      +'<div style="font-size:11px;color:var(--text3);margin-top:8px">🕒 '+when(r.requested_at)
+        +(r.notified_at?' · 📧 أُبلغت البلدية':' · <span style="color:#a83232">📧 لم يُرسَل البريد بعد</span>')
+        +(decided?(' · قرار: '+aprEsc(r.decided_email||'—')+' — '+when(r.decided_at)):'')
+        +(r.note?(' · ملاحظة: '+aprEsc(r.note)):'')+'</div>'
+      +(decided?'':'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'
+        +'<button class="btn bp" style="font-size:12.5px" onclick="aprDecide(\''+r.id+'\',\'approved\')">✅ '+k.yes+'</button>'
+        +'<button class="btn" style="font-size:12.5px;background:#a83232;color:#fff" onclick="aprDecide(\''+r.id+'\',\'rejected\')">⛔ '+k.no+'</button>'
+        +(aprRecordLink(r)?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(aprRecordLink(r))+'" target="_blank" rel="noopener">👤 بطاقة صاحب السجل</a>'):'')
+        +(aprReviewLink(r)&&aprReviewLink(r)!==aprRecordLink(r)?('<a class="btn bg" style="font-size:12.5px;text-decoration:none" href="'+aprEsc(aprReviewLink(r))+'" target="_blank" rel="noopener">↗️ شاشة المراجعة</a>'):'')
+        +(APR_FOCUS?'':'<button class="btn bg" style="font-size:12.5px" onclick="aprFocus(\''+r.id+'\')">🔎 عرض هذا الطلب وحده</button>')
+        +'</div>')
+      +'</div>';
+  };
+  // 🎯 the email links to one record — show exactly that record, not a list
+  //    to hunt through. Everything else is one click away.
+  if(APR_FOCUS){
+    const one=APR_ROWS.find(r=>r.id===APR_FOCUS);
+    document.getElementById('MB').innerHTML=
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">'
+      +'<button class="btn bg" style="font-size:12.5px" onclick="aprTab(\'pending\')">↩︎ كل الطلبات ('+pend.length+')</button>'
+      +'<span style="font-size:12px;color:var(--text3)">وصلتَ إلى هذا السجل من بريد التبليغ</span></div>'
+      +(one?card(one):'<div style="padding:20px;color:var(--text3);font-size:13px">⚠️ هذا الطلب لم يعد موجوداً — ربما حُذف السجل الأصلي.</div>')
+      +'<div style="margin-top:14px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
+    return;
+  }
+  document.getElementById('MB').innerHTML=
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+tab('pending','⏳ بانتظار القرار',pend.length)+tab('done','📚 مبتوتة',done.length)
+      +'<button class="btn" style="font-size:12px" onclick="loadApprovals()">🔄 تحديث</button>'
+      +(canDo('settings')?'<button class="btn" style="font-size:12px" onclick="aprRecipients()">📧 عناوين التبليغ</button>':'')+'</div>'
+    +(rows.length?rows.map(card).join(''):'<div style="text-align:center;padding:26px;color:var(--text3);font-size:13px">'+(APR_TAB==='pending'?'🎉 لا شيء ينتظر التحقق':'لا قرارات سابقة')+'</div>')
+    +'<div style="font-size:11.5px;color:var(--text3);margin-top:10px;line-height:1.7">يصل بريد إلى البلدية تلقائياً عند كل طلب جديد. الموافقة هنا تُطبَّق مباشرة: تعتمد البائع أو العامل، تنشر الجهة في الدليل، أو تُطبّق التعديل المقترح.</div>'
+    +'<div style="margin-top:14px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
+}
+async function aprDecide(id,decision){
+  const r=APR_ROWS.find(x=>x.id===id); if(!r)return;
+  const k=APR_KIND[r.kind]||{yes:'موافقة',no:'رفض'};
+  const what=decision==='approved'?k.yes:k.no;
+  if(!await wadiConfirm(what+' — "'+r.title+'"؟'))return;
+  let note=null;
+  if(decision==='rejected'){
+    note=await wadiPrompt('سبب الرفض (اختياري):',{title:'⛔ '+what,required:false});
+    if(note===null)return;            // ألغى المستخدم
+  }
+  try{
+    const{error}=await sb.rpc('approval_decide',{p_id:id,p_decision:decision,p_note:note||null});
+    if(error)throw error;
+    toast(decision==='approved'?'✅ تمّت الموافقة':'⛔ تمّ الرفض');
+    trackActivity(decision==='approved'?'موافقة على طلب تحقق':'رفض طلب تحقق',
+                  (APR_KIND[r.kind]||{}).label+' — '+r.title+(note?(' — '+note):''),{target:r.title});
+    logAudit('approval',decision,r.kind,r.title);
+    await loadApprovals();
+  }catch(e){ toast('⚠️ '+(e.message||e),'err'); }
+}
+// عناوين التبليغ — الأشخاص الذين يصلهم البريد، إضافةً إلى كل مشرف عام تلقائياً
+async function aprRecipients(){
+  let cur=[];
+  try{
+    const{data}=await sb.from('settings').select('value').eq('key','approval_notify').maybeSingle();
+    cur=((data&&data.value&&data.value.emails)||[]);
+  }catch(_e){}
+  const val=await wadiPrompt('عناوين البريد التي تتلقّى تنبيهات التحقق، مفصولة بفاصلة:\n(كل مشرف عام يتلقّاها تلقائياً بالإضافة إلى هذه)',
+    {title:'📧 عناوين التبليغ', value:cur.join(', '), required:false});
+  if(val===null)return;
+  const emails=String(val).split(/[,،\s]+/).map(x=>x.trim()).filter(x=>x.indexOf('@')>0);
+  try{
+    const{error}=await sb.from('settings').upsert({key:'approval_notify',value:{emails:emails},updated_at:new Date().toISOString()},{onConflict:'key'});
+    if(error)throw error;
+    toast('✓ حُفظت عناوين التبليغ ('+emails.length+')');
+    trackActivity('تعديل عناوين تبليغ التحقق',emails.join('، '));
+  }catch(e){ toast('⚠️ '+(e.message||e),'err'); }
+}
+
 async function openAuditLog(){
   if(!guard('audit','🚫 سجل التدقيق غير متاح لهذا الدور')) return;
   document.getElementById('MT').textContent='🧾 سجل التدقيق والتعديلات';
@@ -1019,6 +1203,15 @@ async function setupUser(user){
   document.getElementById('LS').style.display='none';
   document.getElementById('APP').style.display='block';
   trackActivity('تسجيل الدخول','دخول إلى لوحة البلدية — '+R.l);
+  aprCount();
+  // 🔔 the email links to dashboard.html#approval=<id> — land on that very
+  //    record, decision buttons and all. #approvals alone opens the whole queue.
+  try{
+    const h=(location.hash||'').replace('#','');
+    const m=h.match(/^approval=(.+)$/);
+    if(R.approvals && m) setTimeout(function(){ openApprovals(decodeURIComponent(m[1])); },400);
+    else if(R.approvals && h==='approvals') setTimeout(function(){ openApprovals(); },400);
+  }catch(_e){}
   loadViewPrefs();
   applyPrefsToUI();
   await load();
@@ -1484,7 +1677,7 @@ function openAdd(){
   document.getElementById('MB').innerHTML=`
     <div class="g2">
       <div class="fg"><div class="fl">الاسم الكامل *</div><input type="text" class="fi" id="an" placeholder="اسم المواطن"></div>
-      <div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="aph" placeholder="03xxxxxx" style="direction:ltr"></div>
+      <div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="aph" placeholder="03xxxxxx" style="direction:ltr" data-phone></div>
     </div>
     <div class="g2">
       <div class="fg"><div class="fl">البريد الإلكتروني</div><input type="email" class="fi" id="aem" placeholder="email@example.com" style="direction:ltr"></div>
@@ -1514,7 +1707,7 @@ function can(){const t=document.getElementById('at').value;document.getElementBy
 async function subAdd(){
   trackActivity('فتح إضافة طلب','بدء إنشاء طلب جديد');
   if(!guard('add','🚫 لا تملك صلاحية إضافة طلب جديد')) return;
-  const name=document.getElementById('an').value.trim(),phone=document.getElementById('aph').value.trim(),email=document.getElementById('aem').value.trim(),address=document.getElementById('aad').value.trim(),type=getDbType(document.getElementById('at').value),description=document.getElementById('ad').value.trim(),priority=document.getElementById('ap').value,assigned=document.getElementById('ao').value,notes=document.getElementById('ano').value.trim();
+  const name=document.getElementById('an').value.trim(),phone=phoneE164(document.getElementById('aph').value.trim()),email=document.getElementById('aem').value.trim(),address=document.getElementById('aad').value.trim(),type=getDbType(document.getElementById('at').value),description=document.getElementById('ad').value.trim(),priority=document.getElementById('ap').value,assigned=document.getElementById('ao').value,notes=document.getElementById('ano').value.trim();
   if(!name||!description){alert('يرجى إدخال الاسم والوصف');return;}
   const today=new Date().toISOString().slice(0,10);const na=NA.includes(type);
   const by=currentUser?.user_metadata?.name||currentUser?.email||'—';
@@ -2047,7 +2240,7 @@ function renderCitFiles() {
 
 async function doSubmitCit(){
   const name=document.getElementById('c-name').value.trim();
-  const phone=document.getElementById('c-phone').value.trim();
+  const phone=phoneE164(document.getElementById('c-phone').value.trim());
   const email=document.getElementById('c-email').value.trim();
   const typeRaw=document.getElementById('c-type').value;
   const type=getDbType(typeRaw);
@@ -2703,7 +2896,7 @@ function openUsers() {
     '<div class="fg"><div class="fl">الاسم الكامل *</div><input type="text" class="fi" id="nu-name" placeholder="اسم الموظف"></div>' +
     '<div class="fg"><div class="fl">البريد الإلكتروني *</div><input type="email" class="fi" id="nu-email" placeholder="email@" style="direction:ltr"></div>' +
     '<div class="fg"><div class="fl">كلمة المرور *</div><input type="password" class="fi" id="nu-pw" placeholder="8 أحرف على الأقل" style="direction:ltr"></div>' +
-    '<div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="nu-phone" placeholder="03xxxxxx" style="direction:ltr"></div>' +
+    '<div class="fg"><div class="fl">رقم الهاتف</div><input type="tel" class="fi" id="nu-phone" placeholder="03xxxxxx" style="direction:ltr" data-phone></div>' +
     '<div class="fg"><div class="fl">الدور</div>' +
     '<select class="fi" id="nu-role" onchange="showRolePrev(this.value)">' + roleOpts + '</select></div>' +
     '<div id="role-prev" style="margin:8px 0;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;min-height:24px"></div>' +
@@ -2830,7 +3023,7 @@ const WP_GROUPS=[
   {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
   {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل'],['phonebook_registry','سجل النفوس الكامل (اسم الأم وسنة الولادة)']]},
   {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['inbox_read','البريد الوارد']]},
-  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين']]}
+  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين'],['approvals_manage','طلبات التحقق (موافقة/رفض)']]}
 ];
 let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}}
 
@@ -4869,7 +5062,7 @@ function renderWaterModal(){
     '<div id="ir-add" style="display:none">',
     '<div class="admin-section"><div class="admin-header">➕ إضافة صاحب حق ري</div>',
     '<div class="fg"><div class="fl">الاسم *</div><input type="text" class="fi" id="ir-name"></div>',
-    '<div class="fg"><div class="fl">الهاتف *</div><input type="tel" class="fi" id="ir-phone" style="direction:ltr"></div>',
+    '<div class="fg"><div class="fl">الهاتف *</div><input type="tel" class="fi" id="ir-phone" style="direction:ltr" data-phone></div>',
     '<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="ir-email" style="direction:ltr"></div>',
     '<div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="ir-area"></div>',
     '<div class="fg"><div class="fl">القطعة</div><input type="text" class="fi" id="ir-land"></div>',
@@ -5055,7 +5248,7 @@ function editIrrOwner(id){
   var mb=document.getElementById('MB'); if(!mb) return;
   mb.innerHTML='<div class="admin-section"><div class="admin-header">✏️ تعديل: '+o.name+'</div>'+
     '<div class="fg"><div class="fl">الاسم</div><input type="text" class="fi" id="ire-name" value="'+(o.name||'')+'"></div>'+
-    '<div class="fg"><div class="fl">الهاتف</div><input type="tel" class="fi" id="ire-phone" value="'+(o.phone||'')+'" style="direction:ltr"></div>'+
+    '<div class="fg"><div class="fl">الهاتف</div><input type="tel" class="fi" id="ire-phone" value="'+(o.phone||'')+'" style="direction:ltr" data-phone></div>'+
     '<div class="fg"><div class="fl">البريد</div><input type="email" class="fi" id="ire-email" value="'+(o.email||'')+'" style="direction:ltr"></div>'+
     '<div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="ire-area" value="'+(o.area||'')+'"></div>'+
     '<div class="fg"><div class="fl">القطعة</div><input type="text" class="fi" id="ire-land" value="'+(o.landName||'')+'"></div>'+

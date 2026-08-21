@@ -750,6 +750,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
 <script src="wadi-dialogs.js"></script>
+<script src="number-format.js"></script>
 <script src="wadi-municipality.js"></script>
 </head>
 <body>
@@ -808,7 +809,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <input type="tel" id="popup-phone" placeholder="مثال: 03xxxxxx" data-i18n-placeholder="phonePh"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;outline:none;direction:ltr;margin-bottom:8px"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')confirmPhone()">
+            onkeydown="if(event.key==='Enter')confirmPhone()" data-phone>
           <div id="popup-err" style="color:var(--danger);font-size:13px;min-height:18px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
             <button onclick="closePhonePopup()" data-i18n="cancel" style="flex:1;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:600;cursor:pointer;color:var(--text2)">إلغاء</button>
@@ -826,7 +827,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <input type="tel" id="modal-phone" placeholder="مثال: 03xxxxxx" data-i18n-placeholder="phonePh"
             style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:10px;font-family:var(--font);font-size:16px;text-align:center;direction:ltr;outline:none;margin-bottom:8px;box-sizing:border-box"
             onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')confirmPhone()">
+            onkeydown="if(event.key==='Enter')confirmPhone()" data-phone>
           <div id="phone-err" style="color:var(--danger);font-size:13px;min-height:20px;margin-bottom:12px"></div>
           <div style="display:flex;gap:10px">
             <button onclick="confirmPhone()" data-i18n="confirmCheck" style="flex:2;padding:13px;background:linear-gradient(120deg,var(--blue2),var(--blue));color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer">✓ تأكيد</button>
@@ -846,7 +847,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="fullName">الاسم الكامل *</div>
           <input type="text" id="c-name" class="fi" placeholder="اسمك الكامل" data-i18n-placeholder="fullNamePh"></div>
         <div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="phone">رقم الهاتف *</div>
-          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" data-i18n-placeholder="phonePhShort" style="direction:ltr"></div>
+          <input type="tel" id="c-phone" class="fi" placeholder="03xxxxxx" data-i18n-placeholder="phonePhShort" style="direction:ltr" data-phone></div>
       </div>
       <div style="margin-top:13px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px" data-i18n="email">البريد الإلكتروني</div>
         <input type="email" id="c-email" class="fi" placeholder="email@example.com" style="direction:ltr"></div>
@@ -1218,7 +1219,7 @@ async function citLogin(){
 }
 async function citRegister(){
   const name=document.getElementById('cit-name').value.trim();
-  const phone=document.getElementById('cit-phone').value.trim();
+  const phone=phoneE164(document.getElementById('cit-phone').value.trim());
   const email=document.getElementById('cit-rem').value.trim();
   const pw=document.getElementById('cit-rpw').value;
   const err=document.getElementById('cit-rerr');
@@ -1398,7 +1399,7 @@ async function doSubmitCit(){
 }
 async function doSubmitCit__run(){
   const name=document.getElementById('c-name').value.trim();
-  const phone=document.getElementById('c-phone').value.trim();
+  const phone=phoneE164(document.getElementById('c-phone').value.trim());
   const email=document.getElementById('c-email').value.trim();
   const typeRaw=document.getElementById('c-type').value;
   const type=getDbType(typeRaw);
