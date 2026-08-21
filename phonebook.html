@@ -372,7 +372,6 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
   });
 })();
 </script>
-<script src="contacts-registry.js"></script>
 <script src="pwa.js" defer></script>
 <script src="pwa-ios.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1055,9 +1054,35 @@ window.addEventListener('error', e => {
 const LOGO_B64 = "icons/apple-touch-icon.png";
 { const _lg = document.getElementById('LOGO'); if (_lg) _lg.src = LOGO_B64; }
 
-// window.__CONTACTS is loaded from ./contacts-registry.js (included in the <head>)
+// The registry used to be contacts-registry.js — a static file in the web root
+// that GitHub Pages served to anyone who asked for it, with no login. It now
+// lives in public.phonebook_registry, which no role may SELECT directly.
+//
+// phonebook_public() returns the public projection with the per-person opt-out
+// applied IN THE DATABASE. That matters: entry_hidden used to be filtered here
+// in JavaScript, over a file everyone could download, so a resident who asked
+// to be removed from the directory stayed fully readable to anyone with curl.
+//
+// Staff holding `phonebook_registry` get the unfiltered table instead, because
+// hiding someone is only useful if you can still see them to un-hide them.
+let REGISTRY = [];
 
-const REGISTRY = window.__CONTACTS || [];
+async function loadRegistry(){
+  if(!sb) return;
+  try {
+    const full = await sb.rpc('phonebook_registry_full');
+    if(!full.error && Array.isArray(full.data) && full.data.length){
+      REGISTRY = full.data;
+      return;
+    }
+    const pub = await sb.rpc('phonebook_public');
+    if(pub.error) throw pub.error;
+    REGISTRY = pub.data || [];
+  } catch(e){
+    REGISTRY = [];
+    if(typeof toast === 'function') toast('⚠️ تعذّر تحميل الدليل: '+(e.message||e),'err');
+  }
+}
 let EXTRAS = {};         // ref_id -> { occupation, image, lat, lng, email, work_phone, work_address, work_lat, work_lng, phone_hidden, address_hidden, phone, address }
 let ADDED = [];          // approved user-added contacts (visible to public)
 let MY_PENDING = [];     // current user's own pending submissions (locally stored)
@@ -3906,6 +3931,7 @@ async function checkSession(){
 // INIT
 // ═══════════════════════════════════════════════════════════════════════════
 async function init(){
+  await loadRegistry();
   renderStats();
   renderLettersBar();
   renderFiltersBar();

@@ -8,7 +8,6 @@
 <script src="auth-common.js" defer></script>
 <script src="number-format.js"></script>
 <script src="wadi-perms.js"></script>
-<script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -1203,17 +1202,19 @@ function showSection(s){
 async function loadFinance(){
   document.getElementById('e-date').value=wfToday();
   document.getElementById('c-date').value=wfToday();
-  const[fin,pb]=await Promise.all([
+  const[fin,pb,reg]=await Promise.all([
     sb.from('water_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true}),
-    sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',MUN_ID).eq('status','approved').eq('entry_hidden',false)
+    sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',MUN_ID).eq('status','approved').eq('entry_hidden',false),
+    // Same registry, same permission key, same reason as sandouk.
+    sb.rpc('phonebook_registry_full')
   ]);
   if(fin.error){toast('⚠️ خطأ في تحميل بيانات الصندوق: '+fin.error.message,'err');return;}
   wfEntries=fin.data||[];
 
-  // Merge municipal citizen registry (contacts-registry.js window.__CONTACTS)
+  // Merge municipal citizen registry (phonebook_registry_full, permissioned)
   // with phonebook_entries rows into wfPhonebookEntries — same shape and
   // rules as the sandouk picker.
-  const registry=(typeof window!=='undefined' && Array.isArray(window.__CONTACTS)) ? window.__CONTACTS : [];
+  const registry=(!reg.error && Array.isArray(reg.data)) ? reg.data : [];
   const bag=new Map();
   const keyOf=(nm)=>String(nm||'').replace(/\s+/g,' ').trim().toLowerCase();
   registry.forEach(r=>{

@@ -8,7 +8,6 @@
 <script src="auth-common.js" defer></script>
 <script src="number-format.js"></script>
 <script src="wadi-perms.js"></script>
-<script src="contacts-registry.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -773,10 +772,16 @@ function bfCatOther(p){
   document.getElementById('bf-'+p+'-cat-other-w').style.display = v==='أخرى' ? '' : 'none';
 }
 async function bfLoad(){
-  const[fin, pb, ser]=await Promise.all([
+  const[fin, pb, ser, reg]=await Promise.all([
     sb.from('baladieh_finance').select('*').order('entry_date',{ascending:true}).order('created_at',{ascending:true}),
     sb.from('phonebook_entries').select('id,name,first,family,phone,is_wadi_citizen').eq('mun_id',BF_MUN_ID).eq('status','approved').eq('entry_hidden',false),
-    sb.from('settings').select('value').eq('key',BF_SERIES_KEY).limit(1)
+    sb.from('settings').select('value').eq('key',BF_SERIES_KEY).limit(1),
+    // The citizen registry. It used to be contacts-registry.js, a static file
+    // in the web root that anyone could download; it is now a table nobody may
+    // SELECT directly, behind the `phonebook_registry` permission. A clerk who
+    // does not hold that key gets an empty list and the picker still works off
+    // phonebook_entries.
+    sb.rpc('phonebook_registry_full')
   ]);
   if(fin.error){toast('⚠️ خطأ في تحميل الصندوق: '+fin.error.message,'err');return;}
   bfEntries=fin.data||[];
@@ -784,13 +789,13 @@ async function bfLoad(){
   // the same series. Missing or unreadable → the built-in Q/S defaults.
   bfSeries=(!ser.error && ser.data && ser.data[0] && ser.data[0].value) ? ser.data[0].value : null;
 
-  // Merge the municipal citizen registry (loaded from contacts-registry.js
-  // as window.__CONTACTS — same source the phonebook page uses) with the
+  // Merge the municipal citizen registry (read from the database
+  // via phonebook_registry_full() — same source the phonebook page uses) with the
   // dynamic phonebook_entries rows. Registry entries are wadi-el-sit
   // citizens by default. DB entries win over registry on duplicate
   // normalised names because the DB reflects user edits (and captures the
   // explicit is_wadi_citizen flag).
-  const registry=(typeof window!=='undefined' && Array.isArray(window.__CONTACTS)) ? window.__CONTACTS : [];
+  const registry=(!reg.error && Array.isArray(reg.data)) ? reg.data : [];
   const bag=new Map();
   // Keyed on each record's own id, not on the name. Keying on the name
   // dropped the second of any two residents who share one, and the registry

@@ -64,6 +64,21 @@ agree about the same person.
 - The available-delivery queue blanks the buyer's name, phone and address until
   an agent actually claims the order.
 
+## Nothing in the web root is protected
+
+GitHub Pages serves every file in this repository to anyone who asks. There is
+no login in front of it and row-level security cannot reach it, because it is
+not in the database. Two files have had to be taken out of the web root for
+exactly this reason — the tax archive, and `contacts-registry.js`, which
+published 601 residents' names, parents, phones, addresses, birth dates and
+religious sect.
+
+So: **personal data belongs in a table, never in a file here.** If a page needs
+it, the page asks the database for it through a function that decides what that
+caller may see. A privacy switch enforced in JavaScript is not a privacy switch
+— `phonebook_extras.entry_hidden` filtered the directory in the browser while
+the hidden person stayed fully readable in the public file underneath.
+
 ## House rules
 
 - **Migrations are numbered files at the repo root** (`07_…sql` … `12_…sql`),
