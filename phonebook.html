@@ -873,6 +873,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
 <script src="wadi-dialogs.js"></script>
+<script src="wadi-municipality.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">دليل وادي الست — الصفحات الصفراء</h1>
@@ -1019,8 +1020,11 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 const SUPABASE_URL = "https://onjbwhkmmtqnymhjnplw.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
 const MUN_ID = "00000000-0000-0000-0000-000000000001";
-const MUN_PHONE = "+96176789039";
-const MUN_EMAIL = "managemenet@municipality-wadi-el-sitt.org";
+// Fallbacks only. The live values come from the municipality record via
+// WadiMun, so changing the number is a form field on the super-admin
+// screen rather than an edit in five files and a deploy.
+const MUN_PHONE = (window.WadiMun && WadiMun.phone) ? WadiMun.phone() : "+96176789039";
+const MUN_EMAIL = (window.WadiMun && WadiMun.email) ? WadiMun.email() : "managemenet@municipality-wadi-el-sitt.org";
 const ADMIN_ROLES = ['mayor','admin','approver','super_admin'];
 
 let sb = null;

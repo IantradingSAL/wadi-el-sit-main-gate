@@ -1499,6 +1499,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
 <script src="wadi-dialogs.js"></script>
+<script src="wadi-municipality.js"></script>
 </head>
 <body>
 
@@ -2141,7 +2142,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       <p style="color:var(--text3);font-size:13px;margin-bottom:14px" data-i18n="aboutAppSub">الإصدار 2.0</p>
       <p style="color:var(--text2);font-size:13px;line-height:1.7;margin-bottom:14px" data-i18n="aboutAppDesc">تطبيق التسوّق الرسمي لبلدية وادي الست — يربط أهل القرية بمنتجاتها المحليّة.</p>
       <div style="background:var(--surface2);padding:12px;border-radius:12px;font-size:12px;color:var(--text2);line-height:1.7">
-        <div>📞 <a href="tel:+96176789039" style="color:var(--primary);font-weight:700">+961 76 789 039</a></div>
+        <div>📞 <a id="coop-mun-tel" href="tel:+96176789039" style="color:var(--primary);font-weight:700">+961 76 789 039</a></div>
         <div>📧 <a href="mailto:management@municipality-wadi-el-sitt.org" style="color:var(--primary);font-weight:700">البريد الإلكتروني</a></div>
         <div style="margin-top:8px;color:var(--text3);font-size:11px">© 2026 IanTrading SAL · جميع الحقوق محفوظة</div>
       </div>
@@ -2158,7 +2159,21 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 
 const SB_URL='https://onjbwhkmmtqnymhjnplw.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
-const MUN_PHONE='+96176789039';
+// Kept as the fallback only; the live value comes from WadiMun.
+const MUN_PHONE=(window.WadiMun&&WadiMun.phone)?WadiMun.phone():'+96176789039';
+// The footer number is in the markup so it is readable before any script runs;
+// refresh it once the municipality record lands.
+(function(){
+  function paint(){
+    if(!window.WadiMun) return;
+    var a=document.getElementById('coop-mun-tel');
+    if(!a) return;
+    a.href=WadiMun.telLink();
+    a.textContent=WadiMun.phone();
+  }
+  document.addEventListener('wadi:municipality', paint);
+  if(window.WadiMun && WadiMun.ready) WadiMun.ready.then(paint);
+})();
 const MUN_ID='00000000-0000-0000-0000-000000000001';
 
 let sb=null;
@@ -3518,7 +3533,7 @@ function requestAgentPayout(amount, count){
               `عدد التسليمات: ${count}\n`+
               `المبلغ المستحق: ${formatPrice(amount)}\n\n`+
               `يرجى التواصل لتنسيق الصرف. شكراً.`;
-  openWhatsApp('https://wa.me/96176789039?text='+encodeURIComponent(msg));
+  openWhatsApp((window.WadiMun&&WadiMun.waLink)?WadiMun.waLink(msg):'https://wa.me/96176789039?text='+encodeURIComponent(msg));
   toast('✅ تمّ إرسال طلب الصرف','ok');
 }
 
@@ -4007,7 +4022,7 @@ async function requestPayout(){
               `الهاتف: ${currentSeller.phone}\n`+
               `المبلغ المطلوب سحبه: ${formatPrice(due)} ل.ل.\n\n`+
               `يرجى التواصل لتنسيق التسليم. شكراً.`;
-  openWhatsApp('https://wa.me/96176789039?text='+encodeURIComponent(msg));
+  openWhatsApp((window.WadiMun&&WadiMun.waLink)?WadiMun.waLink(msg):'https://wa.me/96176789039?text='+encodeURIComponent(msg));
   toast('✅ تمّ إرسال طلب السحب','ok');
 }
 

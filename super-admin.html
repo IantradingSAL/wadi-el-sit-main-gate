@@ -99,6 +99,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
 <script src="wadi-dialogs.js"></script>
+<script src="wadi-municipality.js"></script>
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">الإدارة الكلّية للبلديات</h1>
@@ -147,6 +148,35 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
           <div class="fg" style="grid-column:1/-1"><div class="fl">الاسم العربي *</div><input type="text" class="fi" id="me-name"></div>
           <div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="me-region"></div>
           <div class="fg"><div class="fl">الموقع</div><input type="text" class="fi" id="me-website" style="direction:ltr"></div>
+        </div>
+
+        <!-- ── contact details ────────────────────────────────────────────
+             These drive the real links across the portal. The emergency
+             number in particular is the one a fire report goes to — it used
+             to be written into the source of five files. -->
+        <div class="fl" style="margin:14px 0 8px;font-weight:800;color:var(--blue2)">☎️ بيانات الاتصال</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="fg">
+            <div class="fl">📞 الهاتف الرئيسي</div>
+            <input type="tel" class="fi" id="me-phone" style="direction:ltr" placeholder="+961...">
+          </div>
+          <div class="fg">
+            <div class="fl">💬 واتساب <span style="font-weight:400;color:var(--text3);font-size:11px">(أرقام فقط، بلا +)</span></div>
+            <input type="tel" class="fi" id="me-whatsapp" style="direction:ltr" placeholder="961...">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="fg">
+            <div class="fl">🚨 رقم الطوارئ <span style="font-weight:400;color:var(--text3);font-size:11px">(الحرائق والطوارئ — إن تُرك فارغاً يُستخدم الرئيسي)</span></div>
+            <input type="tel" class="fi" id="me-emergency" style="direction:ltr" placeholder="+961...">
+          </div>
+          <div class="fg">
+            <div class="fl">✉️ البريد الإلكتروني</div>
+            <input type="email" class="fi" id="me-email" style="direction:ltr" placeholder="info@...">
+          </div>
+        </div>
+        <div class="fg"><div class="fl">📍 العنوان</div><input type="text" class="fi" id="me-address"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div class="fg">
             <div class="fl">اللون الأساسي ☀️</div>
             <div style="display:flex;gap:8px;">
@@ -191,6 +221,14 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
         <div class="fg"><div class="fl">الاسم العربي *</div><input type="text" class="fi" id="nm-name" placeholder="مثال: بلدية المصيلح"></div>
         <div class="fg"><div class="fl">المنطقة</div><input type="text" class="fi" id="nm-region"></div>
         <div class="fg"><div class="fl">الموقع</div><input type="text" class="fi" id="nm-website" style="direction:ltr" placeholder="https://..."></div>
+        <!-- A new municipality gets its own contact details from the start.
+             Leaving these blank is what left the portal pointing at another
+             municipality's number. -->
+        <div class="fg"><div class="fl">📞 الهاتف الرئيسي</div><input type="tel" class="fi" id="nm-phone" style="direction:ltr" placeholder="+961..."></div>
+        <div class="fg"><div class="fl">💬 واتساب <span style="font-weight:400;color:var(--text3);font-size:11px">(أرقام فقط، بلا +)</span></div><input type="tel" class="fi" id="nm-whatsapp" style="direction:ltr" placeholder="961..."></div>
+        <div class="fg"><div class="fl">🚨 رقم الطوارئ <span style="font-weight:400;color:var(--text3);font-size:11px">(الحرائق — إن تُرك فارغاً يُستخدم الرئيسي)</span></div><input type="tel" class="fi" id="nm-emergency" style="direction:ltr" placeholder="+961..."></div>
+        <div class="fg"><div class="fl">✉️ البريد الإلكتروني</div><input type="email" class="fi" id="nm-email" style="direction:ltr" placeholder="info@..."></div>
+        <div class="fg"><div class="fl">📍 العنوان</div><input type="text" class="fi" id="nm-address"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
           <div class="fg"><div class="fl">اللون الأساسي</div><input type="color" class="fi" id="nm-c1" value="#1a6eb5" style="height:42px;padding:4px;"></div>
           <div class="fg"><div class="fl">اللون الثانوي</div><input type="color" class="fi" id="nm-c2" value="#1e5429" style="height:42px;padding:4px;"></div>
@@ -458,6 +496,11 @@ async function editMunicipality(id) {
   document.getElementById('me-name').value = m.name || '';
   document.getElementById('me-region').value = m.region || '';
   document.getElementById('me-website').value = m.website || '';
+  document.getElementById('me-phone').value     = m.phone || '';
+  document.getElementById('me-whatsapp').value  = m.whatsapp || '';
+  document.getElementById('me-emergency').value = m.emergency_phone || '';
+  document.getElementById('me-email').value     = m.email || '';
+  document.getElementById('me-address').value   = m.address || '';
   document.getElementById('me-c1').value = m.primary_color || '#1a6eb5';
   document.getElementById('me-c1t').value = m.primary_color || '#1a6eb5';
   document.getElementById('me-c2').value = m.secondary_color || '#1e5429';
@@ -512,6 +555,13 @@ async function saveMunEdit() {
     name: document.getElementById('me-name').value.trim(),
     region: document.getElementById('me-region').value.trim(),
     website: document.getElementById('me-website').value.trim(),
+    phone:           document.getElementById('me-phone').value.trim()     || null,
+    // wa.me refuses a plus sign or spaces, so normalise here rather than
+    // trusting whoever fills the form to know that.
+    whatsapp:       (document.getElementById('me-whatsapp').value || '').replace(/[^0-9]/g,'') || null,
+    emergency_phone: document.getElementById('me-emergency').value.trim() || null,
+    email:           document.getElementById('me-email').value.trim()     || null,
+    address:         document.getElementById('me-address').value.trim()   || null,
     primary_color: document.getElementById('me-c1').value,
     secondary_color: document.getElementById('me-c2').value
   };
@@ -533,6 +583,11 @@ async function createMunicipality() {
     name: name,
     region: (document.getElementById('nm-region').value||'').trim()||null,
     website: (document.getElementById('nm-website').value||'').trim()||null,
+    phone:           (document.getElementById('nm-phone').value||'').trim()||null,
+    whatsapp:        (document.getElementById('nm-whatsapp').value||'').replace(/[^0-9]/g,'')||null,
+    emergency_phone: (document.getElementById('nm-emergency').value||'').trim()||null,
+    email:           (document.getElementById('nm-email').value||'').trim()||null,
+    address:         (document.getElementById('nm-address').value||'').trim()||null,
     primary_color: document.getElementById('nm-c1').value,
     secondary_color: document.getElementById('nm-c2').value,
     is_active: true
@@ -542,7 +597,7 @@ async function createMunicipality() {
   if (r.error) { msg.style.color='var(--danger)'; msg.textContent='خطأ: '+r.error.message; return; }
   msg.style.color='var(--green2)'; msg.textContent='✅ تم الإنشاء!';
   toast('✅ تم إنشاء البلدية: '+name);
-  ['nm-name','nm-region','nm-website'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  ['nm-name','nm-region','nm-website','nm-phone','nm-whatsapp','nm-emergency','nm-email','nm-address'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   newLogoB64=null; document.getElementById('nm-logo-prev').innerHTML='';
   loadMunicipalities();
 }
