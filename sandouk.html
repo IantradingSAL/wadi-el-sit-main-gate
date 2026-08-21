@@ -237,6 +237,7 @@ select.bf-colfilter{padding-inline-end:22px}
         <button class="bf-vbtn" onclick="bfSortBy('receipt_no')" title="ترتيب الجدول حسب تسلسل رقم السند">🔢 ترتيب السند</button>
         <button class="bf-vbtn" onclick="bfSortClear()" title="العودة إلى الترتيب الطبيعي للدفتر">⇅ إلغاء الترتيب</button>
         <button class="bf-vbtn" onclick="bfViewReset()">↺ إعادة التعيين</button>
+        <button class="bf-vbtn primary" onclick="bfLedgerToReport()" title="بناء تقرير على الفلاتر المستعملة الآن في السجل">📊 تقرير بهذه الفلاتر</button>
       </div>
       <div class="bf-filters">
         <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-f-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRenderLedger()"></div>
@@ -387,6 +388,43 @@ select.bf-colfilter{padding-inline-end:22px}
 
     <!-- REPORTS -->
     <div id="bf-pane-reports" style="display:none">
+
+      <!-- 🎛️ REPORT SCOPE — the filters that build the report -->
+      <div class="bf-card">
+        <div class="bf-sumtitle">🎛️ نطاق التقرير</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:10px">اختر الفلاتر، فيُبنى التقرير عليها وحدها — الملخّصات أدناه، وملف PDF، وملف CSV، والنص المُرسَل عبر واتساب.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="bf-vbtn" onclick="bfRepPreset('month')">📅 هذا الشهر</button>
+          <button class="bf-vbtn" onclick="bfRepPreset('prev')">📅 الشهر الماضي</button>
+          <button class="bf-vbtn" onclick="bfRepPreset('quarter')">📅 هذا الفصل</button>
+          <button class="bf-vbtn" onclick="bfRepPreset('year')">📅 هذه السنة</button>
+          <button class="bf-vbtn" onclick="bfRepFromLedger()" title="نسخ الفلاتر المستعملة الآن في شاشة السجل">⬇️ استيراد فلاتر السجل</button>
+          <button class="bf-vbtn danger" onclick="bfRepClear()">↺ كل الحركات (بلا فلترة)</button>
+        </div>
+        <div class="bf-filters">
+          <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label><input type="text" class="fi" id="bf-r-q" placeholder="بحث بالاسم، البيان، الفئة، رقم السند…" oninput="bfRepChanged()"></div>
+          <div><label class="fl">النوع</label><select class="fi" id="bf-r-type" onchange="bfRepChanged()"><option value="">الكل</option><option value="income">مقبوضات</option><option value="expense">مصروفات</option><option value="__voided">⛔ الملغاة</option><option value="__no_wassel">📄 بدون رقم إيصال</option></select></div>
+          <div><label class="fl">الفئة</label><select class="fi" id="bf-r-cat" onchange="bfRepChanged()"><option value="">الكل</option></select></div>
+          <div><label class="fl">العملة</label><select class="fi" id="bf-r-cur" onchange="bfRepChanged()"><option value="">الكل</option><option value="USD">دولار $</option><option value="LBP">ليرة ل.ل.</option></select></div>
+          <div><label class="fl">طريقة الدفع</label><select class="fi" id="bf-r-pay" onchange="bfRepChanged()"><option value="">الكل</option><option value="cash">نقداً</option><option value="transfer">حوالة</option><option value="whish">Whish</option></select></div>
+          <div><label class="fl">من تاريخ</label><input type="date" class="fi" id="bf-r-from" onchange="bfRepChanged()"></div>
+          <div><label class="fl">إلى تاريخ</label><input type="date" class="fi" id="bf-r-to" onchange="bfRepChanged()"></div>
+          <div><label class="fl">من سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-r-sfrom" placeholder="1" oninput="bfRepChanged()" title="تصفية حسب تسلسل رقم السند"></div>
+          <div><label class="fl">إلى سند رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-r-sto" placeholder="999" oninput="bfRepChanged()" title="تصفية حسب تسلسل رقم السند"></div>
+          <div><label class="fl">من إيصال رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-r-wfrom" placeholder="1" oninput="bfRepChanged()" title="تصفية حسب رقم الإيصال"></div>
+          <div><label class="fl">إلى إيصال رقم</label><input type="text" inputmode="numeric" class="fi" id="bf-r-wto" placeholder="999" oninput="bfRepChanged()" title="تصفية حسب رقم الإيصال"></div>
+        </div>
+        <div id="bf-rep-scope" style="font-size:12.5px;font-weight:700;color:#0f4d82;background:#f4f8fd;border:1.5px solid #d5dfec;border-radius:10px;padding:9px 11px"></div>
+      </div>
+
+      <div style="font-size:12px;font-weight:800;color:#0f4d82;margin:0 2px 6px">📊 أرقام نطاق التقرير — لا أرقام الصندوق كاملاً</div>
+      <div class="bf-kpis" id="bf-rep-kpis">
+        <div class="bf-kpi bal"><div class="v" id="bf-rk-bal">—</div><div class="l" id="bf-rk-bal-l">رصيد التقرير</div></div>
+        <div class="bf-kpi inc"><div class="v" id="bf-rk-inc">—</div><div class="l">مقبوضات التقرير</div></div>
+        <div class="bf-kpi exp"><div class="v" id="bf-rk-exp">—</div><div class="l">مصروفات التقرير</div></div>
+        <div class="bf-kpi"><div class="v" id="bf-rk-cnt" style="color:#555">—</div><div class="l">عدد الحركات</div></div>
+      </div>
+
       <div class="bf-card">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
           <button class="bf-tab on" id="bf-pdf-btn" style="flex:1;min-width:150px" onclick="bfExportPDF()">📄 تصدير تقرير PDF</button>
@@ -887,6 +925,7 @@ async function bfLoad(){
   })();
   bfPhonebookEntries=Array.from(bag.values());
   bfRefresh();
+  bfRepRestore();
   bfViewsInit();
 }
 function bfRefresh(){bfKPIs();bfBuildFilters();bfDatalists();bfFillFormCats();bfRenderLedger();bfRenderReports();bfRefreshAutoReceiptNos();}
@@ -917,9 +956,13 @@ function bfKPIs(rowsArg){
 }
 function bfBuildFilters(){
   const cats=[...new Set(bfEntries.map(e=>e.category).filter(Boolean))].sort();
-  const el=document.getElementById('bf-f-cat'); const v=el.value;
-  el.innerHTML='<option value="">الكل</option>'+cats.map(c=>'<option>'+c+'</option>').join('');
-  el.value=v;
+  // both filter bars — the ledger's and the report's — offer the same categories
+  ['bf-f-cat','bf-r-cat'].forEach(id=>{
+    const el=document.getElementById(id); if(!el)return;
+    const v=el.value;
+    el.innerHTML='<option value="">الكل</option>'+cats.map(c=>'<option>'+c+'</option>').join('');
+    el.value=v;
+  });
 }
 function bfDatalists(){
   // Only the handler datalist still uses <datalist> — the payer/beneficiary
@@ -1135,6 +1178,7 @@ function bfShowTab(t){
     return;
   }
   if(t==='audit')bfLoadAudit();
+  if(t==='reports')bfRenderReports();
   if(t==='settings')bfSettingsRender();
   ['ledger','income','expense','reports','audit','settings'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
@@ -1236,56 +1280,79 @@ function bfTrailNum(v){
 function bfSanadSeq(no){return bfTrailNum(no);}
 function bfWasselSeq(no){return bfTrailNum(no);}
 
-function bfFiltered(){
-  const ft=document.getElementById('bf-f-type').value, fc=document.getElementById('bf-f-cat').value,
-        fcur=document.getElementById('bf-f-cur').value,
-        fpay=document.getElementById('bf-f-pay').value,
-        fq=bfNormTxt(document.getElementById('bf-f-q').value||''),
-        from=document.getElementById('bf-f-from').value, to=document.getElementById('bf-f-to').value;
-  const sFrom=bfTrailNum((document.getElementById('bf-f-sfrom')||{}).value),
-        sTo=bfTrailNum((document.getElementById('bf-f-sto')||{}).value),
-        wFrom=bfTrailNum((document.getElementById('bf-f-wfrom')||{}).value),
-        wTo=bfTrailNum((document.getElementById('bf-f-wto')||{}).value);
-  const cf=bfColState.filters||{};
+// ── 🎛️ ONE FILTER ENGINE, TWO SCREENS ──
+// The ledger (bf-f-…) and the report (bf-r-…) hold the same eleven filters, so
+// the predicate lives here once and both screens read their own inputs into the
+// same plain object. A report is therefore never "the whole box" by accident:
+// it is exactly the rows its own filters keep.
+function bfReadFilters(pfx){
+  const g=k=>{const el=document.getElementById(pfx+k); return el?el.value:'';};
+  return {q:bfNormTxt(g('q')||''),type:g('type'),cat:g('cat'),cur:g('cur'),pay:g('pay'),
+          from:g('from'),to:g('to'),
+          sFrom:bfTrailNum(g('sfrom')),sTo:bfTrailNum(g('sto')),
+          wFrom:bfTrailNum(g('wfrom')),wTo:bfTrailNum(g('wto'))};
+}
+function bfFilterOn(f){
+  return !!(f.q||f.type||f.cat||f.cur||f.pay||f.from||f.to
+            ||f.sFrom!=null||f.sTo!=null||f.wFrom!=null||f.wTo!=null);
+}
+function bfMatchEntry(e,f){
+  if(f.type==='__voided'){ if(!e.voided)return false; }
+  else if(f.type==='__no_wassel'){
+    if(e.voided)return false;
+    if(e.entry_type==='opening')return false;
+    if(String(e.wassel_number||'').trim())return false;
+  }
+  else if(f.type&&e.entry_type!==f.type)return false;
+  if(f.cat&&e.category!==f.cat)return false;
+  if(f.cur&&(e.currency||'USD')!==f.cur)return false;
+  if(f.pay&&(e.payment_method||'cash')!==f.pay)return false;
+  if(f.from&&e.entry_date<f.from)return false;
+  if(f.to&&e.entry_date>f.to)return false;
+  if(f.sFrom!=null||f.sTo!=null){
+    const seq=bfSanadSeq(e.receipt_no);
+    if(seq===null)return false;
+    if(f.sFrom!=null&&seq<f.sFrom)return false;
+    if(f.sTo!=null&&seq>f.sTo)return false;
+  }
+  if(f.wFrom!=null||f.wTo!=null){
+    const wseq=bfWasselSeq(e.wassel_number);
+    if(wseq===null)return false;
+    if(f.wFrom!=null&&wseq<f.wFrom)return false;
+    if(f.wTo!=null&&wseq>f.wTo)return false;
+  }
+  if(f.q){
+    const hay=bfNormTxt([e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number,e.manual_receipt_no,e.wassel_number,e.wassel_date].join(' '));
+    if(hay.indexOf(f.q)<0)return false;
+  }
+  return true;
+}
+// The running balance is the box's own balance, so it is accumulated over every
+// entry — filtered rows carry the balance the ledger really stood at, not a
+// balance that restarts inside the filter.
+function bfRowsFor(f){
   let balU=0,balL=0; const out=[];
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
     if(!e.voided){ if(e.currency==='LBP')balL+=signed; else balU+=signed; }
-    if(ft==='__voided'){ if(!e.voided)return; }
-    else if(ft==='__no_wassel'){ if(e.voided)return; if(e.entry_type==='opening')return; if(String(e.wassel_number||'').trim())return; }
-    else if(ft&&e.entry_type!==ft)return;
-    if(fc&&e.category!==fc)return;
-    if(fcur&&(e.currency||'USD')!==fcur)return;
-    if(fpay&&(e.payment_method||'cash')!==fpay)return;
-    if(from&&e.entry_date<from)return; if(to&&e.entry_date>to)return;
-    if(sFrom!==null||sTo!==null){
-      const seq=bfSanadSeq(e.receipt_no);
-      if(seq===null)return;
-      if(sFrom!==null&&seq<sFrom)return;
-      if(sTo!==null&&seq>sTo)return;
+    if(!bfMatchEntry(e,f))return;
+    out.push(Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)}));
+  });
+  return out;
+}
+function bfFiltered(){
+  const rows=bfRowsFor(bfReadFilters('bf-f-'));
+  // Per-column filters belong to the ledger table alone
+  const cf=bfColState.filters||{};
+  const keys=Object.keys(cf).filter(k=>bfNormTxt(cf[k]||'')&&bfCol(k));
+  const out=!keys.length?rows:rows.filter(e=>{
+    for(let i=0;i<keys.length;i++){
+      const col=bfCol(keys[i]), v=bfNormTxt(cf[keys[i]]||'');
+      const t=bfNormTxt(col.search(e)||'');
+      if(col.filter==='select'){ if(t!==v)return false; }
+      else if(t.indexOf(v)<0)return false;
     }
-    if(wFrom!==null||wTo!==null){
-      const wseq=bfWasselSeq(e.wassel_number);
-      if(wseq===null)return;
-      if(wFrom!==null&&wseq<wFrom)return;
-      if(wTo!==null&&wseq>wTo)return;
-    }
-    if(fq){
-      const hay=bfNormTxt([e.receipt_no,e.description,e.person,e.handled_by,e.category,e.notes,e.amount,e.void_reason,e.karar_number,e.property_number,e.manual_receipt_no,e.wassel_number,e.wassel_date].join(' '));
-      if(hay.indexOf(fq)<0)return;
-    }
-    const enriched=Object.assign({},e,{signed:signed,bal:(e.currency==='LBP'?balL:balU)});
-    // Per-column filters
-    let keep=true;
-    for(const k in cf){
-      const v=bfNormTxt(cf[k]||''); if(!v)continue;
-      const col=bfCol(k); if(!col)continue;
-      const s=bfNormTxt(col.search(enriched)||'');
-      if(col.filter==='select'){ if(s!==v)keep=false; }
-      else if(s.indexOf(v)<0)keep=false;
-      if(!keep)break;
-    }
-    if(keep)out.push(enriched);
+    return true;
   });
   return bfApplySort(out);
 }
@@ -1807,16 +1874,137 @@ function bfGroup(list,keyFn){
   list.forEach(e=>{if(e.voided)return;const k=keyFn(e)||'—';if(!m[k])m[k]={n:0,usd:0,lbp:0};m[k].n++;if(e.currency==='LBP')m[k].lbp+=+e.amount;else m[k].usd+=+e.amount;});
   return Object.entries(m).sort((a,b)=>((b[1].usd*100000+b[1].lbp)-(a[1].usd*100000+a[1].lbp)));
 }
+// ═══════════ 📊 REPORTS (بُنيت على نطاق التقرير) ═══════════
+// Everything on this tab — the four summary tables, the PDF, the CSV and the
+// WhatsApp text — reads the same filtered set. Before this, the summaries and
+// the CSV silently covered the whole box while the PDF's ledger pages covered
+// the ledger tab's filters, so two halves of one document disagreed about what
+// they were reporting on.
+const BF_RTYPE_AR={income:'مقبوضات فقط',expense:'مصروفات فقط',__voided:'الحركات الملغاة فقط',__no_wassel:'حركات بلا رقم إيصال'};
+const BF_REP_IDS=['q','type','cat','cur','pay','from','to','sfrom','sto','wfrom','wto'];
+function bfDmy(d){return d?String(d).split('-').reverse().join('/'):'';}
+function bfRepFilters(){return bfReadFilters('bf-r-');}
+function bfReportRows(){return bfRowsFor(bfRepFilters());}
+function bfRepChips(f){
+  f=f||bfRepFilters();
+  const raw=k=>{const el=document.getElementById('bf-r-'+k);return el?el.value:'';};
+  const c=[];
+  if(f.from||f.to)c.push('الفترة: '+(f.from?bfDmy(f.from):'من البداية')+' ← '+(f.to?bfDmy(f.to):'حتى اليوم'));
+  if(f.type)c.push('النوع: '+(BF_RTYPE_AR[f.type]||f.type));
+  if(f.cat)c.push('الفئة: '+f.cat);
+  if(f.cur)c.push('العملة: '+(f.cur==='LBP'?'ليرة لبنانية':'دولار أميركي'));
+  if(f.pay)c.push('طريقة الدفع: '+(BF_PAY[f.pay]||f.pay));
+  if(f.sFrom!=null||f.sTo!=null)c.push('أرقام السندات: '+(f.sFrom!=null?f.sFrom:'…')+' ← '+(f.sTo!=null?f.sTo:'…'));
+  if(f.wFrom!=null||f.wTo!=null)c.push('أرقام الإيصالات: '+(f.wFrom!=null?f.wFrom:'…')+' ← '+(f.wTo!=null?f.wTo:'…'));
+  if(f.q)c.push('بحث: '+raw('q').trim());
+  return c;
+}
+function bfRepScopeText(f){const c=bfRepChips(f);return c.length?c.join(' · '):'كل حركات الصندوق — بلا فلترة';}
+// ── presets, import, clear ──
+function bfRepSet(k,v){const el=document.getElementById('bf-r-'+k); if(el)el.value=v==null?'':v;}
+function bfRepPreset(kind){
+  const now=new Date(), y=now.getFullYear(), m=now.getMonth();
+  const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  let from='',to='';
+  if(kind==='month'){from=iso(new Date(y,m,1));to=iso(new Date(y,m+1,0));}
+  else if(kind==='prev'){from=iso(new Date(y,m-1,1));to=iso(new Date(y,m,0));}
+  else if(kind==='quarter'){const q=Math.floor(m/3)*3;from=iso(new Date(y,q,1));to=iso(new Date(y,q+3,0));}
+  else if(kind==='year'){from=iso(new Date(y,0,1));to=iso(new Date(y,11,31));}
+  bfRepSet('from',from); bfRepSet('to',to);
+  bfRepChanged();
+  toast('✓ نطاق التقرير: '+bfDmy(from)+' ← '+bfDmy(to));
+}
+function bfRepClear(){
+  BF_REP_IDS.forEach(k=>bfRepSet(k,''));
+  bfRepChanged();
+  toast('✓ التقرير يشمل كل الحركات');
+}
+function bfRepCopyFrom(pfx){
+  BF_REP_IDS.forEach(k=>{
+    const src=document.getElementById(pfx+k), dst=document.getElementById('bf-r-'+k);
+    if(!src||!dst)return;
+    if(dst.tagName==='SELECT'&&!Array.from(dst.options).some(o=>o.value===src.value))return;
+    dst.value=src.value;
+  });
+}
+function bfRepFromLedger(){
+  bfRepCopyFrom('bf-f-');
+  bfRepChanged();
+  toast('✓ نُقلت فلاتر السجل إلى التقرير');
+}
+// من شاشة السجل: "تقرير بهذه الفلاتر"
+function bfLedgerToReport(){
+  bfRepCopyFrom('bf-f-');
+  bfRepPersist();
+  bfShowTab('reports');
+  bfRenderReports();
+  toast('✓ التقرير مبنيّ على فلاتر السجل');
+}
+// ── per-user persistence of the report scope ──
+function bfRepKey(){return 'bf_rep_filters:'+((bfUser&&bfUser.email?bfUser.email:'anon').toLowerCase());}
+function bfRepPersist(){
+  try{
+    const o={}; BF_REP_IDS.forEach(k=>{const el=document.getElementById('bf-r-'+k); if(el)o[k]=el.value;});
+    localStorage.setItem(bfRepKey(),JSON.stringify(o));
+  }catch(_e){}
+}
+let bfRepRestored=false;
+function bfRepRestore(){
+  if(bfRepRestored)return; bfRepRestored=true;
+  try{
+    const raw=localStorage.getItem(bfRepKey()); if(!raw)return;
+    const o=JSON.parse(raw)||{};
+    BF_REP_IDS.forEach(k=>{
+      const el=document.getElementById('bf-r-'+k); if(!el||o[k]==null)return;
+      if(el.tagName==='SELECT'&&!Array.from(el.options).some(x=>x.value===o[k]))return;
+      el.value=o[k];
+    });
+  }catch(_e){}
+  bfRenderReports();
+}
+function bfRepChanged(){bfRepPersist();bfRenderReports();}
+
 function bfRenderReports(){
-  const incs=bfEntries.filter(e=>e.entry_type!=='expense');
-  const exps=bfEntries.filter(e=>e.entry_type==='expense');
-  const esc=s=>String(s).replace(/'/g,"&#39;").replace(/"/g,'&quot;');
-  const rowCat=(k,v,cls,t)=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({type:\''+t+'\',cat:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">'+bfSumTxt(v)+'</td></tr>';
+  const rows=bfReportRows();
+  const f=bfRepFilters();
+  const on=bfFilterOn(f);
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+  // ── نطاق التقرير: كم حركة، وأي فترة، وأي فلاتر ──
+  const scope=document.getElementById('bf-rep-scope');
+  if(scope){
+    let dFrom='',dTo='';
+    rows.forEach(e=>{const d=e.entry_date||''; if(d){if(!dFrom||d<dFrom)dFrom=d; if(!dTo||d>dTo)dTo=d;}});
+    const chips=bfRepChips(f).map(c=>'<span style="display:inline-block;background:#fff;border:1.5px solid #c8d9ea;border-radius:999px;padding:2px 9px;margin:2px 0 2px 4px;font-size:11.5px;color:#0f4d82">'+esc(c)+'</span>').join('');
+    scope.innerHTML='<div>'+(on?'🎛️ تقرير مُصفّى':'📒 التقرير يشمل كل حركات الصندوق')
+      +' — <b>'+bfFmt(rows.length)+'</b> حركة من أصل '+bfFmt(bfEntries.length)
+      +(rows.length?(' · الفترة الفعلية: '+bfDmy(dFrom)+' ← '+bfDmy(dTo)):'')+'</div>'
+      +(chips?('<div style="margin-top:6px">'+chips+'</div>'):'');
+  }
+  // ── مؤشرات التقرير ──
+  let iU=0,eU=0,iL=0,eL=0;
+  rows.forEach(e=>{
+    if(e.voided)return;
+    const l=e.currency==='LBP';
+    if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
+    else { if(l)iL+=+e.amount; else iU+=+e.amount; }
+  });
+  const hasL=!!(iL||eL);
+  const two=(u,l)=>u+(hasL?'<div style="font-size:14px;margin-top:2px">'+l+'</div>':'');
+  const setv=(id,html)=>{const el=document.getElementById(id); if(el)el.innerHTML=html;};
+  setv('bf-rk-bal',two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.'));
+  setv('bf-rk-inc',two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.'));
+  setv('bf-rk-exp',two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.'));
+  setv('bf-rk-cnt',bfFmt(rows.length));
+  setv('bf-rk-bal-l',on?'رصيد الحركات المُصفّاة':'الرصيد الحالي');
+
+  const incs=rows.filter(e=>e.entry_type!=='expense');
+  const exps=rows.filter(e=>e.entry_type==='expense');
+  const rowCat=(k,v,cls,t)=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfRepDrill({type:\''+t+'\',cat:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="'+cls+'">'+bfSumTxt(v)+'</td></tr>';
   const empty='<tr><td colspan="4" style="color:#999;text-align:center">—</td></tr>';
   document.getElementById('bf-rep-inc').innerHTML=bfGroup(incs,e=>e.category).map(([k,v])=>rowCat(k,v,'bf-pos','income')).join('')||empty;
   document.getElementById('bf-rep-exp').innerHTML=bfGroup(exps,e=>e.category).map(([k,v])=>rowCat(k,v,'bf-neg','expense')).join('')||empty;
   const pm={};
-  bfEntries.forEach(e=>{
+  rows.forEach(e=>{
     if(e.voided)return;
     const k=e.person||'—';if(!pm[k])pm[k]={n:0,inc:{usd:0,lbp:0},exp:{usd:0,lbp:0}};pm[k].n++;
     const b=e.entry_type==='expense'?pm[k].exp:pm[k].inc;
@@ -1824,10 +2012,10 @@ function bfRenderReports(){
   });
   document.getElementById('bf-rep-person').innerHTML=Object.entries(pm)
     .sort((a,b)=>((b[1].inc.usd+b[1].exp.usd)-(a[1].inc.usd+a[1].exp.usd)))
-    .map(([k,v])=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfDrill({person:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
+    .map(([k,v])=>'<tr style="cursor:pointer" title="عرض الحركات" onclick="bfRepDrill({person:\''+esc(k)+'\'})"><td>'+k+'</td><td>'+v.n+'</td><td class="bf-pos">'+bfSumTxt(v.inc)+'</td><td class="bf-neg">'+bfSumTxt(v.exp)+'</td></tr>').join('')||empty;
 
-  // 🏷️ Stamps usage report
-  const stEntries=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
+  // 🏷️ Stamps usage report — within the report's scope
+  const stEntries=rows.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
   const stTot={usd:0,lbp:0,n:0};
   stEntries.forEach(e=>{stTot.n++; if(e.currency==='LBP')stTot.lbp+=+e.stamp_value; else stTot.usd+=+e.stamp_value;});
   const tot=document.getElementById('bf-rep-stamp-tot');
@@ -1835,13 +2023,13 @@ function bfRenderReports(){
     tot.innerHTML=stEntries.length
       ? '<div class="bf-kpi" style="flex:1;min-width:150px;border-top-color:#c9a227"><div class="v" style="color:#8a6d1a">'+bfSumTxt(stTot)+'</div><div class="l">إجمالي قيمة الطوابع</div></div>'
         +'<div class="bf-kpi" style="flex:1;min-width:150px"><div class="v" style="color:#0f4d82">'+bfFmt(stTot.n)+'</div><div class="l">عدد السندات ذات طوابع</div></div>'
-      : '<div style="font-size:12.5px;color:#8a95a3">لا توجد سندات مسجّل عليها قيمة طوابع بعد</div>';
+      : '<div style="font-size:12.5px;color:#8a95a3">'+(on?'لا توجد سندات بطوابع ضمن نطاق التقرير':'لا توجد سندات مسجّل عليها قيمة طوابع بعد')+'</div>';
   }
   const body=document.getElementById('bf-rep-stamps');
   if(body){
     const TYPE_AR={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'};
     body.innerHTML=stEntries.length
-      ? stEntries.sort((a,b)=>String(b.entry_date||'').localeCompare(String(a.entry_date||''))).map(e=>
+      ? stEntries.slice().sort((a,b)=>String(b.entry_date||'').localeCompare(String(a.entry_date||''))).map(e=>
         '<tr style="cursor:pointer" onclick="bfOpenCase(\''+e.id+'\')">'
         +'<td>'+(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')+'</td>'
         +'<td style="font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+'</td>'
@@ -1852,6 +2040,29 @@ function bfRenderReports(){
         +'</tr>').join('')
       : '<tr><td colspan="6" style="color:#999;text-align:center;padding:10px">—</td></tr>';
   }
+}
+// من جدول التقرير إلى السجل — مع الحفاظ على نطاق التقرير نفسه
+function bfRepDrill(f){
+  f=f||{};
+  BF_REP_IDS.forEach(k=>{
+    const src=document.getElementById('bf-r-'+k), dst=document.getElementById('bf-f-'+k);
+    if(!src||!dst)return;
+    if(dst.tagName==='SELECT'&&!Array.from(dst.options).some(o=>o.value===src.value))return;
+    dst.value=src.value;
+  });
+  if(f.type==='income'||f.type==='expense'){
+    const t=document.getElementById('bf-f-type');
+    // a scope of "الملغاة فقط" / "بلا إيصال" is narrower than the row's type: keep it
+    if(t&&t.value!=='__voided'&&t.value!=='__no_wassel')t.value=f.type;
+  }
+  if(f.cat){
+    const catSel=document.getElementById('bf-f-cat');
+    if(catSel&&Array.from(catSel.options).some(o=>o.value===f.cat))catSel.value=f.cat;
+    else document.getElementById('bf-f-q').value=f.cat;
+  }
+  if(f.person)document.getElementById('bf-f-q').value=f.person;
+  bfShowTab('ledger');
+  bfRenderLedger();
 }
 
 // ── 🔽 CLICKABLE DRILL-DOWN (KPIs, reports, ledger amounts) ──
@@ -1877,7 +2088,8 @@ function bfKpiClick(kind){
   else if(kind==='expense')bfDrill({type:'expense'});
 }
 function bfExportCSV(){
-  let balU=0,balL=0;
+  // نفس نطاق التقرير: ما يظهر في الملخّصات وفي ملف PDF هو ما يُصدَّر هنا
+  const rows=bfReportRows();
   // `manual_receipt_no` («رقم الإيصال اليدوي») is deliberately NOT exported.
   //
   // For a few weeks either side of the changeover the clerk typed the paper
@@ -1898,17 +2110,19 @@ function bfExportCSV(){
   // stops being published in a document meant to be handed to an auditor.
   const lines=['التاريخ,رقم السند,رقم الإيصال,تاريخ الإيصال,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
-  bfEntries.forEach(e=>{
-    const signed=e.entry_type==='expense'?-e.amount:+e.amount;
+  rows.forEach(e=>{
     const lbp=e.currency==='LBP';
     const sv=Number(e.stamp_value)||0;
     const base=Math.max(0,(+e.amount||0)-sv);
-    if(!e.voided){ if(lbp)balL+=signed; else balU+=signed; }
-    lines.push([e.entry_date,q(e.receipt_no),q(e.wassel_number),q(e.wassel_date),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
+    // e.signed / e.bal come from bfRowsFor: the balance is the box's own running
+    // balance, so a filtered export still shows the true balance of each row.
+    lines.push([e.entry_date,q(e.receipt_no),q(e.wassel_number),q(e.wassel_date),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,e.signed,(lbp?'LBP':'USD'),e.bal,(e.voided?'نعم':''),q(e.void_reason)].join(','));
   });
+  const f=bfRepFilters();
+  const stamp=(f.from||f.to)?((f.from||'').replace(/-/g,'')+'-'+(f.to||'').replace(/-/g,'')):bfToday();
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
-  bfAudit('export_csv','تصدير سجل الحركات ('+bfEntries.length+' حركة)');
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh_'+stamp+'.csv';a.click();URL.revokeObjectURL(a.href);
+  bfAudit('export_csv','تصدير سجل الحركات ('+rows.length+' حركة) — '+bfRepScopeText(f));
 }
 
 // ═══════════ 📜 AUDIT LOG (سجل العمليات) ═══════════
@@ -2245,7 +2459,7 @@ function bfCloseSendModal(){document.getElementById('bf-share-ov').style.display
 // ── PRINT ──
 function bfPrint(){
   bfCloseSendModal();
-  bfAudit('print',bfShareCtx?bfKind(bfShareCtx):'تقرير الصندوق',bfShareCtx);
+  bfAudit('print',bfShareCtx?bfKind(bfShareCtx):('تقرير الصندوق — '+bfRepScopeText()),bfShareCtx);
   const inner=bfShareCtx?bfReceiptHTML(bfShareCtx):bfBuildReportEl().innerHTML;
   const w=window.open('','_blank');
   if(!w){toast('⚠️ يرجى السماح بالنوافذ المنبثقة للطباعة','err');return;}
@@ -2263,8 +2477,12 @@ function bfBuildReportEl(){
   //    real width and the text lands around 9pt on paper instead of 7pt ──
   const W=1040, PAD=12, INNER=W-2*PAD;
   const PAGE_H=Math.round(W*(190/277));   // usable height of one landscape page, in px
+  // ── the report is exactly its scope: every figure, table and page below is
+  //    built from the rows the نطاق التقرير filters keep, and the header says so ──
+  const rfil=bfRepFilters(), rOn=bfFilterOn(rfil), repRows=bfRowsFor(rfil);
+  const rChips=bfRepChips(rfil);
   let iU=0,eU=0,iL=0,eL=0;
-  bfEntries.forEach(e=>{
+  repRows.forEach(e=>{
     if(e.voided)return;
     const l=e.currency==='LBP';
     if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
@@ -2302,7 +2520,7 @@ function bfBuildReportEl(){
 
   // ── ledger: always oldest → newest, with the balance column running in that order ──
   const seqNo=v=>{const m=String(v==null?'':v).match(/(\d+)\s*$/);return m?parseInt(m[1],10):0;};
-  const led=bfFiltered().slice().sort((a,b)=>
+  const led=repRows.slice().sort((a,b)=>
       String(a.entry_date||'').localeCompare(String(b.entry_date||''))
       ||seqNo(a.receipt_no)-seqNo(b.receipt_no)
       ||String(a.id||'').localeCompare(String(b.id||'')));
@@ -2366,10 +2584,10 @@ function bfBuildReportEl(){
   el.setAttribute('dir','rtl');
   el.style.cssText='width:'+W+'px;background:#fff;color:#1a1a2e;font-family:Tajawal,Tahoma,sans-serif;padding:'+PAD+'px';
   const kpi=[
-    ['الرصيد الحالي',two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.'),'#0f4d82'],
-    ['إجمالي المقبوضات',two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.'),'#1f7a45'],
-    ['إجمالي المصروفات',two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.'),'#a83232'],
-    ['عدد الحركات',bfFmt(bfEntries.length),'#1a1a2e']
+    [rOn?'رصيد الحركات المشمولة':'الرصيد الحالي',two('$'+bfFmt(iU-eU),bfFmt(iL-eL)+' ل.ل.'),'#0f4d82'],
+    [rOn?'مقبوضات التقرير':'إجمالي المقبوضات',two('$'+bfFmt(iU),bfFmt(iL)+' ل.ل.'),'#1f7a45'],
+    [rOn?'مصروفات التقرير':'إجمالي المصروفات',two('$'+bfFmt(eU),bfFmt(eL)+' ل.ل.'),'#a83232'],
+    ['عدد الحركات',bfFmt(led.length),'#1a1a2e']
   ];
   const infoRow=(l,v)=>'<div style="display:flex;gap:6px;font-size:12px"><span style="color:#8a8f9c;font-weight:700">'+l+':</span><span style="font-weight:700">'+v+'</span></div>';
   el.innerHTML=
@@ -2378,7 +2596,7 @@ function bfBuildReportEl(){
     +(BF_LOGO?'<img src="'+BF_LOGO+'" alt="" style="height:64px">':'')
     +'<div style="flex:1"><div style="font-size:13px;color:#8a8f9c;font-weight:700">الجمهورية اللبنانية — محافظة جبل لبنان — قضاء الشوف</div>'
     +'<div style="font-size:24px;font-weight:800;color:#0f4d82">بلدية وادي الست — صندوق البلدية</div>'
-    +'<div style="font-size:15px;font-weight:800;color:#c9a227">تقرير المقبوضات والمصروفات</div></div>'
+    +'<div style="font-size:15px;font-weight:800;color:#c9a227">تقرير المقبوضات والمصروفات'+(rOn?' — تقرير مُصفّى':'')+'</div></div>'
     +'<div style="text-align:left;font-size:12px;color:#8a8f9c;font-weight:700">تاريخ التقرير<br><span style="font-size:15px;color:#1a1a2e">'+dts+'</span></div></div>'
     +'<div style="display:flex;gap:10px;margin-bottom:14px;text-align:center">'
     +kpi.map(([l,v,c])=>'<div style="flex:1;border:1px solid #e0e6ef;border-radius:10px;padding:10px;font-size:12px">'
@@ -2392,16 +2610,21 @@ function bfBuildReportEl(){
     +infoRow('مصروفات الفترة',totTxt(teU,teL))
     +infoRow('رصيد الفترة',totTxt(rbU,rbL))
     +'</div>'
+    // ── نطاق التقرير: مطبوع على الورقة كي يعرف المدقّق ما الذي يقرأه بالضبط ──
+    +'<div style="border:1px solid '+(rOn?'#c9a227':'#e0e6ef')+';background:'+(rOn?'#fdfaf0':'#fbfcfe')+';border-radius:10px;padding:9px 10px;margin-bottom:14px;font-size:12px">'
+    +'<b style="color:#0f4d82">🎛️ نطاق التقرير:</b> '
+    +(rChips.length?rChips.map(c=>'<span style="display:inline-block;border:1px solid #d5dfec;border-radius:999px;padding:1px 8px;margin:2px 0 2px 4px;background:#fff">'+esc(c)+'</span>').join(''):'كل حركات الصندوق — بلا فلترة')
+    +'</div>'
     +secT('🟢 المقبوضات حسب الفئة')
-    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'),[0,70,240])
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(repRows.filter(e=>e.entry_type!=='expense'),e=>e.category),'#1f7a45'),[0,70,240])
     +secT('🔴 المصروفات حسب الفئة')
-    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(bfEntries.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'),[0,70,240])
+    +tbl(['الفئة','عدد','المجموع'],sumR(bfGroup(repRows.filter(e=>e.entry_type==='expense'),e=>e.category),'#a83232'),[0,70,240])
     +foot('ملخّص — صفحة الغلاف')
     // ── ledger pages, each with its own column header ──
     +ledgerHtml
     // ── stamps ──
     +(function(){
-      const st=bfEntries.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
+      const st=repRows.filter(e=>!e.voided && (Number(e.stamp_value)||0)>0);
       if(!st.length) return '';
       const TYPE_AR2={income:'مقبوضات',expense:'مصروف',opening:'رصيد افتتاحي'};
       let sU=0,sL=0; st.forEach(e=>{if(e.currency==='LBP')sL+=+e.stamp_value;else sU+=+e.stamp_value;});
@@ -2487,8 +2710,12 @@ function bfPdfOpts(){
       jsPDF:{unit:'mm',format:'a5',orientation:'portrait'},
       pagebreak:{mode:['css','legacy']}};
   }
+  // the file name carries the report's period, so two exports of different
+  // scopes never land in the same download with the same name
+  const rf=bfRepFilters();
+  const span=(rf.from||rf.to)?((rf.from||'').replace(/-/g,'')+'-'+(rf.to||'').replace(/-/g,'')):bfToday();
   return {margin:[10,10,10,10],
-    filename:'Sandouk-Baladieh-Report-'+bfToday()+'.pdf',
+    filename:'Sandouk-Baladieh-Report-'+span+'.pdf',
     image:{type:'jpeg',quality:0.96},
     html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
     jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
@@ -2506,7 +2733,7 @@ async function bfExportPDF(){
       await html2pdf().set(bfFitForPdf(el,bfPdfOpts())).from(el).save();
     }finally{hold.remove();}
     toast('✓ تم إنشاء التقرير');
-    bfAudit('export_pdf','تقرير الصندوق ('+bfFiltered().length+' حركة)');
+    bfAudit('export_pdf','تقرير الصندوق ('+bfReportRows().length+' حركة) — '+bfRepScopeText());
   }catch(e){toast('⚠️ فشل إنشاء PDF: '+e.message,'err');}
   btn.disabled=false;btn.textContent=lbl;
 }
@@ -2531,8 +2758,11 @@ function bfShareText(){
       +(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k));return L.length?('موقّع إلكترونياً ✓ ('+L.join('، ')+')\n'):'';})()
       +SEP;
   }
+  // النص المُرسَل يتبع نطاق التقرير نفسه — الأرقام في الترويسة هي أرقام الحركات المشمولة
+  const rfil=bfRepFilters(), rOn=bfFilterOn(rfil);
+  let list=[]; try{list=bfRowsFor(rfil);}catch(_e){list=[];}
   let iU=0,eU=0,iL=0,eL=0;
-  bfEntries.forEach(e=>{
+  list.forEach(e=>{
     if(e.voided)return;
     const l=e.currency==='LBP';
     if(e.entry_type==='expense'){ if(l)eL+=+e.amount; else eU+=+e.amount; }
@@ -2550,16 +2780,16 @@ function bfShareText(){
     +'قضاء الشوف — جبل لبنان\n'
     +'التاريخ: '+new Date().toLocaleDateString('ar-LB')+'\n'
     +SEP+'\n'
-    +'الرصيد الحالي: '+cmb(iU-eU,iL-eL)+'\n'
-    +'إجمالي المقبوضات: '+cmb(iU,iL)+'\n'
-    +'إجمالي المصروفات: '+cmb(eU,eL)+'\n'
-    +'عدد الحركات: '+bfFmt(bfEntries.length)+'\n'
+    +(rOn?('🎛️ نطاق التقرير: '+bfRepScopeText(rfil)+'\n'+SEP+'\n'):'')
+    +(rOn?'رصيد الحركات المشمولة: ':'الرصيد الحالي: ')+cmb(iU-eU,iL-eL)+'\n'
+    +(rOn?'مقبوضات التقرير: ':'إجمالي المقبوضات: ')+cmb(iU,iL)+'\n'
+    +(rOn?'مصروفات التقرير: ':'إجمالي المصروفات: ')+cmb(eU,eL)+'\n'
+    +'عدد الحركات: '+bfFmt(list.length)+(rOn?(' من أصل '+bfFmt(bfEntries.length)):'')+'\n'
     +SEP+'\n'
-    +catBlock('🟢 المقبوضات حسب الفئة',bfEntries.filter(e=>e.entry_type!=='expense'))
-    +catBlock('🔴 المصروفات حسب الفئة',bfEntries.filter(e=>e.entry_type==='expense'));
-  // تفاصيل الحركات سطراً سطراً تحت الترويسة، مرقّمة (حسب الفلاتر الحالية)
-  let list=[]; try{list=bfFiltered();}catch(_e){list=[];}
-  if(!list.length) return head+'*📒 تفاصيل الحركات*\nلا توجد حركات ضمن الفلاتر الحالية\n'+SEP;
+    +catBlock('🟢 المقبوضات حسب الفئة',list.filter(e=>e.entry_type!=='expense'))
+    +catBlock('🔴 المصروفات حسب الفئة',list.filter(e=>e.entry_type==='expense'));
+  // تفاصيل الحركات سطراً سطراً تحت الترويسة، مرقّمة (حسب نطاق التقرير)
+  if(!list.length) return head+'*📒 تفاصيل الحركات*\nلا توجد حركات ضمن نطاق التقرير\n'+SEP;
   const TYPE_AR={expense:'مصروف',income:'مقبوضات',opening:'رصيد افتتاحي'};
   const MAXCH=3200; // سقف طول النص كي لا تُقصّ الرسالة عند مشاركتها عبر واتساب
   let det='',shown=0,stop=false;
@@ -2596,7 +2826,7 @@ function bfOpenWa(text){
   }
 }
 function bfShareWaText(){bfCloseSendModal();bfOpenWa(bfShareText());
-  bfAudit('share_text',bfShareCtx?('واتساب — '+bfKind(bfShareCtx)):'واتساب — تقرير الصندوق',bfShareCtx);}
+  bfAudit('share_text',bfShareCtx?('واتساب — '+bfKind(bfShareCtx)):('واتساب — تقرير الصندوق — '+bfRepScopeText()),bfShareCtx);}
 async function bfCopyText(){
   bfCloseSendModal();
   const t=bfShareText();
@@ -2691,28 +2921,67 @@ function bfDocUrl(path,name){
   const{data:pd}=sb.storage.from('sandouk-docs').getPublicUrl(path,{download:name});
   return (pd&&pd.publicUrl)||'';
 }
-async function bfSignedDocUrl(path,name){
+// `?download=<name>` makes Storage answer with Content-Disposition: attachment,
+// so the browser saves the file instead of showing it. Tapping a receipt should
+// SHOW the receipt — so the view link is minted without it, and only the ⬇️
+// button asks for the download form, where the name still matters.
+async function bfSignedDocUrl(path,name,forDownload){
   const{data,error}=await sb.storage.from('sandouk-docs')
-    .createSignedUrl(path,3600,name?{download:name}:undefined);
+    .createSignedUrl(path,3600,(forDownload&&name)?{download:name}:undefined);
   if(error)throw error;
   return data.signedUrl;
 }
-async function bfOpenDoc(path,name,ev){
+// The tab is opened synchronously, before the signed URL is awaited: a popup
+// blocker only trusts a window.open that happens inside the click itself, and
+// awaiting first is what made a tap do nothing at all on the phone.
+function bfOpenDoc(path,name,ev){
   if(ev&&ev.preventDefault)ev.preventDefault();
   if(!path){toast('⚠️ هذا المرفق قديم ولا يحمل مساراً — أعد رفعه','err');return;}
-  try{
-    const url=await bfSignedDocUrl(path,name);
-    window.open(url,'_blank','noopener');
-  }catch(e){
-    toast('⚠️ تعذّر فتح المرفق: '+(e.message||e),'err');
+  let w=null;
+  try{w=window.open('','_blank');}catch(_e){w=null;}
+  if(w){
+    try{
+      w.document.write('<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="UTF-8">'
+        +'<title>📎 '+String(name||'مرفق').replace(/</g,'&lt;')+'</title></head>'
+        +'<body style="font-family:Tahoma,sans-serif;color:#0f4d82;padding:24px">⏳ جاري فتح المرفق…</body></html>');
+      w.document.close();
+    }catch(_e){}
   }
+  bfSignedDocUrl(path,name,false).then(url=>{
+    if(w&&!w.closed)w.location.replace(url);
+    else window.location.href=url;   // popup blocked — open it in this tab
+  }).catch(e=>{
+    if(w&&!w.closed)try{w.close();}catch(_e){}
+    toast('⚠️ تعذّر فتح المرفق: '+(e.message||e),'err');
+  });
 }
+async function bfSaveDoc(path,name,ev){
+  if(ev){if(ev.preventDefault)ev.preventDefault(); if(ev.stopPropagation)ev.stopPropagation();}
+  if(!path){toast('⚠️ هذا المرفق قديم ولا يحمل مساراً — أعد رفعه','err');return;}
+  try{
+    const url=await bfSignedDocUrl(path,name,true);
+    const a=document.createElement('a');
+    a.href=url; a.download=name||''; a.rel='noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){toast('⚠️ تعذّر تنزيل المرفق: '+(e.message||e),'err');}
+}
+// صفّ مرفق واحد: الاسم يفتح الملف، والزر ⬇️ يحفظه باسم رقم الإيصال
 function bfDocLink(d,style){
   const path=String((d&&d.path)||'').replace(/'/g,"\\'");
   const name=String((d&&d.name)||'مرفق').replace(/'/g,"\\'");
   const label=String((d&&d.name)||'مرفق').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  return '<a href="#" onclick="bfOpenDoc(\''+path+'\',\''+name+'\',event)" '
+  return '<a href="#" title="فتح المرفق" onclick="bfOpenDoc(\''+path+'\',\''+name+'\',event)" '
     +'style="'+(style||'')+'">📄 <span style="word-break:break-all">'+label+'</span></a>';
+}
+function bfDocRow(d,linkStyle,linkClass){
+  const path=String((d&&d.path)||'').replace(/'/g,"\\'");
+  const name=String((d&&d.name)||'مرفق').replace(/'/g,"\\'");
+  const link=bfDocLink(d,linkStyle).replace('<a ','<a class="'+(linkClass||'')+'" ');
+  return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
+    +'<div style="flex:1;min-width:0">'+link+'</div>'
+    +'<button class="bf-vbtn" title="تنزيل الملف" aria-label="تنزيل المرفق" '
+    +'onclick="bfSaveDoc(\''+path+'\',\''+name+'\',event)">⬇️</button>'
+    +'</div>';
 }
 // يُعيد تسمية كل المرفقات المُسمّاة آلياً بعد تغيّر رقم الإيصال، فلا يضطرّ
 // المستخدم لتصحيحها واحداً واحداً.
@@ -2770,8 +3039,9 @@ async function bfUploadDocs(saved,p){
 function bfDocsById(id){
   const e=bfEntries.find(x=>String(x.id)===String(id));
   if(!e||!e.documents||!e.documents.length)return;
-  document.getElementById('bf-docs-list').innerHTML=e.documents.map(d=>
-    bfDocLink(d,'text-decoration:none').replace('<a ','<a class="bf-share-btn" ')).join('');
+  document.getElementById('bf-docs-list').innerHTML=
+    '<div style="font-size:12px;color:#8a95a3;font-weight:700;margin:-8px 0 10px">اضغط اسم الملف لفتحه، أو ⬇️ لحفظه على الجهاز</div>'
+    +e.documents.map(d=>bfDocRow(d,'text-decoration:none;margin-bottom:0','bf-share-btn')).join('');
   document.getElementById('bf-docs-ov').style.display='flex';
 }
 function bfCloseDocs(){document.getElementById('bf-docs-ov').style.display='none';}
@@ -2835,7 +3105,7 @@ function bfOpenCase(id){
     +dr('التواقيع',(function(){const s=bfSigs(e);const L=BF_SIGN_ROLES.filter(k=>s[k]&&s[k].img).map(k=>bfSignRoleLabel(e,k)+' ✓');return L.length?L.join(' · '):'';})())
     +dr('أُدخلت بواسطة',e.created_by)
     +((e.documents&&e.documents.length)?('<div style="margin-top:8px"><div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:5px">📎 المرفقات ('+e.documents.length+')</div>'
-      +e.documents.map(d=>bfDocLink(d,'display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all')).join('')+'</div>'):'');
+      +e.documents.map(d=>bfDocRow(d,'display:block;font-size:12.5px;color:#1a6eb5;text-decoration:none;padding:3px 0;word-break:break-all')).join('')+'</div>'):'');
   document.getElementById('bf-case-delbtn').style.display = bfCanDel() ? '' : 'none';
   document.getElementById('bf-case-editrow').style.display = bfCanEdit() ? 'flex' : 'none';
   document.getElementById('bf-case-voidrow').innerHTML = e.voided

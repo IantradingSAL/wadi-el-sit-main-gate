@@ -43,6 +43,17 @@ agree about the same person.
   that, and this line is the record of why.
 - **Vocabulary:** it is **إيصال**, never وصل — for the number, the date and the
   document. #83 standardised the cash box; the home page followed later.
+- **A report is its scope, whole.** 📊 التقارير has its own filter bar
+  (نطاق التقرير), and every output built there — the summary tables, the PDF, the
+  CSV, the WhatsApp text — reads the same filtered rows and prints the scope on
+  the page. Before that, the summaries and the CSV covered the whole box while
+  the PDF's ledger pages followed the *ledger* tab's filters, so one document
+  disagreed with itself. The ledger's own فلاتر stay separate; 📊 تقرير بهذه
+  الفلاتر carries them over on purpose.
+- **An attachment opens; it does not download.** A signed Storage link only
+  carries `?download=<name>` for the ⬇️ button. Asking for it on the view link is
+  what made every tap save the file instead of showing it, and the tab is opened
+  synchronously inside the click so a popup blocker still lets it through.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 
@@ -63,6 +74,20 @@ agree about the same person.
   back, and there is deliberately no anon SELECT policy to allow it.
 - The available-delivery queue blanks the buyer's name, phone and address until
   an agent actually claims the order.
+
+## Staff activity (📊 تتبع نشاط الموظفين)
+
+- Activity rows live in **`app_activity`** (migration 26), not in
+  `localStorage`. The screen showed zeros for exactly that reason: it was
+  reading the supervisor's own browser, and every employee's actions stayed on
+  their own device.
+- The key is **`activity_view`** — super_admin, mayor and admin by default,
+  explicit `false` for every other role, grantable per person from the user
+  screen. The read policy asks `has_perm('activity_view')`; INSERT is limited to
+  `actor_id = auth.uid()`, and there is no UPDATE or DELETE policy.
+- **`public.audit_log` on this project is not ours.** Its pages are inventory,
+  suppliers, invoices and employees — it belongs to the other application
+  sharing the Supabase project. Never point a municipality screen at it.
 
 ## Nothing in the web root is protected
 
