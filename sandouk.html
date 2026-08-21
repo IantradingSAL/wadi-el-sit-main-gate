@@ -1878,7 +1878,25 @@ function bfKpiClick(kind){
 }
 function bfExportCSV(){
   let balU=0,balL=0;
-  const lines=['التاريخ,رقم السند,رقم الإيصال,تاريخ الإيصال,رقم الإيصال اليدوي,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
+  // `manual_receipt_no` («رقم الإيصال اليدوي») is deliberately NOT exported.
+  //
+  // For a few weeks either side of the changeover the clerk typed the paper
+  // receipt number into two boxes on the same form — that field and
+  // `wassel_number` — and the second box was retired on 18 August. It survives
+  // on 17 of the ledger's rows, and on two of them the two copies disagree:
+  // Q-2026-014 holds 533 in the live field and ٥٣٤ in this one, Q-2026-020
+  // holds 542 and ٥٤٣. The paper book was checked on 21 August: the live field
+  // is right in both cases.
+  //
+  // Exported side by side, those two lines showed an auditor two different
+  // receipt numbers for one payment with nothing to say which counted — and on
+  // Q-2026-020 the stale copy claims 543, which genuinely belongs to another
+  // payer's sanad (Q-2026-021). One number per receipt, and it is the one the
+  // app itself uses everywhere else.
+  //
+  // The field is untouched in the database. Nothing is deleted; it simply
+  // stops being published in a document meant to be handed to an auditor.
+  const lines=['التاريخ,رقم السند,رقم الإيصال,تاريخ الإيصال,النوع,الفئة,رقم القرار,رقم العقار,طريقة الدفع,البيان,الجهة,المستلم,قيمة الإجراءات,قيمة الطوابع,المبلغ الإجمالي,العملة,الرصيد,ملغى,سبب الإلغاء'];
   const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
   bfEntries.forEach(e=>{
     const signed=e.entry_type==='expense'?-e.amount:+e.amount;
@@ -1886,7 +1904,7 @@ function bfExportCSV(){
     const sv=Number(e.stamp_value)||0;
     const base=Math.max(0,(+e.amount||0)-sv);
     if(!e.voided){ if(lbp)balL+=signed; else balU+=signed; }
-    lines.push([e.entry_date,q(e.receipt_no),q(e.wassel_number),q(e.wassel_date),q(e.manual_receipt_no),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
+    lines.push([e.entry_date,q(e.receipt_no),q(e.wassel_number),q(e.wassel_date),e.entry_type,q(e.category),q(e.karar_number),q(e.property_number),q(bfPay(e)),q(e.description),q(e.person),q(e.handled_by),base,sv,signed,(lbp?'LBP':'USD'),(lbp?balL:balU),(e.voided?'نعم':''),q(e.void_reason)].join(','));
   });
   const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sandouk_baladieh.csv';a.click();URL.revokeObjectURL(a.href);
