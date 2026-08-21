@@ -43,6 +43,17 @@ agree about the same person.
   that, and this line is the record of why.
 - **Vocabulary:** it is **إيصال**, never وصل — for the number, the date and the
   document. #83 standardised the cash box; the home page followed later.
+- **A report is its scope, whole.** 📊 التقارير has its own filter bar
+  (نطاق التقرير), and every output built there — the summary tables, the PDF, the
+  CSV, the WhatsApp text — reads the same filtered rows and prints the scope on
+  the page. Before that, the summaries and the CSV covered the whole box while
+  the PDF's ledger pages followed the *ledger* tab's filters, so one document
+  disagreed with itself. The ledger's own فلاتر stay separate; 📊 تقرير بهذه
+  الفلاتر carries them over on purpose.
+- **An attachment opens; it does not download.** A signed Storage link only
+  carries `?download=<name>` for the ⬇️ button. Asking for it on the view link is
+  what made every tap save the file instead of showing it, and the tab is opened
+  synchronously inside the click so a popup blocker still lets it through.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 
