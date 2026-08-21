@@ -3,6 +3,7 @@
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>تحديث أرشيف الرسوم — بلدية وادي الست</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="wadi-perms.js"></script>
 <script src="auth-common.js" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -56,6 +57,9 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
 <script src="wadi-dialogs.js"></script>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 </head>
 <body>
 <h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">تحديث أرشيف الرسوم البلدية</h1><div class="card">
@@ -95,7 +99,14 @@ function log(m){el('log').innerHTML=m+'<br>'+el('log').innerHTML;}
 async function doLogin(){
   const{data,error}=await sb.auth.signInWithPassword({email:el('em').value.trim(),password:el('pw').value});
   if(error){el('lerr').textContent='⚠️ '+error.message;return;}
-  if((data.user.email||'').toLowerCase()!=='imadaehn@gmail.com'){el('lerr').textContent='🚫 التحديث محصور بالمشرف العام';return;}
+  // Gate on the permission, not on one address. This is a convenience check:
+  // the real protection is RLS — every mrs_* table requires has_perm('mrs_edit')
+  // on INSERT and DELETE, so bypassing this line in the browser gains nothing.
+  // What it does buy is telling the truth: an authorised person is let in, and
+  // an unauthorised one is refused for the right reason.
+  var _ok = false;
+  try { await WadiPerms.load(sb, true); _ok = WadiPerms.can('mrs_edit'); } catch(e) { _ok = false; }
+  if(!_ok){ el('lerr').textContent='🚫 التحديث محصور بمن يملك صلاحية تعديل النظام المالي'; await sb.auth.signOut(); return; }
   el('login').style.display='none';el('stage').style.display='block';
 }
 const dz=document.currentScript?null:null;

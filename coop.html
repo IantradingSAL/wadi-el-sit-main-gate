@@ -2143,7 +2143,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       <p style="color:var(--text2);font-size:13px;line-height:1.7;margin-bottom:14px" data-i18n="aboutAppDesc">تطبيق التسوّق الرسمي لبلدية وادي الست — يربط أهل القرية بمنتجاتها المحليّة.</p>
       <div style="background:var(--surface2);padding:12px;border-radius:12px;font-size:12px;color:var(--text2);line-height:1.7">
         <div>📞 <a id="coop-mun-tel" href="tel:+96176789039" style="color:var(--primary);font-weight:700">+961 76 789 039</a></div>
-        <div>📧 <a href="mailto:management@municipality-wadi-el-sitt.org" style="color:var(--primary);font-weight:700">البريد الإلكتروني</a></div>
+        <div>📧 <a id="coop-mun-email" href="mailto:management@municipality-wadi-el-sitt.org" style="color:var(--primary);font-weight:700">البريد الإلكتروني</a></div>
         <div style="margin-top:8px;color:var(--text3);font-size:11px">© 2026 IanTrading SAL · جميع الحقوق محفوظة</div>
       </div>
     </div>
@@ -2170,6 +2170,8 @@ const MUN_PHONE=(window.WadiMun&&WadiMun.phone)?WadiMun.phone():'+96176789039';
     if(!a) return;
     a.href=WadiMun.telLink();
     a.textContent=WadiMun.phone();
+    var m=document.getElementById('coop-mun-email');
+    if(m) m.href='mailto:'+WadiMun.email();
   }
   document.addEventListener('wadi:municipality', paint);
   if(window.WadiMun && WadiMun.ready) WadiMun.ready.then(paint);

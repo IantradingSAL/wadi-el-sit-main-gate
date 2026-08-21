@@ -8,26 +8,79 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <meta name="theme-color" content="#0f4d82">
 <style>
-:root{--blue:#1a6eb5;--blue2:#0f4d82;--text:#1a1a2e;--text2:#475569;--text3:#8a95a3;--border:#e0e6ef;--bg:#f5f7fa;--font:'Tahoma','Helvetica Neue',Arial,sans-serif}
+:root{
+  --blue:#1a6eb5;--blue2:#0f4d82;--green2:#1e5429;
+  --text:#12212e;--text2:#4a5866;--text3:#8a95a3;
+  --border:#e4eaf2;--bg:#eef2f7;--card:#fff;
+  --font:'Tajawal','Tahoma','Helvetica Neue',Arial,sans-serif;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.75;padding:20px;font-size:15px}
-.wrap{max-width:820px;margin:0 auto;background:#fff;border-radius:16px;padding:34px;box-shadow:0 4px 20px rgba(15,77,130,.08)}
-.hdr{text-align:center;margin-bottom:26px;padding-bottom:18px;border-bottom:2px solid var(--border)}
-.hdr img{height:72px;width:72px;border-radius:50%;padding:4px;background:#fff;box-shadow:0 3px 12px rgba(15,77,130,.15);border:2px solid #eaf2fb;margin-bottom:10px}
-h1{font-size:22px;color:var(--blue2);margin-bottom:4px}
-.sub{font-size:13px;color:var(--text3)}
-.lang-tabs{display:flex;gap:6px;margin:20px 0;justify-content:center}
-.lang-tabs button{padding:8px 18px;border:1.5px solid var(--border);background:#fff;color:var(--text2);border-radius:999px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
-.lang-tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
-h2{font-size:16px;color:var(--blue2);margin:22px 0 6px}
-p,li{color:var(--text2);margin-bottom:8px}
-ul{padding-inline-start:22px;margin-bottom:10px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);
+  line-height:1.8;padding:18px 16px 40px;font-size:15.5px;
+  -webkit-text-size-adjust:100%}
+
+.wrap{max-width:760px;margin:0 auto;background:var(--card);border-radius:18px;
+  overflow:hidden;box-shadow:0 10px 40px rgba(15,77,130,.10),0 2px 8px rgba(15,77,130,.05)}
+
+/* header — the portal's own gradient, so the page belongs to the app */
+.hdr{background:linear-gradient(135deg,var(--blue2),var(--blue) 55%,var(--green2));
+  color:#fff;text-align:center;padding:30px 24px 26px}
+.hdr img{height:66px;width:66px;border-radius:50%;padding:5px;background:#fff;
+  box-shadow:0 4px 16px rgba(0,0,0,.18);margin-bottom:12px;object-fit:contain}
+h1{font-size:21px;font-weight:800;letter-spacing:-.2px;margin-bottom:5px}
+.sub{font-size:13px;opacity:.88;font-weight:500}
+
+/* language picker — one segmented control, not three loose buttons */
+.lang-tabs{display:flex;gap:4px;justify-content:center;padding:16px 20px 0}
+.lang-tabs .seg{display:inline-flex;gap:3px;background:#eff3f8;border-radius:999px;padding:4px}
+.lang-tabs button{padding:8px 20px;border:none;background:transparent;color:var(--text2);
+  border-radius:999px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+  transition:background .16s ease,color .16s ease;min-height:38px}
+.lang-tabs button:hover{color:var(--blue2)}
+.lang-tabs button.on{background:var(--blue);color:#fff;box-shadow:0 2px 8px rgba(26,110,181,.3)}
+.lang-tabs button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+.body{padding:8px 30px 30px}
+
+/* a quiet accent bar makes the sections scannable in a long legal page */
+h2{font-size:16.5px;font-weight:800;color:var(--blue2);margin:26px 0 8px;
+  padding-inline-start:12px;border-inline-start:4px solid var(--blue);line-height:1.5}
+h2:first-of-type{margin-top:14px}
+p,li{color:var(--text2);margin-bottom:9px}
+ul{padding-inline-start:20px;margin-bottom:12px}
+li{padding-inline-start:4px}
+li::marker{color:var(--blue)}
+strong{color:var(--text);font-weight:700}
+
 .lang{display:none}
 .lang.on{display:block}
 .lang.ltr{direction:ltr;text-align:left}
-.meta{font-size:12.5px;color:var(--text3);margin-top:26px;padding-top:16px;border-top:1px solid var(--border);text-align:center}
-a{color:var(--blue);text-decoration:none;font-weight:600}
+
+/* the contact block reads as a card, not another paragraph */
+.lang p:last-child{background:#f5f9fd;border:1px solid #dfeaf6;border-radius:12px;
+  padding:14px 16px;margin-top:6px}
+
+.meta{font-size:12.5px;color:var(--text3);margin:24px 30px 0;padding:16px 0 4px;
+  border-top:1px solid var(--border);text-align:center;line-height:1.9}
+.meta a{display:inline-block;margin-top:6px}
+a{color:var(--blue);text-decoration:none;font-weight:700}
 a:hover{text-decoration:underline}
+
+@media(max-width:560px){
+  body{padding:0 0 30px;font-size:15px}
+  .wrap{border-radius:0;box-shadow:none}
+  .body{padding:6px 18px 24px}
+  .meta{margin:20px 18px 0}
+  .hdr{padding:26px 18px 22px}
+  h1{font-size:19px}
+}
+@media print{
+  body{background:#fff;padding:0}
+  .wrap{box-shadow:none;max-width:none}
+  .lang-tabs{display:none}
+  .hdr{background:#fff;color:var(--blue2)}
+  .lang{display:block!important}
+}
 </style>
 <script src="pwa-ios.js" defer></script>
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -71,16 +124,20 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <body>
 <div class="wrap">
   <div class="hdr">
-    <img src="icons/apple-touch-icon.png" alt="شعار بلدية وادي الست">
-    <h1>سياسة الخصوصية · Privacy Policy</h1>
-    <div class="sub">بلدية وادي الست — Wadi El Sit Municipality</div>
+    <img src="icons/apple-touch-icon.png" alt="">
+    <h1 id="pp-title">سياسة الخصوصية</h1>
+    <div class="sub" id="pp-sub">بلدية وادي الست</div>
   </div>
 
   <div class="lang-tabs">
-    <button class="on" onclick="pick('ar')">العربية</button>
-    <button onclick="pick('en')">English</button>
-    <button onclick="pick('fr')">Français</button>
+    <div class="seg" role="tablist" aria-label="Language">
+      <button type="button" class="on" data-lang="ar" onclick="pick('ar')">العربية</button>
+      <button type="button" data-lang="en" onclick="pick('en')">English</button>
+      <button type="button" data-lang="fr" onclick="pick('fr')">Français</button>
+    </div>
   </div>
+
+  <div class="body">
 
   <div class="lang ar on" id="lang-ar">
     <h2>مقدمة</h2>
@@ -220,20 +277,76 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
     E-mail : <a class="mun-email" href="mailto:management@municipality-wadi-el-sitt.org">management@municipality-wadi-el-sitt.org</a></p>
   </div>
 
+  </div><!-- /.body -->
+
   <div class="meta">
-    آخر تحديث · Last updated · Dernière mise à jour: 31 يوليو / July / juillet 2026
-    <br><a href="index.html">← البوابة الرئيسية · Home · Accueil</a>
+    <span id="pp-updated">آخر تحديث: 31 تموز 2026</span>
+    <br><a href="index.html" id="pp-home">← البوابة الرئيسية</a>
   </div>
 </div>
 <script>
-function pick(l){
-  document.querySelectorAll('.lang').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('.lang-tabs button').forEach(x=>x.classList.remove('on'));
-  document.getElementById('lang-'+l).classList.add('on');
-  event.currentTarget.classList.add('on');
-  document.documentElement.lang = l;
-  document.documentElement.dir = (l==='ar') ? 'rtl' : 'ltr';
+// ── language ───────────────────────────────────────────────────────────────
+// This page used to open in Arabic every time, whatever the visitor had chosen
+// on the rest of the portal, and its header and footer printed all three
+// languages at once — «آخر تحديث · Last updated · Dernière mise à jour». So an
+// English reader arrived at an Arabic page with Arabic chrome and had to pick
+// the language again on every visit.
+//
+// The portal stores the choice in localStorage under `wadi_lang` (i18n.js).
+// This page now reads it, follows it, and writes it back when the reader picks
+// a tab — so choosing English here keeps English everywhere else too.
+var PP = {
+  ar: { title:'سياسة الخصوصية', sub:'بلدية وادي الست',
+        updated:'آخر تحديث: 31 تموز 2026', home:'← البوابة الرئيسية',
+        doc:'سياسة الخصوصية — بلدية وادي الست' },
+  en: { title:'Privacy Policy', sub:'Wadi El Sit Municipality',
+        updated:'Last updated: 31 July 2026', home:'← Home',
+        doc:'Privacy Policy — Wadi El Sit Municipality' },
+  fr: { title:'Politique de confidentialité', sub:'Municipalité de Wadi El Sit',
+        updated:'Dernière mise à jour : 31 juillet 2026', home:'← Accueil',
+        doc:'Politique de confidentialité — Municipalité de Wadi El Sit' }
+};
+
+// The portal has used a few keys for this over time; accept any of them.
+function savedLang(){
+  var keys = ['wadi_lang','lang','i18n_lang','i18nLang','language'];
+  for (var i=0;i<keys.length;i++){
+    try { var v = localStorage.getItem(keys[i]);
+          if (v==='ar'||v==='en'||v==='fr') return v; } catch(e){}
+  }
+  return null;
 }
+
+function applyLang(l, persist){
+  if (!PP[l]) l = 'ar';
+  var t = PP[l];
+
+  document.querySelectorAll('.lang').forEach(function(x){ x.classList.remove('on'); });
+  var body = document.getElementById('lang-'+l);
+  if (body) body.classList.add('on');
+
+  document.querySelectorAll('.lang-tabs button').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-lang') === l);
+    b.setAttribute('aria-selected', b.getAttribute('data-lang') === l ? 'true' : 'false');
+  });
+
+  document.documentElement.lang = l;
+  document.documentElement.dir  = (l === 'ar') ? 'rtl' : 'ltr';
+
+  document.getElementById('pp-title').textContent   = t.title;
+  document.getElementById('pp-sub').textContent     = t.sub;
+  document.getElementById('pp-updated').textContent = t.updated;
+  document.getElementById('pp-home').textContent    = t.home;
+  document.title = t.doc;
+
+  if (persist) { try { localStorage.setItem('wadi_lang', l); } catch(e){} }
+}
+
+// `pick` is what the tabs call. It reads its language from the button rather
+// than from the global `event`, which the old version relied on.
+function pick(l){ applyLang(l, true); }
+
+applyLang(savedLang() || 'ar', false);
 
 // The privacy contact used to be a Gmail address written into this page three
 // times, once per language. It is the municipality's own address now, and it

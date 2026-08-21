@@ -44,7 +44,16 @@
   'use strict';
 
   var MUN_ID = '00000000-0000-0000-0000-000000000001';
-  var CACHE_KEY = 'wadi_mun_v1';
+  // Versioned on purpose. A device that cached the record before a correction
+  // keeps repainting the OLD value from localStorage — and on a page with no
+  // Supabase client (privacy.html) nothing ever refreshes it, so the stale copy
+  // would stand forever. That is exactly how a corrected email address kept
+  // appearing misspelled after the fix had shipped.
+  //
+  // BUMP THIS whenever a value in the municipality record is corrected. Old
+  // keys are deleted rather than read.
+  var CACHE_KEY  = 'wadi_mun_v2';
+  var OLD_KEYS   = ['wadi_mun_v1'];
 
   // Last resort. See the note above — this is deliberate.
   var FALLBACK = {
@@ -68,6 +77,7 @@
 
   function readCache() {
     try {
+      OLD_KEYS.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
       var raw = localStorage.getItem(CACHE_KEY);
       if (!raw) return null;
       var c = JSON.parse(raw);
