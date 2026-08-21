@@ -2,7 +2,7 @@
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Super Admin — نظام البلديات</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -59,16 +59,49 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
 .login-card .err.has{background:#fee2e2;padding:9px 12px;border-radius:9px;border-right:4px solid #bf2424;text-align:right;line-height:1.5}
 </style>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a6eb5">
+<meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="وادي الست">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="pwa-ios.js" defer></script>
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+/* ── touch targets ────────────────────────────────────────────────────────
+   Apple asks for 44pt, Android for 48dp. These controls measured 13-38px in
+   Chromium at iPhone size. The hit area is grown with a transparent overlay
+   rather than by resizing the control, so nothing moves on screen.
+   Side-by-side controls (the AR/EN/FR pills) grow only in height, because
+   widening them would make neighbouring targets overlap. */
+@media (max-width:820px){
+  .wadi-lang-btn,.hdr-btn,.cat,.section-link,.chip,.pill{position:relative}
+  .wadi-lang-btn::after,.hdr-btn::after,.cat::after,.section-link::after{
+    content:'';position:absolute;left:0;right:0;top:50%;
+    transform:translateY(-50%);height:44px;pointer-events:auto}
+  /* isolated round buttons have room to grow both ways */
+  .wadi-help-trigger,.drawer-close,.photo-thumb-rm{position:relative}
+  .wadi-help-trigger::after,.drawer-close::after,.photo-thumb-rm::after{
+    content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:44px;height:44px}
+}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+</style>
+<script src="wadi-nav.js" defer></script>
+<script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">الإدارة الكلّية للبلديات</h1>
 
 <!-- ROUND BALADIEH LOGO (floating, always visible, click → main gate) -->
 <a href="index.html" class="wadi-logo-float" title="البوابة الرئيسية">
@@ -139,7 +172,7 @@ body{font-family:var(--font);direction:rtl;background:var(--bg);min-height:100vh
           <div class="fg" style="grid-column:1/-1">
             <div class="fl">معاينة</div>
             <div id="me-prev-hdr" style="border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px;color:#fff;">
-              <img id="me-prev-logo" src="" style="height:32px;display:none">
+              <img id="me-prev-logo" src="" alt="" style="height:32px;display:none">
               <span id="me-prev-name" style="font-weight:800;font-size:14px;">اسم البلدية</span>
             </div>
           </div>
@@ -347,7 +380,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
-  if (!confirm('تسجيل خروج؟')) return;
+  if (!await wadiConfirm('تسجيل خروج؟')) return;
   await sb.auth.signOut();
   location.reload();
 }
@@ -396,7 +429,7 @@ async function loadMunicipalities() {
     muns.forEach(function(m) {
       html += '<div class="mun-card" data-munid="' + m.id + '">';
       html += '<div style="width:44px;height:44px;border-radius:10px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-      html += m.logo_base64 ? '<img src="' + m.logo_base64 + '" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:24px">🏛</span>';
+      html += m.logo_base64 ? '<img src="' + m.logo_base64 + '" alt="" style="width:100%;height:100%;object-fit:contain">' : '<span style="font-size:24px">🏛</span>';
       html += '</div><div style="flex:1"><div style="font-weight:700;font-size:14px">' + m.name + '</div>';
       html += '<div style="font-size:12px;color:var(--text3)">' + (m.region||'') + '</div></div>';
       html += '<div class="color-swatch" style="background:' + (m.primary_color||'#1a6eb5') + '"></div>';
@@ -430,7 +463,7 @@ async function editMunicipality(id) {
   document.getElementById('me-c2').value = m.secondary_color || '#1e5429';
   document.getElementById('me-c2t').value = m.secondary_color || '#1e5429';
   var lp = document.getElementById('me-logo-prev');
-  lp.innerHTML = editLogoB64 ? '<img src="' + editLogoB64 + '" style="height:50px;border-radius:8px;">' : '<span style="font-size:12px;color:var(--text3)">لا يوجد شعار</span>';
+  lp.innerHTML = editLogoB64 ? '<img src="' + editLogoB64 + '" alt="" style="height:50px;border-radius:8px;">' : '<span style="font-size:12px;color:var(--text3)">لا يوجد شعار</span>';
   document.getElementById('mun-edit-title').textContent = '✏️ تعديل: ' + m.name;
   document.getElementById('mun-edit-card').style.display = 'block';
   document.getElementById('me-msg').textContent = '';
@@ -455,7 +488,7 @@ function previewEditLogo(input) {
   reader.onload = function(e) {
     editLogoB64 = e.target.result;
     var lp = document.getElementById('me-logo-prev');
-    lp.innerHTML = '<img src="' + editLogoB64 + '" style="height:50px;border-radius:8px;">';
+    lp.innerHTML = '<img src="' + editLogoB64 + '" alt="" style="height:50px;border-radius:8px;">';
     updateEditPreview();
   };
   reader.readAsDataURL(f);
@@ -466,7 +499,7 @@ function previewNewLogo(input) {
   var reader = new FileReader();
   reader.onload = function(e) {
     newLogoB64 = e.target.result;
-    document.getElementById('nm-logo-prev').innerHTML = '<img src="' + newLogoB64 + '" style="height:44px;border-radius:8px;">';
+    document.getElementById('nm-logo-prev').innerHTML = '<img src="' + newLogoB64 + '" alt="" style="height:44px;border-radius:8px;">';
   };
   reader.readAsDataURL(f);
 }
@@ -559,7 +592,7 @@ async function addSuperAdmin() {
 }
 
 async function removeSuperAdmin(id, email) {
-  if(!confirm('حذف '+email+' من جدول super_admins؟'))return;
+  if(!await wadiConfirm('حذف '+email+' من جدول super_admins؟'))return;
   var r = await sb.from('super_admins').delete().eq('id',id);
   if(r.error){toast('خطأ: '+r.error.message,'err');return;}
   loadSuperAdmins(); toast('🗑️ تم الحذف');

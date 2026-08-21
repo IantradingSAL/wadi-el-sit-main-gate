@@ -9,7 +9,7 @@
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "any",
   "background_color": "#f5f7fa",
-  "theme_color": "#1a6eb5",
+  "theme_color": "#0f4d82",
   "lang": "ar",
   "dir": "rtl",
   "handle_links": "preferred",

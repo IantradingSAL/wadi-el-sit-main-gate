@@ -48,7 +48,8 @@
   async function handleClick(emailInput, feedbackTarget) {
     var em = emailInput ? String(emailInput.value || '').trim() : '';
     if (!em) {
-      em = String(window.prompt('أدخل بريدك الإلكتروني لإرسال رابط إعادة تعيين كلمة المرور:') || '').trim();
+      em = String(await window.wadiPrompt('أدخل بريدك الإلكتروني لإرسال رابط إعادة تعيين كلمة المرور:',
+                    { title: '🔑 إعادة تعيين كلمة المرور', type: 'email', dir: 'ltr' }) || '').trim();
       if (!em) return;
     }
     showFeedback(feedbackTarget, '⏳ جاري إرسال رابط إعادة التعيين…', 'info');

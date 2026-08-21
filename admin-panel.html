@@ -2,18 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1a6eb5">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="وادي الست">
 <title>لوحة إدارة التعاونيّة — بلدية وادي الست</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
 <style>
 :root{
-  --blue:#1a6eb5; --blue2:#0f4d82; --blue3:#daeaf8; --blue4:#f0f5fa; --blue5:#e8f2ff;
-  --green:#28a745; --green2:#155724; --green3:#d4edda;
+  --blue:#1a6eb5; --blue2:#0f4d82; --blue3:#daeaf8; --blue4:#eef5fc; --blue5:#e8f2ff;
+  --green:#2d7a3e; --green2:#1e5429; --green3:#d4edda;
   --yellow:#ffc107; --yellow2:#856404; --yellow3:#fff3cd;
   --red:#dc3545; --red2:#721c24; --red3:#f8d7da;
   --cyan:#17a2b8; --cyan3:#d1ecf1;
@@ -326,6 +326,40 @@ html[dir="rtl"] .search input{padding:12px 40px 12px 14px}
 }
 </style>
 <script src="pwa-ios.js" defer></script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+/* ── touch targets ────────────────────────────────────────────────────────
+   Apple asks for 44pt, Android for 48dp. These controls measured 13-38px in
+   Chromium at iPhone size. The hit area is grown with a transparent overlay
+   rather than by resizing the control, so nothing moves on screen.
+   Side-by-side controls (the AR/EN/FR pills) grow only in height, because
+   widening them would make neighbouring targets overlap. */
+@media (max-width:820px){
+  .wadi-lang-btn,.hdr-btn,.cat,.section-link,.chip,.pill{position:relative}
+  .wadi-lang-btn::after,.hdr-btn::after,.cat::after,.section-link::after{
+    content:'';position:absolute;left:0;right:0;top:50%;
+    transform:translateY(-50%);height:44px;pointer-events:auto}
+  /* isolated round buttons have room to grow both ways */
+  .wadi-help-trigger,.drawer-close,.photo-thumb-rm{position:relative}
+  .wadi-help-trigger::after,.drawer-close::after,.photo-thumb-rm::after{
+    content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:44px;height:44px}
+}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+</style>
+<script src="wadi-nav.js" defer></script>
+<script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -685,7 +719,7 @@ async function coopAdminLogin() {
 }
 
 async function coopAdminLogout() {
-  if (!confirm(t('logoutConfirm'))) return;
+  if (!await wadiConfirm(t('logoutConfirm'))) return;
   const token = tokGet();
   if (token) { try { await client.rpc('coop_admin_logout', { p_token: token }); } catch {} }
   tokClear(); showLogin();
@@ -1039,7 +1073,7 @@ function switchTab(name) {
 
 /* ─── Actions (exact RPC signatures from production) ─── */
 async function actApprove(id) {
-  if (!confirm(t('confirm.approve'))) return;
+  if (!await wadiConfirm(t('confirm.approve'))) return;
   try {
     const { error } = await client.rpc('coop_admin_approve_seller', { p_admin_token: tokGet(), p_seller_id: id });
     if (error) throw error;
@@ -1062,7 +1096,7 @@ async function actSuspend(id, name) {
 async function actChangePassword(id, username) {
   const pwd = await openPrompt(t('prompt.pwdTitle'), t('prompt.pwdSub') + ' — @'+username, 'password');
   if (!pwd || pwd.length < 4) return;
-  if (!confirm(t('confirm.pwd'))) return;
+  if (!await wadiConfirm(t('confirm.pwd'))) return;
   try {
     const hash = await sha256Hex(pwd);
     const { error } = await client.rpc('coop_admin_change_seller_password', { p_admin_token: tokGet(), p_seller_id: id, p_new_password_hash: hash });
@@ -1072,7 +1106,7 @@ async function actChangePassword(id, username) {
 }
 
 async function actDelete(id, name) {
-  if (!confirm(t('confirm.delete') + (name ? '\n— '+name : ''))) return;
+  if (!await wadiConfirm(t('confirm.delete') + (name ? '\n— '+name : ''))) return;
   let force = false;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -1084,7 +1118,7 @@ async function actDelete(id, name) {
     } catch (e) {
       const msg = e?.message || String(e);
       if (msg.includes('seller_has_orders') && attempt === 0) {
-        if (confirm(t('confirm.deleteForce'))) { force = true; continue; }
+        if (await wadiConfirm(t('confirm.deleteForce'), { danger: true })) { force = true; continue; }
         return;
       }
       if (!handleRpcError(e)) toast(t('toast.errOp')+': '+msg,'err');

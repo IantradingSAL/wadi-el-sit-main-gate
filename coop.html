@@ -2,11 +2,11 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title data-i18n="pageTitle">تعاونية وادي الست — متجر القرية</title>
 <meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="تعاونية وادي الست">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -17,6 +17,8 @@
 <script src="auth-common.js" defer></script>
 <script src="number-format.js"></script>
 <script src="i18n.js"></script>
+<script src="wadi-strings.js"></script>
+<link rel="stylesheet" href="wadi-help.css">
 <script>
 if(typeof I18N !== 'undefined' && I18N){ try{ I18N.extend({
   ar: {
@@ -814,18 +816,7 @@ if(typeof I18N !== 'undefined' && I18N){ try{ I18N.onApply(function(lang){
 }); }catch(e){} }
 
 /* ═══ Unified Wadi shared strings — DEFENSIVE ═══ */
-window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
-(function(){
-  var _d = {
-    ar: {"wadiMunName": "بلدية وادي الست", "wadiQadaa": "قضاء الشوف", "wadiHomeAria": "العودة للبوابة الرئيسية", "wadiHelpAria": "مساعدة ودليل الاستخدام", "wadiLangAria": "تغيير اللغة", "whTitle": "❓ دليل وادي الست — كيف تعمل المنصّة؟", "whIntro": "مرحباً بك في المنصّة الرقميّة لبلدية وادي الست. هذا الدليل يشرح أهم الميزات في كل صفحة.", "whLangT": "🌐 تغيير اللغة", "whLangD": "اضغط على AR / EN / FR في أعلى الصفحة لتغيير لغة الواجهة. اللغة تُحفظ تلقائياً وتُطبَّق في كل صفحات المنصّة عند زيارتك التالية.", "whNotifT": "🔔 الإشعارات (Push)", "whNotifD": "فعّل الإشعارات لتستلم تحديثات طلبك، تذكير دورة الري، وأخبار البلدية فوراً على هاتفك دون فتح التطبيق. اضغط على زر «تفعيل الإشعارات» في الصفحة المعنية ووافق على الإذن.", "whCurrT": "💵 العملتان: ليرة لبنانيّة (LBP) ودولار أمريكي (USD)", "whCurrD": "تَستخدم التعاونيّة والخدمات المدفوعة الليرة اللبنانيّة (LBP) والدولار الأمريكي (USD). الأسعار قابلة للتحويل بسعر الصرف المُحدَّث من البلديّة.", "whReqT": "📋 بوابة المواطن (الطلبات)", "whReqD": "قدِّم: شكوى، طلب رعاية اجتماعيّة، طلب ترخيص بناء، استفسار، إفادة عقاريّة، أو شكوى ريّ. ستحصل على رقم مرجعيّ لمتابعة طلبك.", "whCoopT": "🛒 التعاونيّة (Coop)", "whCoopD": "سوق إلكترونيّ للمنتجات المحلّيّة. تصفّح المنتجات، أضِفها للسلّة، وأكمل الطلب عبر واتساب مع البائع.", "whDirT": "📒 الدليل (Yellow Pages)", "whDirD": "دليل أرقام أهالي وادي الست. ابحث بالاسم، العائلة، المهنة، أو المنطقة. احفظ جهة الاتصال كـ vCard أو اتّصل بضغطة واحدة.", "whFoot": "للاستفسار أو الإبلاغ عن مشكلة — توجّه لمركز البلديّة أو استخدم بوابة المواطن.", "whClose": "إغلاق"},
-    en: {"wadiMunName": "Wadi El Sit Municipality", "wadiQadaa": "Chouf District", "wadiHomeAria": "Back to main gate", "wadiHelpAria": "Help & user guide", "wadiLangAria": "Change language", "whTitle": "❓ Wadi El Sit Guide — How does the platform work?", "whIntro": "Welcome to the digital platform of Wadi El Sit Municipality. This guide explains the main features across all pages.", "whLangT": "🌐 Change language", "whLangD": "Tap AR / EN / FR at the top of any page to change the interface language. Your choice is saved automatically and applied across all pages.", "whNotifT": "🔔 Push notifications", "whNotifD": "Enable notifications to receive request updates, irrigation reminders, and municipality news instantly on your phone.", "whCurrT": "💵 Two currencies: Lebanese Pound (LBP) & US Dollar (USD)", "whCurrD": "The cooperative and paid services use both Lebanese Pound (LBP) and US Dollar (USD). Prices convert at the rate set by the municipality.", "whReqT": "📋 Citizen Portal (requests)", "whReqD": "Submit complaints, welfare requests, building permits, inquiries, attestations, or irrigation complaints. Keep your reference number.", "whCoopT": "🛒 Cooperative (Coop)", "whCoopD": "Online marketplace for local products. Browse, add to cart, and complete the order via WhatsApp directly with the seller.", "whDirT": "📒 Directory (Yellow Pages)", "whDirD": "Directory of Wadi El Sit residents. Search by name, family, profession, or area. Save the contact as a vCard or call with one tap.", "whFoot": "For questions or to report an issue — visit the municipality office or use the Citizen Portal.", "whClose": "Close"},
-    fr: {"wadiMunName": "Municipalité de Wadi El Sit", "wadiQadaa": "Caza du Chouf", "wadiHomeAria": "Retour au portail principal", "wadiHelpAria": "Aide & guide d'utilisation", "wadiLangAria": "Changer de langue", "whTitle": "❓ Guide Wadi El Sit — Comment fonctionne la plateforme ?", "whIntro": "Bienvenue sur la plateforme numérique de la Municipalité de Wadi El Sit.", "whLangT": "🌐 Changer de langue", "whLangD": "Appuyez sur AR / EN / FR en haut de la page. Votre choix est sauvegardé automatiquement.", "whNotifT": "🔔 Notifications push", "whNotifD": "Activez les notifications pour recevoir les mises à jour, rappels d'irrigation et actualités sur votre téléphone.", "whCurrT": "💵 Deux monnaies : Livre libanaise (LBP) & Dollar (USD)", "whCurrD": "La coopérative utilise LBP et USD. Les prix sont convertibles au taux fixé par la municipalité.", "whReqT": "📋 Portail citoyen (demandes)", "whReqD": "Soumettez : plaintes, aide sociale, permis, demandes, attestations, ou plaintes d'irrigation. Conservez votre numéro de référence.", "whCoopT": "🛒 Coopérative (Coop)", "whCoopD": "Marché en ligne pour produits locaux. Parcourez, ajoutez au panier, et finalisez via WhatsApp avec le vendeur.", "whDirT": "📒 Annuaire (Yellow Pages)", "whDirD": "Annuaire des habitants. Recherchez par nom, famille, profession ou région. Enregistrez en vCard ou appelez d'un geste.", "whFoot": "Pour toute question ou problème — rendez-vous au bureau de la municipalité ou utilisez le Portail Citoyen.", "whClose": "Fermer"}
-  };
-  for(var lng in _d){ for(var k in _d[lng]){ window.__WADI_STRINGS__[lng][k] = _d[lng][k]; } }
-  if(typeof I18N !== 'undefined' && I18N && typeof I18N.extend === 'function'){
-    try{ I18N.extend(_d); }catch(e){ /* swallow */ }
-  }
-})();
+/* the shared dictionary now lives in wadi-strings.js */
 
 </script>
 
@@ -994,7 +985,7 @@ window.__WADI_STRINGS__ = window.__WADI_STRINGS__ || {ar:{},en:{},fr:{}};
 :root{
   --primary:#0f4d82;--primary2:#1a6eb5;--primary3:#daeaf8;--primary4:#eef5fc;
   --accent:#c8910a;--accent2:#fff8e1;
-  --green:#2d7a3e;--green2:#1e5429;--green3:#e8f3e6;
+  --green:#2d7a3e;--green2:#1e5429;--green3:#d4edda;
   --red:#c0392b;--red3:#fdf0ee;
   --bg:#ffffff;--surface:#ffffff;--surface2:#f5f7fa;
   --text:#1a2332;--text2:#4a5568;--text3:#8a95a3;--text4:#bcc4cf;
@@ -1459,26 +1450,7 @@ input,textarea,select{font-family:var(--font);outline:none}
 .wadi-help-trigger{background:rgba(255,255,255,.18);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0;transition:all .15s;font-weight:800;}
 .wadi-help-trigger:hover,.wadi-help-trigger:active{background:rgba(255,255,255,.32);}
 /* ═══════════ UNIFIED WADI HELP MODAL ═══════════ */
-.wadi-help-ov{position:fixed;inset:0;background:rgba(15,30,60,.58);z-index:99500;display:none;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto;}
-.wadi-help-ov.open{display:flex;}
-.wadi-help-mo{background:#fff;border-radius:18px;max-width:560px;width:100%;margin:auto;box-shadow:0 24px 60px rgba(0,0,0,.32);font-family:'Tajawal',sans-serif;direction:rtl;color:#191c24;animation:wadiHelpPop .22s ease;}
-html[lang="en"] .wadi-help-mo,html[lang="fr"] .wadi-help-mo{direction:ltr;}
-@keyframes wadiHelpPop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
-.wadi-help-mh{padding:18px 22px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:12px;position:sticky;top:0;background:#fff;border-radius:18px 18px 0 0;z-index:1;}
-.wadi-help-mh-i{font-size:24px;}
-.wadi-help-mh-t{flex:1;font-size:17px;font-weight:800;color:#0f4d82;line-height:1.25;}
-.wadi-help-mh-x{background:none;border:none;cursor:pointer;font-size:22px;color:#8d93a6;padding:4px 9px;border-radius:7px;line-height:1;font-family:inherit;}
-.wadi-help-mh-x:hover{background:#eef0f6;color:#191c24;}
-.wadi-help-mb{padding:18px 22px 24px;}
-.wadi-help-intro{font-size:13.5px;color:#515668;line-height:1.7;margin-bottom:16px;padding:11px 13px;background:linear-gradient(135deg,#daeaf8,#eef5fc);border-radius:11px;border:1px solid #c7dff5;}
-.wadi-help-sec{margin-bottom:14px;border-right:3px solid #1a6eb5;padding-right:12px;}
-html[lang="en"] .wadi-help-sec,html[lang="fr"] .wadi-help-sec{border-right:none;border-left:3px solid #1a6eb5;padding-right:0;padding-left:12px;}
-.wadi-help-sec:last-child{margin-bottom:2px;}
-.wadi-help-sec-t{font-size:14.5px;font-weight:800;color:#0f4d82;margin-bottom:5px;display:flex;align-items:center;gap:6px;}
-.wadi-help-sec-d{font-size:13.5px;color:#515668;line-height:1.72;}
-.wadi-help-foot{margin-top:18px;padding:11px 13px;background:#fff8e6;border:1px solid #f5d481;border-radius:10px;font-size:12.5px;color:#7a5500;line-height:1.55;text-align:center;}
-@media(max-width:540px){.wadi-help-ov{padding:14px 10px;}.wadi-help-mh{padding:14px 16px;}.wadi-help-mh-t{font-size:15.5px;}.wadi-help-mb{padding:14px 16px 20px;}}
-@media print{.wadi-help-ov,.wadi-help-trigger,.wadi-lang-pill{display:none!important;}}
+/* the help modal styles now live in wadi-help.css */
 
 /* ═══════════ COOP FLOATING TOP STRIP ═══════════ */
 .wadi-coop-strip{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;left:8px;z-index:200;display:flex;align-items:center;gap:8px;pointer-events:none;}
@@ -1495,6 +1467,38 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
 @media print{.wadi-coop-strip{display:none;}}
 
 </style>
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+/* ── touch targets ────────────────────────────────────────────────────────
+   Apple asks for 44pt, Android for 48dp. These controls measured 13-38px in
+   Chromium at iPhone size. The hit area is grown with a transparent overlay
+   rather than by resizing the control, so nothing moves on screen.
+   Side-by-side controls (the AR/EN/FR pills) grow only in height, because
+   widening them would make neighbouring targets overlap. */
+@media (max-width:820px){
+  .wadi-lang-btn,.hdr-btn,.cat,.section-link,.chip,.pill{position:relative}
+  .wadi-lang-btn::after,.hdr-btn::after,.cat::after,.section-link::after{
+    content:'';position:absolute;left:0;right:0;top:50%;
+    transform:translateY(-50%);height:44px;pointer-events:auto}
+  /* isolated round buttons have room to grow both ways */
+  .wadi-help-trigger,.drawer-close,.photo-thumb-rm{position:relative}
+  .wadi-help-trigger::after,.drawer-close::after,.photo-thumb-rm::after{
+    content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:44px;height:44px}
+}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+</style>
+<script src="wadi-nav.js" defer></script>
+<script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
 
@@ -1814,12 +1818,12 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
 </nav>
 
 <!-- ═══════════════════════ CART DRAWER ═══════════════════════ -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeCart()"></div>
+<div aria-hidden="true" tabindex="-1" class="drawer-overlay" id="drawer-overlay" onclick="closeCart()"></div>
 <div class="drawer" id="cart-drawer">
   <div class="drawer-handle"></div>
   <div class="drawer-hdr">
     <div class="drawer-title" data-i18n="yourCart">🛒 سلّتك</div>
-    <button class="drawer-close" onclick="closeCart()">×</button>
+    <button class="drawer-close" onclick="closeCart()" aria-label="إغلاق">×</button>
   </div>
   <div class="drawer-body" id="cart-items"></div>
   <div class="drawer-foot" id="cart-foot" style="display:none">
@@ -1837,7 +1841,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="completeOrder">إتمام الطلب</div>
-      <button class="drawer-close" onclick="closeCheckout()">×</button>
+      <button class="drawer-close" onclick="closeCheckout()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -1916,7 +1920,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" id="modal-product-title" data-i18n="addProduct">إضافة منتج جديد</div>
-      <button class="drawer-close" onclick="closeProductModal()">×</button>
+      <button class="drawer-close" onclick="closeProductModal()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -1983,7 +1987,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="profile">الملف الشخصي</div>
-      <button class="drawer-close" onclick="closeProfileModal()">×</button>
+      <button class="drawer-close" onclick="closeProfileModal()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div class="field">
@@ -2012,7 +2016,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal" style="max-width:380px">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="adminLoginTitle">🔐 دخول الإدارة</div>
-      <button class="drawer-close" onclick="closeAdminLogin()">×</button>
+      <button class="drawer-close" onclick="closeAdminLogin()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <p style="color:var(--text3);font-size:13px;margin-bottom:16px;text-align:center" data-i18n="adminLoginSub">للموظّفين المخوّلين فقط</p>
@@ -2038,7 +2042,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title">🚚 انضمّ كعامل توصيل</div>
-      <button class="drawer-close" onclick="closeDeliveryAgent()">×</button>
+      <button class="drawer-close" onclick="closeDeliveryAgent()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body">
       <div id="da-status"></div>
@@ -2118,7 +2122,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="orderDetails">تفاصيل الطلب</div>
-      <button class="drawer-close" onclick="closeOrderModal()">×</button>
+      <button class="drawer-close" onclick="closeOrderModal()" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body" id="order-modal-body"></div>
   </div>
@@ -2129,7 +2133,7 @@ html[lang="en"] .wadi-coop-strip .wadi-help-trigger,html[lang="fr"] .wadi-coop-s
   <div class="modal" style="max-width:380px">
     <div class="modal-hdr">
       <div class="modal-title" data-i18n="aboutApp">حول التطبيق</div>
-      <button class="drawer-close" onclick="document.getElementById('modal-about').classList.remove('on')">×</button>
+      <button class="drawer-close" onclick="document.getElementById('modal-about').classList.remove('on')" aria-label="إغلاق">×</button>
     </div>
     <div class="modal-body" style="text-align:center">
       <div style="width:90px;height:90px;border-radius:50%;background:var(--primary4);margin:10px auto 14px;display:flex;align-items:center;justify-content:center;font-size:40px">🛒</div>
@@ -2599,7 +2603,7 @@ function openProductDetail(p){
     <div class="pdetail-img">${img}</div>
     <div class="pdetail-body">
       <div class="pdetail-brand">${escapeHtml(seller.display_name||'')}</div>
-      <h1 class="pdetail-name">${escapeHtml(p.name)}</h1>
+      <h2 class="pdetail-name">${escapeHtml(p.name)}</h2>
       ${cat?`<div class="pdetail-cat">${cat.icon} ${(typeof cat.name==="object"?pickLang(cat.name):cat.name)}</div>`:''}
       <div class="pdetail-price-row">
         <div class="pdetail-price">${formatPriceDual(p.price, p.currency)}</div>
@@ -2757,7 +2761,7 @@ function renderCart(){
   cart.forEach((item,idx)=>{
     const el=document.createElement('div');
     el.className='cart-item';
-    const img=item.photo?`<img src="${escapeAttr(item.photo)}">`:getCategoryIcon(item.category_id);
+    const img=item.photo?`<img src="${escapeAttr(item.photo)}" alt="${escapeAttr(item.name||'')}">`:getCategoryIcon(item.category_id);
     el.innerHTML=`
       <div class="cart-item-img">${img}</div>
       <div class="cart-item-info">
@@ -3108,8 +3112,8 @@ function saveProfile(){
   }catch(e){console.error(e);toast(L().saveFailed,'err');}
 }
 
-function clearIdentity(){
-  if(!confirm(((window.__wadi_t&&window.__wadi_t('logoutSellerConfirm'))||'هل تريد تسجيل الخروج؟ سيتمّ مسح بيانات الجلسة.'))) return;
+async function clearIdentity(){
+  if(!await wadiConfirm(((window.__wadi_t&&window.__wadi_t('logoutSellerConfirm'))||'هل تريد تسجيل الخروج؟ سيتمّ مسح بيانات الجلسة.'))) return;
   localStorage.removeItem('coop_seller');
   coopClearToken('seller');   // revoke it server-side, not just locally
   localStorage.removeItem('coop_admin');
@@ -3468,7 +3472,7 @@ async function openAssignAgentModal(orderId){
   ov.innerHTML = `<div style="background:#fff;border-radius:14px;padding:18px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div style="font-size:15px;font-weight:900;color:#0f4d82">🚚 اختر عامل التوصيل</div>
-      <button class="drawer-close" style="background:#eef2f7">×</button>
+      <button class="drawer-close" style="background:#eef2f7" aria-label="إغلاق">×</button>
     </div>
     ${agents.map(a => `<button class="order-card" data-aid="${escapeAttr(a.id)}" data-aname="${escapeAttr(a.name||'')}" style="width:100%;text-align:start;display:flex;align-items:center;gap:10px;cursor:pointer;border:1px solid var(--border);margin-bottom:8px">
       <div style="font-size:22px">${vehMap[a.vehicle]||'🚚'}</div>
@@ -3518,8 +3522,8 @@ function requestAgentPayout(amount, count){
   toast('✅ تمّ إرسال طلب الصرف','ok');
 }
 
-function logoutAgent(){
-  if(!confirm('تسجيل خروج عامل التوصيل؟')) return;
+async function logoutAgent(){
+  if(!await wadiConfirm('تسجيل خروج عامل التوصيل؟')) return;
   currentAgent = null;
   localStorage.removeItem('coop_agent');
   coopClearToken('agent');    // revoke it server-side, not just locally
@@ -3893,7 +3897,7 @@ async function loadSellerStats(){
       products.forEach(p=>{
         const el=document.createElement('div');
         el.className='product-mgr-card';
-        const img=p.photo_urls?.[0]?`<img src="${escapeAttr(p.photo_urls[0])}">`:getCategoryIcon(p.category_id);
+        const img=p.photo_urls?.[0]?`<img src="${escapeAttr(p.photo_urls[0])}" alt="${escapeAttr(p.name||'')}">`:getCategoryIcon(p.category_id);
         const stockColor = p.stock > 0 ? 'var(--green)' : 'var(--red)';
         const stockTxt = p.stock > 0 ? ((window.__wadi_t&&window.__wadi_t('inStockN'))||'✓ متوفّر: ')+p.stock : ((window.__wadi_t&&window.__wadi_t('outOfStock'))||'✗ نفذ');
         el.innerHTML=`
@@ -3969,7 +3973,7 @@ function setStatNum(el, text){
 }
 
 async function updateOrderStatus(orderId, newStatus){
-  if(!confirm(`تأكيد تغيير حالة الطلب إلى "${newStatus}"؟`)) return;
+  if(!await wadiConfirm(`تأكيد تغيير حالة الطلب إلى "${newStatus}"؟`)) return;
   try{
     const res = await sb.rpc('coop_order_set_status',
       {p_token:coopToken('seller'), p_kind:'seller', p_order:orderId, p_status:newStatus});
@@ -3990,13 +3994,13 @@ function contactCustomerWA(phone, name, item, total){
   openWhatsApp('https://wa.me/'+cleanWa+'?text='+encodeURIComponent(msg));
 }
 
-function requestPayout(){
+async function requestPayout(){
   const due = window._sellerAmountDue || 0;
   if(due <= 0){
     toast('لا يوجد رصيد قابل للسحب حالياً','err');
     return;
   }
-  if(!confirm(`طلب سحب الرصيد المستحقّ: ${formatPrice(due)} ل.ل.؟\n\nسيتمّ التواصل معك من قبل البلدية لتنسيق التسليم.`)) return;
+  if(!await wadiConfirm(`طلب سحب الرصيد المستحقّ: ${formatPrice(due)} ل.ل.؟\n\nسيتمّ التواصل معك من قبل البلدية لتنسيق التسليم.`)) return;
   // Send WhatsApp to municipality
   const msg = `📥 طلب سحب رصيد — تعاونيّة بلدية وادي الست\n\n`+
               `البائع: ${currentSeller.display_name}\n`+
@@ -4113,7 +4117,7 @@ function editSellerProduct(productId){
 }
 
 async function deleteSellerProduct(productId){
-  if(!confirm('هل تريد حذف هذا المنتج نهائياً؟ لا يمكن التراجع عن العمليّة.')) return;
+  if(!await wadiConfirm('هل تريد حذف هذا المنتج نهائياً؟ لا يمكن التراجع عن العمليّة.')) return;
   try{
     const res = await sb.rpc('coop_product_delete',
       {p_token: coopToken('seller'), p_id: productId});
@@ -4169,7 +4173,7 @@ function renderPhotoThumbs(){
   pendingPhotos.forEach((p, idx) => {
     const div = document.createElement('div');
     div.className = 'photo-thumb';
-    div.innerHTML = `<img src="${p.preview}" alt=""><button type="button" class="photo-thumb-rm" onclick="removePendingPhoto(${idx})" title="حذف">×</button>`;
+    div.innerHTML = `<img src="${p.preview}" alt=""><button type="button" class="photo-thumb-rm" onclick="removePendingPhoto(${idx})" title="حذف" aria-label="إغلاق">×</button>`;
     wrap.appendChild(div);
   });
   // Update button text
@@ -4353,8 +4357,8 @@ async function saveProduct(){
   }
 }
 
-function logoutSeller(){
-  if(!confirm('تسجيل خروج البائع؟')) return;
+async function logoutSeller(){
+  if(!await wadiConfirm('تسجيل خروج البائع؟')) return;
   currentSeller=null;
   localStorage.removeItem('coop_seller');
   coopClearToken('seller');   // revoke it server-side, not just locally
@@ -4824,11 +4828,20 @@ async function loadAdminPanel(){
           if(btn){
             btn.onclick = async () => {
               const suggest = btn.dataset.max;
-              const raw = window.prompt(`${dashT('payoutPrompt')} ${btn.dataset.sname} (${dashT('payoutOwed')} ${suggest}):`, suggest);
-              if(raw === null) return;
-              const amt = Number(raw);
+              // Was two native dialogs back to back — amount, then note.
+              const _pay = await wadiForm({
+                title: `${dashT('payoutPrompt')} ${btn.dataset.sname}`,
+                note:  `${dashT('payoutOwed')} ${suggest}`,
+                okText: dashT('payoutPrompt'),
+                fields: [
+                  { key:'amt',  label: dashT('payoutOwed'), value: suggest, inputmode:'decimal', required:true },
+                  { key:'note', label: dashT('payoutNote'), required:false }
+                ]
+              });
+              if(!_pay) return;
+              const amt = Number(_pay.amt);
               if(!(amt>0)){ toast('⚠️ '+dashT('payoutInvalid'),'err'); return; }
-              const note = window.prompt(dashT('payoutNote')+':','')||'';
+              const note = _pay.note || '';
               const { error } = await sb.from('coop_transactions').insert({
                 seller_id: btn.dataset.sid,
                 type: 'withdrawal',
@@ -4897,9 +4910,14 @@ async function loadAdminPanel(){
           ev.stopPropagation();
           const id = b.dataset.catId;
           if(b.dataset.act === 'del-cat'){
-            if(!confirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
+            if(!await wadiConfirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
             b.disabled = true; b.textContent = '⏳';
-            const { error } = await sb.from('coop_categories').delete().eq('id', id);
+            // Was a direct DELETE. The table's write policies were open to anon,
+            // so anyone on the internet could empty the shop's category list.
+            // Now it goes through a token-scoped function, like products do.
+            const { data: gone, error } = await sb.rpc('coop_category_delete',
+              { p_token: coopToken('seller'), p_id: id });
+            if(!error && !gone){ b.disabled=false; b.textContent='🗑️'; toast(dashT('catDeleted'),'err'); return; }
             if(error){ b.disabled=false; b.textContent='🗑️'; toast('⚠️ '+error.message,'err'); return; }
             toast(dashT('catDeleted'),'ok');
             b.closest('.order-card')?.remove();
@@ -5017,7 +5035,7 @@ async function loadAdminPanel(){
             e.stopPropagation();
             const act=b.dataset.act,id=b.dataset.id;
             if(act==='delete-seller'){
-              if(!confirm('حذف البائع "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له منتجات أو طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              if(!await wadiConfirm('حذف البائع "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له منتجات أو طلبات — استخدم الحظر بدلاً من ذلك.'))return;
               b.disabled=true; b.textContent='⏳';
               const{error}=await sb.from('coop_sellers').delete().eq('id',id);
               if(error){b.disabled=false;b.textContent='🗑️ حذف';toast('⚠️ '+error.message,'err');return;}
@@ -5071,7 +5089,7 @@ async function loadAdminPanel(){
             const busy=(txt)=>{b.disabled=true;b.dataset._t=b.textContent;b.textContent=txt||'⏳';};
             const done=()=>{b.disabled=false;if(b.dataset._t){b.textContent=b.dataset._t;delete b.dataset._t;}};
             if(act==='delete-agent'){
-              if(!confirm('حذف عامل التوصيل "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات — استخدم الحظر بدلاً من ذلك.'))return;
+              if(!await wadiConfirm('حذف عامل التوصيل "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات — استخدم الحظر بدلاً من ذلك.'))return;
               busy('⏳ حذف');
               const{error}=await sb.from('coop_delivery_agents').delete().eq('id',id);
               if(error){done();toast('⚠️ '+error.message,'err');return;}
@@ -5079,7 +5097,15 @@ async function loadAdminPanel(){
               el.remove();
               return;
             } else if(act==='set-pin'){
-              const pin = prompt('أدخل رمز PIN جديد (4 أرقام) للعامل "'+(b.dataset.name||'')+'":');
+              // A PIN is a credential. prompt() puts it on the screen in clear
+              // text, in front of whoever is standing at the counter, and leaves
+              // it in the browser's autofill history. wadiAskPassword masks it
+              // and asks for it twice.
+              const pin = await window.wadiAskPassword({
+                title:'🔑 رمز PIN جديد للعامل "'+(b.dataset.name||'')+'"',
+                note:'4 أرقام — يُكتب مرّتين للتأكيد',
+                min:4
+              });
               if(!pin) return;
               if(!/^\d{4}$/.test(pin)){ toast('رمز PIN يجب أن يكون 4 أرقام','err'); return; }
               busy('⏳ حفظ');
@@ -5129,7 +5155,7 @@ async function loadAdminPanel(){
         el.querySelectorAll('button[data-act="delete-product"]').forEach(b=>{
           b.onclick=async(e)=>{
             e.stopPropagation();
-            if(!confirm('حذف المنتج "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات مرتبطة.'))return;
+            if(!await wadiConfirm('حذف المنتج "'+(b.dataset.name||'')+'" نهائياً؟ يفشل الحذف إذا كان له طلبات مرتبطة.'))return;
             b.disabled=true; b.textContent='⏳ حذف';
             const{error}=await sb.from('coop_products').delete().eq('id',b.dataset.id);
             if(error){b.disabled=false;b.textContent='🗑️ حذف المنتج';toast('⚠️ '+error.message,'err');return;}
@@ -5172,7 +5198,7 @@ async function loadAdminPanel(){
             e.stopPropagation();
             const act=b.dataset.act,id=b.dataset.id;
             if(act==='delete-order'){
-              if(!confirm('حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع.'))return;
+              if(!await wadiConfirm('حذف هذا الطلب نهائياً من قاعدة البيانات؟ لا يمكن التراجع.'))return;
               b.disabled=true; b.textContent='⏳ حذف';
               const{error}=await sb.from('coop_orders').delete().eq('id',id);
               if(error){b.disabled=false;b.textContent='🗑️ حذف نهائي';toast('⚠️ '+error.message,'err');return;}
@@ -5180,7 +5206,7 @@ async function loadAdminPanel(){
               el.remove();
               return;
             } else {
-              if(!confirm('إلغاء الطلب؟'))return;
+              if(!await wadiConfirm('إلغاء الطلب؟'))return;
               b.disabled=true;
               const{error}=await sb.from('coop_orders').update({status:'cancelled'}).eq('id',id);
               b.disabled=false;
@@ -5255,7 +5281,7 @@ async function renderAgentPayouts(agents){
   }).join('');
   box.querySelectorAll('button[data-act="mark-paid"]').forEach(btn => {
     btn.onclick = async () => {
-      if(!confirm('تأكيد صرف جميع المستحقّات المعلّقة لهذا العامل؟')) return;
+      if(!await wadiConfirm('تأكيد صرف جميع المستحقّات المعلّقة لهذا العامل؟')) return;
       btn.disabled = true; btn.textContent = '⏳';
       const now = new Date().toISOString();
       const { error } = await sb.from('coop_orders')
@@ -5504,7 +5530,10 @@ function openCatEditor(cat){
     };
     err.textContent = '⏳';
     saveBtn.disabled = true;
-    const { error } = await sb.from('coop_categories').upsert(payload, { onConflict: 'id' });
+    // Was a direct upsert against a table anon could write. Now scoped to the
+    // signed-in seller's session token, same as coop_product_save.
+    const { error } = await sb.rpc('coop_category_save',
+      { p_token: coopToken('seller'), p_category: payload });
     saveBtn.disabled = false;
     if(error){ err.textContent = '⚠️ '+error.message; return; }
     toast(dashT('catSaved'),'ok');
@@ -5529,8 +5558,8 @@ function populateCurrencyAdmin(){
   }
 }
 
-function logoutAdmin(){
-  if(!confirm('تسجيل خروج الإدارة؟')) return;
+async function logoutAdmin(){
+  if(!await wadiConfirm('تسجيل خروج الإدارة؟')) return;
   currentAdmin=null;
   localStorage.removeItem('coop_admin');
   exitAdmin();
@@ -5576,7 +5605,6 @@ async function loadCurrencyRate(){
     if (!error && data) {
       window.currencyRate = parseFloat(data.rate_usd_to_lbp) || 89500;
       window.currencyRateUpdatedAt = data.updated_at;
-      console.log('💱 Currency rate loaded:', window.currencyRate, 'LBP/USD');
     }
   } catch(e) { console.warn('Could not load currency rate, using default 89500'); window.currencyRate = 89500; }
 }

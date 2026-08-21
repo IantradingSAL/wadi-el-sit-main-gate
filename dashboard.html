@@ -2,9 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>بلدية وادي الست — نظام المتابعة</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --blue:#1a6eb5;--blue2:#0f4d82;--blue3:#daeaf8;
@@ -219,17 +219,50 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 </style>
 <!-- PWA & Mobile Meta -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a6eb5">
+<meta name="theme-color" content="#0f4d82">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="وادي الست">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <script src="pwa.js" defer></script>
 <script src="pwa-ios.js" defer></script>
+<style>
+/* ── phone behaviour, identical on every page ─────────────────────────────
+   Applied last so it wins over the page's own rules.
+   font-size:16px on form fields is not a style choice: below it, iOS zooms
+   the page when a field takes focus and the layout jumps. */
+@media (max-width:820px){
+  input,select,textarea,button{font-size:16px!important}
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
+/* ── touch targets ────────────────────────────────────────────────────────
+   Apple asks for 44pt, Android for 48dp. These controls measured 13-38px in
+   Chromium at iPhone size. The hit area is grown with a transparent overlay
+   rather than by resizing the control, so nothing moves on screen.
+   Side-by-side controls (the AR/EN/FR pills) grow only in height, because
+   widening them would make neighbouring targets overlap. */
+@media (max-width:820px){
+  .wadi-lang-btn,.hdr-btn,.cat,.section-link,.chip,.pill{position:relative}
+  .wadi-lang-btn::after,.hdr-btn::after,.cat::after,.section-link::after{
+    content:'';position:absolute;left:0;right:0;top:50%;
+    transform:translateY(-50%);height:44px;pointer-events:auto}
+  /* isolated round buttons have room to grow both ways */
+  .wadi-help-trigger,.drawer-close,.photo-thumb-rm{position:relative}
+  .wadi-help-trigger::after,.drawer-close::after,.photo-thumb-rm::after{
+    content:'';position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%);width:44px;height:44px}
+}
+*:focus-visible{outline:2px solid #1a6eb5;outline-offset:2px}
+</style>
+<script src="wadi-nav.js" defer></script>
+<script src="wadi-shell.js" defer></script>
+<script src="wadi-dialogs.js"></script>
 </head>
 <body>
+<h1 style="position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">بلدية وادي الست — نظام متابعة الطلبات والمراسلات</h1>
 <!-- Back to Main Gate (floating) -->
 <style>
 .back-to-gate{position:fixed;top:12px;left:12px;z-index:99990;display:inline-flex;align-items:center;gap:7px;padding:9px 14px 9px 12px;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff!important;border-radius:999px;font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;text-decoration:none!important;box-shadow:0 4px 14px rgba(15,77,130,.35),0 2px 6px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease;border:1.5px solid rgba(255,255,255,.2);direction:rtl;cursor:pointer}
@@ -362,7 +395,7 @@ select.fi{cursor:pointer;appearance:none;-webkit-appearance:none;}
 <div id="toast" class="toast"></div>
 <div class="ov" id="OV" onclick="mc(event)">
   <div class="mo" onclick="event.stopPropagation()">
-    <div class="mh"><div class="mht" id="MT">—</div><button class="mcl" onclick="closeM()">✕</button></div>
+    <div class="mh"><div class="mht" id="MT">—</div><button class="mcl" onclick="closeM()" aria-label="إغلاق">✕</button></div>
     <div class="mb" id="MB"></div>
   </div>
 </div>
@@ -789,7 +822,7 @@ async function openAuditLog(){
     + listHtml
     + '<div style="margin-top:14px;display:flex;gap:8px">'
     + '<button class="btn bg" onclick="closeM()" style="flex:1;justify-content:center">إغلاق</button>'
-    + '<button class="btn" onclick="if(confirm(\'حذف السجل المحلي؟\')){localStorage.removeItem(APP_AUDIT_KEY);openAuditLog();}" style="font-size:12px">🗑️ مسح المحلي</button>'
+    + '<button class="btn" onclick="wadiConfirm(\'حذف السجل المحلي؟\',{danger:true}).then(function(ok){if(ok){localStorage.removeItem(APP_AUDIT_KEY);openAuditLog();}})" style="font-size:12px">🗑️ مسح المحلي</button>'
     + '</div>';
 }
 function openWhatsAppRoles(){
@@ -1025,7 +1058,8 @@ async function addDoc(caseId,file){
 
 async function rmDoc(caseId,path){
   if(!guard('edit','🚫 لا تملك صلاحية تعديل الطلبات')) return;
-  const c=cases.find(x=>String(x.id)===String(caseId));if(!c||!confirm('حذف هذا المستند؟'))return;
+  const c=cases.find(x=>String(x.id)===String(caseId));if(!c)return;
+  if(!await wadiConfirm('حذف هذا المستند؟',{danger:true}))return;
   sv(true);
   try{
     if(dbR)await sb.storage.from('case-documents').remove([path]);
@@ -1182,7 +1216,7 @@ function openDetail(id){
   if(R.A&&na&&ip){ab=`<div class="ab"><div class="abt">⏳ هذا الطلب يحتاج إلى موافقتك</div><div class="abs">يستوجب موافقة رسمية قبل المتابعة</div><div class="abbs"><button class="btn bgr" style="flex:1;justify-content:center" onclick="doApprove('${id}','approved')">✓ منح الموافقة</button><button class="btn bd2" style="flex:1;justify-content:center" onclick="doApprove('${id}','rejected')">✗ رفض</button></div></div>`;}
   const isImg=ext=>['jpg','jpeg','png','gif','webp'].includes((ext||'').toLowerCase());
   const docsH=docs.length?docs.map(d=>`<div class="dcd">
-    ${isImg(d.type)?`<img class="dth" src="${d.url}" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">`:`<div class="dpdf" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">📄</div>`}
+    ${isImg(d.type)?`<img class="dth" alt="${docAttr(d.name)}" src="${d.url}" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">`:`<div class="dpdf" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')">📄</div>`}
     <div class="ddi"><span class="ddn" title="${d.name}">${d.name}</span><a href="#" onclick="openCaseDoc(event,'${docAttr(d.path)}','${docAttr(d.name)}')" style="color:var(--blue);font-size:13px;text-decoration:none;margin-left:4px;cursor:pointer" title="تحميل">⬇️</a>${R.edit?`<button class="ddrm" onclick="event.stopPropagation();rmDoc('${id}','${d.path}')">🗑</button>`:''}</div>
   </div>`).join(''):'<div style="color:var(--text3);font-size:13px;padding:4px 0">لا توجد مستندات مرفقة</div>';
   const uz=R.edit?`<div class="uz" id="uz${id}" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hd(event,'${id}')"><input type="file" multiple accept="image/*,video/*,.pdf" onchange="hf(this.files,'${id}')"><div class="uzi">📎</div><div class="uzt">اسحب الملفات أو اضغط للاختيار</div><div class="uzs">صور JPG/PNG وPDF — حتى 10MB</div></div>`:'';
@@ -1327,7 +1361,7 @@ async function doApprove(id,dec){
   }
 }
 
-async function cd(id){if(!confirm('حذف هذا الطلب نهائياً؟'))return;await delC(id);closeM();}
+async function cd(id){if(!await wadiConfirm('حذف هذا الطلب نهائياً؟'))return;await delC(id);closeM();}
 
 // ── ADD ───────────────────────────────────────────────────────────────────────
 function openAdd(){
@@ -1578,7 +1612,7 @@ async function saveEmp(uid) {
 async function delEmp(btn) {
   if(!guard('admin','🚫 حذف الموظفين متاح للإدارة فقط')) return;
   const uid = btn.dataset.uid, name = btn.dataset.nm;
-  if (!confirm('حذف ' + name + '؟')) return;
+  if (!await wadiConfirm('حذف ' + name + '؟')) return;
   try {
     await adminAPI({ action: 'delete', uid: uid });
     toast('🗑 تم حذف ' + name); setTimeout(loadEmp, 700);
@@ -1888,7 +1922,7 @@ function renderCitFiles() {
     +'<span style="font-size:20px">'+ico(f)+'</span>'
     +'<span style="flex:1;font-size:13px;font-weight:600;color:var(--blue2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.name+'</span>'
     +'<span style="font-size:11px;color:var(--text3);flex-shrink:0">'+fmt(f.size)+'</span>'
-    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px">✕</button>'
+    +'<button onclick="removeCitFile('+i+')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:18px;padding:0 2px" aria-label="إغلاق">✕</button>'
     +'</div>'
   ).join('');
 }
@@ -2078,7 +2112,7 @@ function renderCitFileList(){
       <span style="font-size:17px">${icon(f)}</span>
       <span style="flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
       <span style="font-size:11px;color:var(--text3);white-space:nowrap">${fmt(f.size)}</span>
-      <button onclick="removeCitFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text3)'">✕</button>
+      <button onclick="removeCitFile(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--text3)'" aria-label="إغلاق">✕</button>
     </div>`).join('');
 }
 
@@ -2280,7 +2314,6 @@ async function loadCatsFromSupabase() {
       localStorage.setItem('wadi_cats', JSON.stringify(cats));
       renderCatsNav();
       updateCitizenTypeSelect();
-      console.log('✅ Cats loaded from Supabase:', cats.length);
     }
   } catch(e) { console.log('loadCatsFromSupabase:', e.message); }
 }
@@ -2676,7 +2709,7 @@ const WP_GROUPS=[
   {t:'📋 معاملات المواطنين',keys:[['cases_view','الاطلاع'],['cases_add','إضافة معاملة'],['cases_edit','تعديل'],['cases_delete','حذف'],['cases_approve','الموافقات']]},
   {t:'💧 الري',keys:[['water_view','الاطلاع'],['water_edit','التعديل']]},
   {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
-  {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل']]},
+  {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل'],['phonebook_registry','سجل النفوس الكامل (اسم الأم وسنة الولادة)']]},
   {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['inbox_read','البريد الوارد']]},
   {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات']]}
 ];
@@ -2802,7 +2835,7 @@ async function doResetPw(btn) {
 async function doDelUser(btn) {
   var uid=btn.dataset.uid, name=btn.dataset.nm;
   if(!WadiPerms.can('users_delete')){toast('🚫 حذف الحسابات غير مسموح لهذا الحساب','err');return;}
-  if(!confirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
+  if(!await wadiConfirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
   try {
     await adminAPI({action:'delete',uid:uid});
     // leave no orphan role or permission rows behind
@@ -2914,9 +2947,9 @@ function doSaveEditRole(rid, ico) {
   toast('✅ تم حفظ الدور');openUsers();
 }
 
-function doDeleteRole(btn) {
+async function doDeleteRole(btn) {
   var rid=btn.dataset.rid, r=getAdvRoleCfg(rid);
-  if(!confirm('حذف دور "'+r.label+'"?'))return;
+  if(!await wadiConfirm('حذف دور "'+r.label+'"?'))return;
   var custom=getCustomRoles();delete custom[rid];saveCustomRoles(custom);
   toast('🗑️ تم حذف الدور');renderRolesList();
 }
@@ -3066,10 +3099,8 @@ async function sendBrevoEmail(toEmail, toName, subject, htmlBody) {
       body: payload
     });
     const status = r.status;
-    console.log('Brevo:', status, toEmail);
     return status === 201 || status === 200;
   } catch(e) {
-    console.log('sendBrevoEmail error:', e.message);
     return false;
   }
 }
@@ -3129,7 +3160,6 @@ async function loadCatsFromDB() {
       if (cats && cats.length) {
         localStorage.setItem('wadi_cats', JSON.stringify(cats));
         renderCatsNav();
-        console.log('✅ Cats loaded from Supabase:', cats.length);
       }
     }
   } catch(e) { console.log('loadCatsFromDB:', e.message); }
@@ -3143,7 +3173,6 @@ async function loadCatsFromDB() {
     const {data, error} = await sb.from('settings').select('value').eq('key','wadi_cats').single();
     if (!error && data && data.value && data.value.length) {
       localStorage.setItem('wadi_cats', JSON.stringify(data.value));
-      console.log('✅ التصنيفات محمّلة من Supabase:', data.value.length);
       renderCatsNav();
       // Update type select if open
       var sel = document.getElementById('at');
@@ -3723,7 +3752,7 @@ function showWhatsNewPopup(items) {
     '<div style="background:linear-gradient(120deg,#0f4d82,#1a6eb5);color:#fff;padding:18px 22px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between">' +
     '<div><div style="font-size:16px;font-weight:800">🚀 ما الجديد في هذا الإصدار</div>' +
     '<div style="font-size:12px;opacity:.8;margin-top:2px">' + (items[0] ? items[0].date : '') + '</div></div>' +
-    '<button onclick="document.getElementById(\'news-popup\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px">×</button>' +
+    '<button onclick="document.getElementById(\'news-popup\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px" aria-label="إغلاق">×</button>' +
     '</div>' +
     '<div style="padding:16px 20px">' +
     items.map(function(item) {
@@ -4660,7 +4689,6 @@ async function openWaterSchedule(){
           email:o.email||null,area:o.area||null,land_name:o.landName||null,
           crop:o.crop||null,hours:o.hours||0,sort_order:o.order||o.sort_order||1,notes:o.notes||null};
       }),{onConflict:'id'}).then(function(){
-        console.log('Synced '+lsOwners.length+' owners from localStorage to Supabase');
       }).catch(function(e){console.log('sync err:',e);});
     }
   }
@@ -4894,8 +4922,8 @@ function saveIrrOwner(){
   }
 }
 
-function delIrrOwner(id,name){
-  if(!confirm('حذف '+name+'؟')) return;
+async function delIrrOwner(id,name){
+  if(!await wadiConfirm('حذف '+name+'؟')) return;
   saveIrrOwners(irrOwners().filter(function(o){return o.id!==id;}));
   if(dbR&&sb) sb.from('irr_owners').delete().eq('id',id).catch(function(){});
   renderIrrList(); updateWaterBadge(); toast('🗑️ '+name);
@@ -5013,7 +5041,7 @@ function irrNotifyNow(id){
   ov2.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;max-width:380px;width:100%">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'+
     '<div style="font-size:15px;font-weight:800">📧 إشعار: '+o.name+'</div>'+
-    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999">✕</button>'+
+    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#999" aria-label="إغلاق">✕</button>'+
     '</div>'+
     Object.keys(NOTIF_TEMPLATES).map(function(k){
       var t=NOTIF_TEMPLATES[k];
@@ -5087,11 +5115,11 @@ function irTab(id){var mb=document.getElementById('MB');if(!mb)return;mb.querySe
 
 async function openHelp(page){
   var content='<div style="padding:0 0 10px;border-bottom:2px solid #e8f0fc;margin-bottom:12px"><h3 style="color:#1a6eb5;margin:0;font-size:15px;font-weight:800">⚙️ لوحة تحكم موظفي البلدية</h3></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">📋 الطلبات</div><div style="font-size:13px;color:#444;padding-right:11px">جميع الطلبات — طلبات الموقع — تنتظر الموافقة</div></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">➕ إضافة طلب</div><div style="font-size:13px;color:#444;padding-right:11px">الاسم والهاتف والنوع إلزامية</div></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">👥 إدارة المستخدمين + 🎭 الأدوار</div><div style="font-size:13px;color:#444;padding-right:11px">للمدير ورئيس البلدية — YES/NO لكل ميزة وتصنيف</div></div><div style="margin-bottom:10px"><div style="font-size:13px;font-weight:700;color:#0f4d82;border-right:3px solid #1a6eb5;padding-right:8px;margin-bottom:4px">💧 دورة المياه</div><div style="font-size:13px;color:#444;padding-right:11px">تسجيل المشتركين، الجدول، إشعارات البريد</div></div><div style="background:#f0f7ff;border:1px solid #bee3f8;border-radius:8px;padding:10px 12px;font-size:13px"><b style="color:#1a6eb5">⚠️</b> كل تعديل يُسجَّل في سجل التدقيق</div>';
-  var m=document.getElementById('_hm_d');if(!m){m=document.createElement('div');m.id='_hm_d';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:20px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1"><div style="font-size:15px;font-weight:800;color:#1a6eb5">📖 دليل لوحة التحكم</div><button onclick="document.getElementById(\'_hm_d\').remove()" style="background:#f0f4f8;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px">✕</button></div><div id="_hb_d" style="padding:20px"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb_d').innerHTML=content;m.style.display='flex';
+  var m=document.getElementById('_hm_d');if(!m){m=document.createElement('div');m.id='_hm_d';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:20px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;border-radius:20px 20px 0 0;z-index:1"><div style="font-size:15px;font-weight:800;color:#1a6eb5">📖 دليل لوحة التحكم</div><button onclick="document.getElementById(\'_hm_d\').remove()" style="background:#f0f4f8;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px" aria-label="إغلاق">✕</button></div><div id="_hb_d" style="padding:20px"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb_d').innerHTML=content;m.style.display='flex';
 }
 
 
-function openHelp(p){var c='<b style="color:#1a6eb5;font-size:14px">⚙️ لوحة تحكم موظفي البلدية</b><br><br>📋 <b>الطلبات</b>: ترى فقط التصنيفات المسموحة.<br>➕ <b>إضافة طلب</b>: الاسم والهاتف والنوع إلزامية.<br>👥 <b>المستخدمين</b>: للمدير ورئيس البلدية فقط.<br>🎭 <b>الأدوار</b>: YES/NO لكل ميزة وتصنيف.<br>💧 <b>دورة المياه</b>: المشتركين والجدول والإشعارات.';var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%"><div style="display:flex;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل لوحة التحكم</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';}
+function openHelp(p){var c='<b style="color:#1a6eb5;font-size:14px">⚙️ لوحة تحكم موظفي البلدية</b><br><br>📋 <b>الطلبات</b>: ترى فقط التصنيفات المسموحة.<br>➕ <b>إضافة طلب</b>: الاسم والهاتف والنوع إلزامية.<br>👥 <b>المستخدمين</b>: للمدير ورئيس البلدية فقط.<br>🎭 <b>الأدوار</b>: YES/NO لكل ميزة وتصنيف.<br>💧 <b>دورة المياه</b>: المشتركين والجدول والإشعارات.';var m=document.getElementById('_hm');if(!m){m=document.createElement('div');m.id='_hm';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl';m.innerHTML='<div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%"><div style="display:flex;justify-content:space-between;margin-bottom:12px;border-bottom:1px solid #eee;padding-bottom:10px"><b style="color:#1a6eb5">📖 دليل لوحة التحكم</b><button onclick="document.getElementById(\'_hm\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer" aria-label="إغلاق">✕</button></div><div id="_hb" style="font-size:13px;line-height:1.8;color:#444"></div></div>';m.addEventListener('click',function(e){if(e.target===m)m.remove();});document.body.appendChild(m);}document.getElementById('_hb').innerHTML=c;m.style.display='flex';}
 </script>
 
 
