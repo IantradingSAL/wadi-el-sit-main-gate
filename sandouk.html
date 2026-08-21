@@ -816,7 +816,23 @@ async function bfLoad(){
   // citizens by default. DB entries win over registry on duplicate
   // normalised names because the DB reflects user edits (and captures the
   // explicit is_wadi_citizen flag).
-  const registry=(!reg.error && Array.isArray(reg.data)) ? reg.data : [];
+  // Fall back to the public projection when the caller does not hold
+  // `phonebook_registry`. Simulating every real account against the database
+  // showed this is not hypothetical: the person who actually uses the
+  // irrigation screen has the `water_only` role, which the permission is
+  // explicitly false for — so phonebook_registry_full() returned 0 rows and
+  // this picker would have been empty for the one person who needs it.
+  //
+  // The public projection carries name, father and phone, which is everything
+  // required to pick a payee. Only the birth year used to separate namesakes
+  // is missing, and that is a permissioned field on purpose.
+  let registry = (!reg.error && Array.isArray(reg.data)) ? reg.data : [];
+  if(!registry.length){
+    try {
+      const _pub = await sb.rpc('phonebook_public');
+      if(!_pub.error && Array.isArray(_pub.data)) registry = _pub.data;
+    } catch(_e){ /* offline — phonebook_entries alone still populates the picker */ }
+  }
   const bag=new Map();
   // Keyed on each record's own id, not on the name. Keying on the name
   // dropped the second of any two residents who share one, and the registry
