@@ -66,6 +66,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
 <script src="wadi-nav.js" defer></script>
 <script src="wadi-shell.js" defer></script>
 <script src="wadi-dialogs.js"></script>
+<script src="wadi-municipality.js" defer></script>
 </head>
 <body>
 <div class="wrap">
@@ -124,7 +125,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
     <h2>التواصل</h2>
     <p>لأي سؤال بشأن الخصوصية، تواصل مع:<br>
     <strong>بلدية وادي الست</strong><br>
-    البريد: <a href="mailto:baladiya.wadielsit@gmail.com">baladiya.wadielsit@gmail.com</a></p>
+    البريد: <a class="mun-email" href="mailto:management@municipality-wadi-el-sitt.org">management@municipality-wadi-el-sitt.org</a></p>
   </div>
 
   <div class="lang en ltr" id="lang-en">
@@ -170,7 +171,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
     <h2>Contact</h2>
     <p>For any privacy-related question, contact:<br>
     <strong>Wadi El Sit Municipality</strong><br>
-    Email: <a href="mailto:baladiya.wadielsit@gmail.com">baladiya.wadielsit@gmail.com</a></p>
+    Email: <a class="mun-email" href="mailto:management@municipality-wadi-el-sitt.org">management@municipality-wadi-el-sitt.org</a></p>
   </div>
 
   <div class="lang fr ltr" id="lang-fr">
@@ -216,7 +217,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
     <h2>Contact</h2>
     <p>Pour toute question relative à la vie privée, contactez :<br>
     <strong>Municipalité de Wadi El Sit</strong><br>
-    E-mail : <a href="mailto:baladiya.wadielsit@gmail.com">baladiya.wadielsit@gmail.com</a></p>
+    E-mail : <a class="mun-email" href="mailto:management@municipality-wadi-el-sitt.org">management@municipality-wadi-el-sitt.org</a></p>
   </div>
 
   <div class="meta">
@@ -233,6 +234,30 @@ function pick(l){
   document.documentElement.lang = l;
   document.documentElement.dir = (l==='ar') ? 'rtl' : 'ltr';
 }
+
+// The privacy contact used to be a Gmail address written into this page three
+// times, once per language. It is the municipality's own address now, and it
+// is kept in step with the municipality record so it cannot drift again.
+//
+// This page carries no Supabase client, so WadiMun answers from the copy
+// cached by whichever page the visitor used last, or from its built-in value.
+// Either way the address in the markup is already correct — this only updates
+// it if the municipality has since changed it.
+(function(){
+  function paint(){
+    if(!window.WadiMun || !WadiMun.email) return;
+    var e = WadiMun.email();
+    if(!e) return;
+    document.querySelectorAll('a.mun-email').forEach(function(a){
+      a.href = 'mailto:' + e;
+      a.textContent = e;
+    });
+  }
+  document.addEventListener('wadi:municipality', paint);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', paint);
+  else paint();
+  setTimeout(paint, 1200);   // WadiMun loads with defer
+})();
 </script>
   <script src="analytics.js?v=1" data-site="wadi-el-sit"></script>
 </body>

@@ -56,7 +56,7 @@
     phone: '+96176789039',
     whatsapp: '96176789039',
     emergency_phone: '+96176789039',
-    email: 'managemenet@municipality-wadi-el-sitt.org',
+    email: 'management@municipality-wadi-el-sitt.org',
     address: null,
     primary_color: '#1a6eb5',
     secondary_color: '#1e5429'
