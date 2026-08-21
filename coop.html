@@ -4911,7 +4911,12 @@ async function loadAdminPanel(){
           if(b.dataset.act === 'del-cat'){
             if(!confirm(dashT('catConfirmDelete')+'\n\n'+b.dataset.catName)) return;
             b.disabled = true; b.textContent = '⏳';
-            const { error } = await sb.from('coop_categories').delete().eq('id', id);
+            // Was a direct DELETE. The table's write policies were open to anon,
+            // so anyone on the internet could empty the shop's category list.
+            // Now it goes through a token-scoped function, like products do.
+            const { data: gone, error } = await sb.rpc('coop_category_delete',
+              { p_token: coopToken('seller'), p_id: id });
+            if(!error && !gone){ b.disabled=false; b.textContent='🗑️'; toast(dashT('catDeleted'),'err'); return; }
             if(error){ b.disabled=false; b.textContent='🗑️'; toast('⚠️ '+error.message,'err'); return; }
             toast(dashT('catDeleted'),'ok');
             b.closest('.order-card')?.remove();
@@ -5524,7 +5529,10 @@ function openCatEditor(cat){
     };
     err.textContent = '⏳';
     saveBtn.disabled = true;
-    const { error } = await sb.from('coop_categories').upsert(payload, { onConflict: 'id' });
+    // Was a direct upsert against a table anon could write. Now scoped to the
+    // signed-in seller's session token, same as coop_product_save.
+    const { error } = await sb.rpc('coop_category_save',
+      { p_token: coopToken('seller'), p_category: payload });
     saveBtn.disabled = false;
     if(error){ err.textContent = '⚠️ '+error.message; return; }
     toast(dashT('catSaved'),'ok');
