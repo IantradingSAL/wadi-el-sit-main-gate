@@ -3574,9 +3574,6 @@ async function submitDeliveryAgent(){
       toast(((window.__wadi_t&&window.__wadi_t('orderFailed'))||'فشل إرسال الطلب')+': '+(res.error.message||((window.__wadi_t&&window.__wadi_t('unknownError'))||'خطأ غير معروف')),'err');
       return;
     }
-    if(res.data.status === 'pending'){
-      notifyCoopRegistration('agent', res.data.id);
-    }
     toast(((window.__wadi_t&&window.__wadi_t('orderSent'))||'✅ تمّ إرسال طلبك!'),'ok');
     showDeliveryAgentStatus(res.data);
   }catch(e){
@@ -3585,20 +3582,18 @@ async function submitDeliveryAgent(){
   }
 }
 
-// Fire-and-forget: ping the notify-coop-registration edge function
-// so the coop admins get an email about a new pending registration.
-// Never blocks the user flow — silent no-op on any failure.
-function notifyCoopRegistration(type, id){
-  try{
-    if(!id) return;
-    fetch(SB_URL + '/functions/v1/notify-coop-registration', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: SB_KEY },
-      body: JSON.stringify({ type: type, id: id }),
-      keepalive: true,
-    }).catch(() => {});
-  }catch(e){ /* silent */ }
-}
+// The browser no longer announces a registration.
+//
+// It used to POST to notify-coop-registration here, fire-and-forget — which
+// meant a closed tab, a dropped connection or a phone locking mid-request lost
+// the notification entirely. Migration 27 replaced that with a database
+// trigger: inserting a pending coop_sellers / coop_delivery_agents row queues
+// an approval_requests row and hands it to notify-approval through pg_net, so
+// the notice is sent by the thing that recorded the registration and cannot be
+// lost by the browser walking away.
+//
+// Keeping this call as well would simply send the coop admins two e-mails for
+// one registration, from two different systems, one of them unreliable.
 
 /* ═══════ SELL PAGE ═══════ */
 async function refreshSellerStatus(){
@@ -3744,9 +3739,7 @@ async function doSellerRegister(){
     if(res.error){err.textContent='فشل: '+(res.error.message||'خطأ');err.style.display='block';return;}
     currentSeller=res.data;
     localStorage.setItem('coop_seller',JSON.stringify(currentSeller));
-    // Auto-approve trigger may have flipped status; only notify admins for pending rows.
     if(currentSeller.status === 'pending'){
-      notifyCoopRegistration('seller', currentSeller.id);
       toast(((window.__wadi_t&&window.__wadi_t('signupOk'))||'✅ تمّ تسجيل حسابك! بانتظار الموافقة'),'ok');
     } else {
       toast('✅ '+((window.__wadi_t&&window.__wadi_t('sellerWelcomeBack'))||'مرحباً')+' '+(currentSeller.display_name||''),'ok');
