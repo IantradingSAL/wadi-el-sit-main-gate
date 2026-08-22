@@ -342,6 +342,17 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const MUN_ID='00000000-0000-0000-0000-000000000001';
 const FUNCTION_URL=SUPABASE_URL+'/functions/v1/send-push';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+// 🔑 رمز جلسة المُرسِل — دالة send-push تستخرج هويّة المُنادي من هذه
+// الترويسة. مفتاح anon لا يُعيد مستخدماً، فيُرفض أي بثّ للمقيمين بـ 403.
+async function authHeader(){
+  try{
+    const {data} = await sb.auth.getSession();
+    const tok = data && data.session && data.session.access_token;
+    if(tok) return 'Bearer ' + tok;
+  }catch(e){}
+  return 'Bearer ' + SUPABASE_KEY;   // آخر حلّ: سيُرفض البثّ ويظهر سبب مفهوم
+}
+
 
 let currentUser=null, allArticles=[], editingId=null;
 let coverImage=null, gallery=[];
@@ -666,7 +677,7 @@ async function saveArticle(){
         const icon = catIcons[category] || '📰';
         await fetch(FUNCTION_URL, {
           method:'POST',
-          headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_KEY,'apikey':SUPABASE_KEY},
+          headers:{'Content-Type':'application/json','Authorization':await authHeader(),'apikey':SUPABASE_KEY},
           body:JSON.stringify({
             mun_id: MUN_ID,
             title: icon + ' ' + title.slice(0,60),

@@ -122,6 +122,25 @@ agree about the same person.
   person's own card. `#review=<id>` opens the phonebook's review panel with the
   item highlighted.
 
+## Push notifications
+
+- **Targeting reads `user_role`, never `role`.** The table carries both; `role`
+  is a dead column nothing reads (kept only until cached clients rotate).
+  Registration goes through **`push_device_register`**, updates through
+  **`push_device_update`** — both keyed on the device's own endpoint, because
+  the table no longer accepts UPDATE or DELETE from `anon` (it used to accept
+  both from anyone, which was enough to erase every subscription).
+- **A sender must pass the signed-in user's access token**, not the anon key:
+  `send-push` resolves the caller from that JWT and an outward send with no
+  caller is refused 403 — silently, since a refusal writes no `push_log` row.
+  That is exactly how the broadcast screens stopped working for three weeks.
+- **`autoLink()` never defaults a role.** Passing `'citizen'` re-labelled staff
+  phones on their next visit to a public page, and municipal alerts then matched
+  no device. Its dedupe signature includes the role for the same reason.
+- Phone targeting matches on the generated `phone_norm` (digits, no 961, no
+  trunk 0), so `03…`, `3…` and `+9613…` all find the same device.
+- Full findings: `AUDIT-2026-08-22-push.md`; the database half: migration 30.
+
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
 
 - One shape everywhere: **`+961 3 922 209`**, **`+961 76 789 039`**. Lebanon

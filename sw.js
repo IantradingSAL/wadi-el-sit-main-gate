@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v117';
+const CACHE_NAME   = 'wadi-elsit-v118';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used by notificationclick to mark opens.
@@ -229,17 +229,18 @@ self.addEventListener('notificationclick', (event) => {
   const markOpened = self.registration.pushManager.getSubscription()
     .then((sub) => {
       if (!sub || !sub.endpoint) return;
+      // through push_device_update, keyed on this device's own endpoint:
+      // the table no longer accepts a bare PATCH from the anon key.
       return fetch(
-        PUSH_SUPABASE_URL + '/rest/v1/push_subscriptions?endpoint=eq.' + encodeURIComponent(sub.endpoint),
+        PUSH_SUPABASE_URL + '/rest/v1/rpc/push_device_update',
         {
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'apikey': PUSH_SUPABASE_KEY,
             'Authorization': 'Bearer ' + PUSH_SUPABASE_KEY,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ last_used_at: new Date().toISOString() })
+          body: JSON.stringify({ p_endpoint: sub.endpoint, p_touch: true })
         }
       ).catch(() => {});
     })

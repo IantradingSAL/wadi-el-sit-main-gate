@@ -245,6 +245,26 @@ function _t(key, ar){
       else alert(_t('pwaInstallFromMenu','يمكنك تثبيت التطبيق من قائمة المتصفّح (الثلاث نقاط).'));
     },
 
+    // 🔐 Every write to push_subscriptions goes through a security-definer
+    // RPC keyed on this device's own endpoint. The table used to accept
+    // UPDATE and DELETE from anyone holding the published anon key — enough
+    // to deactivate or erase every subscription in the village at once.
+    _deviceUpdate: async (endpoint, fields) => {
+      if (!endpoint) return false;
+      try {
+        const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/push_device_update`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(Object.assign({ p_endpoint: endpoint }, fields || {}))
+        });
+        return r.ok;
+      } catch (e) { console.warn('[PWA] device update failed:', e); return false; }
+    },
+
     // Returns the current subscription status: 'subscribed', 'denied', 'unsupported', 'pending'
     pushStatus: async () => {
       if (!window.PWA.canPush()) return 'unsupported';
@@ -299,34 +319,36 @@ function _t(key, ar){
       if(opts && opts.userPhone) __userPhone = opts.userPhone;
       if(opts && opts.userName)  __userName  = opts.userName;
       if(opts && opts.role)      __userRole  = opts.role;
-      // Normalize phone: strip non-digits, drop leading +961 and leading 0
+      // The phone is stored in international form; the server keeps a
+      // normalised key (digits, no 961, no trunk 0) for targeting, so the
+      // three shapes this column has held over time all match each other.
       if(__userPhone){
-        __userPhone = String(__userPhone).replace(/[^0-9+]/g,'').replace(/^\+/,'').replace(/^961/,'').replace(/^0/,'');
+        __userPhone = (window.phoneE164 ? window.phoneE164(__userPhone) : String(__userPhone).replace(/[^0-9+]/g,'')) || null;
       }
 
-      const payload = {
-        mun_id: MUN_ID,
-        endpoint: subJson.endpoint,
-        p256dh: subJson.keys.p256dh,
-        auth: subJson.keys.auth,
-        user_agent: navigator.userAgent.slice(0, 200),
-        topics: topics,
-        is_active: true,
-        lang: __lang,
-        user_phone: __userPhone,
-        user_name: __userName,
-        role: __userRole
-      };
-
-      const resp = await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?on_conflict=endpoint`, {
+      // Registration goes through push_device_register: it upserts by endpoint
+      // and writes `user_role` — the column targeting actually reads. The old
+      // payload set `role`, a second column nothing has ever looked at, which
+      // is why no device was ever labelled staff.
+      const resp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/push_device_register`, {
         method: 'POST',
         headers: {
           'apikey': SUPABASE_KEY,
           'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates,return=minimal'
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          p_endpoint: subJson.endpoint,
+          p_p256dh: subJson.keys.p256dh,
+          p_auth: subJson.keys.auth,
+          p_mun_id: MUN_ID,
+          p_topics: topics,
+          p_lang: __lang,
+          p_user_phone: __userPhone,
+          p_user_name: __userName,
+          p_user_role: __userRole,
+          p_user_agent: navigator.userAgent.slice(0, 200)
+        })
       });
 
       if (!resp.ok && resp.status !== 201 && resp.status !== 204) {
@@ -350,18 +372,7 @@ function _t(key, ar){
       await sub.unsubscribe();
 
       // Mark inactive in Supabase
-      try {
-        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ is_active: false })
-        });
-      } catch (e) { console.warn('Failed to mark sub inactive:', e); }
+      await window.PWA._deviceUpdate(endpoint, { p_is_active: false });
 
       return true;
     },
@@ -376,44 +387,27 @@ function _t(key, ar){
     updateTopics: async (topics) => {
       const sub = await window.PWA.getCurrentSubscription();
       if (!sub) throw new Error(_t('pushNotSubscribed','غير مشترك حالياً'));
-      await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ topics })
-      });
+      await window.PWA._deviceUpdate(sub.endpoint, { p_topics: topics });
     },
 
     // Link the current subscription to a user identifier (phone number)
     // Call this after enablePush() once we know who the user is
+    // `role` is optional and is never defaulted here: passing nothing leaves
+    // whatever the row already carries. Defaulting it to 'citizen' is what
+    // re-labelled a staff member's phone on their next visit to a public page,
+    // so «طلب جديد» notifications went to a device the query no longer matched.
     linkToUser: async (userPhone, userName, role) => {
       const sub = await window.PWA.getCurrentSubscription();
-      if (!sub || !userPhone) return false;
-      const phoneNorm = (userPhone || '').toString().replace(/[^\d+]/g, '');
-      try {
-        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({
-            user_phone: phoneNorm,
-            user_name: userName || null,
-            user_role: role || 'citizen'
-          })
-        });
-        return true;
-      } catch (e) {
-        console.warn('linkToUser failed:', e);
-        return false;
-      }
+      if (!sub) return false;
+      const phone = userPhone
+        ? (window.phoneE164 ? window.phoneE164(userPhone) : String(userPhone).replace(/[^\d+]/g, ''))
+        : null;
+      if (!phone && !userName && !role) return false;
+      return await window.PWA._deviceUpdate(sub.endpoint, {
+        p_user_phone: phone || null,
+        p_user_name: userName || null,
+        p_user_role: role || null
+      });
     },
 
     // 🔄 AUTO-LINK: runs automatically on every page load
@@ -427,16 +421,7 @@ function _t(key, ar){
       try {
         const sub = await window.PWA.getCurrentSubscription();
         if (!sub || !sub.endpoint) return false;
-        await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(sub.endpoint)}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify({ last_used_at: new Date().toISOString() })
-        });
+        await window.PWA._deviceUpdate(sub.endpoint, { p_touch: true });
         return true;
       } catch (e) {
         console.warn('[PWA] touch error:', e);
@@ -455,12 +440,14 @@ function _t(key, ar){
         const u = JSON.parse(raw);
         if (!u || !u.phone) return false; // need at least a phone
         
-        // Check if linked already (avoid spam) — store last-linked phone
+        // The signature carries the role too: a staff member who signs in to
+        // the dashboard must re-link, which the phone|name signature blocked.
         const lastLinked = localStorage.getItem('wadi_push_linked');
-        const currentSig = (u.phone || '') + '|' + (u.name || '');
+        const currentSig = (u.phone || '') + '|' + (u.name || '') + '|' + (u.role || '');
         if (lastLinked === currentSig) return false; // already linked
         
-        const ok = await window.PWA.linkToUser(u.phone, u.name || '', u.role || 'citizen');
+        // no role in wadi_user → send none, so an existing label survives
+        const ok = await window.PWA.linkToUser(u.phone, u.name || '', u.role || null);
         if (ok) {
           localStorage.setItem('wadi_push_linked', currentSig);
         }
@@ -666,16 +653,9 @@ if (typeof window !== 'undefined' && window.I18N && typeof window.I18N.onApply =
       var sub = await reg.pushManager.getSubscription();
       if (!sub) return;
       // Update the subscription's lang in Supabase
-      await fetch(SUPABASE_URL + '/rest/v1/push_subscriptions?endpoint=eq.' + encodeURIComponent(sub.endpoint), {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': 'Bearer ' + SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ lang: lang })
-      });
+      if (window.PWA && window.PWA._deviceUpdate) {
+        await window.PWA._deviceUpdate(sub.endpoint, { p_lang: lang });
+      }
     } catch(e) { /* silent */ }
   });
 }
