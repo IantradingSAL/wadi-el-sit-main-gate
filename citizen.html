@@ -1219,7 +1219,7 @@ async function citLogin(){
 }
 async function citRegister(){
   const name=document.getElementById('cit-name').value.trim();
-  const phone=phoneE164(document.getElementById('cit-phone').value.trim());
+  const phone=citPhoneE164(document.getElementById('cit-phone').value.trim());
   const email=document.getElementById('cit-rem').value.trim();
   const pw=document.getElementById('cit-rpw').value;
   const err=document.getElementById('cit-rerr');
@@ -1387,6 +1387,32 @@ async function confirmPhone(){
 function closePhoneModal(){
   document.getElementById('phone-modal').style.display='none';
 }
+// A submit must never fail in silence.
+//
+// The handler reads the phone through phoneE164() and the labels through L(),
+// and it does both BEFORE the try/catch that shows errors. If either global is
+// missing — number-format.js or i18n.js served stale, blocked, or still in
+// flight — the very first line throws, the exception escapes an onclick
+// handler into the console, and the button appears to do nothing at all. That
+// is exactly what "أرسل الطلب لا يفعل شيئاً" looks like from the outside.
+//
+// citPhoneE164 falls back to the raw value rather than throwing, and the
+// wrapper below turns any escaping error into visible red text next to the
+// button instead of a silent no-op.
+function citPhoneE164(v){
+  try{ if(typeof phoneE164==='function') return phoneE164(v); }catch(e){}
+  return String(v||'').replace(/[^\d+]/g,'');
+}
+function citShowErr(msg){
+  var el=document.getElementById('c-err');
+  if(el){
+    el.textContent=msg;
+    try{ el.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+  }else{
+    alert(msg);
+  }
+}
+
 // Re-entry guard. These handlers are wired straight to a button and await a
 // network insert, so a second tap before the first returns — routine on a
 // phone with a weak signal — used to create a second record.
@@ -1395,11 +1421,17 @@ async function doSubmitCit(){
   if(doSubmitCit__busy)return;
   doSubmitCit__busy=true;
   try{ return await doSubmitCit__run(); }
+  catch(e){
+    console.error('doSubmitCit:',e);
+    citShowErr('خطأ: '+((e&&e.message)||e));
+    var b=document.getElementById('c-btn');
+    if(b){ b.disabled=false; b.textContent='📤 إرسال الطلب'; }
+  }
   finally{ doSubmitCit__busy=false; }
 }
 async function doSubmitCit__run(){
   const name=document.getElementById('c-name').value.trim();
-  const phone=phoneE164(document.getElementById('c-phone').value.trim());
+  const phone=citPhoneE164(document.getElementById('c-phone').value.trim());
   const email=document.getElementById('c-email').value.trim();
   const typeRaw=document.getElementById('c-type').value;
   const type=getDbType(typeRaw);
@@ -1408,10 +1440,11 @@ async function doSubmitCit__run(){
   const err=document.getElementById('c-err');
   const btn=document.getElementById('c-btn');
   err.textContent='';
-  if(!name){err.textContent=L().errNameRequired;return;}
-  if(!phone){err.textContent=L().errPhoneRequired;return;}
-  if(!desc){err.textContent=L().errDescRequired;return;}
-  if(!dbR){err.textContent=L().errServiceUnavailable;return;}
+  const _G=(function(){ try{ return (typeof L==='function')?L():{}; }catch(e){ return {}; } })();
+  if(!name){citShowErr(_G.errNameRequired||'الاسم مطلوب');return;}
+  if(!phone){citShowErr(_G.errPhoneRequired||'رقم الهاتف مطلوب');return;}
+  if(!desc){citShowErr(_G.errDescRequired||'وصف الطلب مطلوب');return;}
+  if(!dbR){citShowErr(_G.errServiceUnavailable||'⚠️ الخدمة غير متاحة — أعد تحميل الصفحة');return;}
 
   // ★ Save identity to localStorage so it autofills next time (other pages too)
   try {
@@ -1630,7 +1663,12 @@ async function doSubmitCit__run(){
     document.getElementById('submit-form-wrap').style.display='none';
     document.getElementById('c-success').style.display='block';
     document.getElementById('c-success').scrollIntoView({behavior:'smooth'});
-  }catch(e){err.textContent='خطأ: '+e.message;btn.disabled=false;btn.textContent=L().submitRequest;}
+  }catch(e){
+    console.error('doSubmitCit__run:',e);
+    citShowErr('خطأ: '+((e&&e.message)||e));
+    btn.disabled=false;
+    btn.textContent=(_LS&&_LS.submitRequest)||'📤 إرسال الطلب';
+  }
 }
 function resetCit(){
   citFiles=[];
