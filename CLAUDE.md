@@ -100,7 +100,12 @@ agree about the same person.
 - Recipients are `settings.approval_notify` **plus every super_admin**, resolved
   live by `approval_recipients()`. `notified_at` is stamped only on a successful
   send, and the `approval-notify-sweep` pg_cron job retries the rest for a week.
-- **`approval_decide()` is the only way to decide.** It moves the queue row and
+- **A decision taken anywhere closes the request everywhere.** The phonebook's
+  own popup and the coop admin panel resolve records directly, and they predate
+  the queue; migration 29 has the watchers mirror that outcome onto
+  `approval_requests` (`حُسم من الشاشة الخاصة بالسجل`) so the 🔔 badge never
+  counts something already settled.
+- **`approval_decide()` is the only way to decide from the queue.** It moves the queue row and
   the thing it stands for in one call — approving a seller sets
   `coop_sellers.status`, approving an edit applies `proposed` onto the target —
   so the two can never disagree. The key is **`approvals_manage`**.
@@ -116,6 +121,25 @@ agree about the same person.
   and a directory row also carries `phonebook.html#contact=<id>` for the
   person's own card. `#review=<id>` opens the phonebook's review panel with the
   item highlighted.
+
+## Push notifications
+
+- **Targeting reads `user_role`, never `role`.** The table carries both; `role`
+  is a dead column nothing reads (kept only until cached clients rotate).
+  Registration goes through **`push_device_register`**, updates through
+  **`push_device_update`** — both keyed on the device's own endpoint, because
+  the table no longer accepts UPDATE or DELETE from `anon` (it used to accept
+  both from anyone, which was enough to erase every subscription).
+- **A sender must pass the signed-in user's access token**, not the anon key:
+  `send-push` resolves the caller from that JWT and an outward send with no
+  caller is refused 403 — silently, since a refusal writes no `push_log` row.
+  That is exactly how the broadcast screens stopped working for three weeks.
+- **`autoLink()` never defaults a role.** Passing `'citizen'` re-labelled staff
+  phones on their next visit to a public page, and municipal alerts then matched
+  no device. Its dedupe signature includes the role for the same reason.
+- Phone targeting matches on the generated `phone_norm` (digits, no 961, no
+  trunk 0), so `03…`, `3…` and `+9613…` all find the same device.
+- Full findings: `AUDIT-2026-08-22-push.md`; the database half: migration 30.
 
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
 

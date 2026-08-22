@@ -1217,15 +1217,40 @@ async function setupUser(user){
   await load();
   tick();setInterval(tick,60000);
   if(dbR)subscribe();
-  // Auto-link push subscription to this staff member's role
+  // 🔔 Push for the municipality's own alerts («طلب جديد», …).
+  //
+  // Two things were wrong here. It only ever RE-LABELLED an existing
+  // subscription, so a staff member who had never enabled notifications from a
+  // public page had none at all — and every alert to to_role:'staff' found
+  // zero devices. And it passed the EMAIL where a phone is expected, which
+  // linkToUser stripped to an empty string.
+  //
+  // Now the dashboard asks for its own subscription, labelled staff, with the
+  // staff member's phone when the profile carries one.
   if (window.PWA && window.PWA.canPush && window.PWA.canPush()) {
     setTimeout(async function(){
-      const status = await window.PWA.pushStatus();
-      if (status === 'subscribed') {
-        // Already subscribed — just update role
-        await window.PWA.linkToUser(user.email, userName, 'staff');
-      }
-    }, 1000);
+      try{
+        const status = await window.PWA.pushStatus();
+        let phone = null;
+        try{
+          const pr = await sb.from('profiles').select('phone').eq('id', user.id).maybeSingle();
+          phone = (pr && pr.data && pr.data.phone) || null;
+        }catch(_e){}
+        if (status === 'subscribed') {
+          await window.PWA.linkToUser(phone, userName, 'staff');
+        } else if (status === 'pending') {
+          // never nag: one offer, and only for an account that can act on it
+          if (localStorage.getItem('wadi_staff_push_offered') !== '1') {
+            localStorage.setItem('wadi_staff_push_offered','1');
+            if (await wadiConfirm('تفعيل إشعارات البلدية على هذا الجهاز؟ ستصلك تنبيهات المعاملات الجديدة وطلبات التحقق.')) {
+              await window.PWA.enablePush(['general','staff'], { userPhone: phone, userName: userName, role: 'staff' });
+              trackActivity('تفعيل إشعارات الموظف','هذا الجهاز');
+              toast('\u2705 فُعِّلت إشعارات البلدية على هذا الجهاز');
+            }
+          }
+        }
+      }catch(e){ console.warn('staff push setup:', e); }
+    }, 1200);
   }
 }
 
