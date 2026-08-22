@@ -3,10 +3,13 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v119';
+const CACHE_NAME   = 'wadi-elsit-v120';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
-// Push tracking config — used by notificationclick to mark opens.
+// Push tracking config — used to report a notification's fate back to the
+// municipality: `delivered` the moment this worker receives it, `opened` when
+// the person taps it. Both go through push_receipt_mark, which can only ever
+// stamp a receipt that already exists for THIS device's own endpoint.
 const PUSH_SUPABASE_URL = 'https://onjbwhkmmtqnymhjnplw.supabase.co';
 const PUSH_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4';
 
@@ -175,6 +178,28 @@ function resolveNotificationUrl(url) {
   }
 }
 
+// ─── RECEIPTS ───────────────────────────────────────────────────────────────
+// `logId` rides inside every payload send-push builds. Without it there is no
+// way to say *which* send arrived, so a payload that lacks one (an older
+// notification still sitting in the queue) is simply not reported.
+function markReceipt(logId, kind) {
+  if (!logId) return Promise.resolve();
+  return self.registration.pushManager.getSubscription()
+    .then((sub) => {
+      if (!sub || !sub.endpoint) return;
+      return fetch(PUSH_SUPABASE_URL + '/rest/v1/rpc/push_receipt_mark', {
+        method: 'POST',
+        headers: {
+          'apikey': PUSH_SUPABASE_KEY,
+          'Authorization': 'Bearer ' + PUSH_SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ p_log_id: logId, p_endpoint: sub.endpoint, p_event: kind })
+      }).catch(() => {});
+    })
+    .catch(() => {});
+}
+
 // ─── PUSH ───────────────────────────────────────────────────────────────────
 self.addEventListener('push', (event) => {
   console.log('[SW v6] Push received');
@@ -202,10 +227,16 @@ self.addEventListener('push', (event) => {
     timestamp: data.timestamp || Date.now(),
     dir: 'rtl',
     lang: 'ar',
-    data: { url: resolvedUrl, originalUrl: data.url, ...data.data },
+    data: { url: resolvedUrl, originalUrl: data.url, logId: data.logId || null,
+            event: data.event || null, ...data.data },
     actions: data.actions || []
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+  // Showing it comes first; the receipt is reported alongside and never delays
+  // the notification if the network is slow or gone.
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(title, options),
+    markReceipt(data.logId, 'delivered')
+  ]));
 });
 
 // ─── NOTIFICATION CLICK ────────────────────────────────────────────────────
@@ -223,28 +254,34 @@ self.addEventListener('notificationclick', (event) => {
   const fullUrl = resolveNotificationUrl(targetUrl);
   console.log('[SW v6] Opening:', fullUrl);
 
-  // 👁️ Mark the notification as "opened" for admin analytics: bump
-  // last_used_at on this device's push_subscriptions row so it becomes
-  // >= the notification's sent_at. Fire-and-forget; never blocks navigation.
-  const markOpened = self.registration.pushManager.getSubscription()
-    .then((sub) => {
-      if (!sub || !sub.endpoint) return;
-      // through push_device_update, keyed on this device's own endpoint:
-      // the table no longer accepts a bare PATCH from the anon key.
-      return fetch(
-        PUSH_SUPABASE_URL + '/rest/v1/rpc/push_device_update',
-        {
-          method: 'POST',
-          headers: {
-            'apikey': PUSH_SUPABASE_KEY,
-            'Authorization': 'Bearer ' + PUSH_SUPABASE_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ p_endpoint: sub.endpoint, p_touch: true })
-        }
-      ).catch(() => {});
-    })
-    .catch(() => {});
+  // 👁️ Two things are recorded on a tap, and they answer different questions.
+  //   · the receipt — THIS notification was opened, which is what 📬 سجل
+  //     الإشعارات shows per message
+  //   · last_used_at on the device — this phone is still alive, which is what
+  //     keeps a stale subscription from being counted as a live one
+  const logId = (event.notification.data && event.notification.data.logId) || null;
+  const markOpened = Promise.all([
+    markReceipt(logId, 'opened'),
+    self.registration.pushManager.getSubscription()
+      .then((sub) => {
+        if (!sub || !sub.endpoint) return;
+        // through push_device_update, keyed on this device's own endpoint:
+        // the table no longer accepts a bare PATCH from the anon key.
+        return fetch(
+          PUSH_SUPABASE_URL + '/rest/v1/rpc/push_device_update',
+          {
+            method: 'POST',
+            headers: {
+              'apikey': PUSH_SUPABASE_KEY,
+              'Authorization': 'Bearer ' + PUSH_SUPABASE_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_endpoint: sub.endpoint, p_touch: true })
+          }
+        ).catch(() => {});
+      })
+      .catch(() => {})
+  ]);
 
   const openWindowTask = self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
     for (const client of clientList) {

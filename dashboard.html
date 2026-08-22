@@ -326,6 +326,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       <div class="ni" id="nav-users" onclick="openUsers()" style="display:none"><span class="nii">👥</span> إدارة المستخدمين</div>
       <div class="ni" id="nav-approvals" onclick="openApprovals()" style="display:none"><span class="nii">🔔</span> طلبات التحقق <span id="apr-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">0</span></div>
       <div class="ni" id="nav-activity" onclick="openActivityTracking()" style="display:none"><span class="nii">📊</span> نشاط الموظفين</div>
+      <div class="ni" id="nav-pushlog" onclick="openPushLog()" style="display:none"><span class="nii">📬</span> سجل الإشعارات</div>
       <div class="ni" id="nav-cit-updates" onclick="openCitizenUpdates()" style="display:none"><span class="nii">📬</span> تحديثات المواطنين <span id="cit-updates-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;display:none">!</span></div>
       <div class="ni" id="nav-audit" onclick="openAuditLog()" style="display:none"><span class="nii">🧾</span> سجل التعديلات</div>
       <div class="ni" id="nav-cit-msgs" onclick="openCitMessages()" style="display:none"><span class="nii">💬</span> رسائل المواطنين <span id="cit-msg-badge" style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-right:4px;display:none">0</span></div>
@@ -639,6 +640,7 @@ function getRoleCfg(){
     settings:WadiPerms.can('settings_edit'),
     audit:WadiPerms.can('audit_view'),
     activity:WadiPerms.can('activity_view'),
+    pushlog:WadiPerms.can('push_log_view'),
     approvals:WadiPerms.can('approvals_manage'),
     f_water:WadiPerms.can('water_view')
   });
@@ -660,6 +662,7 @@ function applyRoleVisibility(){
   show('#nav-whats-new',true,'flex'); // visible to all
   show('#nav-approvals',R.approvals,'flex');
   show('#nav-activity',R.activity,'flex');
+  show('#nav-pushlog',R.pushlog,'flex');
   show('#nav-audit',R.audit,'flex');
   show('#nav-wa',R.wa,'flex');
   show('#nav-cit-msgs',R.admin||R.activity,'flex');
@@ -672,7 +675,7 @@ function applyRoleVisibility(){
   // water_only: hide everything except water nav
   if (userRole === 'water_only') {
     ['#nav-pend','#nav-add','#BADD','#nav-users','#nav-cit-updates',
-     '#nav-whats-new','#nav-activity','#nav-approvals','#nav-audit','#nav-wa','#nav-cit-msgs',
+     '#nav-whats-new','#nav-activity','#nav-pushlog','#nav-approvals','#nav-audit','#nav-wa','#nav-cit-msgs',
      '#nav-whatsnew'].forEach(function(sel){
       document.querySelectorAll(sel).forEach(function(el){el.style.display='none';});
     });
@@ -697,6 +700,7 @@ function getPermissionRows(){
     ['الطباعة', R.print],
     ['إعدادات النظام', R.settings],
     ['تتبع نشاط الموظفين', R.activity],
+    ['سجل الإشعارات', R.pushlog],
     ['سجل التدقيق والتعديلات', R.audit],
     ['إشعارات واتساب حسب الدور', R.wa]
   ];
@@ -865,6 +869,200 @@ function exportActivityCSV(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
   a.download='wadi-staff-activity-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
   trackActivity('تصدير نشاط الموظفين',numGroup(rows.length)+' سجل');
+}
+// ═══════════ 📬 سجل الإشعارات (push_log + push_receipts) ═══════════
+// Every notification the portal sends — from a case status change, a directory
+// approval, a coop order, an irrigation turn, or a hand-written broadcast —
+// lands in push_log with the `event` that caused it, and in push_receipts with
+// one row per device.
+//
+// The three columns that matter are not the same thing, and the screen keeps
+// them apart on purpose:
+//   أُرسل    — the push service accepted the message
+//   وصل      — the phone's service worker actually received it
+//   فُتح     — somebody tapped it
+// A message can be أُرسل and never وصل: the phone was off, or the subscription
+// had gone stale. Anything counted as وصل was reported by the device itself.
+const PL_EVENT_AR={
+  case_received:'📋 استلام معاملة', case_status:'📋 تغيّر حالة معاملة',
+  phonebook_new_approved:'📇 قبول جهة في الدليل',
+  phonebook_new_rejected:'📇 رفض جهة في الدليل',
+  phonebook_edit_approved:'📇 تطبيق تعديل في الدليل',
+  phonebook_edit_rejected:'📇 رفض تعديل في الدليل',
+  coop_seller_approved:'🛒 قبول بائع', coop_seller_rejected:'🛒 رفض/إيقاف بائع',
+  coop_agent_approved:'🛵 قبول عامل توصيل', coop_agent_rejected:'🛵 رفض/إيقاف عامل توصيل',
+  coop_order_confirmed:'🛒 تأكيد طلب', coop_order_delivered:'🛒 تسليم طلب',
+  coop_order_cancelled:'🛒 إلغاء طلب',
+  coop_delivery_assigned:'🛵 إسناد التوصيل', coop_delivery_picked_up:'🛵 خروج للتوصيل',
+  coop_delivery_delivered:'🛵 تم التسليم',
+  irrigation_tomorrow:'💧 دور الري غداً', irrigation_morning:'💧 دور الري اليوم',
+  irrigation_one_hour:'💧 الري بعد ساعة', irrigation_end:'💧 انتهاء دور الري'
+};
+function plEventAr(e){ return e ? (PL_EVENT_AR[e]||e) : '✍️ إرسال يدوي'; }
+function plEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+let PL_ROWS=[], PL_RCPT={}, PL_LOADED=false, PL_OPEN=null;
+
+function plFilters(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  return {from:g('pl-from'),to:g('pl-to'),event:g('pl-event'),
+          state:g('pl-state'),q:(g('pl-q')||'').trim().toLowerCase()};
+}
+function plFiltered(){
+  const f=plFilters();
+  return PL_ROWS.filter(r=>{
+    const day=String(r.sent_at||'').slice(0,10);
+    if(f.from&&day<f.from)return false;
+    if(f.to&&day>f.to)return false;
+    if(f.event&&(r.event||'')!==f.event)return false;
+    if(f.state){
+      const rc=PL_RCPT[r.id]||[];
+      const opened=rc.filter(x=>x.opened_at).length;
+      const delivered=rc.filter(x=>x.delivered_at).length;
+      if(f.state==='opened'&&!opened)return false;
+      if(f.state==='delivered'&&!(delivered&&!opened))return false;
+      if(f.state==='silent'&&delivered)return false;
+      if(f.state==='nobody'&&(r.recipients_count||0)>0)return false;
+    }
+    if(f.q){
+      const hay=[r.title,r.body,r.to_user_phone,r.to_role,r.sent_by,plEventAr(r.event)].join(' ').toLowerCase();
+      if(hay.indexOf(f.q)<0)return false;
+    }
+    return true;
+  });
+}
+function plAudience(r){
+  if(r.to_user_phone) return '📱 '+(window.phoneDisplay?phoneDisplay(r.to_user_phone):r.to_user_phone);
+  if(r.to_role)       return '👥 '+r.to_role;
+  if(r.topics&&r.topics.length) return '🏷️ '+r.topics.join('، ');
+  return '🌍 الجميع';
+}
+function openPushLog(){
+  if(!guard('pushlog','🚫 سجل الإشعارات متاح للإدارة فقط')) return;
+  document.getElementById('MT').textContent='📬 سجل الإشعارات';
+  document.getElementById('MB').innerHTML='<div style="text-align:center;padding:24px;color:var(--text3)">⏳ جاري تحميل السجل…</div>';
+  document.getElementById('OV').classList.add('open');
+  trackActivity('فتح سجل الإشعارات','');
+  loadPushLog(true);
+}
+async function loadPushLog(force){
+  if(PL_LOADED&&!force){renderPushLog();return;}
+  try{
+    const [logRes, rcptRes] = await Promise.all([
+      sb.from('push_log').select('*').order('sent_at',{ascending:false}).limit(500),
+      sb.from('push_receipts').select('*').order('sent_at',{ascending:false}).limit(4000)
+    ]);
+    if(logRes.error)throw logRes.error;
+    PL_ROWS=logRes.data||[];
+    PL_RCPT={};
+    // receipts arrived only after migration 31 — older sends have none, and the
+    // screen says «قبل التتبّع» for them rather than pretending they went unread
+    ((rcptRes&&rcptRes.data)||[]).forEach(r=>{
+      (PL_RCPT[r.log_id]=PL_RCPT[r.log_id]||[]).push(r);
+    });
+    PL_LOADED=true;
+    renderPushLog();
+  }catch(e){
+    document.getElementById('MB').innerHTML=
+      '<div style="padding:18px;color:var(--text3);font-size:13px">⚠️ تعذّر تحميل السجل: '+plEsc(e.message||e)+'</div>'
+      +'<div style="margin-top:12px"><button class="btn bg" onclick="closeM()">إغلاق</button></div>';
+  }
+}
+function plToggle(id){ PL_OPEN = (PL_OPEN===id ? null : id); renderPushLog(); }
+function plRowDetail(r){
+  const rc=PL_RCPT[r.id]||[];
+  if(!rc.length){
+    return '<div style="padding:8px 12px;font-size:12px;color:var(--text3)">'
+      +((r.recipients_count||0)===0
+          ? 'لم يطابق هذا الإرسال أي جهاز مشترك.'
+          : 'هذا الإرسال يسبق تتبّع الأجهزة — العدد أعلاه من سجل الإرسال وحده.')
+      +'</div>';
+  }
+  return '<div style="padding:6px 12px 10px">'+rc.map(x=>
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)">'
+    +'<span style="font-weight:700">'+plEsc(x.user_name||'جهاز')+'</span>'
+    +'<span style="color:var(--text3)">'+plEsc(x.user_phone?(window.phoneDisplay?phoneDisplay(x.user_phone):x.user_phone):'—')+'</span>'
+    +(x.user_role?'<span style="color:var(--text3)">'+plEsc(x.user_role)+'</span>':'')
+    +'<span style="margin-inline-start:auto">'
+    +(x.sent_ok?'✅ أُرسل':'❌ تعذّر'+(x.error?(' ('+plEsc(x.error)+')'):''))
+    +' · '+(x.delivered_at?('📬 وصل '+fmtDT(x.delivered_at)):'⏳ لم يصل بعد')
+    +' · '+(x.opened_at?('👁️ فُتح '+fmtDT(x.opened_at)):'— لم يُفتح')
+    +'</span></div>').join('')+'</div>';
+}
+function renderPushLog(){
+  const rows=plFiltered();
+  const f=plFilters();
+  const count=(rs,fn)=>rs.reduce((s,r)=>s+((PL_RCPT[r.id]||[]).filter(fn).length),0);
+  const sent=rows.reduce((s,r)=>s+(r.success_count||0),0);
+  const delivered=count(rows,x=>x.delivered_at);
+  const opened=count(rows,x=>x.opened_at);
+  const events=[...new Set(PL_ROWS.map(r=>r.event||'').filter(v=>v!==''))].sort();
+  const inp='padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:12.5px;background:var(--bg);color:var(--text)';
+  const opts=(list,cur)=>'<option value="">— الكل —</option>'
+    +list.map(v=>'<option value="'+plEsc(v)+'"'+(cur===v?' selected':'')+'>'+plEsc(plEventAr(v))+'</option>').join('');
+  const states=[['opened','فُتحت'],['delivered','وصلت ولم تُفتح'],['silent','لم تصل'],['nobody','بلا مستقبِلين']];
+  const filters='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px">'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">من تاريخ</div><input type="date" id="pl-from" value="'+plEsc(f.from)+'" onchange="renderPushLog()" style="'+inp+'"></div>'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">إلى تاريخ</div><input type="date" id="pl-to" value="'+plEsc(f.to)+'" onchange="renderPushLog()" style="'+inp+'"></div>'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">نوع الحدث</div><select id="pl-event" onchange="renderPushLog()" style="'+inp+'">'+opts(events,f.event)+'</select></div>'
+    +'<div><div style="font-size:11px;font-weight:800;color:var(--text3)">المصير</div><select id="pl-state" onchange="renderPushLog()" style="'+inp+'">'
+      +'<option value="">— الكل —</option>'
+      +states.map(s=>'<option value="'+s[0]+'"'+(f.state===s[0]?' selected':'')+'>'+s[1]+'</option>').join('')
+    +'</select></div>'
+    +'<div style="flex:1;min-width:150px"><div style="font-size:11px;font-weight:800;color:var(--text3)">بحث</div><input type="text" id="pl-q" value="'+plEsc(f.q)+'" oninput="renderPushLog()" placeholder="عنوان، نص، رقم…" style="'+inp+';width:100%"></div>'
+    +'<button class="btn" onclick="loadPushLog(true)" style="font-size:12px">🔄 تحديث</button>'
+    +'<button class="btn" onclick="plClearFilters()" style="font-size:12px">↺ مسح الفلاتر</button>'
+    +'</div>';
+  const kpis='<div class="kpi-strip">'
+    +'<div class="kpi-box"><div class="kpi-num">'+numGroup(rows.length)+'</div><div class="kpi-lbl">الإشعارات المعروضة</div></div>'
+    +'<div class="kpi-box"><div class="kpi-num">'+numGroup(sent)+'</div><div class="kpi-lbl">أُرسلت إلى أجهزة</div></div>'
+    +'<div class="kpi-box"><div class="kpi-num">'+numGroup(delivered)+'</div><div class="kpi-lbl">وصلت فعلاً</div></div>'
+    +'<div class="kpi-box"><div class="kpi-num">'+numGroup(opened)+'</div><div class="kpi-lbl">فُتحت</div></div>'
+    +'</div>';
+  const list=rows.slice(0,200).map(r=>{
+    const rc=PL_RCPT[r.id]||[];
+    const d=rc.filter(x=>x.delivered_at).length, o=rc.filter(x=>x.opened_at).length;
+    const open=PL_OPEN===r.id;
+    return '<div class="log-item" style="cursor:pointer" onclick="plToggle(\''+r.id+'\')">'
+      +'<div class="log-title">'+(open?'▾ ':'▸ ')+plEsc(r.title)+'</div>'
+      +'<div class="log-meta">'+plEsc(plEventAr(r.event))+' · '+plEsc(plAudience(r))
+      +'<br>📝 '+plEsc((r.body||'').slice(0,120))
+      +'<br>📤 '+numGroup(r.success_count||0)+' من '+numGroup(r.recipients_count||0)
+      +' · 📬 '+numGroup(d)+' · 👁️ '+numGroup(o)
+      +'<br>🕒 '+fmtDT(r.sent_at)+(r.sent_by?(' · '+plEsc(r.sent_by)):'')
+      +'</div></div>'
+      +(open?plRowDetail(r):'');
+  }).join('') || '<div class="em">لا إشعارات مطابقة للفلاتر</div>';
+  document.getElementById('MB').innerHTML=filters+kpis
+    +'<div class="log-card"><div class="admin-header">الإشعارات ('+numGroup(Math.min(rows.length,200))+')</div>'
+    +'<div class="log-list">'+list+'</div></div>'
+    +'<div style="font-size:11.5px;color:var(--text3);margin-top:10px">'
+    +'«أُرسلت» أن خدمة الإشعارات قبلت الرسالة · «وصلت» أن الهاتف نفسه أبلغ باستلامها · «فُتحت» أن صاحبه ضغط عليها. '
+    +'اضغط على أي إشعار لعرض الأجهزة واحداً واحداً.</div>'
+    +'<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">'
+    +'<button class="btn bg" onclick="closeM()">إغلاق</button>'
+    +'<button class="btn bp" onclick="exportPushLogCSV()">⬇️ تصدير CSV</button>'
+    +'</div>';
+}
+function plClearFilters(){
+  ['pl-from','pl-to','pl-event','pl-state','pl-q'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  renderPushLog();
+}
+function exportPushLogCSV(){
+  const rows=plFiltered();
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const lines=['التاريخ والوقت,الحدث,العنوان,النص,المستهدَف,عدد الأجهزة,أُرسلت,وصلت,فُتحت,المُرسِل'];
+  rows.forEach(r=>{
+    const rc=PL_RCPT[r.id]||[];
+    lines.push([q(fmtDT(r.sent_at)),q(plEventAr(r.event)),q(r.title),q(r.body),q(plAudience(r)),
+                q(r.recipients_count||0),q(r.success_count||0),
+                q(rc.filter(x=>x.delivered_at).length),q(rc.filter(x=>x.opened_at).length),
+                q(r.sent_by)].join(','));
+  });
+  const blob=new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='wadi-push-log-'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
+  trackActivity('تصدير سجل الإشعارات',numGroup(rows.length)+' إشعار');
 }
 // ═══════════ 🔔 طلبات التحقق (approval_requests) ═══════════
 // Everything that needs a municipal decision — a coop seller or delivery agent
@@ -3051,7 +3249,7 @@ const WP_GROUPS=[
   {t:'💧 الري',keys:[['water_view','الاطلاع'],['water_edit','التعديل']]},
   {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
   {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل'],['phonebook_registry','سجل النفوس الكامل (اسم الأم وسنة الولادة)']]},
-  {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['inbox_read','البريد الوارد']]},
+  {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['push_log_view','سجل الإشعارات (من وصله ومن فتحه)'],['inbox_read','البريد الوارد']]},
   {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين'],['approvals_manage','طلبات التحقق (موافقة/رفض)']]}
 ];
 let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}}
