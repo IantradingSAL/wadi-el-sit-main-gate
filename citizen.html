@@ -1902,6 +1902,10 @@ function showLanding(){ window.location='index.html'; }
 document.addEventListener('DOMContentLoaded', async function(){
   try{
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{realtime:{enabled:false}});
+  // 🔑 pwa.js reads window.sb to attach the sender's session to send-push.
+  // `let sb` is not a window property, so PWA.sendPush fell back to the anon
+  // key and every outward push from this page was refused with 403.
+  try{ window.sb = sb; }catch(e){}
     dbR=true;
   }catch(e){console.error('SB:',e);}
   showCitizenHero();
