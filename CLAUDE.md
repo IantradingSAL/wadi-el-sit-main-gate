@@ -100,7 +100,12 @@ agree about the same person.
 - Recipients are `settings.approval_notify` **plus every super_admin**, resolved
   live by `approval_recipients()`. `notified_at` is stamped only on a successful
   send, and the `approval-notify-sweep` pg_cron job retries the rest for a week.
-- **`approval_decide()` is the only way to decide.** It moves the queue row and
+- **A decision taken anywhere closes the request everywhere.** The phonebook's
+  own popup and the coop admin panel resolve records directly, and they predate
+  the queue; migration 29 has the watchers mirror that outcome onto
+  `approval_requests` (`حُسم من الشاشة الخاصة بالسجل`) so the 🔔 badge never
+  counts something already settled.
+- **`approval_decide()` is the only way to decide from the queue.** It moves the queue row and
   the thing it stands for in one call — approving a seller sets
   `coop_sellers.status`, approving an edit applies `proposed` onto the target —
   so the two can never disagree. The key is **`approvals_manage`**.
