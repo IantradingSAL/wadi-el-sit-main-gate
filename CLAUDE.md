@@ -124,6 +124,32 @@ agree about the same person.
 
 ## Push notifications
 
+- **`push_notify()` is the only way the database sends one.** Every trigger
+  calls it and nothing else: a directory entry decided, a proposed edit applied,
+  a coop seller or delivery agent accepted, an order confirmed or delivered, an
+  irrigation turn due. It refuses a send with no audience — a bug that silently
+  addressed *everybody* is the worst failure this feature has.
+- **It authenticates with a secret of its own**, `push_internal_token` in the
+  vault, checked back through `push_internal_auth()`. Deliberately not the
+  service-role key: the `notify-i18n` trigger carries that key in plaintext
+  inside its own definition, and this path does not repeat it. A caller who
+  leaks the push token can send notifications and nothing else.
+- **`push_log` says it was sent; `push_receipts` says what became of it.** One
+  row per device, written by the edge function; the service worker then stamps
+  `delivered_at` on the `push` event and `opened_at` on the tap, through
+  `push_receipt_mark`, keyed on the device's own endpoint. The log id travels
+  inside the payload as `logId` — a payload without one cannot be reported, so
+  a notification queued before migration 31 reads «قبل التتبّع» rather than
+  pretending it went unread.
+- **أُرسل, وصل and فُتح are three different facts.** The push service accepting
+  a message is not the phone receiving it, and neither is somebody reading it.
+  📬 سجل الإشعارات keeps the three columns apart, behind **`push_log_view`** —
+  its own key, because sending and seeing who read what are different powers.
+- **The irrigation reminders have no event to hang off**, so they are a pg_cron
+  sweep (`irr_push_sweep`, every 15 min) that recomputes the cycle the way
+  water-admin.html draws it, in Beirut time, with `irr_push_sent` as the ledger
+  that makes each reminder fire once. The four kinds and their default on/off
+  state match the screen: tomorrow / morning / one_hour on, end off.
 - **Targeting reads `user_role`, never `role`.** The table carries both; `role`
   is a dead column nothing reads (kept only until cached clients rotate).
   Registration goes through **`push_device_register`**, updates through
