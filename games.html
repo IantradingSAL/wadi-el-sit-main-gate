@@ -449,7 +449,7 @@ function $(id){return document.getElementById(id)}
 function esc(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function toast(m){const t=$('toastc');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 let sb=null,CFG={},CUR=null,BOARD=null;
-try{sb=window.wadiAuth&&window.wadiAuth.sb?window.wadiAuth.sb:supabase.createClient(SB_URL,SB_KEY);}catch(e){console.warn(e);}
+try{sb=window.sb||supabase.createClient(SB_URL,SB_KEY);window.sb=sb;}catch(e){console.warn(e);}
 
 // ── تحميل الإعدادات والأرقام ──
 async function loadAll(){
@@ -741,10 +741,10 @@ window.addEventListener('load',function(){setTimeout(function(){
 let ADM={tab:'regs',game:'frangieh'};
 async function adminGate(){
   try{
-    if(!window.wadiAuth||!window.WadiPerms)return;
-    const s=await wadiAuth.session();
-    if(!s)return;
-    if(!WadiPerms.loaded())await WadiPerms.load(wadiAuth.sb);
+    if(!window.WadiPerms||!sb)return;
+    const u=await sb.auth.getUser();
+    if(!u||!u.data||!u.data.user)return;      // only a signed-in staff member
+    if(!WadiPerms.loaded())await WadiPerms.load(sb);
     if(WadiPerms.can('club_games_manage'))$('adm-fab').classList.add('on');
   }catch(_e){}
 }
@@ -770,7 +770,7 @@ async function admRender(){
 }
 
 async function admRegs(box){
-  const{data,error}=await wadiAuth.sb.from('club_game_regs')
+  const{data,error}=await sb.from('club_game_regs')
     .select('*').eq('game',ADM.game).eq('status','registered').order('seq');
   if(error)throw error;
   if(!data.length){box.innerHTML='<div style="text-align:center;color:#8d93a6;padding:14px">لا تسجيلات بعد</div>';return;}
@@ -793,12 +793,12 @@ async function admRegs(box){
 }
 async function admFlag(id,field,val){
   const u={};u[field]=val;
-  const{error}=await wadiAuth.sb.from('club_game_regs').update(u).eq('id',id);
+  const{error}=await sb.from('club_game_regs').update(u).eq('id',id);
   if(error){toast('⚠️ '+error.message);}else toast('✅ حُفظ');
 }
 async function admPhoto(path){
   try{
-    const{data,error}=await wadiAuth.sb.storage.from('club-photos').createSignedUrl(path,300);
+    const{data,error}=await sb.storage.from('club-photos').createSignedUrl(path,300);
     if(error)throw error;
     window.open(data.signedUrl,'_blank');
   }catch(e){toast('⚠️ '+(e.message||e));}
@@ -806,7 +806,7 @@ async function admPhoto(path){
 
 // ── 📊 التقرير: الحضور، من وادي الست، والمبالغ ──
 async function admReport(box){
-  const{data,error}=await wadiAuth.sb.from('club_game_regs')
+  const{data,error}=await sb.from('club_game_regs')
     .select('game,fee,paid,attended,p1_from_wadi,p2_from_wadi,p2_name')
     .eq('status','registered');
   if(error)throw error;
@@ -862,10 +862,10 @@ async function admBracket(box){
     box.innerHTML=html;return;
   }
   // need match ids for scoring → read the table directly (staff RLS)
-  const{data:rows,error:e2}=await wadiAuth.sb.from('club_matches')
+  const{data:rows,error:e2}=await sb.from('club_matches')
     .select('*').eq('game',ADM.game).order('round').order('slot');
   if(e2)throw e2;
-  const regsRes=await wadiAuth.sb.from('club_game_regs').select('id,p1_name,p2_name,team_name').eq('game',ADM.game);
+  const regsRes=await sb.from('club_game_regs').select('id,p1_name,p2_name,team_name').eq('game',ADM.game);
   const NM={};((regsRes&&regsRes.data)||[]).forEach(r=>{NM[r.id]=r.team_name||(r.p1_name+(r.p2_name?' + '+r.p2_name:''));});
   const maxR=Math.max.apply(null,rows.map(r=>r.round));
   let lastR=0;
