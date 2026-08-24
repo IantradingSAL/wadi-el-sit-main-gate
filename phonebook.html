@@ -4240,6 +4240,7 @@ async function phbHashRoute(){
         if(phEl&&ph)phEl.value=(window.phoneDisplay?phoneDisplay(ph):ph);
         const fullEl=document.getElementById('AD_FULL');
         if(fullEl&&nm&&!fullEl.value)fullEl.value=nm;
+        pbAddPrefill();
       }catch(_e){}
     },350);
     return;
@@ -4265,6 +4266,44 @@ async function phbHashRoute(){
   setTimeout(function(){ phbFlash(document.getElementById('rev-'+id)); }, 450);
 }
 window.addEventListener('hashchange', phbHashRoute);
+
+// ── نموذج الإضافة يعرف صاحب الرقم ─────────────────────────────────────────
+// إن كان الرقم المكتوب في AD_PH معروفاً في الدليل العلني، تُعبأ خانات الاسم
+// والأب والأم والعائلة والاسم الكامل وحدها — مما يراه أي زائر أصلاً، فالرقم
+// المخفي لا يطابق شيئاً. تبقى الخانات قابلة للتعديل.
+function pbNormLb(v){
+  let d=(v||'').toString().replace(/\D/g,'');
+  if(d.slice(0,2)==='00')d=d.slice(2);
+  while(d.length>8&&d.slice(0,3)==='961')d=d.slice(3).replace(/^0+/,'');
+  return d.replace(/^0+/,'');
+}
+function pbAddPrefill(){
+  try{
+    const phEl=document.getElementById('AD_PH'); if(!phEl)return;
+    const n=pbNormLb(phEl.value); if(n.length<7)return;
+    const list=(typeof getAllPublic==='function')?getAllPublic():[];
+    const c=list.find(x=>!x.phone_hidden&&(pbNormLb(x.phone)===n||pbNormLb(x.wa)===n));
+    if(!c)return;
+    const set=function(id,v){const el=document.getElementById(id);if(el&&v)el.value=v;};
+    set('AD_FIRST',c.first); set('AD_FATHER',c.father); set('AD_MOTHER',c.mother);
+    const fam=document.getElementById('AD_FAM');
+    if(fam&&c.family){
+      let has=false;
+      for(let i=0;i<fam.options.length;i++)if(fam.options[i].value===c.family){has=true;break;}
+      if(!has){const o=document.createElement('option');o.value=c.family;o.textContent=c.family;fam.appendChild(o);}
+      fam.value=c.family;
+    }
+    set('AD_FULL',c.name||[c.first,c.father,c.family].filter(Boolean).join(' '));
+    if(typeof toast==='function')toast('📇 عُبئت البيانات من الدليل — عدّلها إن لزم');
+  }catch(_e){}
+}
+let __pbPhT=null;
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='AD_PH'){clearTimeout(__pbPhT);__pbPhT=setTimeout(pbAddPrefill,500);}
+});
+document.addEventListener('focusout',function(e){
+  if(e.target&&e.target.id==='AD_PH')pbAddPrefill();
+});
 
 function markWhatsNewSeen(){
   lsSet('whatsnew_seen', 'v2.1');
