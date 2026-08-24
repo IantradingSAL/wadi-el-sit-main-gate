@@ -99,10 +99,12 @@ Deno.serve(async (req: Request) => {
   if (row.notified_at)          return json({ ok: true, skipped: "already notified" });
 
   // ── who to tell ──
+  // Per event kind: the settings list and the super admins as always, plus
+  // every reviewer who switched 📧 on for THIS kind in user_notify_prefs (33).
   const rp = await fetch(`${SUPABASE_URL}/rest/v1/rpc/approval_recipients`, {
     method: "POST",
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, "Content-Type": "application/json" },
-    body: "{}",
+    body: JSON.stringify({ p_kind: row.kind ?? null }),
   });
   const emails: string[] = rp.ok ? (await rp.json() ?? []) : [];
   if (!emails.length) {

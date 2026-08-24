@@ -122,6 +122,32 @@ agree about the same person.
   person's own card. `#review=<id>` opens the phonebook's review panel with the
   item highlighted.
 
+## Who is told, and how (🔔 قنوات التنبيه)
+
+- **The permission decides WHO is told; the preference decides HOW.** One row
+  per person in **`user_notify_prefs`** (migration 33): a `phone` and a
+  `channels` jsonb keyed by the `approval_requests.kind` values —
+  `{"phonebook_edit":{"email":true,"push":true,"whatsapp":false}}` — so the
+  queue's own kinds are the registry of events, and "Paul reviews the
+  phonebook" never wakes him for a coop seller.
+- Channels only ever *deliver*: e-mail and push reach a person exclusively
+  while `user_has_perm(user,'approvals_manage')` holds. Losing the permission
+  silences every channel with it — nothing to clean up, no stale recipients.
+- `approval_recipients(kind)` = the `settings.approval_notify` list + the super
+  admins (each may switch an event's 📧 off; the settings list itself is
+  independent and always sends) + every reviewer who switched 📧 on for that
+  kind. `approval_push_targets(kind)` are the reviewers' phones with 🔔 on;
+  `approval_enqueue` fires the push once, deliberately outside the e-mail's
+  retry sweep, through `push_notify` like every other push.
+- **`whatsapp` is stored and sends nothing.** WhatsApp is not connected; the
+  column exists so connecting it later activates everyone who already opted
+  in, with no second round of setup.
+- The matrix is edited from the 🔑 الصلاحيات panel on the user screen, behind
+  its own key **`notify_prefs_edit`** (super_admin, mayor, admin by default),
+  and the table's RLS asks the same key. The old 📧/💬 toggles in 🔐 تخصيص
+  wrote `user_metadata` that nothing read — they are gone; the panel now points
+  here.
+
 ## Push notifications
 
 - **`push_notify()` is the only way the database sends one.** Every trigger
