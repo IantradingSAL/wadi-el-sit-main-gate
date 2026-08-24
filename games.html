@@ -657,7 +657,8 @@ function dalilAddUrl(key){
   const f=WADI_FIELDS[key]||[];
   const ph=f[0]&&$(f[0])?$(f[0]).value.trim():'';
   const nm=f[1]&&$(f[1])?$(f[1]).value.trim():'';
-  return 'phonebook.html#add='+encodeURIComponent(window.phoneE164?phoneE164(ph):ph)+'|'+encodeURIComponent(nm);
+  return 'phonebook.html#add='+encodeURIComponent(window.phoneE164?phoneE164(ph):ph)+'|'+encodeURIComponent(nm)
+    +'|'+encodeURIComponent(CUR+':'+key);
 }
 function wadiAnswer(v){
   $('m-wadi').classList.remove('open');
@@ -905,6 +906,27 @@ async function admSaveCfg(){
 
 loadAll();
 setInterval(loadAll,30000);
+// عاد من تسجيل نفسه في الدليل: نفتح النموذج نفسه باسمه ورقمه ليتابع من حيث توقف
+(function(){
+  const m=(location.hash||'').match(/^#resume=([a-z]+):(s|t1|t2):(.+)$/);
+  if(!m)return;
+  const game=m[1],key=m[2],rest=m[3].split('|');
+  const ph=decodeURIComponent(rest[0]||''),nm=decodeURIComponent(rest[1]||'');
+  history.replaceState(null,'',location.pathname);
+  setTimeout(function(){
+    if(!GAMES[game])return;
+    if(key==='s')openSolo(game);else openTeam(game);
+    const F=WADI_FIELDS[key]||[];
+    if(F[0]&&$(F[0]))$(F[0]).value=(window.phoneDisplay?phoneDisplay(ph):ph);
+    if(F[1]&&$(F[1])&&nm)$(F[1]).value=nm;
+    DALIL[key]='yes';
+    const boxId=key==='s'?'s-lk':(key==='t1'?'t-lk':'t-lk2');
+    LK_LAST[key]=(window.phoneE164?phoneE164(ph):ph);
+    const box=$(boxId);
+    if(box)box.innerHTML='<div class="lk ok">🏡 سُجّل في الدليل — قيد تحقق البلدية · تابع تسجيلك في البطولة</div>';
+    toast('📇 وصل اسمك إلى الدليل — أكمل تسجيلك في البطولة');
+  },1400);
+})();
 window.addEventListener('load',function(){setTimeout(adminGate,1200);});
 </script>
 </body>
