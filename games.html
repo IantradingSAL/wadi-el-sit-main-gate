@@ -614,13 +614,16 @@ function agreeConfirm(){
 // وجدناه → الاسم يظهر وحده. لم نجده → نسأل إن كان من وادي الست: نعم يدخل
 // الدليل معلقاً حتى التحقق (تسجيل البطولة لا ينتظره)، لا يبقى خارج الدليل.
 const DALIL={s:null,t1:null,t2:null};
-const LK_LAST={};
-function lkReset(key,boxId){DALIL[key]=null;delete LK_LAST[key];const b=$(boxId);if(b)b.innerHTML='';}
+const LK_LAST={},LK_NAME={};
+function lkReset(key,boxId){DALIL[key]=null;delete LK_LAST[key];delete LK_NAME[key];const b=$(boxId);if(b)b.innerHTML='';}
 async function lkCheck(phId,nmId,boxId,key){
   const box=$(boxId), v=$(phId).value.trim();
   const norm=v?((window.phoneE164&&phoneE164(v))||v):'';
-  // الرقم لم يتغير → لا نعيد السؤال ولا نمسح جواباً أجاب به
-  if(LK_LAST[key]===norm&&box.innerHTML!=='')return;
+  // الرقم لم يتغير → لا نعيد السؤال ولا نمسح جواباً أجاب به — لكن الاسم يُملأ دائماً
+  if(LK_LAST[key]===norm&&box.innerHTML!==''){
+    if(DALIL[key]==='found'&&LK_NAME[key])$(nmId).value=LK_NAME[key];
+    return;
+  }
   LK_LAST[key]=norm;
   DALIL[key]=null; box.innerHTML='';
   if(!v||(window.phoneValid&&!phoneValid(v)))return;
@@ -635,8 +638,9 @@ async function lkCheck(phId,nmId,boxId,key){
     }
     if(data&&data.found){
       DALIL[key]='found';
-      if(!$(nmId).value.trim())$(nmId).value=data.name;
-      box.innerHTML='<div class="lk ok">📇 موجود في دليل البلدية: <b>'+esc(data.name)+'</b></div>';
+      LK_NAME[key]=data.name;
+      $(nmId).value=data.name;   // الاسم يُملأ تلقائياً — لا داعي لكتابته
+      box.innerHTML='<div class="lk ok">📇 موجود في دليل البلدية: <b>'+esc(data.name)+'</b> — الاسم مُلئ تلقائياً</div>';
     }else{
       WADI_ASK={key:key,boxId:boxId};
       box.innerHTML='<div class="lk ask">📇 لم نجد الرقم في الدليل — بانتظار جوابك</div>';
@@ -689,8 +693,17 @@ window.addEventListener('load',function(){setTimeout(function(){
   [['s-phone','s-name','s-lk','s'],['t-phone','t-name','t-lk','t1'],['t-phone2','t-name2','t-lk2','t2']]
   .forEach(function(cfgL){
     const el=$(cfgL[0]); if(!el)return;
-    el.addEventListener('blur',function(){lkCheck(cfgL[0],cfgL[1],cfgL[2],cfgL[3]);});
-    el.addEventListener('change',function(){lkCheck(cfgL[0],cfgL[1],cfgL[2],cfgL[3]);});
+    const go=function(){lkCheck(cfgL[0],cfgL[1],cfgL[2],cfgL[3]);};
+    el.addEventListener('blur',go);
+    el.addEventListener('change',go);
+    // أثناء الكتابة: لحظة يكتمل الرقم يظهر الاسم وحده — دون انتظار مغادرة الحقل
+    let t=null;
+    el.addEventListener('input',function(){
+      clearTimeout(t);
+      t=setTimeout(function(){
+        if(window.phoneValid&&phoneValid(el.value.trim()))go();
+      },500);
+    });
   });
 },800);});
 
