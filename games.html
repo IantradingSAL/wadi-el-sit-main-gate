@@ -122,6 +122,14 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
 .btn-sub{width:100%;background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;padding:14px;border-radius:13px;font-size:15px;font-weight:900;margin-top:14px;box-shadow:0 6px 18px rgba(212,160,23,.45)}
 .btn-sub:disabled{opacity:.6}
 .btn-x{width:100%;background:transparent;color:#515668;padding:11px;border:1.5px solid #dce0ea;border-radius:13px;font-size:13px;font-weight:700;margin-top:8px}
+.pop-t{font-size:17px;font-weight:900;color:#0f4d82;text-align:center;margin-bottom:4px}
+.pop-i{font-size:44px;text-align:center;display:block;margin-bottom:4px}
+.pop-s{font-size:13px;color:#515668;text-align:center;line-height:1.8;margin-bottom:14px}
+.pop-btn{width:100%;padding:15px;border-radius:14px;font-size:15px;font-weight:900;margin-top:9px;display:flex;align-items:center;justify-content:center;gap:8px}
+.pop-btn.yes{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 6px 18px rgba(22,163,74,.4)}
+.pop-btn.no{background:#fff;color:#515668;border:2px solid #dce0ea}
+.pop-btn.gold{background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;box-shadow:0 6px 18px rgba(212,160,23,.45)}
+.pop-terms{background:#fff4e0;border:1.5px solid #d4a017;border-radius:14px;padding:13px 15px;font-size:13.5px;line-height:1.9;color:#191c24}
 .lk{margin-top:7px;border-radius:12px;padding:9px 12px;font-size:12px;line-height:1.7;font-weight:700}
 .lk.ok{background:#e4f7ec;border:1.5px solid #16a34a;color:#15803d}
 .lk.ask{background:#fff4e0;border:1.5px solid #d4a017;color:#7c5803}
@@ -240,6 +248,7 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
       <div class="tk-table"><div class="l">طاولتك</div><div class="n" id="tk-n"></div><div class="l" id="tk-seat"></div></div>
       <div class="tk-rows" id="tk-rows"></div>
       <div class="tk-warn">⚠️ عدم الحضور لا يُسقط الرسم، وتُحتسب المباريات خسارة</div>
+      <a id="tk-dalil" href="phonebook.html" target="_blank" rel="noopener" style="display:none;margin-top:10px;background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:12px;padding:11px;font-size:12.5px;font-weight:800;text-decoration:none">📇 اسمك في طريقه إلى الدليل — أكمل بياناتك من هنا</a>
     </div>
   </div>
 
@@ -367,6 +376,36 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
   <button class="btn-x" onclick="closeM()">إغلاق</button>
 </div></div>
 
+<!-- هل أنت من وادي الست؟ -->
+<div class="modal" id="m-wadi"><div class="sheet">
+  <div class="grab"></div>
+  <span class="pop-i">🏡</span>
+  <div class="pop-t">هل أنت من وادي الست؟</div>
+  <div class="pop-s">لم نجد هذا الرقم في دليل البلدية.<br>إن كنت من وادي الست نضيفك إلى الدليل — <b>بعد تحقق البلدية</b> — وتسجيلك في البطولة لا ينتظر شيئاً.</div>
+  <button class="pop-btn yes" onclick="wadiAnswer('yes')">🏡 نعم، من وادي الست — أضفني إلى الدليل</button>
+  <button class="pop-btn no" onclick="wadiAnswer('no')">لست من وادي الست — تابع التسجيل</button>
+</div></div>
+
+<!-- مسجّل مسبقاً -->
+<div class="modal" id="m-dup"><div class="sheet">
+  <div class="grab"></div>
+  <span class="pop-i">🎟️</span>
+  <div class="pop-t">هذا الرقم مسجّل مسبقاً!</div>
+  <div class="pop-s" id="dup-txt"></div>
+  <button class="pop-btn gold" onclick="closeM();openMyWith()">🎟️ عرض تسجيلاتي</button>
+  <button class="pop-btn no" onclick="$('m-dup').classList.remove('open')">حسناً</button>
+</div></div>
+
+<!-- الموافقة الإلزامية -->
+<div class="modal" id="m-agree"><div class="sheet">
+  <div class="grab"></div>
+  <span class="pop-i">✋</span>
+  <div class="pop-t">قبل الحجز — الموافقة على الشروط</div>
+  <div class="pop-terms" id="agree-txt"></div>
+  <button class="pop-btn yes" onclick="agreeConfirm()">✓ أوافق — احجز طاولتي</button>
+  <button class="pop-btn no" onclick="$('m-agree').classList.remove('open')">رجوع</button>
+</div></div>
+
 <!-- إدارة البطولة -->
 <button class="adm-fab" id="adm-fab" onclick="openAdmin()">🛠️</button>
 <div class="modal" id="m-adm"><div class="sheet" style="max-width:640px">
@@ -429,7 +468,7 @@ function openSolo(g){
   $('s-fee-txt').textContent='—';$('s-fee-note').textContent='';
   $('s-err').style.display='none';$('s-agree').checked=false;
   $('s-photo').value='';$('s-photo-l').firstChild.textContent='إرفاق';
-  lkReset('s','s-lk');
+  lkReset('s','s-lk');DUP.s=false;
   $('st-solo').textContent='🎲 تسجيل — '+GAMES[g].ar;
   $('m-solo').classList.add('open');
 }
@@ -462,7 +501,8 @@ async function submitSolo(){
   if(!name)return err('s-err','يرجى إدخال الاسم');
   if(!phone||(window.phoneValid&&!phoneValid(phone)))return err('s-err','رقم الهاتف غير صالح');
   if(BOARD===null)return err('s-err','يرجى تحديد: هل ستحضر طاولة زهر معك؟');
-  if(!$('s-agree').checked)return err('s-err','يرجى الموافقة على شروط الاشتراك');
+  if(DUP.s){$('m-dup').classList.add('open');return;}
+  if(!$('s-agree').checked)return agreeAsk('s');
   const btn=$('s-sub');btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري الحجز…';
   try{
     const photo=await uploadPhoto($('s-photo'));
@@ -481,7 +521,7 @@ function openTeam(g){
   CUR=g;
   $('t-err').style.display='none';$('t-agree').checked=false;
   $('t-photo').value='';$('t-photo-l').firstChild.textContent='إرفاق';
-  lkReset('t1','t-lk');lkReset('t2','t-lk2');
+  lkReset('t1','t-lk');lkReset('t2','t-lk2');DUP.t1=false;DUP.t2=false;
   $('st-team').textContent=GAMES[g].emoji+' تسجيل فريق — '+GAMES[g].ar;
   $('m-team').classList.add('open');
 }
@@ -493,7 +533,8 @@ async function submitTeam(){
   if(!n1||!n2)return err('t-err','يرجى إدخال اسمَي اللاعبَين');
   if(!p1||(window.phoneValid&&!phoneValid(p1)))return err('t-err','رقم هاتفك غير صالح');
   if(!p2||(window.phoneValid&&!phoneValid(p2)))return err('t-err','رقم هاتف الشريك غير صالح');
-  if(!$('t-agree').checked)return err('t-err','يرجى الموافقة على شروط الاشتراك');
+  if(DUP.t1||DUP.t2){$('m-dup').classList.add('open');return;}
+  if(!$('t-agree').checked)return agreeAsk('t');
   const btn=$('t-sub');btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري الحجز…';
   try{
     const photo=await uploadPhoto($('t-photo'));
@@ -511,6 +552,7 @@ async function submitTeam(){
 
 function showTicket(d,name,phone,name2){
   closeM();
+  const w=$('tk-dalil'); if(w)w.style.display='none';
   $('tk-s').textContent=d.label+(d.team_name?' — '+d.team_name:'');
   $('tk-n').textContent=d.table_label;
   $('tk-seat').textContent=d.waiting
@@ -550,6 +592,22 @@ async function loadMy(){
 
 function closeM(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open'));}
 
+// ── الموافقة إلزامية: من ينقر «تأكيد» دونها تفتح له نافذة الشروط ليقرّها ──
+let AGREE_FOR=null;
+function agreeAsk(which){
+  AGREE_FOR=which;
+  $('agree-txt').innerHTML=which==='t'
+    ?'أوافق باسم الفريق: الرسم <b>'+(CFG.fee_team||20)+'$</b> ('+(CFG.fee_solo||10)+'$ لكل لاعب) <b>مستحق بمجرد التسجيل</b>، وفي حال غياب الفريق يبقى مستحقاً وتُحتسب المباريات <b>خسارة</b>.'
+    :'أوافق: الرسم <b>'+((BOARD?(CFG.fee_board||5):(CFG.fee_solo||10)))+'$</b> <b>مستحق بمجرد التسجيل</b>'+(BOARD?'، وألتزم بإحضار طاولة الزهر معي':'')+'، وفي حال عدم حضوري يبقى مستحقاً وتُحتسب مبارياتي <b>خسارة</b>.';
+  $('m-agree').classList.add('open');
+}
+function agreeConfirm(){
+  $('m-agree').classList.remove('open');
+  if(AGREE_FOR==='t'){$('t-agree').checked=true;submitTeam();}
+  else if(AGREE_FOR==='s'){$('s-agree').checked=true;submitSolo();}
+  AGREE_FOR=null;
+}
+
 // ── الدليل يتعرف على الرقم ──
 // وجدناه → الاسم يظهر وحده. لم نجده → نسأل إن كان من وادي الست: نعم يدخل
 // الدليل معلقاً حتى التحقق (تسجيل البطولة لا ينتظره)، لا يبقى خارج الدليل.
@@ -567,28 +625,62 @@ async function lkCheck(phId,nmId,boxId,key){
   try{
     const{data,error}=await sb.rpc('club_phone_lookup',{p_phone:(window.phoneE164?phoneE164(v):v)});
     if(error)return;
+    // مسجّل مسبقاً في هذه اللعبة؟ نافذة واحدة تكفي — لا معنى لسؤال الدليل هنا
+    const isDup=await dupCheck(phId,key);
+    if(isDup){
+      box.innerHTML='<div class="lk ask">🎟️ هذا الرقم مسجّل مسبقاً في هذه اللعبة</div>';
+      return;
+    }
     if(data&&data.found){
       DALIL[key]='found';
       if(!$(nmId).value.trim())$(nmId).value=data.name;
       box.innerHTML='<div class="lk ok">📇 موجود في دليل البلدية: <b>'+esc(data.name)+'</b></div>';
     }else{
-      box.innerHTML='<div class="lk ask">📇 لم نجد هذا الرقم في دليل البلدية — هل صاحبه من وادي الست؟'
-        +'<div class="lk-opts">'
-        +'<span class="lko" onclick="lkPick(this,\''+key+'\',\'yes\')">🏡 نعم — أضفه إلى الدليل (يخضع للتحقق)</span>'
-        +'<span class="lko" onclick="lkPick(this,\''+key+'\',\'no\')">ليس من وادي الست</span>'
-        +'</div></div>';
+      WADI_ASK={key:key,boxId:boxId};
+      box.innerHTML='<div class="lk ask">📇 لم نجد الرقم في الدليل — بانتظار جوابك</div>';
+      $('m-wadi').classList.add('open');
     }
   }catch(_e){}
 }
-function lkPick(el,key,v){
-  DALIL[key]=v;
-  el.parentElement.querySelectorAll('.lko').forEach(x=>x.classList.remove('on'));
-  el.classList.add('on');
+// جواب النافذة يثبت تحت الحقل، مع إمكانية تغييره
+let WADI_ASK=null;
+function wadiAnswer(v){
+  $('m-wadi').classList.remove('open');
+  if(!WADI_ASK)return;
+  DALIL[WADI_ASK.key]=v;
+  const box=$(WADI_ASK.boxId);
+  if(box)box.innerHTML=v==='yes'
+    ?'<div class="lk ok">🏡 من وادي الست — سيُضاف إلى الدليل بعد التحقق <span style="text-decoration:underline;cursor:pointer" onclick="wadiReask(\''+WADI_ASK.key+'\',\''+WADI_ASK.boxId+'\')">تغيير</span></div>'
+    :'<div class="lk ask">ليس من وادي الست — لن يُضاف إلى الدليل <span style="text-decoration:underline;cursor:pointer" onclick="wadiReask(\''+WADI_ASK.key+'\',\''+WADI_ASK.boxId+'\')">تغيير</span></div>';
 }
+function wadiReask(key,boxId){WADI_ASK={key:key,boxId:boxId};$('m-wadi').classList.add('open');}
+// مسجّل مسبقاً في هذه اللعبة؟ نافذة فورية عند إدخال الرقم (والخادم يتحقق أيضاً)
+const DUP={};
+let DUP_PHONE='';
+async function dupCheck(phId,key){
+  DUP[key]=false;
+  const v=$(phId).value.trim(); if(!v)return false;
+  try{
+    const{data}=await sb.rpc('club_my_regs',{p_phone:(window.phoneE164?phoneE164(v):v)});
+    const hit=(data||[]).find(r=>r.game===CUR);
+    if(hit){
+      DUP[key]=true; DUP_PHONE=v;
+      $('m-wadi').classList.remove('open');
+      $('dup-txt').innerHTML='<b>'+esc(hit.team_name||hit.p1_name)+'</b> مسجّل في <b>'+esc(hit.label)+'</b><br>الطاولة: <b style="font-size:18px">'+esc(hit.table_label)+'</b><br>التسجيل مرة واحدة لكل لعبة — يمكنك التسجيل في لعبة أخرى.';
+      $('m-dup').classList.add('open');
+      return true;
+    }
+  }catch(_e){}
+  return false;
+}
+function openMyWith(){openMy();if(DUP_PHONE)$('my-phone').value=DUP_PHONE;loadMy();}
 async function dalilQueue(name,phone){
   try{
     const{data}=await sb.rpc('club_dalil_submit',{p_name:name,p_phone:(window.phoneE164?phoneE164(phone):phone)});
-    if(data&&data.queued)toast('📇 أُرسل الاسم إلى دليل البلدية — بانتظار التحقق');
+    if(data&&data.queued){
+      toast('📇 أُرسل الاسم إلى دليل البلدية — بانتظار التحقق');
+      const w=$('tk-dalil'); if(w)w.style.display='block';
+    }
   }catch(_e){}
 }
 window.addEventListener('load',function(){setTimeout(function(){
