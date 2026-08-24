@@ -3114,6 +3114,7 @@ function openUsers() {
     '<div class="adtab" onclick="adTab(this,\'t-add\')">➕ إضافة موظف</div>' +
     '<div class="adtab" onclick="adTab(this,\'t-roles\');renderRolesList()">🎭 الأدوار</div>' +
     '<div class="adtab" onclick="adTab(this,\'t-newrole\')">✨ دور جديد</div>' +
+    (WadiPerms.can('notify_prefs_edit')?'<div class="adtab" onclick="adTab(this,\'t-notify\');loadNotifyMatrix()">🔔 توزيع التنبيهات</div>':'') +
     '</div>' +
     // TAB: employees
     '<div id="t-emp"><div id="emp-cards" style="min-height:60px;text-align:center;padding:20px;color:var(--text3)">⏳ جاري التحميل…</div></div>' +
@@ -3127,15 +3128,15 @@ function openUsers() {
     '<div class="fg"><div class="fl">الدور</div>' +
     '<select class="fi" id="nu-role" onchange="showRolePrev(this.value)">' + roleOpts + '</select></div>' +
     '<div id="role-prev" style="margin:8px 0;padding:8px;background:var(--bg2);border-radius:8px;font-size:12px;min-height:24px"></div>' +
-    '<div class="fg"><div class="fl">الإشعارات</div><div style="display:flex;gap:14px;flex-wrap:wrap">' +
-    '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="checkbox" id="nu-em" checked style="accent-color:var(--blue)"> 📧 إيميل</label>' +
-    '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="checkbox" id="nu-wa" style="accent-color:var(--green)"> 💬 واتساب</label>' +
-    '</div></div>' +
+    '<div class="fg"><div class="fl">الإشعارات</div>' +
+    '<div style="font-size:12px;color:var(--text3);background:var(--bg2);padding:8px 12px;border-radius:8px;line-height:1.7">قنوات التنبيه تُضبط بعد الإنشاء من تبويب <b>🔔 توزيع التنبيهات</b> أو زر 🔑 الصلاحيات في بطاقة الموظف.</div></div>' +
     '<button class="btn bp" style="width:100%;justify-content:center;margin-top:12px" onclick="createUser()">✓ إنشاء الحساب</button>' +
     '<div id="cu-msg" style="margin-top:10px;font-size:13px;text-align:center;min-height:18px"></div>' +
     '</div></div>' +
     // TAB: roles list
     '<div id="t-roles" style="display:none"><div id="roles-list2"></div></div>' +
+    // TAB: notification routing — the same user_notify_prefs, seen per EVENT
+    '<div id="t-notify" style="display:none"><div id="nm-box" style="min-height:60px;text-align:center;padding:20px;color:var(--text3)">⏳ جاري التحميل…</div></div>' +
     // TAB: new role
     '<div id="t-newrole" style="display:none"><div class="admin-section">' +
     '<div class="admin-header">✨ إنشاء دور جديد</div>' +
@@ -3161,7 +3162,7 @@ function openUsers() {
 function adTab(el, id) {
   document.querySelectorAll('.adtab').forEach(function(t){ t.classList.remove('on'); });
   el.classList.add('on');
-  ['t-emp','t-add','t-roles','t-newrole'].forEach(function(tid){
+  ['t-emp','t-add','t-roles','t-newrole','t-notify'].forEach(function(tid){
     var e = document.getElementById(tid);
     if(e) e.style.display = tid===id ? 'block' : 'none';
   });
@@ -3271,7 +3272,9 @@ const WP_NOTIFY_EVENTS=[
   ['coop_agent','🚚 عامل توصيل جديد'],
   ['user_account','👤 حساب جديد على البوابة']
 ];
-const WP_CHANNELS=[['email','📧 بريد'],['push','🔔 إشعار'],['whatsapp','💬 واتساب']];
+// واتساب وSMS مخزّنان فقط: يعملان تلقائياً يوم تُربط الخدمة، بلا إعداد ثانٍ
+const WP_CHANNELS=[['email','📧 بريد'],['push','🔔 إشعار'],['whatsapp','💬 واتساب'],['sms','📱 SMS']];
+const WP_CH_LATER={whatsapp:1,sms:1};
 let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}, notify:{phone,channels}}
 
 async function openUserPerms(btn){
@@ -3338,11 +3341,11 @@ function wpNotifyHTML(){
     '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border-radius:7px;background:var(--bg);border:1px solid var(--border)">'
     +'<span style="flex:1;min-width:170px;font-size:12.5px">'+lbl+'</span>'
     +WP_CHANNELS.map(([k,kl])=>
-      '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer'+(k==='whatsapp'?';opacity:.55':'')+'" '
-      +(k==='whatsapp'?'title="يُحفظ الآن ويعمل تلقائياً عند ربط واتساب"':'')+'>'
+      '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer'+(WP_CH_LATER[k]?';opacity:.55':'')+'" '
+      +(WP_CH_LATER[k]?'title="يُحفظ الآن ويعمل تلقائياً عند ربط الخدمة"':'')+'>'
       +'<input type="checkbox" '+(on(ev,k)?'checked':'')
       +' onchange="wpNotifyToggle(\''+ev+'\',\''+k+'\',this.checked)" style="width:14px;height:14px;accent-color:var(--blue)">'
-      +kl+(k==='whatsapp'?' <small style="color:var(--text3)">(قريباً)</small>':'')+'</label>').join('')
+      +kl+(WP_CH_LATER[k]?' <small style="color:var(--text3)">(قريباً)</small>':'')+'</label>').join('')
     +'</div>').join('');
   return '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:10px">'
     +'<div style="font-size:12px;font-weight:800;color:var(--blue2);margin-bottom:4px">🔔 قنوات التنبيه — متى يصله خبر طلبات التحقق</div>'
@@ -3389,10 +3392,10 @@ async function wpSave(){
       const chans={};
       Object.keys(c.notify.channels||{}).forEach(ev=>{
         const src=c.notify.channels[ev]||{}, dst={};
-        ['email','push','whatsapp'].forEach(k=>{ if(src[k])dst[k]=true; });
+        ['email','push','whatsapp','sms'].forEach(k=>{ if(src[k])dst[k]=true; });
         if(Object.keys(dst).length)chans[ev]=dst;
       });
-      const wantsPush=Object.keys(chans).some(ev=>chans[ev].push||chans[ev].whatsapp);
+      const wantsPush=Object.keys(chans).some(ev=>chans[ev].push||chans[ev].whatsapp||chans[ev].sms);
       if(wantsPush&&!phone)toast('⚠️ الإشعار وواتساب يحتاجان رقم هاتف — احفظ الرقم أيضاً','err');
       if(!Object.keys(chans).length&&!phone){
         await sb.from('user_notify_prefs').delete().eq('user_id',c.uid);
@@ -3407,6 +3410,136 @@ async function wpSave(){
     trackActivity('تعديل صلاحيات مستخدم',c.name+' — '+(keys.length?(keys.length+' صلاحية مخصّصة'):'كلها حسب الدور'),{target:c.name,page:'users'});
     const p=document.getElementById('wp-panel'); if(p)p.remove();
   }catch(e){ toast('⚠️ '+e.message,'err'); }
+}
+
+// ══════════ 🔔 توزيع التنبيهات (notification routing, per EVENT) ══════════
+// The same user_notify_prefs the 🔑 panel edits, transposed: pick an event and
+// see WHO gets it and HOW — Paul push+email for the phonebook, Imad email for
+// new accounts. Both screens write the same rows, so they can never disagree.
+let NM_CTX=null;   // {users:[{uid,name,email,role,phone,channels,canApprove,hadRow}]}
+
+async function loadNotifyMatrix(){
+  const box=document.getElementById('nm-box'); if(!box)return;
+  if(!WadiPerms.can('notify_prefs_edit')){box.innerHTML='🚫 توزيع التنبيهات متاح لمن يملك مفتاح «قنوات تنبيه الموظفين»';return;}
+  box.innerHTML='⏳ جاري التحميل…';
+  try{
+    const [d, rolesRes, defsRes, ovRes, npRes] = await Promise.all([
+      adminAPI({action:'list'}),
+      sb.from('user_roles').select('user_id,role'),
+      sb.from('role_permissions').select('role,perms'),
+      sb.from('user_permissions').select('user_id,perms'),
+      sb.from('user_notify_prefs').select('user_id,phone,channels')
+    ]);
+    const ROLES={}; ((rolesRes&&rolesRes.data)||[]).forEach(r=>{(ROLES[r.user_id]=ROLES[r.user_id]||[]).push(r.role);});
+    const DEFS={}; ((defsRes&&defsRes.data)||[]).forEach(r=>{DEFS[r.role]=r.perms||{};});
+    const OV={};   ((ovRes&&ovRes.data)||[]).forEach(r=>{OV[r.user_id]=r.perms||{};});
+    const NP={};   ((npRes&&npRes.data)||[]).forEach(r=>{NP[r.user_id]=r;});
+    // same resolution as has_perm(): per-user override → role default → super_admin
+    const canApprove=function(uid){
+      const ov=OV[uid]||{};
+      if(Object.prototype.hasOwnProperty.call(ov,'approvals_manage'))return !!ov.approvals_manage;
+      const roles=ROLES[uid]||[]; let hit=null;
+      roles.forEach(rl=>{const p=DEFS[rl]||{};
+        if(Object.prototype.hasOwnProperty.call(p,'approvals_manage'))hit=(hit===true)?true:!!p.approvals_manage;});
+      if(hit!==null)return hit;
+      return roles.indexOf('super_admin')>=0;
+    };
+    NM_CTX={users:(d.users||[]).filter(u=>u.email).map(u=>{
+      const meta=u.user_metadata||{}, np=NP[u.id]||{};
+      return {uid:u.id,name:meta.name||u.email.split('@')[0],email:u.email,
+              role:(ROLES[u.id]||[])[0]||meta.role||'officer',
+              phone:np.phone||meta.phone||'',channels:JSON.parse(JSON.stringify(np.channels||{})),
+              canApprove:canApprove(u.id),hadRow:!!NP[u.id]};
+    })};
+    nmRender();
+  }catch(e){ box.innerHTML='<div style="color:var(--danger);font-size:13px">⚠️ '+e.message+'</div>'; }
+}
+
+function nmRender(){
+  const box=document.getElementById('nm-box'); if(!box||!NM_CTX)return;
+  const apr=NM_CTX.users.filter(u=>u.canApprove);
+  const rest=NM_CTX.users.filter(u=>!u.canApprove);
+  const avatar=function(u){
+    const rc=getAdvRoleCfg(u.role);
+    const ini=u.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
+    return '<div style="width:30px;height:30px;border-radius:50%;background:'+rc.bg+';color:'+rc.color+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0">'+ini+'</div>';
+  };
+  const th='padding:7px 6px;font-size:11px;color:var(--text3);font-weight:800;text-align:center;border-bottom:1.5px solid var(--border);white-space:nowrap';
+  const td='padding:7px 6px;text-align:center;border-bottom:1px solid var(--border)';
+  const evBlocks=WP_NOTIFY_EVENTS.map(([ev,lbl])=>
+    '<div class="ecard" style="padding:0;overflow:hidden;margin-bottom:12px">'
+    +'<div style="padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border);font-size:13.5px;font-weight:800;color:var(--blue2)">'+lbl+'</div>'
+    +(apr.length
+      ?'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:430px">'
+        +'<tr><th style="'+th+';text-align:right;padding-right:14px">الموظف</th>'
+        +WP_CHANNELS.map(([k,kl])=>'<th style="'+th+(WP_CH_LATER[k]?';opacity:.55':'')+'">'+kl+(WP_CH_LATER[k]?'<br><small style="font-weight:400">قريباً</small>':'')+'</th>').join('')+'</tr>'
+        +apr.map(u=>'<tr>'
+          +'<td style="'+td+';text-align:right;padding-right:14px"><div style="display:flex;align-items:center;gap:8px">'+avatar(u)
+          +'<div style="min-width:0"><div style="font-size:12.5px;font-weight:700">'+u.name+'</div>'
+          +'<div style="font-size:10.5px;color:var(--text3);direction:ltr;text-align:right">'+u.email+'</div></div></div></td>'
+          +WP_CHANNELS.map(([k])=>'<td style="'+td+(WP_CH_LATER[k]?';opacity:.55':'')+'">'
+            +'<input type="checkbox" '+(((u.channels[ev]||{})[k])?'checked':'')
+            +' onchange="nmToggle(\''+u.uid+'\',\''+ev+'\',\''+k+'\',this.checked)" style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer"></td>').join('')
+          +'</tr>').join('')
+        +'</table></div>'
+      :'<div style="padding:12px 14px;font-size:12px;color:var(--text3)">لا أحد يملك صلاحية «طلبات التحقق» بعد — امنحها من 🔑 الصلاحيات أولاً</div>')
+    +'</div>').join('');
+  const phones=apr.map(u=>
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0">'
+    +avatar(u)+'<span style="min-width:120px;font-size:12.5px;font-weight:700">'+u.name+'</span>'
+    +'<input type="tel" class="fi" data-phone value="'+String(u.phone||'').replace(/"/g,'&quot;')
+    +'" onchange="nmPhone(\''+u.uid+'\',this.value)" style="direction:ltr;max-width:200px;padding:6px 10px;font-size:12.5px;height:auto"></div>').join('');
+  box.innerHTML='<div style="text-align:right">'
+    +'<div style="font-size:12px;color:var(--text3);line-height:1.9;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px">'
+    +'الصلاحية تقرِّر <b>من</b> يُبلَّغ، وهذا الجدول يقرِّر <b>كيف</b> — لكل حدث على حدة. '
+    +'يظهر كل من يملك «طلبات التحقق (موافقة/رفض)»، والقنوات نفسها تظهر في 🔑 الصلاحيات على بطاقة الموظف — الشاشتان تحرِّران السجل نفسه. '
+    +'💬 واتساب و📱 SMS يُحفظان الآن ويعملان تلقائياً يوم تُربط الخدمة. البريد الثابت في ⚙️ الإعدادات والمشرف العام يبقيان يستلمان كما هما.'
+    +(rest.length?'<br>بلا صلاحية تحقق (لا يظهرون في الجدول): '+rest.map(u=>u.name).join('، '):'')+'</div>'
+    +evBlocks
+    +'<div class="ecard" style="margin-bottom:12px"><div style="font-size:13px;font-weight:800;color:var(--blue2);margin-bottom:4px">📱 أرقام الهواتف</div>'
+    +'<div style="font-size:11.5px;color:var(--text3);margin-bottom:6px">الرقم الذي فعّل به الموظف الإشعارات على جهازه — وعنوان واتساب وSMS لاحقاً</div>'
+    +phones+'</div>'
+    +'<div style="display:flex;gap:8px"><button class="btn bp" style="padding:8px 20px" onclick="nmSave()">💾 حفظ التوزيع</button>'
+    +'<button class="btn bg" style="padding:8px 16px" onclick="loadNotifyMatrix()">↩️ إلغاء التعديلات</button></div>'
+    +'</div>';
+}
+
+function nmToggle(uid,ev,k,val){
+  if(!NM_CTX)return;
+  const u=NM_CTX.users.find(x=>x.uid===uid); if(!u)return;
+  u.channels[ev]=u.channels[ev]||{};
+  u.channels[ev][k]=!!val;
+}
+function nmPhone(uid,val){
+  if(!NM_CTX)return;
+  const u=NM_CTX.users.find(x=>x.uid===uid); if(u)u.phone=val;
+}
+
+async function nmSave(){
+  if(!NM_CTX)return;
+  try{
+    const ups=[],dels=[];
+    NM_CTX.users.forEach(u=>{
+      if(!u.canApprove&&!u.hadRow)return;
+      const chans={};
+      Object.keys(u.channels||{}).forEach(ev=>{
+        const src=u.channels[ev]||{},dst={};
+        ['email','push','whatsapp','sms'].forEach(k=>{if(src[k])dst[k]=true;});
+        if(Object.keys(dst).length)chans[ev]=dst;
+      });
+      const raw=(u.phone||'').trim();
+      const phone=raw?((window.phoneE164&&phoneE164(raw))||raw):'';
+      if(!Object.keys(chans).length&&!phone){ if(u.hadRow)dels.push(u.uid); return; }
+      ups.push({user_id:u.uid,phone:phone||null,channels:chans,
+                updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()});
+    });
+    if(ups.length){const{error}=await sb.from('user_notify_prefs').upsert(ups,{onConflict:'user_id'});if(error)throw error;}
+    if(dels.length){await sb.from('user_notify_prefs').delete().in('user_id',dels);}
+    const needPhone=ups.filter(r=>!r.phone&&Object.keys(r.channels).some(ev=>r.channels[ev].push||r.channels[ev].whatsapp||r.channels[ev].sms)).length;
+    toast('✅ حُفظ توزيع التنبيهات'+(needPhone?' — ⚠️ '+needPhone+' بلا رقم هاتف للإشعار':''),needPhone?'err':undefined);
+    trackActivity('تعديل توزيع التنبيهات',(ups.length+dels.length)+' موظف',{page:'users'});
+    loadNotifyMatrix();
+  }catch(e){toast('⚠️ '+e.message,'err');}
 }
 
 // ── EMPLOYEE ACTIONS ──────────────────────────────────────────────────────────

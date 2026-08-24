@@ -139,14 +139,16 @@ agree about the same person.
   kind. `approval_push_targets(kind)` are the reviewers' phones with 🔔 on;
   `approval_enqueue` fires the push once, deliberately outside the e-mail's
   retry sweep, through `push_notify` like every other push.
-- **`whatsapp` is stored and sends nothing.** WhatsApp is not connected; the
-  column exists so connecting it later activates everyone who already opted
-  in, with no second round of setup.
-- The matrix is edited from the 🔑 الصلاحيات panel on the user screen, behind
+- **`whatsapp` and `sms` are stored and send nothing.** Neither service is
+  connected; the keys exist so connecting a provider later activates everyone
+  who already opted in, with no second round of setup.
+- The matrix is edited from two views of the same rows: per person in the
+  🔑 الصلاحيات panel, and per event in the 🔔 توزيع التنبيهات tab of the user
+  screen ("for the phonebook: Paul push+email, Imad email"). Both are behind
   its own key **`notify_prefs_edit`** (super_admin, mayor, admin by default),
-  and the table's RLS asks the same key. The old 📧/💬 toggles in 🔐 تخصيص
-  wrote `user_metadata` that nothing read — they are gone; the panel now points
-  here.
+  and the table's RLS asks the same key. The old 📧/💬 toggles in 🔐 تخصيص and
+  the create-user form wrote `user_metadata` that nothing read — they are gone;
+  both places now point here.
 
 ## Push notifications
 
