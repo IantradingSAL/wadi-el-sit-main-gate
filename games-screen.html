@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#081f38">
+<title>شاشة البطولة — وادي الست</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',Tahoma,sans-serif;background:radial-gradient(1400px 700px at 50% -220px,#16406b,#081f38 70%);min-height:100vh;color:#fff;padding:26px 18px;overflow-x:hidden}
+.tvhd{text-align:center;margin-bottom:8px}
+.tvhd .cup{font-size:52px;display:inline-block;animation:pulse 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 20px rgba(255,200,60,.6))}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.tvhd h1{font-size:30px;font-weight:900;color:#ffd76b;text-shadow:0 2px 16px rgba(0,0,0,.5)}
+.tvhd .s{font-size:14px;opacity:.8}
+.tvgame{display:flex;gap:8px;justify-content:center;margin:14px 0 24px;flex-wrap:wrap}
+.tvg{padding:9px 22px;border-radius:99px;font-weight:900;font-size:15px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.18);color:#9fb4cc;cursor:pointer}
+.tvg.on{background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;border-color:#ffd76b;box-shadow:0 4px 18px rgba(212,160,23,.5)}
+.bracket{display:flex;gap:18px;justify-content:center;align-items:stretch;max-width:1200px;margin:0 auto;overflow-x:auto;padding-bottom:12px}
+.col{display:flex;flex-direction:column;justify-content:space-around;gap:14px;min-width:240px}
+.col-t{text-align:center;font-size:14px;font-weight:900;color:#ffd76b;letter-spacing:.5px;margin-bottom:2px}
+.tvm{background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.16);border-radius:15px;padding:10px 12px}
+.tvm.live{border-color:#ffd76b;box-shadow:0 0 24px rgba(255,215,107,.35)}
+.tvm .t{font-size:11px;font-weight:800;color:#9fb4cc;margin-bottom:5px;display:flex;justify-content:space-between}
+.tvm .t .lv{color:#ffd76b;animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.4}}
+.tvp{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;font-size:16px;font-weight:800}
+.tvp.win{background:linear-gradient(90deg,rgba(22,163,74,.4),transparent);color:#7ef0a5}
+.tvp .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tvp .sc{display:flex;gap:4px}
+.tvp .g{width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4)}
+.tvp .g.w{background:#16a34a;border-color:#7ef0a5;color:#fff}
+.tvp .dim{color:rgba(255,255,255,.4)}
+.champ{max-width:420px;margin:22px auto 0;background:linear-gradient(135deg,rgba(212,160,23,.28),rgba(212,160,23,.08));border:2px solid #ffd76b;border-radius:20px;padding:18px;text-align:center;box-shadow:0 0 40px rgba(255,215,107,.25)}
+.champ .l{font-size:13px;font-weight:800;color:#ffd76b;letter-spacing:1px}
+.champ .n{font-size:28px;font-weight:900;margin-top:4px}
+.regs{max-width:760px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.regt{background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.16);border-radius:15px;padding:12px 14px;text-align:center}
+.regt .tl{font-size:13px;font-weight:900;color:#ffd76b;margin-bottom:6px}
+.regt .p{font-size:15px;font-weight:800;padding:3px 0}
+.regt .vs{font-size:11px;color:#9fb4cc}
+.stage-note{text-align:center;font-size:15px;color:#9fb4cc;margin-bottom:16px;font-weight:700}
+.tvfoot{text-align:center;font-size:12px;opacity:.55;margin-top:20px}
+.empty{text-align:center;color:#9fb4cc;padding:40px;font-size:16px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="tvhd">
+  <span class="cup">🏆</span>
+  <h1>بطولة وادي الست</h1>
+  <div class="s">📍 وادي الست · نتائج مباشرة · ♠ ♥ 🎲 ♦ ♣</div>
+</div>
+<div class="tvgame" id="tabs"></div>
+<div id="stage"></div>
+<div class="tvfoot">تُحدَّث الشاشة تلقائياً لحظة تسجيل الحكم للنتيجة · <span id="cyc">التبديل بين الألعاب كل 20 ثانية</span></div>
+
+<script>
+const SB_URL="https://onjbwhkmmtqnymhjnplw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
+const GAMES=[['frangieh','🎲 فرنجية'],['mahbouseh','🎲🔒 محبوسة'],['tarneeb','♠️ طرنيب'],['arbaamie','♥️ أربعمية']];
+const sb=supabase.createClient(SB_URL,SB_KEY);
+function esc(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ?game=frangieh يثبّت الشاشة على لعبة واحدة؛ وإلا تتبدل كل 20 ثانية
+const params=new URLSearchParams(location.search);
+const LOCK=params.get('game');
+let cur=LOCK&&GAMES.some(g=>g[0]===LOCK)?LOCK:GAMES[0][0];
+if(LOCK)document.getElementById('cyc').textContent='شاشة مثبّتة على لعبة واحدة';
+
+function tabs(){
+  document.getElementById('tabs').innerHTML=GAMES.map(g=>
+    '<span class="tvg'+(g[0]===cur?' on':'')+'" onclick="pick(\''+g[0]+'\')">'+g[1]+'</span>').join('');
+}
+function pick(g){cur=g;tabs();load();}
+
+function roundName(r,max){
+  if(r===max)return '🏆 النهائي';
+  if(r===max-1)return '⚔️ نصف النهائي';
+  if(r===max-2)return 'ربع النهائي';
+  return 'الدور '+r;
+}
+function playerRow(p,games,needed,isWin,bestOf,decided){
+  let sc='';
+  if(bestOf>1&&p){
+    sc='<span class="sc">';
+    for(let i=1;i<=needed;i++)sc+='<span class="g'+(games>=i?' w':'')+'">'+i+'</span>';
+    sc+='</span>';
+  }else if(p&&decided&&isWin){sc='<span style="font-size:13px">🏆</span>';}
+  return '<div class="tvp'+(isWin?' win':'')+'"><span class="nm'+(p?'':' dim')+'">'
+    +(p?esc(p.name):'بانتظار المتأهل')+'</span>'+sc+'</div>';
+}
+async function load(){
+  const el=document.getElementById('stage');
+  try{
+    const{data,error}=await sb.rpc('club_bracket',{p_game:cur});
+    if(error)throw error;
+    if(data.stage==='registration'){
+      const t=data.tables||[];
+      el.innerHTML='<div class="stage-note">🎟️ مرحلة التسجيل — الطاولات كما امتلأت'+(t.length?'':'؛ كن أول المسجلين!')+'</div>'
+        +(t.length?'<div class="regs">'+t.map(x=>
+          '<div class="regt"><div class="tl">طاولة '+esc(x.table)+'</div>'
+          +x.players.map((p,i)=>'<div class="p">'+esc(p)+'</div>'+(i===0&&x.players.length>1?'<div class="vs">⚔️</div>':'')).join('')
+          +(x.players.length<2?'<div class="vs">بانتظار المنافس…</div>':'')
+          +'</div>').join('')+'</div>'
+        :'<div class="empty">لا تسجيلات بعد — سجّل عبر صفحة البطولة</div>');
+      return;
+    }
+    const ms=data.matches||[];
+    const maxR=Math.max.apply(null,ms.map(m=>m.round));
+    const byRound={};
+    ms.forEach(m=>{(byRound[m.round]=byRound[m.round]||[]).push(m);});
+    let cols='';
+    for(let r=1;r<=maxR;r++){
+      cols+='<div class="col"><div class="col-t">'+roundName(r,maxR)
+        +(byRound[r][0].best_of>1?' — 2 من 3':'')+'</div>'
+        +byRound[r].sort((a,b)=>a.slot-b.slot).map(m=>{
+          const needed=Math.floor(m.best_of/2)+1;
+          const live=m.a&&m.b&&!m.winner_side;
+          const st=m.winner_side?(m.status==='walkover'?'✓ غياب':'✓ انتهت'):(m.a&&m.b?'<span class="lv">● مباشر</span>':'بالانتظار');
+          return '<div class="tvm'+(live?' live':'')+'">'
+            +'<div class="t"><span>مباراة '+m.slot+'</span><span>'+st+'</span></div>'
+            +playerRow(m.a,m.a_games,needed,m.winner_side==='a',m.best_of,!!m.winner_side)
+            +playerRow(m.b,m.b_games,needed,m.winner_side==='b',m.best_of,!!m.winner_side)
+            +'</div>';
+        }).join('')+'</div>';
+    }
+    const fin=(byRound[maxR]||[])[0];
+    const champ=fin&&fin.winner_side?(fin.winner_side==='a'?fin.a:fin.b):null;
+    el.innerHTML='<div class="bracket">'+cols
+      +'<div class="col" style="justify-content:center"><div class="champ"><div class="l">🏆 البطل</div><div class="n">'
+      +(champ?esc(champ.name):'—')+'</div></div></div></div>';
+  }catch(e){el.innerHTML='<div class="empty">⚠️ '+esc(e.message||e)+'</div>';}
+}
+tabs();load();
+setInterval(load,10000);
+if(!LOCK)setInterval(function(){
+  const i=GAMES.findIndex(g=>g[0]===cur);
+  cur=GAMES[(i+1)%GAMES.length][0];
+  tabs();load();
+},20000);
+</script>
+</body>
+</html>

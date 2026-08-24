@@ -15,9 +15,10 @@ have, it is not finished until all four of these are done:
 2. **A role default** in `role_permissions`, for *every* role — `true` for the
    roles that should hold it, an explicit `false` for the rest. Migrations
    `07`–`12` are the precedent.
-3. **A row on the user screen** — add the key to `WP_GROUPS` in
-   `dashboard.html`, in the group it belongs to, with an Arabic label. This is
-   what makes it grantable to one person without changing their role.
+3. **A row on the user screen** — add the key to `UP_MODULES` in
+   `dashboard.html`, in the module it belongs to, with `pk_<key>` labels in
+   the `UP_T` dictionary in **all three languages** (ar/en/fr). This is what
+   makes it grantable to one person without changing their role.
 4. **The database enforcing the same key** — a page gate alone is not a gate.
    Whatever table or key the feature writes, its RLS policy must ask
    `has_perm('<the same key>')`. `has_perm()` resolves *per-user override →
@@ -122,6 +123,35 @@ agree about the same person.
   person's own card. `#review=<id>` opens the phonebook's review panel with the
   item highlighted.
 
+## Who is told, and how (🔔 قنوات التنبيه)
+
+- **The permission decides WHO is told; the preference decides HOW.** One row
+  per person in **`user_notify_prefs`** (migration 33): a `phone` and a
+  `channels` jsonb keyed by the `approval_requests.kind` values —
+  `{"phonebook_edit":{"email":true,"push":true,"whatsapp":false}}` — so the
+  queue's own kinds are the registry of events, and "Paul reviews the
+  phonebook" never wakes him for a coop seller.
+- Channels only ever *deliver*: e-mail and push reach a person exclusively
+  while `user_has_perm(user,'approvals_manage')` holds. Losing the permission
+  silences every channel with it — nothing to clean up, no stale recipients.
+- `approval_recipients(kind)` = the `settings.approval_notify` list + the super
+  admins (each may switch an event's 📧 off; the settings list itself is
+  independent and always sends) + every reviewer who switched 📧 on for that
+  kind. `approval_push_targets(kind)` are the reviewers' phones with 🔔 on;
+  `approval_enqueue` fires the push once, deliberately outside the e-mail's
+  retry sweep, through `push_notify` like every other push.
+- **`whatsapp` and `sms` are stored and send nothing.** Neither service is
+  connected; the keys exist so connecting a provider later activates everyone
+  who already opted in, with no second round of setup.
+- The matrix is edited from two views of the same rows: per person in the
+  التنبيهات tab of the employee profile, and per event in the 🔔 توزيع
+  التنبيهات tab of the user screen ("for the phonebook: Paul push+email, Imad
+  email"). Both are behind
+  its own key **`notify_prefs_edit`** (super_admin, mayor, admin by default),
+  and the table's RLS asks the same key. The old 📧/💬 toggles in 🔐 تخصيص and
+  the create-user form wrote `user_metadata` that nothing read — they are gone;
+  both places now point here.
+
 ## Push notifications
 
 - **`push_notify()` is the only way the database sends one.** Every trigger
@@ -166,6 +196,47 @@ agree about the same person.
 - Phone targeting matches on the generated `phone_norm` (digits, no 961, no
   trunk 0), so `03…`, `3…` and `+9613…` all find the same device.
 - Full findings: `AUDIT-2026-08-22-push.md`; the database half: migration 30.
+
+## بطولة وادي الست (`games.html` · `games-screen.html`)
+
+- Four knockout competitions: طاولة **فرنجية/محبوسة** (solo, 2 players a table,
+  every round best-of-3) and ورق **طرنيب/أربعمية** (teams of two — optionally
+  named — 2 teams a table, one decisive match). Fees: 10$/person, 20$/team,
+  **5$ for a tawli player who brings a board** — a mandatory choice at
+  registration. Registering makes the fee DUE; a no-show still owes it and the
+  matches count as lost — stated on the card, the consent checkbox, the ticket,
+  and applied by the referee's 🚫 غياب button (walkover + `attended=false`).
+- **A table seat is issued like a sanad number**: `club_register()` under a
+  per-game advisory lock — never twice, no cap (tables grow with demand). One
+  entry per person per game, matched on `lb_phone_norm` including partners.
+- Dates, deadline, fees and open/close are `settings.club_games`, edited from
+  the page's ⚙️ admin sheet — never code. Setting `event_ts` arms the
+  `club-push-sweep` reminders (غداً / قبل ساعة، once each via `club_push_sent`).
+- **The bracket**: `club_generate_bracket` (locks registration first from the
+  UI), byes auto-advance, `club_match_set` scores best-of-N and promotes the
+  winner (a decided match is editable only until the next round's slot is
+  touched), `club_match_walkover` applies absence. The TV page
+  (`games-screen.html`) and the page read `club_bracket()` — **names and
+  results only, never a phone**; the regs/matches tables have no anon access.
+- Registration photos are optional and land in the **private `club-photos`
+  bucket** (anon upload, read only by the key below via signed URLs). The
+  consent line at registration says winners' photos go on our social pages —
+  nothing is public before that.
+- The key is **`club_games_manage`** (super_admin, mayor, admin by default):
+  gates the page's admin sheet, the tables' RLS, the referee RPCs, and the
+  organizer notifications — the `club_game_reg` event in the notify matrix
+  (push + email via `notify-club-reg`), resolved per person like every other
+  event. Registrants get a confirmation push on the phone they registered with.
+- **The form knows the dalil** (migrations 36–37): a typed phone is looked up
+  via `club_phone_lookup`, which answers only with what the public directory
+  itself shows — approved entries plus registry people through
+  `phonebook_public()`, whose own privacy makes a hidden phone match nothing —
+  and the name pre-fills while typing. Unknown → the «هل أنت من وادي الست؟»
+  popup: yes OPENS the dalil's own add form (`phonebook.html#add=<phone>|<name>`,
+  pre-filled) in a new tab so the person registers themselves through the normal
+  validation pipeline; no keeps them out of the dalil entirely. Tournament
+  registration never waits for any of it.
+- Deliberately **no home-page link** — the page is shared by URL.
 
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
 
