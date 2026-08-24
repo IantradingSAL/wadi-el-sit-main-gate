@@ -416,6 +416,7 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
   <div class="atabs">
     <button class="at on" data-a="regs" onclick="admTab(this)">📋 التسجيلات</button>
     <button class="at" data-a="bracket" onclick="admTab(this)">🏆 الجدول والنتائج</button>
+    <button class="at" data-a="report" onclick="admTab(this)">📊 التقرير</button>
     <button class="at" data-a="cfg" onclick="admTab(this)">⚙️ الإعدادات</button>
   </div>
   <div class="gtabs" id="adm-gtabs"></div>
@@ -497,6 +498,9 @@ async function uploadPhoto(inp){
   return path;
 }
 function err(id,m){const e=$(id);e.textContent=m;e.style.display='block';}
+// what the form learned from the dalil question: in the dalil or said yes → true,
+// said «لا» → false, never answered → null (stored as-is for the report)
+function wadiFlag(k){const v=DALIL[k];return v==='no'?false:(v?true:null);}
 async function submitSolo(){
   $('s-err').style.display='none';
   const name=$('s-name').value.trim(), phone=$('s-phone').value.trim();
@@ -510,7 +514,7 @@ async function submitSolo(){
     const photo=await uploadPhoto($('s-photo'));
     const{data,error}=await sb.rpc('club_register',{
       p_game:CUR,p_name:name,p_phone:(window.phoneE164?phoneE164(phone):phone),
-      p_own_board:BOARD,p_photo:photo});
+      p_own_board:BOARD,p_photo:photo,p_from_wadi:wadiFlag('s')});
     if(error)throw error;
     showTicket(data,name,phone);
   }catch(e){err('s-err','⚠️ '+(e.message||e));}
@@ -542,7 +546,8 @@ async function submitTeam(){
     const{data,error}=await sb.rpc('club_register',{
       p_game:CUR,p_name:n1,p_phone:(window.phoneE164?phoneE164(p1):p1),
       p_name2:n2,p_phone2:(window.phoneE164?phoneE164(p2):p2),
-      p_team_name:team||null,p_photo:photo});
+      p_team_name:team||null,p_photo:photo,
+      p_from_wadi:wadiFlag('t1'),p_from_wadi2:wadiFlag('t2')});
     if(error)throw error;
     showTicket(data,n1,p1,n2);
   }catch(e){err('t-err','⚠️ '+(e.message||e));}
@@ -740,11 +745,12 @@ function admGtabs(){
     '<button class="gt'+(ADM.game===g?' on':'')+'" onclick="admGame(\''+g+'\')">'+GAMES[g].emoji+' '+GAMES[g].ar+'</button>').join('');
 }
 async function admRender(){
-  $('adm-gtabs').innerHTML=ADM.tab==='cfg'?'':admGtabs();
+  $('adm-gtabs').innerHTML=(ADM.tab==='cfg'||ADM.tab==='report')?'':admGtabs();
   const box=$('adm-body');box.innerHTML='⏳ …';
   try{
     if(ADM.tab==='regs')return admRegs(box);
     if(ADM.tab==='bracket')return admBracket(box);
+    if(ADM.tab==='report')return admReport(box);
     return admCfg(box);
   }catch(e){box.innerHTML='<div style="color:#bf2424">⚠️ '+esc(e.message||e)+'</div>';}
 }
@@ -782,6 +788,45 @@ async function admPhoto(path){
     if(error)throw error;
     window.open(data.signedUrl,'_blank');
   }catch(e){toast('⚠️ '+(e.message||e));}
+}
+
+// ── 📊 التقرير: الحضور، من وادي الست، والمبالغ ──
+async function admReport(box){
+  const{data,error}=await wadiAuth.sb.from('club_game_regs')
+    .select('game,fee,paid,attended,p1_from_wadi,p2_from_wadi,p2_name')
+    .eq('status','registered');
+  if(error)throw error;
+  if(!data.length){box.innerHTML='<div style="text-align:center;color:#8d93a6;padding:14px">لا تسجيلات بعد</div>';return;}
+  const Z=()=>({regs:0,players:0,att:0,abs:0,attNa:0,wadi:0,out:0,wadiNa:0,due:0,paid:0});
+  const per={},tot=Z();
+  const wadiTally=(a,v)=>{if(v===true)a.wadi++;else if(v===false)a.out++;else a.wadiNa++;};
+  data.forEach(r=>{
+    const a=per[r.game]||(per[r.game]=Z());
+    [a,tot].forEach(x=>{
+      const n=r.p2_name?2:1;
+      x.regs++;x.players+=n;
+      if(r.attended===true)x.att+=n;else if(r.attended===false)x.abs+=n;else x.attNa+=n;
+      wadiTally(x,r.p1_from_wadi);
+      if(r.p2_name)wadiTally(x,r.p2_from_wadi);
+      x.due+=Number(r.fee)||0;
+      if(r.paid)x.paid+=Number(r.fee)||0;
+    });
+  });
+  const line=(l,v)=>'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #edf0f6"><span style="color:#5b6272">'+l+'</span><b>'+v+'</b></div>';
+  const card=(title,a,hero)=>
+    '<div class="reg-row" style="'+(hero?'border:2px solid #0f4d82;background:#f4f9ff;':'')+'margin-bottom:8px">'
+    +'<div style="font-weight:900;color:#0f4d82;margin-bottom:5px">'+title+'</div>'
+    +line('👥 المشاركون','<span style="direction:ltr;display:inline-block">'+a.players+'</span> لاعب · '+a.regs+(a.regs===1?' تسجيل':' تسجيلات'))
+    +line('✅ حضر / 🚫 غاب / ⏳ لم يُحسم',a.att+' / '+a.abs+' / '+a.attNa)
+    +line('🏡 من وادي الست',a.wadi+' لاعب')
+    +line('🚗 من خارجها',a.out+' لاعب'+(a.wadiNa?' · غير محدد: '+a.wadiNa:''))
+    +line('💵 المستحق','<span style="color:#0f4d82">'+a.due+'$</span>')
+    +line('✔️ المدفوع','<span style="color:#188045">'+a.paid+'$</span>')
+    +line('⏰ المتبقي','<span style="color:'+(a.due-a.paid>0?'#bf2424':'#188045')+'">'+(a.due-a.paid)+'$</span>')
+    +'</div>';
+  box.innerHTML=card('🏆 كل البطولة — الإجمالي',tot,true)
+    +Object.keys(GAMES).filter(g=>per[g]).map(g=>card(GAMES[g].emoji+' '+GAMES[g].ar,per[g])).join('')
+    +'<div style="font-size:10.5px;color:#8d93a6;margin-top:2px">«غير محدد» في السكن: تسجيلات قبل إضافة سؤال «هل أنت من وادي الست؟» أو لم يُجب عنه. الغائب يبقى رسمه مستحقاً.</div>';
 }
 
 function roundName(r,max){
