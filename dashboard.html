@@ -3194,7 +3194,7 @@ ar:{
   permHint:'الدور يعطي الأساس، وكل مفتاح تغيّره هنا يصبح مخصّصاً لهذا الموظف وحده. السهم يفتح كل مفاتيح الوحدة التفصيلية.',
   permSearch:'ابحث عن صلاحية…',cust:'مخصّص',on:'مفعّلة',
   notHint:'الصلاحية تقرّر مَن يُبلَّغ وهذه القنوات تقرّر كيف — لكل حدث. 💬 واتساب و📱 SMS يُحفظان الآن ويعملان يوم تُربط الخدمة. تعمل القنوات فقط ما دام يملك «طلبات التحقق».',
-  needPerm:'⚠️ لا يملك صلاحية «طلبات التحقق» — فعِّلها من تبويب الصلاحيات ليصله شيء',
+  needPerm:'⚠️ لا يملك «طلبات التحقق» ولا «إدارة البطولة» — فعِّل إحداهما من تبويب الصلاحيات ليصله شيء',
   actHint:'آخر ما فعله هذا الموظف — من سجل النشاط (app_activity).',actNone:'لا نشاط مسجّلاً بعد',actNoPerm:'عرض النشاط يحتاج صلاحية «تتبع نشاط الموظفين»',
   save:'💾 حفظ',reset:'↩️ إعادة لإعداد الدور',saved:'✅ حُفظ ملف ',
   confirmDel:'حذف حساب "{n}"؟ لا يمكن التراجع.',pwTitle:'🔑 كلمة مرور جديدة لـ ',pwNote:'لا تقل عن 8 أحرف — سيستخدمها {n} لتسجيل الدخول',
@@ -3215,6 +3215,7 @@ ar:{
   m_cases:'معاملات المواطنين',m_cases_s:'الطلبات والشكاوى والموافقات',
   m_coop:'التعاونية',m_coop_s:'البائعون والتوصيل والطلبات',
   m_mrs:'الأرشيف المالي MRS',m_mrs_s:'الاطلاع والتعديل',
+  m_club:'بطولة وادي الست',m_club_s:'التسجيلات والجدول والنتائج وشاشة العرض',
   m_sys:'المستخدمون والنظام',m_sys_s:'الحسابات والأدوار والإعدادات وقنوات التنبيه',
   pk_phonebook_view:'الاطلاع على الدليل',pk_phonebook_edit:'تعديل الدليل',pks_phonebook_edit:'إضافة وتصحيح مباشر دون تحقق',
   pk_phonebook_registry:'سجل النفوس الكامل',pks_phonebook_registry:'اسم الأم وسنة الولادة — بيانات حساسة',
@@ -3229,7 +3230,9 @@ ar:{
   pk_mrs_view:'الاطلاع',pk_mrs_edit:'التعديل',
   pk_users_view:'عرض المستخدمين',pk_users_create:'إنشاء حساب',pk_users_edit:'تعديل حساب',pk_users_delete:'حذف حساب',
   pk_roles_edit:'تعديل الأدوار',pk_roles_delete:'حذف الأدوار',pk_settings_edit:'إعدادات النظام',pk_export_data:'تصدير البيانات',
-  pk_audit_view:'سجل العمليات',pk_activity_view:'تتبع نشاط الموظفين',pk_notify_prefs_edit:'قنوات تنبيه الموظفين'
+  pk_audit_view:'سجل العمليات',pk_activity_view:'تتبع نشاط الموظفين',pk_notify_prefs_edit:'قنوات تنبيه الموظفين',
+  pk_club_games_manage:'إدارة البطولة (طاولة وورق)',pks_club_games_manage:'التسجيلات والرسوم والجدول والنتائج — games.html',
+  ev_club_game_reg:'🎲 تسجيل في بطولة وادي الست'
 },
 en:{
   emps:'👥 Employees',searchU:'Search by name or email…',fAll:'All',fApr:'Can approve',fCh:'Channels on',fSus:'Suspended',
@@ -3241,7 +3244,7 @@ en:{
   permHint:'The role sets the baseline; any switch changed here becomes custom for this employee alone. The arrow unfolds all the module’s detailed keys.',
   permSearch:'Search a permission…',cust:'custom',on:'on',
   notHint:'The permission decides WHO is told; these channels decide HOW — per event. 💬 WhatsApp & 📱 SMS are stored now and go live when the service is connected. Channels work only while they hold “approval requests”.',
-  needPerm:'⚠️ Does not hold “approval requests” — enable it in the Permissions tab first',
+  needPerm:'⚠️ Holds neither “approval requests” nor “run the championship” — enable one in the Permissions tab first',
   actHint:'This employee’s recent actions — from the activity log (app_activity).',actNone:'No recorded activity yet',actNoPerm:'Viewing activity needs the “staff activity” permission',
   save:'💾 Save',reset:'↩️ Reset to role defaults',saved:'✅ Saved profile of ',
   confirmDel:'Delete the account "{n}"? This cannot be undone.',pwTitle:'🔑 New password for ',pwNote:'At least 8 characters — {n} will use it to sign in',
@@ -3262,6 +3265,7 @@ en:{
   m_cases:'Citizen cases',m_cases_s:'Requests, complaints and approvals',
   m_coop:'Cooperative',m_coop_s:'Sellers, delivery and orders',
   m_mrs:'MRS financial archive',m_mrs_s:'View and edit',
+  m_club:'Wadi El Sitt championship',m_club_s:'Registrations, bracket, results and the big screen',
   m_sys:'Users & system',m_sys_s:'Accounts, roles, settings and notify channels',
   pk_phonebook_view:'View the directory',pk_phonebook_edit:'Edit the directory',pks_phonebook_edit:'Direct add & correct without review',
   pk_phonebook_registry:'Full civil registry',pks_phonebook_registry:'Mother’s name & birth year — sensitive data',
@@ -3276,7 +3280,9 @@ en:{
   pk_mrs_view:'View',pk_mrs_edit:'Edit',
   pk_users_view:'View users',pk_users_create:'Create accounts',pk_users_edit:'Edit accounts',pk_users_delete:'Delete accounts',
   pk_roles_edit:'Edit roles',pk_roles_delete:'Delete roles',pk_settings_edit:'System settings',pk_export_data:'Export data',
-  pk_audit_view:'Audit log',pk_activity_view:'Staff activity',pk_notify_prefs_edit:'Staff notify channels'
+  pk_audit_view:'Audit log',pk_activity_view:'Staff activity',pk_notify_prefs_edit:'Staff notify channels',
+  pk_club_games_manage:'Run the championship (tawle & cards)',pks_club_games_manage:'Registrations, fees, bracket and results — games.html',
+  ev_club_game_reg:'🎲 Championship registration'
 },
 fr:{
   emps:'👥 Employés',searchU:'Rechercher par nom ou e-mail…',fAll:'Tous',fApr:'Peut valider',fCh:'Canaux actifs',fSus:'Suspendu',
@@ -3288,7 +3294,7 @@ fr:{
   permHint:'Le rôle donne la base ; tout interrupteur modifié ici devient personnalisé pour cet employé. La flèche déplie toutes les clés détaillées du module.',
   permSearch:'Rechercher une permission…',cust:'perso',on:'actives',
   notHint:'La permission décide QUI est informé ; ces canaux décident COMMENT — par événement. 💬 WhatsApp et 📱 SMS sont enregistrés dès maintenant et s’activeront à la connexion du service. Les canaux ne fonctionnent que s’il détient « demandes de validation ».',
-  needPerm:'⚠️ Ne détient pas « demandes de validation » — activez-la d’abord dans l’onglet Permissions',
+  needPerm:'⚠️ Ne détient ni « demandes de validation » ni « gérer le championnat » — activez l’une des deux d’abord',
   actHint:'Dernières actions de cet employé — depuis le journal d’activité (app_activity).',actNone:'Aucune activité enregistrée',actNoPerm:'Voir l’activité demande la permission « activité du personnel »',
   save:'💾 Enregistrer',reset:'↩️ Revenir au rôle',saved:'✅ Profil enregistré : ',
   confirmDel:'Supprimer le compte « {n} » ? Irréversible.',pwTitle:'🔑 Nouveau mot de passe pour ',pwNote:'8 caractères minimum — {n} l’utilisera pour se connecter',
@@ -3309,6 +3315,7 @@ fr:{
   m_cases:'Dossiers citoyens',m_cases_s:'Demandes, plaintes et validations',
   m_coop:'Coopérative',m_coop_s:'Vendeurs, livraison et commandes',
   m_mrs:'Archives financières MRS',m_mrs_s:'Consultation et modification',
+  m_club:'Championnat de Wadi El Sitt',m_club_s:'Inscriptions, tableau, résultats et grand écran',
   m_sys:'Utilisateurs & système',m_sys_s:'Comptes, rôles, réglages et canaux',
   pk_phonebook_view:'Consulter l’annuaire',pk_phonebook_edit:'Modifier l’annuaire',pks_phonebook_edit:'Ajout et correction directs sans validation',
   pk_phonebook_registry:'Registre civil complet',pks_phonebook_registry:'Nom de la mère et année de naissance — données sensibles',
@@ -3323,7 +3330,9 @@ fr:{
   pk_mrs_view:'Consulter',pk_mrs_edit:'Modifier',
   pk_users_view:'Voir les utilisateurs',pk_users_create:'Créer des comptes',pk_users_edit:'Modifier des comptes',pk_users_delete:'Supprimer des comptes',
   pk_roles_edit:'Modifier les rôles',pk_roles_delete:'Supprimer les rôles',pk_settings_edit:'Réglages système',pk_export_data:'Exporter les données',
-  pk_audit_view:'Journal des opérations',pk_activity_view:'Activité du personnel',pk_notify_prefs_edit:'Canaux de notification du personnel'
+  pk_audit_view:'Journal des opérations',pk_activity_view:'Activité du personnel',pk_notify_prefs_edit:'Canaux de notification du personnel',
+  pk_club_games_manage:'Gérer le championnat (tawlé & cartes)',pks_club_games_manage:'Inscriptions, frais, tableau et résultats — games.html',
+  ev_club_game_reg:'🎲 Inscription au championnat'
 }};
 
 // Every permission key of the portal, module by module. THE registry: a new
@@ -3343,6 +3352,8 @@ const UP_MODULES=[
    keys:['coop_view','coop_edit']},
   {id:'mrs',   icon:'🏛️', bg:'#efeaf9', quick:[['mrs_view','qView'],['mrs_edit','qEdit']],
    keys:['mrs_view','mrs_edit']},
+  {id:'club',  icon:'🎲', bg:'#fff5d6', quick:[['club_games_manage','qEdit']],
+   keys:['club_games_manage']},
   {id:'sys',   icon:'👥', bg:'#fdecea', quick:[['users_view','qView']],
    keys:['users_view','users_create','users_edit','users_delete','roles_edit','roles_delete',
          'settings_edit','export_data','audit_view','activity_view','notify_prefs_edit']}
@@ -3356,7 +3367,8 @@ const WP_NOTIFY_EVENTS=[
   ['phonebook_edit','✏️ تعديل مقترح على الدليل'],
   ['coop_seller','🛒 بائع جديد في التعاونية'],
   ['coop_agent','🚚 عامل توصيل جديد'],
-  ['user_account','👤 حساب جديد على البوابة']
+  ['user_account','👤 حساب جديد على البوابة'],
+  ['club_game_reg','🎲 تسجيل في بطولة وادي الست']
 ];
 const WP_CHANNELS=[['email','📧 بريد'],['push','🔔 إشعار'],['whatsapp','💬 واتساب'],['sms','📱 SMS']];
 const WP_CH_LATER={whatsapp:1,sms:1};
@@ -3616,7 +3628,7 @@ function upNotHTML(){
       }).join('')+'</div>';
   }).join('');
   return '<div style="font-size:11.5px;color:var(--text2);line-height:1.8;background:var(--bg);border-radius:10px;padding:9px 13px;margin-bottom:10px">'+T('notHint')+'</div>'
-    +(upEff('approvals_manage')?'':'<div style="font-size:12px;color:var(--warn);background:#fff4e0;border-radius:10px;padding:8px 13px;margin-bottom:10px;font-weight:700">'+T('needPerm')+'</div>')
+    +((upEff('approvals_manage')||upEff('club_games_manage'))?'':'<div style="font-size:12px;color:var(--warn);background:#fff4e0;border-radius:10px;padding:8px 13px;margin-bottom:10px;font-weight:700">'+T('needPerm')+'</div>')
     +rows
     +'<div class="fg" style="margin-top:10px;max-width:340px"><div class="fl">📱 '+T('fPhone')+'</div>'
     +'<input type="tel" class="fi" data-phone value="'+upEsc(e.notify.phone)+'" onchange="UP_CTX.edit.notify.phone=this.value" style="direction:ltr"></div>';
@@ -3782,15 +3794,17 @@ async function loadNotifyMatrix(){
     const OV={};   ((ovRes&&ovRes.data)||[]).forEach(r=>{OV[r.user_id]=r.perms||{};});
     const NP={};   ((npRes&&npRes.data)||[]).forEach(r=>{NP[r.user_id]=r;});
     // same resolution as has_perm(): per-user override → role default → super_admin
-    const canApprove=function(uid){
+    const holds=function(uid,key){
       const ov=OV[uid]||{};
-      if(Object.prototype.hasOwnProperty.call(ov,'approvals_manage'))return !!ov.approvals_manage;
+      if(Object.prototype.hasOwnProperty.call(ov,key))return !!ov[key];
       const roles=ROLES[uid]||[]; let hit=null;
       roles.forEach(rl=>{const p=DEFS[rl]||{};
-        if(Object.prototype.hasOwnProperty.call(p,'approvals_manage'))hit=(hit===true)?true:!!p.approvals_manage;});
+        if(Object.prototype.hasOwnProperty.call(p,key))hit=(hit===true)?true:!!p[key];});
       if(hit!==null)return hit;
       return roles.indexOf('super_admin')>=0;
     };
+    // approvals OR the championship: delivery still gates per event on the right key
+    const canApprove=function(uid){return holds(uid,'approvals_manage')||holds(uid,'club_games_manage');};
     NM_CTX={users:(d.users||[]).filter(u=>u.email).map(u=>{
       const meta=u.user_metadata||{}, np=NP[u.id]||{};
       return {uid:u.id,name:meta.name||u.email.split('@')[0],email:u.email,
@@ -3829,7 +3843,7 @@ function nmRender(){
             +' onchange="nmToggle(\''+u.uid+'\',\''+ev+'\',\''+k+'\',this.checked)" style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer"></td>').join('')
           +'</tr>').join('')
         +'</table></div>'
-      :'<div style="padding:12px 14px;font-size:12px;color:var(--text3)">لا أحد يملك صلاحية «طلبات التحقق» بعد — امنحها من 🔑 الصلاحيات أولاً</div>')
+      :'<div style="padding:12px 14px;font-size:12px;color:var(--text3)">لا أحد يملك «طلبات التحقق» أو «إدارة البطولة» بعد — امنحها من 🔑 الصلاحيات أولاً</div>')
     +'</div>').join('');
   const phones=apr.map(u=>
     '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0">'
