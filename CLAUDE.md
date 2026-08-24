@@ -236,6 +236,13 @@ agree about the same person.
   pre-filled) in a new tab so the person registers themselves through the normal
   validation pipeline; no keeps them out of the dalil entirely. Tournament
   registration never waits for any of it.
+- **📊 التقرير** in the admin sheet answers the organiser's three questions —
+  how many came, who is from وادي الست, how much money — per game and overall.
+  The wadi split reads `p1_from_wadi`/`p2_from_wadi` (migration 39), stamped at
+  registration from what the form learned: in the dalil or answered «نعم» →
+  `true`, answered «لا» → `false`, never asked → `null`, shown as «غير محدد»
+  rather than guessed. المستحق is Σfee (a no-show still owes), المدفوع is Σfee
+  where `paid`.
 - Deliberately **no home-page link** — the page is shared by URL.
 
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
