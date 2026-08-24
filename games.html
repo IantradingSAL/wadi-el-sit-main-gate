@@ -41,12 +41,16 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
 .prize .cup{font-size:52px;display:inline-block;animation:pulse 2.6s ease-in-out infinite;filter:drop-shadow(0 8px 22px rgba(255,200,60,.65))}
 .prize .t{font-size:17px;font-weight:900;color:#ffd76b;margin-top:2px}
 .prize .s{font-size:12.5px;opacity:.9;margin-top:2px}
-.podium{display:flex;align-items:flex-end;justify-content:center;gap:6px;margin-top:14px}
-.pod{border-radius:10px 10px 0 0;width:74px;text-align:center;padding-top:6px;font-size:22px}
-.pod small{display:block;font-size:10px;font-weight:800;color:#081f38;padding-bottom:4px}
-.pod.p1{background:linear-gradient(180deg,#ffd76b,#d4a017);height:64px}
-.pod.p2{background:linear-gradient(180deg,#e8ecf3,#b9c2d0);height:48px}
-.pod.p3{background:linear-gradient(180deg,#f0b98a,#c98146);height:40px}
+.champs{margin-top:15px}
+.champs .ct{display:inline-block;font-size:12.5px;font-weight:900;color:#081f38;background:linear-gradient(135deg,#ffe9a8,#ffd76b 45%,#e0a92c);border-radius:999px;padding:6px 18px;box-shadow:0 5px 16px rgba(255,200,60,.45);letter-spacing:.3px}
+.champ-grid{display:flex;gap:8px;margin-top:12px}
+.champ-card{flex:1;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,215,107,.5);border-radius:16px;padding:11px 6px 12px;position:relative;overflow:hidden}
+.champ-card::after{content:'';position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.3),transparent);animation:shine 3.4s ease-in-out infinite}
+.champ-card .crown{font-size:20px;filter:drop-shadow(0 3px 8px rgba(255,200,60,.6))}
+.champ-card .cg{font-size:12px;font-weight:900;color:#ffd76b;margin-top:2px}
+.champ-card .cn{font-size:13px;font-weight:800;margin-top:7px;line-height:1.75}
+.champ-card .amp{color:#ffd76b;font-size:11px;font-weight:900;display:block;line-height:1.1}
+@keyframes shine{0%{left:-70%}55%{left:130%}100%{left:130%}}
 .fee{background:linear-gradient(135deg,#fff5d6,#ffe9ad);border:1.5px solid #d4a017;border-radius:18px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 6px 20px rgba(212,160,23,.18)}
 .fee-i{font-size:32px;flex-shrink:0}
 .fee b{color:#7c5803}
@@ -223,10 +227,20 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
     <span class="cup">🏆</span>
     <div class="t">كأس البطولة وجوائز كثيرة!</div>
     <div class="s">جوائز قيّمة بانتظار الرابحين في الطاولة والورق</div>
-    <div class="podium">
-      <div class="pod p2">🥈<small>الوصيف</small></div>
-      <div class="pod p1">🥇<small>البطل</small></div>
-      <div class="pod p3">🥉<small>الثالث</small></div>
+    <div class="champs">
+      <div class="ct">👑 حاملو اللقب — أبطال 2025</div>
+      <div class="champ-grid">
+        <div class="champ-card">
+          <div class="crown">👑</div>
+          <div class="cg">♠️ الطرنيب</div>
+          <div class="cn">فيليب جوهر<span class="amp">&amp;</span>كارل قدادو</div>
+        </div>
+        <div class="champ-card">
+          <div class="crown">👑</div>
+          <div class="cg">♥️ الأربعمية</div>
+          <div class="cn">مروان جوهر<span class="amp">&amp;</span>نعيم مرهج</div>
+        </div>
+      </div>
     </div>
   </div>
 
