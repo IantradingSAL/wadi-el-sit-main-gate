@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#081f38">
+<title>بطولة وادي الست — الطاولة والورق</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-common.js" defer></script>
+<script src="wadi-perms.js" defer></script>
+<script src="number-format.js" defer></script>
+<script src="pwa.js" defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Tajawal',Tahoma,sans-serif;background:#f2f4fa;color:#191c24;font-size:15px;line-height:1.6;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:inherit;color:inherit}
+.hd{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#081f38,#0f4d82);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 14px rgba(8,31,56,.35)}
+.hd-title{flex:1;font-size:15px;font-weight:800}
+.hd-back{background:rgba(255,255,255,.15);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;text-decoration:none}
+.hero{position:relative;padding:44px 20px 110px;background:
+      radial-gradient(1100px 500px at 80% -80px,rgba(212,160,23,.35),transparent 60%),
+      radial-gradient(800px 400px at 10% 110%,rgba(45,122,62,.3),transparent 60%),
+      linear-gradient(160deg,#081f38,#0f4d82 55%,#123c66);color:#fff;text-align:center;overflow:hidden}
+.float{position:absolute;font-size:34px;opacity:.16;animation:drift 7s ease-in-out infinite;user-select:none;pointer-events:none}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-16px) rotate(8deg)}}
+.crest{width:88px;height:88px;margin:0 auto 10px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#ffe9ad,#d4a017 70%);display:flex;align-items:center;justify-content:center;font-size:44px;box-shadow:0 10px 34px rgba(212,160,23,.55),inset 0 -4px 10px rgba(122,84,0,.4);border:3px solid #ffd76b;animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.hero h1{font-size:25px;font-weight:900;margin:4px 0 2px;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.hero-en{font-size:14px;color:#ffd76b;font-weight:700;font-style:italic;letter-spacing:.6px;margin-bottom:8px}
+.hero p{font-size:13.5px;opacity:.92}
+.suits{font-size:19px;letter-spacing:8px;margin-top:6px;color:#ffd76b;text-shadow:0 0 18px rgba(255,215,107,.8)}
+.hero-meta{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.hm{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:7px 15px;font-size:12px;font-weight:800}
+.hm.gold{background:linear-gradient(135deg,#d4a017,#a07a0b);border-color:#ffd76b;box-shadow:0 4px 16px rgba(212,160,23,.5)}
+.main{max-width:560px;margin:-78px auto 30px;padding:0 14px 30px;position:relative;z-index:2}
+.prize{background:linear-gradient(150deg,#1c2c44,#0f4d82 70%,#155a91);border-radius:22px;color:#fff;padding:20px 18px 16px;margin-bottom:14px;box-shadow:0 14px 44px rgba(8,31,56,.35);position:relative;overflow:hidden;text-align:center;border:1px solid rgba(255,215,107,.35)}
+.prize .cup{font-size:52px;display:inline-block;animation:pulse 2.6s ease-in-out infinite;filter:drop-shadow(0 8px 22px rgba(255,200,60,.65))}
+.prize .t{font-size:17px;font-weight:900;color:#ffd76b;margin-top:2px}
+.prize .s{font-size:12.5px;opacity:.9;margin-top:2px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:6px;margin-top:14px}
+.pod{border-radius:10px 10px 0 0;width:74px;text-align:center;padding-top:6px;font-size:22px}
+.pod small{display:block;font-size:10px;font-weight:800;color:#081f38;padding-bottom:4px}
+.pod.p1{background:linear-gradient(180deg,#ffd76b,#d4a017);height:64px}
+.pod.p2{background:linear-gradient(180deg,#e8ecf3,#b9c2d0);height:48px}
+.pod.p3{background:linear-gradient(180deg,#f0b98a,#c98146);height:40px}
+.fee{background:linear-gradient(135deg,#fff5d6,#ffe9ad);border:1.5px solid #d4a017;border-radius:18px;padding:14px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 6px 20px rgba(212,160,23,.18)}
+.fee-i{font-size:32px;flex-shrink:0}
+.fee b{color:#7c5803}
+.fee .t{font-size:14.5px;font-weight:900;color:#7c5803}
+.fee .s{font-size:12.5px;color:#191c24;line-height:1.8;margin-top:3px}
+.mylk{background:#fff;border-radius:18px;border:1px solid #dce0ea;padding:13px 16px;margin-bottom:16px;display:flex;gap:10px;align-items:center;box-shadow:0 4px 14px rgba(15,77,130,.07)}
+.mylk .t{flex:1;font-size:13px;font-weight:800;color:#0f4d82}
+.mylk button{background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:99px;padding:8px 16px;font-size:12.5px;font-weight:800}
+.sect{display:flex;align-items:center;gap:10px;margin:18px 2px 10px}
+.sect .l{flex:1;height:1.5px;background:linear-gradient(90deg,transparent,#c7d2e2)}
+.sect .r{flex:1;height:1.5px;background:linear-gradient(90deg,#c7d2e2,transparent)}
+.sect b{font-size:15px;font-weight:900;color:#0f4d82;white-space:nowrap}
+.game{background:#fff;border-radius:22px;box-shadow:0 12px 36px rgba(15,77,130,.13);padding:18px;margin-bottom:14px;border:1px solid #dce0ea;position:relative;overflow:hidden}
+.game:before{content:'';position:absolute;inset:0 0 auto 0;height:5px}
+.game.t1:before{background:linear-gradient(90deg,#d4a017,#ffd76b)}
+.game.t2:before{background:linear-gradient(90deg,#7c3aed,#c4b5fd)}
+.game.c1:before{background:linear-gradient(90deg,#0f4d82,#60a5fa)}
+.game.c2:before{background:linear-gradient(90deg,#be123c,#fda4af)}
+.wm{position:absolute;bottom:-18px;left:-10px;font-size:110px;opacity:.055;transform:rotate(-15deg);pointer-events:none;user-select:none}
+.rib{position:absolute;top:12px;left:14px;color:#fff;font-weight:900;font-size:11px;padding:5px 13px;border-radius:99px;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.rib.solo{background:linear-gradient(135deg,#1a6eb5,#0f4d82)}
+.rib.team{background:linear-gradient(135deg,#16a34a,#15803d)}
+.g-head{display:flex;align-items:center;gap:12px;margin:8px 0 12px}
+.g-emoji{width:58px;height:58px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;box-shadow:inset 0 -3px 8px rgba(0,0,0,.12);position:relative}
+.g-emoji .mini{position:absolute;bottom:-5px;left:-5px;font-size:17px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.game.t1 .g-emoji{background:linear-gradient(135deg,#fff5d6,#e9c463)}
+.game.t2 .g-emoji{background:linear-gradient(135deg,#ede9fe,#c4b5fd)}
+.game.c1 .g-emoji{background:linear-gradient(135deg,#dbeafe,#93c5fd);font-size:30px}
+.game.c2 .g-emoji{background:linear-gradient(135deg,#ffe4e6,#fda4af)}
+.g-title{font-size:17px;font-weight:900;color:#0f4d82}
+.g-sub{font-size:12px;color:#515668}
+.g-cells{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px}
+.g-cell{background:#f2f5fa;border-radius:12px;padding:8px 10px;text-align:center;border:1px solid #e7ecf4}
+.g-cell .l{font-size:10px;color:#8d93a6;font-weight:700}
+.g-cell .v{font-size:13.5px;font-weight:900;color:#0f4d82}
+.btn-go{width:100%;color:#fff;padding:13px;border-radius:13px;font-size:14.5px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s}
+.btn-go:active{transform:scale(.98)}
+.btn-go:disabled{opacity:.55}
+.game.t1 .btn-go{background:linear-gradient(135deg,#d4a017,#a07a0b);box-shadow:0 6px 18px rgba(212,160,23,.45)}
+.game.t2 .btn-go{background:linear-gradient(135deg,#7c3aed,#5b21b6);box-shadow:0 6px 18px rgba(124,58,237,.4)}
+.game.c1 .btn-go{background:linear-gradient(135deg,#1a6eb5,#0f4d82);box-shadow:0 6px 18px rgba(26,110,181,.45)}
+.game.c2 .btn-go{background:linear-gradient(135deg,#e11d48,#be123c);box-shadow:0 6px 18px rgba(225,29,72,.4)}
+.badge400{display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:9px;font-weight:900;color:#be123c;font-size:15px;padding:2px 7px;border:2px solid #be123c;line-height:1.2}
+.rules{background:#fff;border-radius:20px;border:1px solid #dce0ea;padding:16px;margin-bottom:12px;box-shadow:0 6px 20px rgba(15,77,130,.07)}
+.rules h3{font-size:14.5px;font-weight:900;color:#0f4d82;margin-bottom:8px}
+.rl{display:flex;gap:10px;align-items:flex-start;padding:8px 0;font-size:13px;border-bottom:1px dashed #eef0f6}
+.rl:last-child{border-bottom:none}
+.rl .i{width:30px;height:30px;border-radius:9px;background:#f2f5fa;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.modal{position:fixed;inset:0;background:rgba(8,20,38,.7);display:none;align-items:flex-end;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
+.modal.open{display:flex}
+.sheet{background:#fff;border-radius:26px 26px 0 0;width:100%;max-width:560px;max-height:92vh;overflow:auto;padding:10px 20px 26px}
+.grab{width:44px;height:5px;border-radius:99px;background:#dce0ea;margin:4px auto 14px}
+.sh-t{font-size:17px;font-weight:900;color:#0f4d82;margin-bottom:2px}
+.sh-s{font-size:12.5px;color:#515668;margin-bottom:12px}
+.fm-l{font-size:12.5px;color:#515668;font-weight:700;margin:10px 0 5px;display:block}
+.fm-i{width:100%;padding:12px 14px;border:1.5px solid #dce0ea;border-radius:12px;font-size:15px;background:#fafbfd;outline:none}
+.fm-i:focus{border-color:#1a6eb5;background:#fff;box-shadow:0 0 0 3px rgba(26,110,181,.12)}
+.duo{background:linear-gradient(135deg,#eef5fc,#f6fbf3);border:1.5px solid #b4d4ed;border-radius:15px;padding:12px 14px;margin-top:12px}
+.duo .dt{font-size:12.5px;font-weight:900;color:#0f4d82}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.opt{border:2px solid #dce0ea;border-radius:14px;padding:11px 10px;text-align:center;cursor:pointer;background:#fafbfd;transition:.15s}
+.opt .oi{font-size:24px}
+.opt .ot{font-size:12.5px;font-weight:900;color:#0f4d82;margin-top:2px}
+.opt .op{font-size:15px;font-weight:900;color:#a07a0b;margin-top:1px}
+.opt.on{border-color:#d4a017;background:linear-gradient(135deg,#fff9e8,#ffedb8);box-shadow:0 4px 14px rgba(212,160,23,.3)}
+.photo{display:flex;align-items:center;gap:10px;margin-top:10px;background:#fafbfd;border:1.5px dashed #c7d2e2;border-radius:13px;padding:10px 13px}
+.photo .pi{font-size:22px}
+.photo .pt{flex:1;font-size:11.5px;color:#515668;line-height:1.6}
+.photo input{display:none}
+.photo .pb{background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:99px;padding:7px 14px;font-size:11.5px;font-weight:800;white-space:nowrap}
+.agree{display:flex;gap:9px;align-items:flex-start;background:#fff4e0;border:1.5px solid #d4a017;border-radius:13px;padding:11px 13px;margin-top:14px;font-size:12.5px;line-height:1.7}
+.agree input{width:17px;height:17px;margin-top:2px;accent-color:#a07a0b;flex-shrink:0}
+.btn-sub{width:100%;background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;padding:14px;border-radius:13px;font-size:15px;font-weight:900;margin-top:14px;box-shadow:0 6px 18px rgba(212,160,23,.45)}
+.btn-sub:disabled{opacity:.6}
+.btn-x{width:100%;background:transparent;color:#515668;padding:11px;border:1.5px solid #dce0ea;border-radius:13px;font-size:13px;font-weight:700;margin-top:8px}
+.fm-err{padding:11px 13px;background:#fdeaea;color:#bf2424;border-radius:12px;font-size:13px;font-weight:700;margin-top:10px;display:none}
+.ticket{display:none;position:relative;background:#fff;border-radius:22px;box-shadow:0 16px 48px rgba(15,77,130,.25);margin-bottom:16px;border:1px solid #dce0ea;overflow:hidden}
+.ticket.on{display:block;animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
+.tk-top{background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;text-align:center;padding:20px 18px 16px}
+.tk-top .i{font-size:46px;display:inline-block;animation:pulse 2s ease-in-out infinite}
+.tk-top .t{font-size:19px;font-weight:900;margin-top:2px}
+.tk-top .s{font-size:12.5px;opacity:.85}
+.tk-cut{position:relative;border-top:2.5px dashed #c7d2e2;margin:0 -1px}
+.tk-cut:before,.tk-cut:after{content:'';position:absolute;top:-11px;width:22px;height:22px;border-radius:50%;background:#f2f4fa;border:1px solid #dce0ea}
+.tk-cut:before{right:-12px}.tk-cut:after{left:-12px}
+.tk-body{padding:18px;text-align:center}
+.tk-table{display:inline-block;background:linear-gradient(135deg,#fff5d6,#ffe9ad);border:2px solid #d4a017;border-radius:18px;padding:10px 34px;margin-bottom:12px}
+.tk-table .n{font-size:38px;font-weight:900;color:#7c5803;letter-spacing:2px;line-height:1.2}
+.tk-table .l{font-size:11px;font-weight:800;color:#a07a0b}
+.tk-rows{background:#f2f5fa;border-radius:14px;padding:12px 14px;text-align:right;font-size:13px;border:1px solid #e7ecf4}
+.tk-rows div{padding:3px 0}
+.tk-rows b{color:#0f4d82}
+.tk-warn{margin-top:10px;font-size:11.5px;color:#a07a0b;background:#fff4e0;border-radius:11px;padding:9px 12px;font-weight:800}
+.adm-fab{position:fixed;bottom:18px;left:18px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;font-size:24px;box-shadow:0 8px 24px rgba(15,77,130,.4);display:none;align-items:center;justify-content:center;z-index:100;border:3px solid #fff}
+.adm-fab.on{display:flex}
+.atabs{display:flex;gap:5px;margin-bottom:12px;overflow-x:auto}
+.at{padding:8px 15px;border-radius:99px;font-weight:800;font-size:12px;background:#f2f5fa;border:1.5px solid #dce0ea;color:#515668;white-space:nowrap}
+.at.on{background:#0f4d82;color:#fff;border-color:#0f4d82}
+.gtabs{display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap}
+.gt{padding:6px 13px;border-radius:99px;font-weight:800;font-size:11.5px;background:#fff;border:1.5px solid #dce0ea;color:#515668}
+.gt.on{background:#0f4d82;color:#fff;border-color:#0f4d82}
+.reg-row{border:1px solid #dce0ea;border-radius:13px;padding:10px 12px;margin-bottom:7px;background:#fff}
+.reg-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reg-top .tno{background:#0f4d82;color:#fff;border-radius:8px;font-weight:900;font-size:11px;padding:2px 9px}
+.reg-top .nm{flex:1;min-width:120px;font-weight:800;font-size:13px}
+.reg-top .ph{font-size:11px;color:#515668;direction:ltr}
+.reg-chk{display:flex;gap:14px;margin-top:6px;font-size:11.5px;font-weight:700;color:#515668;flex-wrap:wrap;align-items:center}
+.reg-chk label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.reg-chk input{width:15px;height:15px;accent-color:#16a34a}
+.match{background:#fff;border:1px solid #dce0ea;border-radius:15px;padding:12px 14px;margin-bottom:9px}
+.mh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mh .rt{font-size:12px;font-weight:900;color:#0f4d82}
+.mh .ms{margin-inline-start:auto;font-size:10px;font-weight:800;border-radius:99px;padding:3px 10px}
+.ms.live{background:#fff5d6;color:#a07a0b}
+.ms.done{background:#e4f7ec;color:#15803d}
+.ms.wait{background:#eef0f6;color:#8d93a6}
+.pl{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:11px;margin-bottom:5px;border:1.5px solid #eef0f6}
+.pl.win{background:linear-gradient(135deg,#e4f7ec,#d1f0dd);border-color:#16a34a}
+.pl .nm{flex:1;font-weight:800;font-size:13px;min-width:0}
+.dots{display:flex;gap:5px}
+.dot{width:26px;height:26px;border-radius:50%;border:2px solid #dce0ea;background:#f7f9fc;font-size:12px;font-weight:900;color:#c3ccd9;display:flex;align-items:center;justify-content:center}
+.dot.w{background:linear-gradient(135deg,#16a34a,#15803d);border-color:#15803d;color:#fff}
+.wbtn{background:#fdeaea;color:#bf2424;border:1.5px dashed #f0b6b6;border-radius:9px;padding:5px 10px;font-size:10.5px;font-weight:800}
+.abtn{width:100%;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;padding:12px;border-radius:12px;font-size:13.5px;font-weight:900;margin-top:8px}
+.abtn.warn{background:linear-gradient(135deg,#d4a017,#a07a0b)}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spn .7s linear infinite;display:inline-block;vertical-align:middle}
+@keyframes spn{to{transform:rotate(360deg)}}
+.toastc{position:fixed;bottom:20px;right:50%;transform:translateX(50%);background:#081f38;color:#fff;border-radius:99px;padding:10px 22px;font-size:13px;font-weight:800;z-index:300;display:none}
+.toastc.show{display:block}
+</style>
+</head>
+<body>
+
+<div class="hd"><a class="hd-back" href="index.html">←</a><div class="hd-title">وادي الست</div>
+  <a class="hd-back" href="games-screen.html" title="شاشة العرض">🖥️</a></div>
+
+<div class="hero">
+  <span class="float" style="top:12%;right:8%">♠️</span>
+  <span class="float" style="top:30%;right:88%;animation-delay:1.2s">🎲</span>
+  <span class="float" style="top:62%;right:6%;animation-delay:2s">♥️</span>
+  <span class="float" style="top:74%;right:90%;animation-delay:.6s">♦️</span>
+  <span class="float" style="top:8%;right:70%;animation-delay:1.7s">♣️</span>
+  <div class="crest">🏆</div>
+  <h1>بطولة وادي الست</h1>
+  <div class="hero-en">Tawle &amp; Cards Championship</div>
+  <p>فرنجية · محبوسة · طرنيب · أربعمية</p>
+  <div class="suits">♠ ♥ 🎲 ♦ ♣</div>
+  <div class="hero-meta">
+    <span class="hm" id="hm-date">📅 …</span>
+    <span class="hm">📍 وادي الست</span>
+    <span class="hm" id="hm-fee">💵 10$ للشخص</span>
+    <span class="hm gold">🏆 كأس وجوائز كثيرة</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="prize">
+    <span class="cup">🏆</span>
+    <div class="t">كأس البطولة وجوائز كثيرة!</div>
+    <div class="s">جوائز قيّمة بانتظار الرابحين في الطاولة والورق</div>
+    <div class="podium">
+      <div class="pod p2">🥈<small>الوصيف</small></div>
+      <div class="pod p1">🥇<small>البطل</small></div>
+      <div class="pod p3">🥉<small>الثالث</small></div>
+    </div>
+  </div>
+
+  <div class="fee"><div class="fee-i">💵</div><div>
+    <div class="t">رسم الاشتراك: <span id="fee-solo-l">10</span> دولار عن كل شخص</div>
+    <div class="s">التسجيل التزام: يصبح الرسم <b>مستحقاً بمجرد التسجيل</b>. من لا يحضر في موعد البطولة
+      يبقى الرسم مستحقاً عليه <b>وتُحتسب مبارياته خسارة</b> — في الطاولة والورق على السواء.
+      <br>🎲 <b>خاص بالطاولة:</b> إذا أحضرت طاولة زهر معك فالرسم <b><span id="fee-board-l">5</span>$ فقط</b> — تختاره عند الاشتراك.
+      <br>📸 يمكنك إرفاق صورتك عند التسجيل — <b>صور الرابحين ستُنشر على صفحاتنا</b> على وسائل التواصل.</div>
+  </div></div>
+
+  <div class="mylk"><span style="font-size:24px">🎟️</span><span class="t">سجّلت سابقاً؟ اطّلع على طاولتك برقم هاتفك</span><button onclick="openMy()">تسجيلاتي</button></div>
+
+  <!-- بطاقة النجاح -->
+  <div class="ticket" id="tk">
+    <div class="tk-top"><span class="i">🎟️</span><div class="t">تم تسجيلك!</div><div class="s" id="tk-s"></div></div>
+    <div class="tk-cut"></div>
+    <div class="tk-body">
+      <div class="tk-table"><div class="l">طاولتك</div><div class="n" id="tk-n"></div><div class="l" id="tk-seat"></div></div>
+      <div class="tk-rows" id="tk-rows"></div>
+      <div class="tk-warn">⚠️ عدم الحضور لا يُسقط الرسم، وتُحتسب المباريات خسارة</div>
+    </div>
+  </div>
+
+  <div class="sect"><span class="l"></span><b>🎲 الطاولة — تسجيل فردي</b><span class="r"></span></div>
+
+  <div class="game t1">
+    <span class="wm">🎲</span>
+    <span class="rib solo">👤 فردي · <span class="fee-a">10</span>$ — مع طاولتك <span class="fee-b">5</span>$</span>
+    <div class="g-head"><div class="g-emoji">🎲</div><div>
+      <div class="g-title">فرنجية</div><div class="g-sub">لاعبان على كل طاولة · جِب طاولتك معك وادفع <span class="fee-b">5</span>$ فقط</div></div></div>
+    <div class="g-cells">
+      <div class="g-cell"><div class="l">المسجّلون</div><div class="v" id="st-frangieh-r">—</div></div>
+      <div class="g-cell"><div class="l">الطاولات</div><div class="v" id="st-frangieh-t">—</div></div>
+      <div class="g-cell"><div class="l">آخر مهلة</div><div class="v cfg-deadline">—</div></div>
+    </div>
+    <button class="btn-go reg-btn" onclick="openSolo('frangieh')">🎲 سجّل الآن — فرنجية</button>
+  </div>
+
+  <div class="game t2">
+    <span class="wm">🔒</span>
+    <span class="rib solo">👤 فردي · <span class="fee-a">10</span>$ — مع طاولتك <span class="fee-b">5</span>$</span>
+    <div class="g-head"><div class="g-emoji">🎲<span class="mini">🔒</span></div><div>
+      <div class="g-title">محبوسة</div><div class="g-sub">لاعبان على كل طاولة · يمكنك اللعب في الفرنجية والمحبوسة معاً</div></div></div>
+    <div class="g-cells">
+      <div class="g-cell"><div class="l">المسجّلون</div><div class="v" id="st-mahbouseh-r">—</div></div>
+      <div class="g-cell"><div class="l">الطاولات</div><div class="v" id="st-mahbouseh-t">—</div></div>
+      <div class="g-cell"><div class="l">آخر مهلة</div><div class="v cfg-deadline">—</div></div>
+    </div>
+    <button class="btn-go reg-btn" onclick="openSolo('mahbouseh')">🎲 سجّل الآن — محبوسة</button>
+  </div>
+
+  <div class="sect"><span class="l"></span><b>🃏 الورق — فريق من شخصين</b><span class="r"></span></div>
+
+  <div class="game c1">
+    <span class="wm">♠️</span>
+    <span class="rib team">👥 فريق · <span class="fee-t">20</span>$</span>
+    <div class="g-head"><div class="g-emoji">♠️</div><div>
+      <div class="g-title">طرنيب</div><div class="g-sub">فريقان على كل طاولة (٤ لاعبين) · سجّل أنت وشريكك معاً</div></div></div>
+    <div class="g-cells">
+      <div class="g-cell"><div class="l">الفرق</div><div class="v" id="st-tarneeb-r">—</div></div>
+      <div class="g-cell"><div class="l">الطاولات</div><div class="v" id="st-tarneeb-t">—</div></div>
+      <div class="g-cell"><div class="l">آخر مهلة</div><div class="v cfg-deadline">—</div></div>
+    </div>
+    <button class="btn-go reg-btn" onclick="openTeam('tarneeb')">♠️ سجّل فريقك — طرنيب</button>
+  </div>
+
+  <div class="game c2">
+    <span class="wm">♥️</span>
+    <span class="rib team">👥 فريق · <span class="fee-t">20</span>$</span>
+    <div class="g-head"><div class="g-emoji"><span class="badge400">400</span><span class="mini">♥️</span></div><div>
+      <div class="g-title">أربعمية</div><div class="g-sub">فريقان على كل طاولة (٤ لاعبين) · سجّل أنت وشريكك معاً</div></div></div>
+    <div class="g-cells">
+      <div class="g-cell"><div class="l">الفرق</div><div class="v" id="st-arbaamie-r">—</div></div>
+      <div class="g-cell"><div class="l">الطاولات</div><div class="v" id="st-arbaamie-t">—</div></div>
+      <div class="g-cell"><div class="l">آخر مهلة</div><div class="v cfg-deadline">—</div></div>
+    </div>
+    <button class="btn-go reg-btn" onclick="openTeam('arbaamie')">♥️ سجّل فريقك — أربعمية</button>
+  </div>
+
+  <div class="rules">
+    <h3>📜 نظام البطولة</h3>
+    <div class="rl"><span class="i">💵</span><span>الرسم <span class="fee-a">10</span>$ عن كل شخص، ويصبح مستحقاً بمجرد التسجيل — الدفع نقداً عند الحضور.</span></div>
+    <div class="rl"><span class="i">🚫</span><span>الغياب عن موعد البطولة: الرسم يبقى مستحقاً وتُحتسب المباريات <b>خسارة</b>.</span></div>
+    <div class="rl"><span class="i">🎲</span><span>الطاولة (فرنجية أو محبوسة): تسجيل فردي، لاعبان على كل طاولة، وكل الأدوار <b>الغالب 2 من 3</b>.</span></div>
+    <div class="rl"><span class="i">💸</span><span>مَن يحضر <b>طاولة زهر معه</b> يدفع <b><span class="fee-b">5</span>$ بدل <span class="fee-a">10</span>$</b> — يُحدَّد الخيار عند الاشتراك ويظهر على البطاقة.</span></div>
+    <div class="rl"><span class="i">🃏</span><span>الورق (طرنيب أو أربعمية): تسجيل بفريق من شخصين — وباسم فريق إن أحببتم — مباراة واحدة حاسمة.</span></div>
+    <div class="rl"><span class="i">1️⃣</span><span>يحق لكل شخص التسجيل <b>مرة واحدة في كل لعبة</b> — ويمكنه المشاركة في أكثر من لعبة.</span></div>
+    <div class="rl"><span class="i">🪑</span><span>رقم الطاولة يُحجز <b>تلقائياً وفوراً</b> عند التسجيل ويظهر على بطاقتك.</span></div>
+    <div class="rl"><span class="i">📸</span><span>الصورة اختيارية عند التسجيل — <b>صور الرابحين تُنشر على صفحاتنا</b> على وسائل التواصل.</span></div>
+    <div class="rl"><span class="i">🏆</span><span>كأس البطولة للأبطال، وجوائز كثيرة للرابحين — والنتائج مباشرة على شاشة القاعة.</span></div>
+  </div>
+</div>
+
+<!-- نموذج فردي -->
+<div class="modal" id="m-solo"><div class="sheet">
+  <div class="grab"></div>
+  <div class="sh-t" id="st-solo">🎲 تسجيل</div>
+  <div class="sh-s">تسجيل فردي · الرسم يصبح مستحقاً بمجرد التسجيل</div>
+  <label class="fm-l">الاسم الكامل *</label><input class="fm-i" id="s-name" placeholder="الاسم والشهرة">
+  <label class="fm-l">رقم الهاتف *</label><input class="fm-i" id="s-phone" style="direction:ltr" data-phone>
+  <label class="fm-l">هل ستحضر طاولة زهر معك؟ * <span style="color:#bf2424">(إلزامي الاختيار)</span></label>
+  <div class="opts">
+    <div class="opt" id="op-yes" onclick="pickBoard(true)"><div class="oi">🎲✅</div><div class="ot">معي طاولة</div><div class="op"><span class="fee-b">5</span>$</div></div>
+    <div class="opt" id="op-no" onclick="pickBoard(false)"><div class="oi">🎲</div><div class="ot">بدون طاولة</div><div class="op"><span class="fee-a">10</span>$</div></div>
+  </div>
+  <div class="photo"><span class="pi">📸</span><span class="pt">صورتك (اختياري) — صور <b>الرابحين</b> ستُنشر على صفحاتنا على وسائل التواصل</span>
+    <label class="pb" id="s-photo-l">إرفاق<input type="file" id="s-photo" accept="image/*" onchange="photoPicked(this,'s-photo-l')"></label></div>
+  <div class="agree"><input type="checkbox" id="s-agree"><span>أوافق: الرسم <b id="s-fee-txt">—</b> مستحق بمجرد التسجيل، وفي حال عدم حضوري يبقى مستحقاً وتُحتسب مبارياتي خسارة<span id="s-fee-note"></span>.</span></div>
+  <div class="fm-err" id="s-err"></div>
+  <button class="btn-sub" id="s-sub" onclick="submitSolo()">✓ تأكيد التسجيل وحجز الطاولة</button>
+  <button class="btn-x" onclick="closeM()">إلغاء</button>
+</div></div>
+
+<!-- نموذج فريق -->
+<div class="modal" id="m-team"><div class="sheet">
+  <div class="grab"></div>
+  <div class="sh-t" id="st-team">♠️ تسجيل فريق</div>
+  <div class="sh-s">فريق من شخصين · الرسم <span class="fee-t">20</span>$ للفريق (<span class="fee-a">10</span>$ لكل لاعب)</div>
+  <label class="fm-l">اسم الفريق (اختياري — يظهر على شاشة البطولة)</label><input class="fm-i" id="t-team" placeholder="مثال: نسور الوادي">
+  <label class="fm-l">اسمك (قائد الفريق) *</label><input class="fm-i" id="t-name" placeholder="الاسم والشهرة">
+  <label class="fm-l">رقم هاتفك *</label><input class="fm-i" id="t-phone" style="direction:ltr" data-phone>
+  <div class="duo"><div class="dt">👥 شريكك في الفريق</div>
+    <label class="fm-l">اسم الشريك *</label><input class="fm-i" id="t-name2" placeholder="الاسم والشهرة">
+    <label class="fm-l">هاتف الشريك *</label><input class="fm-i" id="t-phone2" style="direction:ltr" data-phone>
+  </div>
+  <div class="photo"><span class="pi">📸</span><span class="pt">صورة الفريق أو اللاعبَين (اختياري) — صور <b>الرابحين</b> ستُنشر على صفحاتنا</span>
+    <label class="pb" id="t-photo-l">إرفاق<input type="file" id="t-photo" accept="image/*" onchange="photoPicked(this,'t-photo-l')"></label></div>
+  <div class="agree"><input type="checkbox" id="t-agree"><span>أوافق باسم الفريق: الرسم <b><span class="fee-t">20</span>$</b> (<span class="fee-a">10</span>$ لكل لاعب) مستحق بمجرد التسجيل، وفي حال غياب الفريق يبقى مستحقاً وتُحتسب المباريات خسارة.</span></div>
+  <div class="fm-err" id="t-err"></div>
+  <button class="btn-sub" id="t-sub" onclick="submitTeam()">✓ تأكيد تسجيل الفريق وحجز الطاولة</button>
+  <button class="btn-x" onclick="closeM()">إلغاء</button>
+</div></div>
+
+<!-- تسجيلاتي -->
+<div class="modal" id="m-my"><div class="sheet">
+  <div class="grab"></div>
+  <div class="sh-t">🎟️ تسجيلاتي</div>
+  <div class="sh-s">أدخل رقم هاتفك لعرض طاولاتك</div>
+  <input class="fm-i" id="my-phone" style="direction:ltr" data-phone>
+  <button class="btn-sub" onclick="loadMy()">عرض</button>
+  <div id="my-list" style="margin-top:12px"></div>
+  <button class="btn-x" onclick="closeM()">إغلاق</button>
+</div></div>
+
+<!-- إدارة البطولة -->
+<button class="adm-fab" id="adm-fab" onclick="openAdmin()">🛠️</button>
+<div class="modal" id="m-adm"><div class="sheet" style="max-width:640px">
+  <div class="grab"></div>
+  <div class="sh-t">🛠️ إدارة البطولة</div>
+  <div class="atabs">
+    <button class="at on" data-a="regs" onclick="admTab(this)">📋 التسجيلات</button>
+    <button class="at" data-a="bracket" onclick="admTab(this)">🏆 الجدول والنتائج</button>
+    <button class="at" data-a="cfg" onclick="admTab(this)">⚙️ الإعدادات</button>
+  </div>
+  <div class="gtabs" id="adm-gtabs"></div>
+  <div id="adm-body" style="min-height:120px"></div>
+  <button class="btn-x" onclick="closeM()">إغلاق</button>
+</div></div>
+
+<div class="toastc" id="toastc"></div>
+
+<script>
+const SB_URL="https://onjbwhkmmtqnymhjnplw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
+const GAMES={frangieh:{ar:'فرنجية',emoji:'🎲',team:false},mahbouseh:{ar:'محبوسة',emoji:'🎲',team:false},
+             tarneeb:{ar:'طرنيب',emoji:'♠️',team:true},arbaamie:{ar:'أربعمية',emoji:'♥️',team:true}};
+function $(id){return document.getElementById(id)}
+function esc(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(m){const t=$('toastc');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+let sb=null,CFG={},CUR=null,BOARD=null;
+try{sb=window.wadiAuth&&window.wadiAuth.sb?window.wadiAuth.sb:supabase.createClient(SB_URL,SB_KEY);}catch(e){console.warn(e);}
+
+// ── تحميل الإعدادات والأرقام ──
+async function loadAll(){
+  try{
+    const [c,s]=await Promise.all([sb.rpc('club_config'),sb.rpc('club_stats')]);
+    CFG=(c&&c.data)||{};
+    const st=(s&&s.data)||{};
+    $('hm-date').textContent='📅 '+(CFG.event_label||'قريباً');
+    $('hm-fee').textContent='💵 '+(CFG.fee_solo||10)+'$ للشخص';
+    $('fee-solo-l').textContent=CFG.fee_solo||10;
+    $('fee-board-l').textContent=CFG.fee_board||5;
+    document.querySelectorAll('.fee-a').forEach(e=>e.textContent=CFG.fee_solo||10);
+    document.querySelectorAll('.fee-b').forEach(e=>e.textContent=CFG.fee_board||5);
+    document.querySelectorAll('.fee-t').forEach(e=>e.textContent=CFG.fee_team||20);
+    document.querySelectorAll('.cfg-deadline').forEach(e=>e.textContent=CFG.deadline_label||'—');
+    Object.keys(GAMES).forEach(g=>{
+      const d=st[g]||{regs:0,tables:0};
+      const r=$('st-'+g+'-r'),t=$('st-'+g+'-t');
+      if(r)r.textContent=d.regs; if(t)t.textContent=d.tables;
+    });
+    const open=CFG.open!==false;
+    document.querySelectorAll('.reg-btn').forEach(b=>{
+      b.disabled=!open;
+      if(!open)b.textContent='🔒 أُقفل التسجيل — نراكم في البطولة!';
+    });
+  }catch(e){console.warn('loadAll',e);}
+}
+
+// ── التسجيل الفردي ──
+function openSolo(g){
+  CUR=g;BOARD=null;
+  $('op-yes').classList.remove('on');$('op-no').classList.remove('on');
+  $('s-fee-txt').textContent='—';$('s-fee-note').textContent='';
+  $('s-err').style.display='none';$('s-agree').checked=false;
+  $('s-photo').value='';$('s-photo-l').firstChild.textContent='إرفاق';
+  $('st-solo').textContent='🎲 تسجيل — '+GAMES[g].ar;
+  $('m-solo').classList.add('open');
+}
+function pickBoard(yes){
+  BOARD=yes;
+  $('op-yes').classList.toggle('on',yes);
+  $('op-no').classList.toggle('on',!yes);
+  $('s-fee-txt').textContent=(yes?(CFG.fee_board||5):(CFG.fee_solo||10))+'$';
+  $('s-fee-note').textContent=yes?'، وألتزم بإحضار طاولة الزهر معي':'';
+}
+function photoPicked(inp,lbl){
+  const f=inp.files&&inp.files[0];
+  const l=$(lbl);
+  if(f&&f.size>5*1024*1024){toast('⚠️ الصورة أكبر من 5MB');inp.value='';return;}
+  l.firstChild.textContent=f?'✓ '+(f.name.length>16?f.name.slice(0,14)+'…':f.name):'إرفاق';
+}
+async function uploadPhoto(inp){
+  const f=inp.files&&inp.files[0];
+  if(!f)return null;
+  const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=(CUR||'x')+'/'+crypto.randomUUID()+'.'+ext;
+  const{error}=await sb.storage.from('club-photos').upload(path,f,{contentType:f.type||'image/jpeg'});
+  if(error)throw new Error('تعذّر رفع الصورة: '+error.message);
+  return path;
+}
+function err(id,m){const e=$(id);e.textContent=m;e.style.display='block';}
+async function submitSolo(){
+  $('s-err').style.display='none';
+  const name=$('s-name').value.trim(), phone=$('s-phone').value.trim();
+  if(!name)return err('s-err','يرجى إدخال الاسم');
+  if(!phone||(window.phoneValid&&!phoneValid(phone)))return err('s-err','رقم الهاتف غير صالح');
+  if(BOARD===null)return err('s-err','يرجى تحديد: هل ستحضر طاولة زهر معك؟');
+  if(!$('s-agree').checked)return err('s-err','يرجى الموافقة على شروط الاشتراك');
+  const btn=$('s-sub');btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري الحجز…';
+  try{
+    const photo=await uploadPhoto($('s-photo'));
+    const{data,error}=await sb.rpc('club_register',{
+      p_game:CUR,p_name:name,p_phone:(window.phoneE164?phoneE164(phone):phone),
+      p_own_board:BOARD,p_photo:photo});
+    if(error)throw error;
+    showTicket(data,name,phone);
+  }catch(e){err('s-err','⚠️ '+(e.message||e));}
+  btn.disabled=false;btn.textContent='✓ تأكيد التسجيل وحجز الطاولة';
+}
+
+// ── تسجيل الفريق ──
+function openTeam(g){
+  CUR=g;
+  $('t-err').style.display='none';$('t-agree').checked=false;
+  $('t-photo').value='';$('t-photo-l').firstChild.textContent='إرفاق';
+  $('st-team').textContent=GAMES[g].emoji+' تسجيل فريق — '+GAMES[g].ar;
+  $('m-team').classList.add('open');
+}
+async function submitTeam(){
+  $('t-err').style.display='none';
+  const team=$('t-team').value.trim();
+  const n1=$('t-name').value.trim(), p1=$('t-phone').value.trim();
+  const n2=$('t-name2').value.trim(), p2=$('t-phone2').value.trim();
+  if(!n1||!n2)return err('t-err','يرجى إدخال اسمَي اللاعبَين');
+  if(!p1||(window.phoneValid&&!phoneValid(p1)))return err('t-err','رقم هاتفك غير صالح');
+  if(!p2||(window.phoneValid&&!phoneValid(p2)))return err('t-err','رقم هاتف الشريك غير صالح');
+  if(!$('t-agree').checked)return err('t-err','يرجى الموافقة على شروط الاشتراك');
+  const btn=$('t-sub');btn.disabled=true;btn.innerHTML='<span class="spin"></span> جاري الحجز…';
+  try{
+    const photo=await uploadPhoto($('t-photo'));
+    const{data,error}=await sb.rpc('club_register',{
+      p_game:CUR,p_name:n1,p_phone:(window.phoneE164?phoneE164(p1):p1),
+      p_name2:n2,p_phone2:(window.phoneE164?phoneE164(p2):p2),
+      p_team_name:team||null,p_photo:photo});
+    if(error)throw error;
+    showTicket(data,n1,p1,n2);
+  }catch(e){err('t-err','⚠️ '+(e.message||e));}
+  btn.disabled=false;btn.textContent='✓ تأكيد تسجيل الفريق وحجز الطاولة';
+}
+
+function showTicket(d,name,phone,name2){
+  closeM();
+  $('tk-s').textContent=d.label+(d.team_name?' — '+d.team_name:'');
+  $('tk-n').textContent=d.table_label;
+  $('tk-seat').textContent=d.waiting
+    ?(name2?'الجهة الأولى — بانتظار الفريق المنافس':'المقعد الأول — بانتظار منافسك')
+    :(name2?'الجهة الثانية — الطاولة اكتملت':'المقعد الثاني — الطاولة اكتملت');
+  $('tk-rows').innerHTML=
+    '<div>👤 <b>'+esc(name)+(name2?' + '+esc(name2):'')+'</b> · <span style="direction:ltr;display:inline-block">'+esc(phone)+'</span></div>'
+    +'<div>📅 '+esc(d.event_label||'')+' · 📍 وادي الست</div>'
+    +'<div>💵 الرسم المستحق: <b>'+d.fee+'$</b>'+(d.own_board?' — 🎲 مع طاولتك':'')+' — يُدفع عند الحضور</div>';
+  const t=$('tk');t.classList.remove('on');void t.offsetWidth;t.classList.add('on');
+  t.scrollIntoView({behavior:'smooth',block:'center'});
+  // اربط جهازه برقمه ليصله التأكيد والتذكير — نفس آلية بقية البوابة
+  try{
+    localStorage.setItem('wadi_user',JSON.stringify({name:name,phone:(window.phoneE164?phoneE164(phone):phone)}));
+    localStorage.removeItem('wadi_push_linked');
+    if(window.PWA&&window.PWA.autoLink)window.PWA.autoLink().catch(function(){});
+  }catch(_e){}
+  loadAll();
+}
+
+// ── تسجيلاتي ──
+function openMy(){ $('my-list').innerHTML=''; $('m-my').classList.add('open'); }
+async function loadMy(){
+  const ph=$('my-phone').value.trim();
+  if(!ph)return;
+  $('my-list').innerHTML='⏳ …';
+  try{
+    const{data,error}=await sb.rpc('club_my_regs',{p_phone:ph});
+    if(error)throw error;
+    if(!data||!data.length){$('my-list').innerHTML='<div style="text-align:center;color:#8d93a6;padding:10px">لا تسجيلات على هذا الرقم</div>';return;}
+    $('my-list').innerHTML=data.map(r=>
+      '<div class="reg-row"><div class="reg-top"><span class="tno">'+esc(r.table_label)+'</span>'
+      +'<span class="nm">'+esc(r.team_name||r.p1_name+(r.p2_name?' + '+r.p2_name:''))+'</span>'
+      +'<span style="font-size:11px;color:#515668">'+esc(r.label)+' · '+r.fee+'$'+(r.own_board?' 🎲':'')+'</span></div></div>').join('');
+  }catch(e){$('my-list').innerHTML='<div style="color:#bf2424">⚠️ '+esc(e.message||e)+'</div>';}
+}
+
+function closeM(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open'));}
+
+// ═══════════ إدارة البطولة (club_games_manage) ═══════════
+let ADM={tab:'regs',game:'frangieh'};
+async function adminGate(){
+  try{
+    if(!window.wadiAuth||!window.WadiPerms)return;
+    const s=await wadiAuth.session();
+    if(!s)return;
+    if(!WadiPerms.loaded())await WadiPerms.load(wadiAuth.sb);
+    if(WadiPerms.can('club_games_manage'))$('adm-fab').classList.add('on');
+  }catch(_e){}
+}
+function openAdmin(){ $('m-adm').classList.add('open'); admRender(); }
+function admTab(el){
+  document.querySelectorAll('.at').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on'); ADM.tab=el.dataset.a; admRender();
+}
+function admGame(g){ ADM.game=g; admRender(); }
+function admGtabs(){
+  return Object.keys(GAMES).map(g=>
+    '<button class="gt'+(ADM.game===g?' on':'')+'" onclick="admGame(\''+g+'\')">'+GAMES[g].emoji+' '+GAMES[g].ar+'</button>').join('');
+}
+async function admRender(){
+  $('adm-gtabs').innerHTML=ADM.tab==='cfg'?'':admGtabs();
+  const box=$('adm-body');box.innerHTML='⏳ …';
+  try{
+    if(ADM.tab==='regs')return admRegs(box);
+    if(ADM.tab==='bracket')return admBracket(box);
+    return admCfg(box);
+  }catch(e){box.innerHTML='<div style="color:#bf2424">⚠️ '+esc(e.message||e)+'</div>';}
+}
+
+async function admRegs(box){
+  const{data,error}=await wadiAuth.sb.from('club_game_regs')
+    .select('*').eq('game',ADM.game).eq('status','registered').order('seq');
+  if(error)throw error;
+  if(!data.length){box.innerHTML='<div style="text-align:center;color:#8d93a6;padding:14px">لا تسجيلات بعد</div>';return;}
+  const total=data.reduce((a,r)=>a+r.fee,0), paid=data.filter(r=>r.paid).reduce((a,r)=>a+r.fee,0);
+  box.innerHTML=
+    '<div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:8px">'+data.length+' تسجيل · المستحق '+total+'$ · المدفوع '+paid+'$</div>'
+    +data.map(r=>{
+      const nm=r.team_name?esc(r.team_name)+' <small style="color:#8d93a6">('+esc(r.p1_name)+' + '+esc(r.p2_name)+')</small>'
+                          :esc(r.p1_name)+(r.p2_name?' + '+esc(r.p2_name):'');
+      return '<div class="reg-row"><div class="reg-top"><span class="tno">'+esc(r.table_label)+'</span>'
+        +'<span class="nm">'+nm+(r.own_board?' 🎲':'')+'</span>'
+        +'<span class="ph">'+esc(r.p1_phone)+(r.p2_phone?' · '+esc(r.p2_phone):'')+'</span></div>'
+        +'<div class="reg-chk">'
+        +'<label><input type="checkbox" '+(r.paid?'checked':'')+' onchange="admFlag(\''+r.id+'\',\'paid\',this.checked)"> دفع '+r.fee+'$</label>'
+        +'<label><input type="checkbox" '+(r.attended===true?'checked':'')+' onchange="admFlag(\''+r.id+'\',\'attended\',this.checked)"> حضر</label>'
+        +(r.attended===false?'<span style="color:#bf2424">🚫 غائب — الرسم مستحق</span>':'')
+        +(r.p1_photo||r.p2_photo?'<button style="color:#0f4d82;font-weight:800" onclick="admPhoto(\''+esc(r.p1_photo||r.p2_photo)+'\')">📸 الصورة</button>':'')
+        +'</div></div>';
+    }).join('');
+}
+async function admFlag(id,field,val){
+  const u={};u[field]=val;
+  const{error}=await wadiAuth.sb.from('club_game_regs').update(u).eq('id',id);
+  if(error){toast('⚠️ '+error.message);}else toast('✅ حُفظ');
+}
+async function admPhoto(path){
+  try{
+    const{data,error}=await wadiAuth.sb.storage.from('club-photos').createSignedUrl(path,300);
+    if(error)throw error;
+    window.open(data.signedUrl,'_blank');
+  }catch(e){toast('⚠️ '+(e.message||e));}
+}
+
+function roundName(r,max){
+  if(r===max)return '🏆 النهائي';
+  if(r===max-1)return '⚔️ نصف النهائي';
+  if(r===max-2)return 'ربع النهائي';
+  return 'الدور '+r;
+}
+async function admBracket(box){
+  const{data,error}=await sb.rpc('club_bracket',{p_game:ADM.game});
+  if(error)throw error;
+  const bo=GAMES[ADM.game].team?1:3;
+  let html='<button class="abtn warn" onclick="admGen()">🔒 قفل التسجيل وإنشاء الجدول من جديد — '+GAMES[ADM.game].ar+'</button>'
+    +'<div style="font-size:10.5px;color:#8d93a6;margin:4px 2px 10px">إنشاء الجدول يمسح نتائج هذه اللعبة ويبدأ من طاولات التسجيل الحالية'
+    +(bo===3?' · كل مباريات الطاولة: الغالب 2 من 3':' · الورق: مباراة واحدة حاسمة — المس «فاز»')+'</div>';
+  if(data.stage!=='bracket'){
+    html+='<div style="text-align:center;color:#8d93a6;padding:10px">لم يُنشأ الجدول بعد — الطاولات الحالية:</div>'
+      +(data.tables||[]).map(t=>'<div class="reg-row"><div class="reg-top"><span class="tno">'+esc(t.table)+'</span><span class="nm">'+t.players.map(esc).join(' ⚔️ ')+'</span></div></div>').join('');
+    box.innerHTML=html;return;
+  }
+  // need match ids for scoring → read the table directly (staff RLS)
+  const{data:rows,error:e2}=await wadiAuth.sb.from('club_matches')
+    .select('*').eq('game',ADM.game).order('round').order('slot');
+  if(e2)throw e2;
+  const regsRes=await wadiAuth.sb.from('club_game_regs').select('id,p1_name,p2_name,team_name').eq('game',ADM.game);
+  const NM={};((regsRes&&regsRes.data)||[]).forEach(r=>{NM[r.id]=r.team_name||(r.p1_name+(r.p2_name?' + '+r.p2_name:''));});
+  const maxR=Math.max.apply(null,rows.map(r=>r.round));
+  let lastR=0;
+  rows.forEach(mt=>{
+    if(mt.round!==lastR){lastR=mt.round;html+='<div style="font-size:13.5px;font-weight:900;color:#0f4d82;margin:12px 2px 7px">'+roundName(mt.round,maxR)+'</div>';}
+    const needed=Math.floor(mt.best_of/2)+1;
+    const st=mt.status==='done'||mt.status==='walkover'?'done':(mt.status==='live'?'live':'wait');
+    const stTxt={done:mt.status==='walkover'?'غياب':'انتهت',live:'جارية',wait:(mt.a_reg&&mt.b_reg)?'لم تبدأ':'بانتظار المتأهلين'}[st];
+    html+='<div class="match"><div class="mh"><span class="rt">مباراة '+mt.slot+'</span><span class="ms '+st+'">'+stTxt+'</span></div>';
+    ['a','b'].forEach(side=>{
+      const reg=mt[side+'_reg'];
+      const g=mt[side+'_games'];
+      const isWin=mt.winner&&mt.winner===reg;
+      html+='<div class="pl'+(isWin?' win':'')+'"><span>'+GAMES[ADM.game].emoji+'</span><span class="nm">'
+        +(reg?esc(NM[reg]||'؟'):'<span style="color:#8d93a6">بانتظار المتأهل</span>')+(isWin?' 🏆':'')+'</span>';
+      if(reg&&mt.a_reg&&mt.b_reg){
+        if(mt.best_of>1){
+          html+='<span class="dots">';
+          for(let i=1;i<=needed;i++)
+            html+='<button class="dot'+(g>=i?' w':'')+'" onclick="admScore(\''+mt.id+'\',\''+side+'\','+i+','+mt.a_games+','+mt.b_games+','+needed+')">'+i+'</button>';
+          html+='</span>';
+        }else{
+          html+=isWin?'':'<button class="dot" style="width:auto;padding:0 12px;border-radius:99px" onclick="admScore(\''+mt.id+'\',\''+side+'\',1,'+mt.a_games+','+mt.b_games+',1)">فاز؟</button>';
+        }
+      }
+      html+='</div>';
+    });
+    if(mt.a_reg&&mt.b_reg&&!mt.winner)
+      html+='<div style="display:flex;gap:6px;margin-top:4px">'
+        +'<button class="wbtn" onclick="admWO(\''+mt.id+'\',\'a\')">🚫 غياب '+esc((NM[mt.a_reg]||'').split(' ')[0])+'</button>'
+        +'<button class="wbtn" onclick="admWO(\''+mt.id+'\',\'b\')">🚫 غياب '+esc((NM[mt.b_reg]||'').split(' ')[0])+'</button></div>';
+    html+='</div>';
+  });
+  box.innerHTML=html;
+}
+async function admGen(){
+  if(!confirm('قفل التسجيل وإنشاء جدول '+GAMES[ADM.game].ar+'؟ يمسح نتائج هذه اللعبة إن وُجدت.'))return;
+  try{
+    await sb.rpc('club_set_config',{p:{open:false}});
+    const{error}=await sb.rpc('club_generate_bracket',{p_game:ADM.game});
+    if(error)throw error;
+    toast('✅ أُنشئ الجدول');admRender();loadAll();
+  }catch(e){toast('⚠️ '+(e.message||e));}
+}
+async function admScore(id,side,val,a,b,needed){
+  // اضغط الرقم لتثبيته لهذا الطرف؛ الضغط على القيمة الحالية يعيدها خطوة
+  let na=a,nb=b;
+  if(side==='a')na=(a===val)?val-1:val; else nb=(b===val)?val-1:val;
+  na=Math.min(na,needed);nb=Math.min(nb,needed);
+  if(na===needed&&nb===needed){toast('⚠️ لا يمكن فوز الطرفين');return;}
+  try{
+    const{error}=await sb.rpc('club_match_set',{p_match:id,p_a:na,p_b:nb});
+    if(error)throw error;
+    admRender();
+  }catch(e){toast('⚠️ '+(e.message||e));}
+}
+async function admWO(id,side){
+  if(!confirm('احتساب غياب وخسارة؟ الرسم يبقى مستحقاً على الغائب.'))return;
+  try{
+    const{error}=await sb.rpc('club_match_walkover',{p_match:id,p_absent:side});
+    if(error)throw error;
+    toast('✅ سُجّل الغياب');admRender();
+  }catch(e){toast('⚠️ '+(e.message||e));}
+}
+
+async function admCfg(box){
+  const c=CFG||{};
+  const ts=c.event_ts?new Date(c.event_ts):null;
+  const local=ts?new Date(ts.getTime()-ts.getTimezoneOffset()*60000).toISOString().slice(0,16):'';
+  box.innerHTML=
+    '<label class="fm-l">نص الموعد (يظهر على الصفحة والبطاقات)</label><input class="fm-i" id="cf-label" value="'+esc(c.event_label||'')+'">'
+    +'<label class="fm-l">نص آخر مهلة</label><input class="fm-i" id="cf-dead" value="'+esc(c.deadline_label||'')+'">'
+    +'<label class="fm-l">وقت البطولة الفعلي (لتذكير «غداً» و«قبل ساعة» تلقائياً)</label><input class="fm-i" type="datetime-local" id="cf-ts" value="'+local+'" style="direction:ltr">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
+    +'<div><label class="fm-l">رسم فردي $</label><input class="fm-i" type="number" id="cf-solo" value="'+(c.fee_solo||10)+'"></div>'
+    +'<div><label class="fm-l">مع طاولة $</label><input class="fm-i" type="number" id="cf-board" value="'+(c.fee_board||5)+'"></div>'
+    +'<div><label class="fm-l">فريق $</label><input class="fm-i" type="number" id="cf-team" value="'+(c.fee_team||20)+'"></div></div>'
+    +'<label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:800;font-size:13px;cursor:pointer">'
+    +'<input type="checkbox" id="cf-open" '+(c.open!==false?'checked':'')+' style="width:17px;height:17px;accent-color:#16a34a"> التسجيل مفتوح</label>'
+    +'<button class="abtn" onclick="admSaveCfg()">💾 حفظ الإعدادات</button>';
+}
+async function admSaveCfg(){
+  try{
+    const tsv=$('cf-ts').value;
+    const{error}=await sb.rpc('club_set_config',{p:{
+      event_label:$('cf-label').value.trim(),
+      deadline_label:$('cf-dead').value.trim(),
+      event_ts:tsv?new Date(tsv).toISOString():null,
+      fee_solo:parseInt($('cf-solo').value)||10,
+      fee_board:parseInt($('cf-board').value)||5,
+      fee_team:parseInt($('cf-team').value)||20,
+      open:$('cf-open').checked}});
+    if(error)throw error;
+    toast('✅ حُفظت الإعدادات');CFG=null;await loadAll();
+  }catch(e){toast('⚠️ '+(e.message||e));}
+}
+
+loadAll();
+setInterval(loadAll,30000);
+window.addEventListener('load',function(){setTimeout(adminGate,1200);});
+</script>
+</body>
+</html>

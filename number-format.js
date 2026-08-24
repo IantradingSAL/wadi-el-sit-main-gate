@@ -218,6 +218,10 @@
     }
 
     var nsn = rest.replace(/\D/g, '').replace(/^0+/, '');
+    // Pasting a full "+961 3 922 209" into a data-phone field that already
+    // opened with "+961 " yields the code twice. A Lebanese NSN is 7-8 digits,
+    // so anything longer that still opens with 961 is a duplicated prefix.
+    while (nsn.length > 8 && nsn.slice(0, 3) === LB_CC) nsn = nsn.slice(3).replace(/^0+/, '');
     return { ok: nsn.length === 7 || nsn.length === 8, lb: true, cc: LB_CC, nsn: nsn, raw: raw };
   }
 

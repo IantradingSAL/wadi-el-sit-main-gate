@@ -197,6 +197,38 @@ agree about the same person.
   trunk 0), so `03…`, `3…` and `+9613…` all find the same device.
 - Full findings: `AUDIT-2026-08-22-push.md`; the database half: migration 30.
 
+## بطولة وادي الست (`games.html` · `games-screen.html`)
+
+- Four knockout competitions: طاولة **فرنجية/محبوسة** (solo, 2 players a table,
+  every round best-of-3) and ورق **طرنيب/أربعمية** (teams of two — optionally
+  named — 2 teams a table, one decisive match). Fees: 10$/person, 20$/team,
+  **5$ for a tawli player who brings a board** — a mandatory choice at
+  registration. Registering makes the fee DUE; a no-show still owes it and the
+  matches count as lost — stated on the card, the consent checkbox, the ticket,
+  and applied by the referee's 🚫 غياب button (walkover + `attended=false`).
+- **A table seat is issued like a sanad number**: `club_register()` under a
+  per-game advisory lock — never twice, no cap (tables grow with demand). One
+  entry per person per game, matched on `lb_phone_norm` including partners.
+- Dates, deadline, fees and open/close are `settings.club_games`, edited from
+  the page's ⚙️ admin sheet — never code. Setting `event_ts` arms the
+  `club-push-sweep` reminders (غداً / قبل ساعة، once each via `club_push_sent`).
+- **The bracket**: `club_generate_bracket` (locks registration first from the
+  UI), byes auto-advance, `club_match_set` scores best-of-N and promotes the
+  winner (a decided match is editable only until the next round's slot is
+  touched), `club_match_walkover` applies absence. The TV page
+  (`games-screen.html`) and the page read `club_bracket()` — **names and
+  results only, never a phone**; the regs/matches tables have no anon access.
+- Registration photos are optional and land in the **private `club-photos`
+  bucket** (anon upload, read only by the key below via signed URLs). The
+  consent line at registration says winners' photos go on our social pages —
+  nothing is public before that.
+- The key is **`club_games_manage`** (super_admin, mayor, admin by default):
+  gates the page's admin sheet, the tables' RLS, the referee RPCs, and the
+  organizer notifications — the `club_game_reg` event in the notify matrix
+  (push + email via `notify-club-reg`), resolved per person like every other
+  event. Registrants get a confirmation push on the phone they registered with.
+- Deliberately **no home-page link** — the page is shared by URL.
+
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
 
 - One shape everywhere: **`+961 3 922 209`**, **`+961 76 789 039`**. Lebanon
