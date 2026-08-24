@@ -3120,6 +3120,16 @@ async function submitAdd__run(e){
     closeModal();
     setBNActive('home');
     toast('✅ شكراً! الإضافة قيد المراجعة');
+    // من جاء من تسجيل البطولة يعود إليها فوراً — باسمه معبأً ليتابع التسجيل
+    if(window.__pbGamesBack){
+      const b=window.__pbGamesBack; window.__pbGamesBack=null;
+      const bp=(window.phoneE164?phoneE164(phone):phone);
+      setTimeout(function(){
+        location.href='games.html#resume='+b.game+':'+b.key+':'
+          +encodeURIComponent(bp)+'|'+encodeURIComponent(full);
+      },900);
+      return;
+    }
     renderStats(); renderLettersBar(); renderFiltersBar(); renderGrid();
     if(isAdmin) await loadAdminQueues();
   } catch(ex){
@@ -4236,10 +4246,22 @@ async function phbHashRoute(){
       try{
         const parts=(a[1]||'').split('|');
         const ph=decodeURIComponent(parts[0]||''), nm=decodeURIComponent(parts[1]||'');
+        const back=decodeURIComponent(parts[2]||'');
         const phEl=document.getElementById('AD_PH');
         if(phEl&&ph)phEl.value=(window.phoneDisplay?phoneDisplay(ph):ph);
         const fullEl=document.getElementById('AD_FULL');
         if(fullEl&&nm&&!fullEl.value)fullEl.value=nm;
+        if(back){
+          // جاء من تسجيل البطولة: نعيده إليها فور الإرسال، ولا نطلب اسم الأم
+          const bm=back.match(/^([a-z]+):(s|t1|t2)$/);
+          if(bm)window.__pbGamesBack={game:bm[1],key:bm[2]};
+          const mo=document.getElementById('AD_MOTHER');
+          if(mo&&mo.parentElement)mo.parentElement.style.display='none';
+          // هو يسجل نفسه: خانتا «اسمك وهاتفك» تُعبآن منه مباشرة
+          const byN=document.getElementById('AD_BY_NM'), byP=document.getElementById('AD_BY_PH');
+          if(byN&&nm&&!byN.value)byN.value=nm;
+          if(byP&&ph&&!byP.value)byP.value=(window.phoneDisplay?phoneDisplay(ph):ph);
+        }
         pbAddPrefill();
       }catch(_e){}
     },350);
@@ -4285,7 +4307,7 @@ function pbAddPrefill(){
     const c=list.find(x=>!x.phone_hidden&&(pbNormLb(x.phone)===n||pbNormLb(x.wa)===n));
     if(!c)return;
     const set=function(id,v){const el=document.getElementById(id);if(el&&v)el.value=v;};
-    set('AD_FIRST',c.first); set('AD_FATHER',c.father); set('AD_MOTHER',c.mother);
+    set('AD_FIRST',c.first); set('AD_FATHER',c.father);
     const fam=document.getElementById('AD_FAM');
     if(fam&&c.family){
       let has=false;
