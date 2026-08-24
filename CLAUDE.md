@@ -15,9 +15,10 @@ have, it is not finished until all four of these are done:
 2. **A role default** in `role_permissions`, for *every* role — `true` for the
    roles that should hold it, an explicit `false` for the rest. Migrations
    `07`–`12` are the precedent.
-3. **A row on the user screen** — add the key to `WP_GROUPS` in
-   `dashboard.html`, in the group it belongs to, with an Arabic label. This is
-   what makes it grantable to one person without changing their role.
+3. **A row on the user screen** — add the key to `UP_MODULES` in
+   `dashboard.html`, in the module it belongs to, with `pk_<key>` labels in
+   the `UP_T` dictionary in **all three languages** (ar/en/fr). This is what
+   makes it grantable to one person without changing their role.
 4. **The database enforcing the same key** — a page gate alone is not a gate.
    Whatever table or key the feature writes, its RLS policy must ask
    `has_perm('<the same key>')`. `has_perm()` resolves *per-user override →
@@ -143,8 +144,9 @@ agree about the same person.
   connected; the keys exist so connecting a provider later activates everyone
   who already opted in, with no second round of setup.
 - The matrix is edited from two views of the same rows: per person in the
-  🔑 الصلاحيات panel, and per event in the 🔔 توزيع التنبيهات tab of the user
-  screen ("for the phonebook: Paul push+email, Imad email"). Both are behind
+  التنبيهات tab of the employee profile, and per event in the 🔔 توزيع
+  التنبيهات tab of the user screen ("for the phonebook: Paul push+email, Imad
+  email"). Both are behind
   its own key **`notify_prefs_edit`** (super_admin, mayor, admin by default),
   and the table's RLS asks the same key. The old 📧/💬 toggles in 🔐 تخصيص and
   the create-user form wrote `user_metadata` that nothing read — they are gone;

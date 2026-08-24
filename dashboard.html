@@ -3152,91 +3152,205 @@ function showRolePrev(rid) {
   el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:4px">' + tags + more + '</div>';
 }
 
-// ── LOAD EMPLOYEES ────────────────────────────────────────────────────────────
-async function loadEmpCards() {
-  var el = document.getElementById('emp-cards'); if(!el) return;
-  try {
-    var d = await adminAPI({action:'list'});
-    var users = (d.users||[]).filter(function(u){ return u.email; }); // Show all users
-    // show the role each account actually holds on the server, not the copy in
-    // its token — those can drift, and only the server one decides anything
-    var SRV = {};
-    try {
-      var rr = await sb.from('user_roles').select('user_id,role');
-      ((rr && rr.data) || []).forEach(function(r){ (SRV[r.user_id] = SRV[r.user_id] || []).push(r.role); });
-    } catch(_e) {}
-    // the real notification channels (user_notify_prefs), not the dead
-    // user_metadata copy the old panel used to write
-    var NP = {};
-    try {
-      var nr = await sb.from('user_notify_prefs').select('user_id,channels');
-      ((nr && nr.data) || []).forEach(function(r){ NP[r.user_id] = r.channels || {}; });
-    } catch(_e) {}
-    if(!users.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">لا يوجد موظفون بعد</div>'; return; }
-    var allR = getAllRoles();
-    var roleOpts2 = function(currentRid) {
-      return Object.entries(allR).map(function(e){
-        return '<option value="'+e[0]+'"'+(currentRid===e[0]?' selected':'')+'>'+e[1].label+'</option>';
-      }).join('');
-    };
-    el.innerHTML = users.map(function(u) {
-      var meta = u.user_metadata || {};
-      var srvRoles = SRV[u.id] || [];
-      var rid = srvRoles[0] || meta.role || 'officer';
-      var rc = getAdvRoleCfg(rid);
-      var srvLbl = srvRoles.length ? srvRoles.join('، ') : '⚠️ بلا دور على الخادم';
-      var active = !u.banned_until || new Date(u.banned_until) < new Date();
-      var name = meta.name || (u.email ? u.email.split('@')[0] : '—');
-      var ini = name.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase() || '?';
-      var chs = NP[u.id] || {};
-      var chOn = function(k){ return Object.keys(chs).some(function(ev){ return chs[ev] && chs[ev][k]; }); };
-      var ni = [chOn('email')?'📧':'', chOn('push')?'🔔':'', chOn('whatsapp')?'💬':''].filter(Boolean).join(' ');
-      var pc = (meta.permissions || rc.perms || []).length;
-      return '<div class="ecard">' +
-        '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-        '<div style="width:42px;height:42px;border-radius:50%;background:'+rc.bg+';color:'+rc.color+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0">'+ini+'</div>' +
-        '<div style="flex:1;min-width:100px">' +
-        '<div style="font-weight:700;font-size:14px">'+name+'</div>' +
-        '<div style="font-size:12px;color:var(--text3);direction:ltr">'+(u.email||'')+'</div>' +
-        (ni?'<div style="font-size:11px;margin-top:2px">'+ni+'</div>':'') + '</div>' +
-        '<span class="rpill" style="background:'+rc.bg+';color:'+rc.color+'" title="الدور على الخادم">'+srvLbl+'</span>' +
-        '<span style="font-size:11px;color:var(--text3)">'+pc+' ص</span>' +
-        '<div style="display:flex;align-items:center;gap:4px;">' +
-        '<span style="font-size:10px;color:var(--text3)">'+(active?'نشط':'موقوف')+'</span>' +
-        '<label class="tgl"><input type="checkbox" '+(active?'checked':'')+' data-uid="'+u.id+'" data-nm="'+name+'" onchange="doTogBan(this)"><span class="tgl-sl"></span></label>' +
-        '</div></div>' +
-        '<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">' +
-        '<select class="fi" style="flex:1;padding:6px 10px;font-size:12px;height:auto" data-uid="'+u.id+'" data-nm="'+name+'" onchange="doChRole(this)">'+roleOpts2(rid)+'</select>' +
-        '<button class="btn" style="padding:6px 12px;font-size:12px" data-uid="'+u.id+'" data-nm="'+name+'" data-rl="'+rid+'" onclick="openEditUser(this)">🔐 تخصيص</button>' +
-        '<button class="btn" style="padding:6px 12px;font-size:12px" data-uid="'+u.id+'" data-nm="'+name+'" onclick="openUserPerms(this)">🔑 الصلاحيات</button>' +
-        '<button class="btn" style="padding:6px 12px;font-size:12px" data-uid="'+u.id+'" data-nm="'+name+'" onclick="doResetPw(this)">🔑 كلمة المرور</button>' +
-        '<button class="btn" style="padding:6px 12px;font-size:12px;color:var(--danger)" data-uid="'+u.id+'" data-nm="'+name+'" onclick="doDelUser(this)">🗑️</button>' +
-        '</div></div>';
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div style="color:var(--danger);font-size:13px;text-align:center;padding:14px">خطأ: '+e.message+'</div>';
-  }
+// ═══════════════════════════════════════════════════════════════════════════
+// 👥 THE EMPLOYEE SCREEN — one list, one profile, three languages
+//
+// Replaces the old card grid + the separate 🔐/🔑 panels with the layout the
+// municipality approved on 2026-08-24: a searchable employee list on one side
+// and ONE profile on the other, with four tabs — عام / الصلاحيات / التنبيهات /
+// النشاط. Everything still writes the same tables the database enforces:
+// user_roles, user_permissions (diff-from-role only), user_notify_prefs, and
+// auth metadata through the admin-user edge function.
+//
+// The permissions tab shows every key the portal has, module by module: quick
+// switches on the row for the common actions, and the arrow unfolds the
+// module's full detail — each key with its own switch, description and code.
+// UP_MODULES is therefore the registry the standing rule in CLAUDE.md points
+// at: a new permission key is not finished until it has a row here.
+//
+// Languages follow the site's own `wadi_lang` (i18n.js convention) — العربية,
+// English, Français — switchable from the screen itself.
+// ═══════════════════════════════════════════════════════════════════════════
+function upLang(){
+  try{ var l=localStorage.getItem('wadi_lang'); if(l==='en'||l==='fr')return l; }catch(_e){}
+  return 'ar';
 }
+function upSetLang(l){
+  try{ localStorage.setItem('wadi_lang',l); }catch(_e){}
+  upRender();
+}
+function upT(k){
+  var d=UP_T[upLang()]||UP_T.ar;
+  return (d[k]!==undefined?d[k]:(UP_T.ar[k]!==undefined?UP_T.ar[k]:k));
+}
+const UP_T={
+ar:{
+  emps:'👥 الموظفون',searchU:'ابحث بالاسم أو البريد…',fAll:'الكل',fApr:'يملك التحقق',fCh:'قنوات مفعّلة',fSus:'موقوف',
+  susp:'موقوف',active:'نشط',pick:'اختر موظفاً من القائمة',
+  bApr:'✅ يملك صلاحية التحقق',bCust:'🔧 {n} صلاحيات مخصّصة',bByRole:'حسب الدور بالكامل',
+  tGen:'عام',tPerm:'الصلاحيات',tNot:'التنبيهات',tAct:'النشاط',
+  fName:'الاسم الكامل',fMail:'البريد الإلكتروني',fPhone:'رقم الهاتف — به يُطابَق جهاز الإشعارات، وواتساب وSMS لاحقاً',fRole:'الدور',
+  pwBtn:'🔑 تغيير كلمة المرور',delBtn:'🗑️ حذف الحساب',
+  permHint:'الدور يعطي الأساس، وكل مفتاح تغيّره هنا يصبح مخصّصاً لهذا الموظف وحده. السهم يفتح كل مفاتيح الوحدة التفصيلية.',
+  permSearch:'ابحث عن صلاحية…',cust:'مخصّص',on:'مفعّلة',
+  notHint:'الصلاحية تقرّر مَن يُبلَّغ وهذه القنوات تقرّر كيف — لكل حدث. 💬 واتساب و📱 SMS يُحفظان الآن ويعملان يوم تُربط الخدمة. تعمل القنوات فقط ما دام يملك «طلبات التحقق».',
+  needPerm:'⚠️ لا يملك صلاحية «طلبات التحقق» — فعِّلها من تبويب الصلاحيات ليصله شيء',
+  actHint:'آخر ما فعله هذا الموظف — من سجل النشاط (app_activity).',actNone:'لا نشاط مسجّلاً بعد',actNoPerm:'عرض النشاط يحتاج صلاحية «تتبع نشاط الموظفين»',
+  save:'💾 حفظ',reset:'↩️ إعادة لإعداد الدور',saved:'✅ حُفظ ملف ',
+  confirmDel:'حذف حساب "{n}"؟ لا يمكن التراجع.',pwTitle:'🔑 كلمة مرور جديدة لـ ',pwNote:'لا تقل عن 8 أحرف — سيستخدمها {n} لتسجيل الدخول',
+  needPhone:'⚠️ الإشعار وواتساب وSMS تحتاج رقم هاتف — احفظ الرقم أيضاً',
+  banOn:'✅ تم تفعيل ',banOff:'🔒 تم إيقاف ',pwDone:'✅ تم تغيير كلمة مرور ',delDone:'🗑️ تم حذف ',selfBan:'⚠️ لا يمكنك إيقاف حسابك الخاص!',
+  roleChanged:'✅ تم تغيير الدور إلى ',
+  ev_phonebook_new:'📇 جهة جديدة في الدليل',ev_phonebook_edit:'✏️ تعديل مقترح على الدليل',
+  ev_coop_seller:'🛒 بائع جديد في التعاونية',ev_coop_agent:'🚚 عامل توصيل جديد',ev_user_account:'👤 حساب جديد على البوابة',
+  ch_email:'📧 بريد',ch_push:'🔔 إشعار',ch_whatsapp:'💬 واتساب',ch_sms:'📱 SMS',chSoon:'قريباً',
+  qView:'اطلاع',qEdit:'تعديل',qAppr:'تحقق',qSign:'توقيع',qPush:'إرسال',
+  rl_super_admin:'👑 مشرف عام',rl_mayor:'👑 رئيس البلدية',rl_admin:'⚙️ المدير',rl_officer:'👤 موظف المتابعة',
+  rl_approver:'✅ مسؤول الموافقات',rl_viewer:'👁️ مشاهد',rl_water_only:'💧 الري فقط',rl_water_admin:'💧 مشرف الري',
+  rl_sandouk:'💰 الصندوق فقط',rl_finance:'💼 مالية',rl_citizen:'🧍 مواطن',
+  m_pb:'دليل البلدية',m_pb_s:'الأسماء والعائلات والأرقام',
+  m_water:'الري',m_water_s:'دورة المياه والمشتركون والتذكيرات',
+  m_news:'الأخبار والإشعارات والبريد',m_news_s:'النشر والإرسال وسجل من وصله ماذا',
+  m_sandouk:'صندوق البلدية',m_sandouk_s:'السندات والتوقيع والترقيم',
+  m_cases:'معاملات المواطنين',m_cases_s:'الطلبات والشكاوى والموافقات',
+  m_coop:'التعاونية',m_coop_s:'البائعون والتوصيل والطلبات',
+  m_mrs:'الأرشيف المالي MRS',m_mrs_s:'الاطلاع والتعديل',
+  m_sys:'المستخدمون والنظام',m_sys_s:'الحسابات والأدوار والإعدادات وقنوات التنبيه',
+  pk_phonebook_view:'الاطلاع على الدليل',pk_phonebook_edit:'تعديل الدليل',pks_phonebook_edit:'إضافة وتصحيح مباشر دون تحقق',
+  pk_phonebook_registry:'سجل النفوس الكامل',pks_phonebook_registry:'اسم الأم وسنة الولادة — بيانات حساسة',
+  pk_approvals_manage:'طلبات التحقق (موافقة/رفض)',pks_approvals_manage:'يشمل الدليل وبائعي التعاونية والحسابات الجديدة',
+  pk_water_view:'الاطلاع على شاشة الري',pk_water_edit:'تعديل الري',pks_water_edit:'المشتركون والساعات وبداية الدورة — يغيّر مواعيد التذكيرات',
+  pk_news_publish:'نشر الأخبار',pk_push_send:'إرسال الإشعارات',pks_push_send:'بث إشعار للأهالي أو لفئة',
+  pk_push_log_view:'سجل الإشعارات',pks_push_log_view:'من وصله الإشعار ومن فتحه — يتضمن أرقام هواتف',pk_inbox_read:'البريد الوارد',
+  pk_sandouk_view:'الاطلاع',pk_sandouk_add:'إدخال سندات',pk_sandouk_edit:'تعديل السندات',pk_sandouk_delete:'حذف السندات',
+  pk_sandouk_sign:'التوقيع',pk_sandouk_series:'ترقيم السندات (إعدادات)',
+  pk_cases_view:'الاطلاع',pk_cases_add:'إضافة معاملة',pk_cases_edit:'تعديل',pk_cases_delete:'حذف',pk_cases_approve:'الموافقات',
+  pk_coop_view:'اطلاع',pk_coop_edit:'تعديل',
+  pk_mrs_view:'الاطلاع',pk_mrs_edit:'التعديل',
+  pk_users_view:'عرض المستخدمين',pk_users_create:'إنشاء حساب',pk_users_edit:'تعديل حساب',pk_users_delete:'حذف حساب',
+  pk_roles_edit:'تعديل الأدوار',pk_roles_delete:'حذف الأدوار',pk_settings_edit:'إعدادات النظام',pk_export_data:'تصدير البيانات',
+  pk_audit_view:'سجل العمليات',pk_activity_view:'تتبع نشاط الموظفين',pk_notify_prefs_edit:'قنوات تنبيه الموظفين'
+},
+en:{
+  emps:'👥 Employees',searchU:'Search by name or email…',fAll:'All',fApr:'Can approve',fCh:'Channels on',fSus:'Suspended',
+  susp:'suspended',active:'Active',pick:'Pick an employee from the list',
+  bApr:'✅ Holds approval permission',bCust:'🔧 {n} custom permissions',bByRole:'entirely by role',
+  tGen:'General',tPerm:'Permissions',tNot:'Notifications',tAct:'Activity',
+  fName:'Full name',fMail:'Email',fPhone:'Phone — matches the push device; WhatsApp & SMS later',fRole:'Role',
+  pwBtn:'🔑 Change password',delBtn:'🗑️ Delete account',
+  permHint:'The role sets the baseline; any switch changed here becomes custom for this employee alone. The arrow unfolds all the module’s detailed keys.',
+  permSearch:'Search a permission…',cust:'custom',on:'on',
+  notHint:'The permission decides WHO is told; these channels decide HOW — per event. 💬 WhatsApp & 📱 SMS are stored now and go live when the service is connected. Channels work only while they hold “approval requests”.',
+  needPerm:'⚠️ Does not hold “approval requests” — enable it in the Permissions tab first',
+  actHint:'This employee’s recent actions — from the activity log (app_activity).',actNone:'No recorded activity yet',actNoPerm:'Viewing activity needs the “staff activity” permission',
+  save:'💾 Save',reset:'↩️ Reset to role defaults',saved:'✅ Saved profile of ',
+  confirmDel:'Delete the account "{n}"? This cannot be undone.',pwTitle:'🔑 New password for ',pwNote:'At least 8 characters — {n} will use it to sign in',
+  needPhone:'⚠️ Push, WhatsApp and SMS need a phone number — save the number too',
+  banOn:'✅ Activated ',banOff:'🔒 Suspended ',pwDone:'✅ Password changed for ',delDone:'🗑️ Deleted ',selfBan:'⚠️ You cannot suspend your own account!',
+  roleChanged:'✅ Role changed to ',
+  ev_phonebook_new:'📇 New directory entry',ev_phonebook_edit:'✏️ Proposed directory edit',
+  ev_coop_seller:'🛒 New coop seller',ev_coop_agent:'🚚 New delivery agent',ev_user_account:'👤 New portal account',
+  ch_email:'📧 Email',ch_push:'🔔 Push',ch_whatsapp:'💬 WhatsApp',ch_sms:'📱 SMS',chSoon:'soon',
+  qView:'View',qEdit:'Edit',qAppr:'Approve',qSign:'Sign',qPush:'Send',
+  rl_super_admin:'👑 Super admin',rl_mayor:'👑 Mayor',rl_admin:'⚙️ Admin',rl_officer:'👤 Case officer',
+  rl_approver:'✅ Approver',rl_viewer:'👁️ Viewer',rl_water_only:'💧 Irrigation only',rl_water_admin:'💧 Irrigation admin',
+  rl_sandouk:'💰 Cash box only',rl_finance:'💼 Finance',rl_citizen:'🧍 Citizen',
+  m_pb:'Municipal directory',m_pb_s:'Names, families and numbers',
+  m_water:'Irrigation',m_water_s:'Water cycle, subscribers and reminders',
+  m_news:'News, notifications & mail',m_news_s:'Publishing, sending, and the delivery log',
+  m_sandouk:'Cash box',m_sandouk_s:'Receipts, signing and numbering',
+  m_cases:'Citizen cases',m_cases_s:'Requests, complaints and approvals',
+  m_coop:'Cooperative',m_coop_s:'Sellers, delivery and orders',
+  m_mrs:'MRS financial archive',m_mrs_s:'View and edit',
+  m_sys:'Users & system',m_sys_s:'Accounts, roles, settings and notify channels',
+  pk_phonebook_view:'View the directory',pk_phonebook_edit:'Edit the directory',pks_phonebook_edit:'Direct add & correct without review',
+  pk_phonebook_registry:'Full civil registry',pks_phonebook_registry:'Mother’s name & birth year — sensitive data',
+  pk_approvals_manage:'Approval requests (approve/reject)',pks_approvals_manage:'Covers the directory, coop sellers and new accounts',
+  pk_water_view:'View the irrigation screen',pk_water_edit:'Edit irrigation',pks_water_edit:'Subscribers, hours and cycle start — changes reminder times',
+  pk_news_publish:'Publish news',pk_push_send:'Send push notifications',pks_push_send:'Broadcast to residents or a group',
+  pk_push_log_view:'Notification log',pks_push_log_view:'Who received and opened what — contains phone numbers',pk_inbox_read:'Inbox',
+  pk_sandouk_view:'View',pk_sandouk_add:'Enter receipts',pk_sandouk_edit:'Edit receipts',pk_sandouk_delete:'Delete receipts',
+  pk_sandouk_sign:'Sign',pk_sandouk_series:'Receipt numbering (settings)',
+  pk_cases_view:'View',pk_cases_add:'Add a case',pk_cases_edit:'Edit',pk_cases_delete:'Delete',pk_cases_approve:'Approvals',
+  pk_coop_view:'View',pk_coop_edit:'Edit',
+  pk_mrs_view:'View',pk_mrs_edit:'Edit',
+  pk_users_view:'View users',pk_users_create:'Create accounts',pk_users_edit:'Edit accounts',pk_users_delete:'Delete accounts',
+  pk_roles_edit:'Edit roles',pk_roles_delete:'Delete roles',pk_settings_edit:'System settings',pk_export_data:'Export data',
+  pk_audit_view:'Audit log',pk_activity_view:'Staff activity',pk_notify_prefs_edit:'Staff notify channels'
+},
+fr:{
+  emps:'👥 Employés',searchU:'Rechercher par nom ou e-mail…',fAll:'Tous',fApr:'Peut valider',fCh:'Canaux actifs',fSus:'Suspendu',
+  susp:'suspendu',active:'Actif',pick:'Choisissez un employé dans la liste',
+  bApr:'✅ Droit de validation',bCust:'🔧 {n} permissions personnalisées',bByRole:'entièrement selon le rôle',
+  tGen:'Général',tPerm:'Permissions',tNot:'Notifications',tAct:'Activité',
+  fName:'Nom complet',fMail:'E-mail',fPhone:'Téléphone — lie l’appareil push ; WhatsApp & SMS plus tard',fRole:'Rôle',
+  pwBtn:'🔑 Changer le mot de passe',delBtn:'🗑️ Supprimer le compte',
+  permHint:'Le rôle donne la base ; tout interrupteur modifié ici devient personnalisé pour cet employé. La flèche déplie toutes les clés détaillées du module.',
+  permSearch:'Rechercher une permission…',cust:'perso',on:'actives',
+  notHint:'La permission décide QUI est informé ; ces canaux décident COMMENT — par événement. 💬 WhatsApp et 📱 SMS sont enregistrés dès maintenant et s’activeront à la connexion du service. Les canaux ne fonctionnent que s’il détient « demandes de validation ».',
+  needPerm:'⚠️ Ne détient pas « demandes de validation » — activez-la d’abord dans l’onglet Permissions',
+  actHint:'Dernières actions de cet employé — depuis le journal d’activité (app_activity).',actNone:'Aucune activité enregistrée',actNoPerm:'Voir l’activité demande la permission « activité du personnel »',
+  save:'💾 Enregistrer',reset:'↩️ Revenir au rôle',saved:'✅ Profil enregistré : ',
+  confirmDel:'Supprimer le compte « {n} » ? Irréversible.',pwTitle:'🔑 Nouveau mot de passe pour ',pwNote:'8 caractères minimum — {n} l’utilisera pour se connecter',
+  needPhone:'⚠️ Push, WhatsApp et SMS demandent un numéro de téléphone — enregistrez-le aussi',
+  banOn:'✅ Activé : ',banOff:'🔒 Suspendu : ',pwDone:'✅ Mot de passe changé pour ',delDone:'🗑️ Supprimé : ',selfBan:'⚠️ Vous ne pouvez pas suspendre votre propre compte !',
+  roleChanged:'✅ Rôle changé en ',
+  ev_phonebook_new:'📇 Nouvelle entrée d’annuaire',ev_phonebook_edit:'✏️ Modification d’annuaire proposée',
+  ev_coop_seller:'🛒 Nouveau vendeur (coopérative)',ev_coop_agent:'🚚 Nouveau livreur',ev_user_account:'👤 Nouveau compte du portail',
+  ch_email:'📧 E-mail',ch_push:'🔔 Push',ch_whatsapp:'💬 WhatsApp',ch_sms:'📱 SMS',chSoon:'bientôt',
+  qView:'Voir',qEdit:'Modifier',qAppr:'Valider',qSign:'Signer',qPush:'Envoyer',
+  rl_super_admin:'👑 Super admin',rl_mayor:'👑 Maire',rl_admin:'⚙️ Directeur',rl_officer:'👤 Agent de suivi',
+  rl_approver:'✅ Valideur',rl_viewer:'👁️ Observateur',rl_water_only:'💧 Irrigation seule',rl_water_admin:'💧 Resp. irrigation',
+  rl_sandouk:'💰 Caisse seule',rl_finance:'💼 Finances',rl_citizen:'🧍 Citoyen',
+  m_pb:'Annuaire municipal',m_pb_s:'Noms, familles et numéros',
+  m_water:'Irrigation',m_water_s:'Cycle d’eau, abonnés et rappels',
+  m_news:'Actualités, notifications & courrier',m_news_s:'Publication, envoi et journal de réception',
+  m_sandouk:'Caisse municipale',m_sandouk_s:'Reçus, signature et numérotation',
+  m_cases:'Dossiers citoyens',m_cases_s:'Demandes, plaintes et validations',
+  m_coop:'Coopérative',m_coop_s:'Vendeurs, livraison et commandes',
+  m_mrs:'Archives financières MRS',m_mrs_s:'Consultation et modification',
+  m_sys:'Utilisateurs & système',m_sys_s:'Comptes, rôles, réglages et canaux',
+  pk_phonebook_view:'Consulter l’annuaire',pk_phonebook_edit:'Modifier l’annuaire',pks_phonebook_edit:'Ajout et correction directs sans validation',
+  pk_phonebook_registry:'Registre civil complet',pks_phonebook_registry:'Nom de la mère et année de naissance — données sensibles',
+  pk_approvals_manage:'Demandes de validation (accepter/refuser)',pks_approvals_manage:'Couvre l’annuaire, les vendeurs et les comptes',
+  pk_water_view:'Voir l’écran d’irrigation',pk_water_edit:'Modifier l’irrigation',pks_water_edit:'Abonnés, heures et début de cycle — change les rappels',
+  pk_news_publish:'Publier les actualités',pk_push_send:'Envoyer des notifications',pks_push_send:'Diffusion aux habitants ou à un groupe',
+  pk_push_log_view:'Journal des notifications',pks_push_log_view:'Qui a reçu et ouvert quoi — contient des numéros',pk_inbox_read:'Boîte de réception',
+  pk_sandouk_view:'Consulter',pk_sandouk_add:'Saisir des reçus',pk_sandouk_edit:'Modifier les reçus',pk_sandouk_delete:'Supprimer les reçus',
+  pk_sandouk_sign:'Signer',pk_sandouk_series:'Numérotation des reçus (réglages)',
+  pk_cases_view:'Consulter',pk_cases_add:'Ajouter un dossier',pk_cases_edit:'Modifier',pk_cases_delete:'Supprimer',pk_cases_approve:'Validations',
+  pk_coop_view:'Consulter',pk_coop_edit:'Modifier',
+  pk_mrs_view:'Consulter',pk_mrs_edit:'Modifier',
+  pk_users_view:'Voir les utilisateurs',pk_users_create:'Créer des comptes',pk_users_edit:'Modifier des comptes',pk_users_delete:'Supprimer des comptes',
+  pk_roles_edit:'Modifier les rôles',pk_roles_delete:'Supprimer les rôles',pk_settings_edit:'Réglages système',pk_export_data:'Exporter les données',
+  pk_audit_view:'Journal des opérations',pk_activity_view:'Activité du personnel',pk_notify_prefs_edit:'Canaux de notification du personnel'
+}};
 
-// ══════════ 🔑 PER-USER PERMISSIONS (صلاحيات المستخدم) ══════════
-// The role gives the defaults; the checkboxes here override them for one person
-// — grant an admin editing while withholding deletion, for example. Only the
-// differences from the role are stored, so changing someone's role still moves
-// everything that was left at its default. The database enforces the same
-// resolution in has_perm(); this screen is how it gets set.
-const WP_GROUPS=[
-  {t:'💰 صندوق البلدية',keys:[['sandouk_view','الاطلاع'],['sandouk_add','إدخال سندات'],['sandouk_edit','تعديل السندات'],['sandouk_delete','حذف السندات'],['sandouk_sign','التوقيع'],['sandouk_series','ترقيم السندات (إعدادات)']]},
-  {t:'📋 معاملات المواطنين',keys:[['cases_view','الاطلاع'],['cases_add','إضافة معاملة'],['cases_edit','تعديل'],['cases_delete','حذف'],['cases_approve','الموافقات']]},
-  {t:'💧 الري',keys:[['water_view','الاطلاع'],['water_edit','التعديل']]},
-  {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
-  {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل'],['phonebook_registry','سجل النفوس الكامل (اسم الأم وسنة الولادة)']]},
-  {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['push_log_view','سجل الإشعارات (من وصله ومن فتحه)'],['inbox_read','البريد الوارد']]},
-  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين'],['approvals_manage','طلبات التحقق (موافقة/رفض)'],['notify_prefs_edit','قنوات تنبيه الموظفين (بريد/إشعار)']]}
+// Every permission key of the portal, module by module. THE registry: a new
+// key is not on the user screen until it has a row here (standing rule).
+const UP_MODULES=[
+  {id:'pb',    icon:'📇', bg:'var(--blue3)', quick:[['phonebook_view','qView'],['approvals_manage','qAppr']],
+   keys:['phonebook_view','phonebook_edit','phonebook_registry','approvals_manage']},
+  {id:'water', icon:'💧', bg:'#e0f2fe', quick:[['water_view','qView'],['water_edit','qEdit']],
+   keys:['water_view','water_edit']},
+  {id:'news',  icon:'📣', bg:'#fef3e2', quick:[['push_send','qPush']],
+   keys:['news_publish','push_send','push_log_view','inbox_read']},
+  {id:'sandouk',icon:'💰', bg:'#fdf6e3', quick:[['sandouk_view','qView'],['sandouk_sign','qSign']],
+   keys:['sandouk_view','sandouk_add','sandouk_edit','sandouk_delete','sandouk_sign','sandouk_series']},
+  {id:'cases', icon:'📋', bg:'var(--blue3)', quick:[['cases_view','qView'],['cases_approve','qAppr']],
+   keys:['cases_view','cases_add','cases_edit','cases_delete','cases_approve']},
+  {id:'coop',  icon:'🛒', bg:'#e8f6ef', quick:[['coop_view','qView'],['coop_edit','qEdit']],
+   keys:['coop_view','coop_edit']},
+  {id:'mrs',   icon:'🏛️', bg:'#efeaf9', quick:[['mrs_view','qView'],['mrs_edit','qEdit']],
+   keys:['mrs_view','mrs_edit']},
+  {id:'sys',   icon:'👥', bg:'#fdecea', quick:[['users_view','qView']],
+   keys:['users_view','users_create','users_edit','users_delete','roles_edit','roles_delete',
+         'settings_edit','export_data','audit_view','activity_view','notify_prefs_edit']}
 ];
-// The notification side of the same panel: the permission decides WHO is told,
-// these channels decide HOW. One jsonb per user in user_notify_prefs, keyed by
-// the approval_requests.kind values — the queue is the registry of events.
-// واتساب يُحفظ الآن ولا يُرسل شيئاً حتى يُربط.
+
+// The notification side: the approval_requests.kind values are the registry of
+// events; the four channels ride user_notify_prefs.channels. واتساب وSMS
+// مخزّنان فقط — يعملان تلقائياً يوم تُربط الخدمة. (Also used by 🔔 توزيع التنبيهات.)
 const WP_NOTIFY_EVENTS=[
   ['phonebook_new','📇 جهة جديدة في الدليل'],
   ['phonebook_edit','✏️ تعديل مقترح على الدليل'],
@@ -3244,144 +3358,405 @@ const WP_NOTIFY_EVENTS=[
   ['coop_agent','🚚 عامل توصيل جديد'],
   ['user_account','👤 حساب جديد على البوابة']
 ];
-// واتساب وSMS مخزّنان فقط: يعملان تلقائياً يوم تُربط الخدمة، بلا إعداد ثانٍ
 const WP_CHANNELS=[['email','📧 بريد'],['push','🔔 إشعار'],['whatsapp','💬 واتساب'],['sms','📱 SMS']];
 const WP_CH_LATER={whatsapp:1,sms:1};
-let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}, notify:{phone,channels}}
 
-async function openUserPerms(btn){
-  if(!WadiPerms.can('roles_edit')&&!WadiPerms.can('users_edit')){toast('🚫 تعديل الصلاحيات متاح للمشرف العام والمدير','err');return;}
-  const uid=btn.dataset.uid, name=btn.dataset.nm;
-  const box=document.getElementById('emp-cards');
-  const old=document.getElementById('wp-panel'); if(old)old.remove();
-  box.insertAdjacentHTML('afterbegin','<div id="wp-panel" style="background:var(--bg2);border:1.5px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:12px">⏳ جاري تحميل الصلاحيات…</div>');
+let UP_CTX=null;  // {users:[], sel, tab, q, filter, psearch, open:{}, edit:{}, activity}
+
+function upEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function upRoleLabel(rid){
+  var k='rl_'+rid;
+  if((UP_T[upLang()]||{})[k]||UP_T.ar[k])return upT(k);
+  var rc=getAdvRoleCfg(rid); return rc.label||rid;
+}
+
+async function loadEmpCards(){
+  var el=document.getElementById('emp-cards'); if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">⏳ …</div>';
   try{
-    const [rolesRes, defsRes, ovRes, npRes] = await Promise.all([
-      sb.from('user_roles').select('role').eq('user_id',uid),
+    var results=await Promise.all([
+      adminAPI({action:'list'}),
+      sb.from('user_roles').select('user_id,role'),
       sb.from('role_permissions').select('role,perms'),
-      sb.from('user_permissions').select('perms').eq('user_id',uid).maybeSingle(),
-      sb.from('user_notify_prefs').select('phone,channels').eq('user_id',uid).maybeSingle()
+      sb.from('user_permissions').select('user_id,perms'),
+      sb.from('user_notify_prefs').select('user_id,phone,channels')
     ]);
-    const roles=((rolesRes&&rolesRes.data)||[]).map(r=>r.role);
-    const defs={};
-    ((defsRes&&defsRes.data)||[]).forEach(row=>{
-      if(roles.indexOf(row.role)<0)return;
-      Object.keys(row.perms||{}).forEach(k=>{ defs[k]=defs[k]===true?true:!!row.perms[k]; });
+    var d=results[0];
+    var ROLES={};((results[1]&&results[1].data)||[]).forEach(function(r){(ROLES[r.user_id]=ROLES[r.user_id]||[]).push(r.role);});
+    var DEFS={};((results[2]&&results[2].data)||[]).forEach(function(r){DEFS[r.role]=r.perms||{};});
+    var OV={};((results[3]&&results[3].data)||[]).forEach(function(r){OV[r.user_id]=r.perms||{};});
+    var NP={};((results[4]&&results[4].data)||[]).forEach(function(r){NP[r.user_id]=r;});
+
+    var users=(d.users||[]).filter(function(u){return u.email;}).map(function(u){
+      var meta=u.user_metadata||{}, roles=ROLES[u.id]||[], np=NP[u.id]||{};
+      // role defaults merged across the user's roles (true wins), like has_perm()
+      var defs={};
+      roles.forEach(function(rl){var p=DEFS[rl]||{};Object.keys(p).forEach(function(k){defs[k]=defs[k]===true?true:!!p[k];});});
+      var isSuper=roles.indexOf('super_admin')>=0;
+      return {
+        uid:u.id, name:meta.name||u.email.split('@')[0], email:u.email,
+        role:roles[0]||meta.role||'officer', roles:roles, isSuper:isSuper,
+        active:!u.banned_until||new Date(u.banned_until)<new Date(),
+        defaults:defs, overrides:OV[u.id]||{},
+        notify:{phone:np.phone||meta.phone||'',channels:JSON.parse(JSON.stringify(np.channels||{}))},
+        hadRow:!!NP[u.id]
+      };
     });
-    const ov=((ovRes&&ovRes.data&&ovRes.data.perms)||{});
-    const np=(npRes&&npRes.data)||{};
-    WP_CTX={uid:uid,name:name,roles:roles,defaults:defs,overrides:ov,
-            notify:{phone:np.phone||'',channels:np.channels||{}}};
-    document.getElementById('wp-panel').innerHTML=wpPanelHTML();
+    var keep=UP_CTX||{};
+    UP_CTX={users:users, sel:keep.sel||null, tab:keep.tab||'perm', q:'', filter:'all',
+            psearch:'', open:keep.open||{}, edit:null, activity:null};
+    if(UP_CTX.sel&&!users.some(function(u){return u.uid===UP_CTX.sel;}))UP_CTX.sel=null;
+    if(UP_CTX.sel)upLoadEdit(UP_CTX.sel);
+    upRender();
   }catch(e){
-    document.getElementById('wp-panel').innerHTML='<div style="color:var(--danger);font-size:13px">⚠️ '+e.message+'</div>';
+    el.innerHTML='<div style="color:var(--danger);font-size:13px;text-align:center;padding:14px">⚠️ '+upEsc(e.message)+'</div>';
   }
 }
-function wpPanelHTML(){
-  const c=WP_CTX;
-  const eff=k=>Object.prototype.hasOwnProperty.call(c.overrides,k)?!!c.overrides[k]:!!c.defaults[k];
-  const isOv=k=>Object.prototype.hasOwnProperty.call(c.overrides,k)&&(!!c.overrides[k])!==(!!c.defaults[k]);
-  const groups=WP_GROUPS.map(g=>
-    '<div style="margin-bottom:10px">'
-    +'<div style="font-size:12px;font-weight:800;color:var(--blue2);margin-bottom:4px">'+g.t+'</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px">'
-    +g.keys.map(([k,l])=>
-      '<label style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;font-size:12.5px;cursor:pointer;'
-      +'background:'+(isOv(k)?'#fff4e0':'var(--bg)')+';border:1px solid '+(isOv(k)?'var(--warn)':'var(--border)')+'">'
-      +'<input type="checkbox" id="wp-'+k+'" '+(eff(k)?'checked':'')+' onchange="wpToggle(\''+k+'\',this.checked)" style="width:15px;height:15px;accent-color:var(--blue)">'
-      +'<span>'+l+'</span>'
-      +(isOv(k)?'<span style="font-size:9.5px;color:var(--warn);font-weight:800;margin-inline-start:auto">مخصّص</span>':'')
-      +'</label>').join('')
-    +'</div></div>').join('');
-  return '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">'
-    +'<div><div style="font-size:14px;font-weight:800;color:var(--blue2)">🔑 صلاحيات: '+c.name+'</div>'
-    +'<div style="font-size:11.5px;color:var(--text3)">الدور: '+(c.roles.join('، ')||'بلا دور')+' — المربّع المظلّل بالبرتقالي مخالف لإعداد الدور</div></div>'
-    +'<div style="display:flex;gap:6px"><button class="btn bp" style="padding:6px 12px;font-size:12px" onclick="wpSave()">✓ حفظ</button>'
-    +'<button class="btn bg" style="padding:6px 12px;font-size:12px" onclick="wpResetToRole()">↩️ إعادة لإعداد الدور</button>'
-    +'<button class="btn bg" style="padding:6px 12px;font-size:12px" onclick="document.getElementById(\'wp-panel\').remove()">إغلاق</button></div></div>'
-    +groups+wpNotifyHTML();
+
+function upUser(uid){return UP_CTX?UP_CTX.users.find(function(u){return u.uid===uid;}):null;}
+function upLoadEdit(uid){
+  var u=upUser(uid); if(!u)return;
+  UP_CTX.edit={
+    uid:uid, name:u.name, role:u.role,
+    overrides:JSON.parse(JSON.stringify(u.overrides)),
+    notify:JSON.parse(JSON.stringify(u.notify))
+  };
+  UP_CTX.activity=null;
 }
-// ── 🔔 the channels grid: one row per approval event, three switches each ──
-// Rendered only for holders of notify_prefs_edit — the database refuses the
-// save for anyone else anyway. State lives in WP_CTX.notify so re-rendering
-// the panel (every permission toggle does) never loses an unsaved choice.
-function wpNotifyHTML(){
-  const c=WP_CTX; if(!c||!c.notify||!WadiPerms.can('notify_prefs_edit'))return '';
-  const ch=c.notify.channels||{};
-  const on=(ev,k)=>!!((ch[ev]||{})[k]);
-  const rows=WP_NOTIFY_EVENTS.map(([ev,lbl])=>
-    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border-radius:7px;background:var(--bg);border:1px solid var(--border)">'
-    +'<span style="flex:1;min-width:170px;font-size:12.5px">'+lbl+'</span>'
-    +WP_CHANNELS.map(([k,kl])=>
-      '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer'+(WP_CH_LATER[k]?';opacity:.55':'')+'" '
-      +(WP_CH_LATER[k]?'title="يُحفظ الآن ويعمل تلقائياً عند ربط الخدمة"':'')+'>'
-      +'<input type="checkbox" '+(on(ev,k)?'checked':'')
-      +' onchange="wpNotifyToggle(\''+ev+'\',\''+k+'\',this.checked)" style="width:14px;height:14px;accent-color:var(--blue)">'
-      +kl+(WP_CH_LATER[k]?' <small style="color:var(--text3)">(قريباً)</small>':'')+'</label>').join('')
-    +'</div>').join('');
-  return '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:10px">'
-    +'<div style="font-size:12px;font-weight:800;color:var(--blue2);margin-bottom:4px">🔔 قنوات التنبيه — متى يصله خبر طلبات التحقق</div>'
-    +'<div style="font-size:11.5px;color:var(--text3);margin-bottom:6px;line-height:1.7">'
-    +'الصلاحية تقرِّر <b>من</b> يُبلَّغ، وهذه القنوات تقرِّر <b>كيف</b>: تعمل فقط ما دام يملك «طلبات التحقق (موافقة/رفض)». '
-    +'البريد يصل على عنوان حسابه، والإشعار على الجهاز الذي فعّل الإشعارات فيه بهذا الرقم، وواتساب يُحفظ الآن ويُفعَّل عند ربطه.</div>'
-    +'<div style="display:grid;gap:4px">'+rows+'</div>'
-    +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">'
-    +'<span style="font-size:12px;color:var(--text3)">📱 رقم هاتفه (للإشعار وواتساب):</span>'
-    +'<input type="tel" class="fi" id="wp-notify-phone" data-phone value="'+String(c.notify.phone||'').replace(/"/g,'&quot;')
-    +'" onchange="if(WP_CTX&&WP_CTX.notify)WP_CTX.notify.phone=this.value" style="direction:ltr;max-width:210px;padding:6px 10px;font-size:12.5px;height:auto"></div></div>';
+// effective value: personal override → role default → super_admin — the same
+// resolution has_perm() applies in the database
+function upEff(k){
+  var e=UP_CTX.edit, u=upUser(e.uid);
+  if(Object.prototype.hasOwnProperty.call(e.overrides,k))return !!e.overrides[k];
+  if(Object.prototype.hasOwnProperty.call(u.defaults,k))return !!u.defaults[k];
+  return u.isSuper;
 }
-function wpNotifyToggle(ev,k,val){
-  const c=WP_CTX; if(!c||!c.notify)return;
-  const ch=c.notify.channels=c.notify.channels||{};
+function upIsOv(k){
+  var e=UP_CTX.edit, u=upUser(e.uid);
+  if(!Object.prototype.hasOwnProperty.call(e.overrides,k))return false;
+  var base=Object.prototype.hasOwnProperty.call(u.defaults,k)?!!u.defaults[k]:u.isSuper;
+  return (!!e.overrides[k])!==base;
+}
+function upCanApprove(u){
+  if(Object.prototype.hasOwnProperty.call(u.overrides,'approvals_manage'))return !!u.overrides.approvals_manage;
+  if(Object.prototype.hasOwnProperty.call(u.defaults,'approvals_manage'))return !!u.defaults.approvals_manage;
+  return u.isSuper;
+}
+function upHasCh(u){var ch=u.notify.channels||{};return Object.keys(ch).some(function(ev){var c=ch[ev]||{};return c.email||c.push||c.whatsapp||c.sms;});}
+function upIni(n){return (n||'?').split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase()||'?';}
+
+function upRender(){
+  var el=document.getElementById('emp-cards'); if(!el||!UP_CTX)return;
+  var c=UP_CTX, T=upT;
+  var list=c.users.filter(function(u){
+    if(c.q){var q=c.q.toLowerCase();if((u.name+' '+u.email).toLowerCase().indexOf(q)<0)return false;}
+    if(c.filter==='apr')return upCanApprove(u);
+    if(c.filter==='ch')return upHasCh(u);
+    if(c.filter==='sus')return !u.active;
+    return true;
+  });
+  var langBtn=function(l,lbl){return '<button class="btn" style="padding:4px 10px;font-size:11px;font-weight:800'
+    +(upLang()===l?';background:var(--blue);color:#fff;border-color:var(--blue)':'')
+    +'" onclick="upSetLang(\''+l+'\')">'+lbl+'</button>';};
+  var side='<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border)">'
+    +'<b style="color:var(--blue2);font-size:13.5px">'+T('emps')+' ('+c.users.length+')</b>'
+    +'<span style="display:flex;gap:4px">'+langBtn('ar','ع')+langBtn('en','EN')+langBtn('fr','FR')+'</span></div>'
+    +'<div style="padding:9px 12px 0"><input class="fi" style="width:100%;padding:8px 12px;font-size:12.5px;height:auto" placeholder="🔍 '+T('searchU')+'" value="'+upEsc(c.q)+'" oninput="UP_CTX.q=this.value;upRenderKeepFocus(this)"></div>'
+    +'<div style="display:flex;gap:5px;padding:8px 12px;flex-wrap:wrap">'
+    +[['all','fAll'],['apr','fApr'],['ch','fCh'],['sus','fSus']].map(function(f){
+      return '<span onclick="UP_CTX.filter=\''+f[0]+'\';upRender()" style="font-size:10.5px;font-weight:800;padding:4px 11px;border-radius:20px;cursor:pointer;border:1.5px solid '
+        +(c.filter===f[0]?'var(--blue);background:var(--blue3);color:var(--blue2)':'var(--border);color:var(--text3)')+'">'+T(f[1])+'</span>';}).join('')
+    +'</div>'
+    +list.map(function(u){
+      var rc=getAdvRoleCfg(u.role);
+      var chIcons=[];var ch=u.notify.channels||{};
+      var any=function(k){return Object.keys(ch).some(function(ev){return (ch[ev]||{})[k];});};
+      if(any('email'))chIcons.push('📧');if(any('push'))chIcons.push('🔔');
+      if(any('whatsapp'))chIcons.push('💬');if(any('sms'))chIcons.push('📱');
+      return '<div onclick="upSelect(\''+u.uid+'\')" style="display:flex;align-items:center;gap:9px;padding:10px 12px;cursor:pointer;'
+        +'border-inline-start:3px solid '+(c.sel===u.uid?'var(--blue);background:var(--blue3)':'transparent')+'">'
+        +'<div style="width:36px;height:36px;border-radius:50%;background:'+rc.bg+';color:'+rc.color+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12.5px;flex-shrink:0">'+upIni(u.name)+'</div>'
+        +'<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:12.5px">'+upEsc(u.name)+'</div>'
+        +'<div style="font-size:10px;color:var(--text3)">'+upRoleLabel(u.role)+(chIcons.length?' · '+chIcons.join(''):'')+(u.active?'':' · '+T('susp'))+'</div></div>'
+        +'<span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:'+(u.active?'var(--green)':'#ccd6e3')+'"></span></div>';
+    }).join('')
+    +'</div>';
+
+  var main;
+  if(!c.sel||!c.edit){
+    main='<div style="display:flex;align-items:center;justify-content:center;min-height:220px;color:var(--text3);font-size:13.5px;background:var(--bg2);border:1px dashed var(--border);border-radius:14px">'+T('pick')+'</div>';
+  }else{
+    main=upProfileHTML();
+  }
+  el.innerHTML='<div style="display:grid;grid-template-columns:262px 1fr;gap:12px;text-align:right" class="up-grid">'
+    +'<style>@media(max-width:760px){.up-grid{grid-template-columns:1fr !important}}</style>'
+    +side+'<div>'+main+'</div></div>';
+}
+function upRenderKeepFocus(inp){
+  var v=inp.value, pos=inp.selectionStart;
+  upRender();
+  var el=document.querySelector('#emp-cards input[oninput]');
+  if(el){el.focus();try{el.setSelectionRange(pos,pos);}catch(_e){}}
+}
+function upSelect(uid){ UP_CTX.sel=uid; upLoadEdit(uid); upRender(); }
+function upTab(t){ UP_CTX.tab=t; upRender(); if(t==='act')upActivityLoad(); }
+
+function upProfileHTML(){
+  var c=UP_CTX, e=c.edit, u=upUser(e.uid), T=upT, rc=getAdvRoleCfg(e.role);
+  var nCust=Object.keys(e.overrides).filter(function(k){return upIsOv(k);}).length;
+  var tabs=[['gen','tGen','👤'],['perm','tPerm','🔐'],['not','tNot','🔔'],['act','tAct','📊']].map(function(t){
+    return '<div onclick="upTab(\''+t[0]+'\')" style="padding:11px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;'
+      +'color:'+(c.tab===t[0]?'var(--blue2)':'var(--text3)')+';border-bottom:3px solid '+(c.tab===t[0]?'var(--blue)':'transparent')+'">'+t[2]+' '+T(t[1])+'</div>';}).join('');
+  var roleOpts=Object.keys(getAllRoles()).map(function(rid){
+    return '<option value="'+rid+'"'+(rid===e.role?' selected':'')+'>'+upRoleLabel(rid)+'</option>';}).join('');
+  var body='';
+  if(c.tab==='gen')body=upGenHTML();
+  else if(c.tab==='perm')body=upPermHTML();
+  else if(c.tab==='not')body=upNotHTML();
+  else body=upActHTML();
+  return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden">'
+    +'<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:15px 16px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg),var(--bg2))">'
+    +'<div style="width:52px;height:52px;border-radius:50%;background:'+rc.bg+';color:'+rc.color+';display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">'+upIni(u.name)+'</div>'
+    +'<div style="flex:1;min-width:170px"><div style="font-size:17px;font-weight:800;color:var(--blue2)">'+upEsc(e.name)+'</div>'
+    +'<div style="font-size:11.5px;color:var(--text3);direction:ltr;text-align:end">'+upEsc(u.email)+(e.notify.phone?' · '+upEsc(e.notify.phone):'')+'</div>'
+    +'<div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">'
+    +'<span style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:'+(u.active?'var(--green3);color:var(--green2,#1f7a45)':'var(--bg);color:var(--text3)')+'">'+(u.active?'● '+T('active'):T('susp'))+'</span>'
+    +(upEff('approvals_manage')?'<span style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:var(--blue3);color:var(--blue2)">'+T('bApr')+'</span>':'')
+    +'<span style="font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;background:'+(nCust?'#fff4e0;color:var(--warn)':'var(--bg);color:var(--text3)')+'">'
+    +(nCust?T('bCust').replace('{n}',nCust):T('bByRole'))+'</span></div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:7px;align-items:flex-end">'
+    +'<select class="fi" style="padding:7px 12px;font-size:12.5px;height:auto;font-weight:800" onchange="upRoleChange(this.value)">'+roleOpts+'</select>'
+    +'<label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:800;color:var(--text2);cursor:pointer">'+T('active')
+    +'<label class="tgl"><input type="checkbox" '+(u.active?'checked':'')+' onchange="upBan(this)"><span class="tgl-sl"></span></label></label></div></div>'
+    +'<div style="display:flex;gap:2px;padding:0 12px;border-bottom:1px solid var(--border);overflow-x:auto">'+tabs+'</div>'
+    +'<div style="padding:15px 16px">'+body+'</div>'
+    +'<div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);background:var(--bg);flex-wrap:wrap">'
+    +'<button class="btn bp" style="padding:8px 20px" onclick="upSave()">'+T('save')+'</button>'
+    +'<button class="btn" style="padding:8px 16px" onclick="upResetRole()">'+T('reset')+'</button></div></div>';
+}
+
+function upGenHTML(){
+  var e=UP_CTX.edit, u=upUser(e.uid), T=upT;
+  return '<div style="max-width:400px">'
+    +'<div class="fg"><div class="fl">'+T('fName')+'</div><input class="fi" value="'+upEsc(e.name)+'" onchange="UP_CTX.edit.name=this.value"></div>'
+    +'<div class="fg"><div class="fl">'+T('fMail')+'</div><input class="fi" value="'+upEsc(u.email)+'" disabled style="direction:ltr;opacity:.7"></div>'
+    +'<div class="fg"><div class="fl">'+T('fPhone')+'</div><input type="tel" class="fi" data-phone value="'+upEsc(e.notify.phone)+'" onchange="UP_CTX.edit.notify.phone=this.value" style="direction:ltr"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">'
+    +'<button class="btn" onclick="upPw()">'+T('pwBtn')+'</button>'
+    +'<button class="btn" style="color:var(--danger)" onclick="upDel()">'+T('delBtn')+'</button></div></div>';
+}
+
+function upPermHTML(){
+  var c=UP_CTX, T=upT;
+  var q=(c.psearch||'').toLowerCase();
+  var mods=UP_MODULES.map(function(m){
+    var keys=m.keys.filter(function(k){
+      if(!q)return true;
+      return (T('pk_'+k)+' '+(T('pks_'+k)!=='pks_'+k?T('pks_'+k):'')+' '+k).toLowerCase().indexOf(q)>=0;
+    });
+    if(q&&!keys.length)return '';
+    var open=q?true:!!c.open[m.id];
+    var nOn=m.keys.filter(upEff).length;
+    var quick=(m.quick||[]).map(function(qk){
+      return '<label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:var(--text2);cursor:pointer" onclick="event.stopPropagation()">'+T(qk[1])
+        +'<label class="tgl" style="transform:scale(.85)"><input type="checkbox" '+(upEff(qk[0])?'checked':'')+' onchange="upTogKey(\''+qk[0]+'\',this.checked)"><span class="tgl-sl"></span></label></label>';
+    }).join('');
+    var rows=keys.map(function(k){
+      var sub=T('pks_'+k); if(sub==='pks_'+k)sub='';
+      return '<div style="display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px dashed var(--border)">'
+        +'<div style="flex:1;min-width:0;font-size:12px;font-weight:700">'+T('pk_'+k)
+        +(upIsOv(k)?' <span style="background:#fff4e0;color:var(--warn);border-radius:6px;font-size:9px;font-weight:800;padding:1px 6px">'+T('cust')+'</span>':'')
+        +(sub?'<div style="font-weight:400;color:var(--text3);font-size:10.5px">'+sub+'</div>':'')+'</div>'
+        +'<code style="font-size:9.5px;color:var(--text3);background:var(--bg);border-radius:5px;padding:2px 6px;direction:ltr">'+k+'</code>'
+        +'<label class="tgl" style="transform:scale(.85)"><input type="checkbox" '+(upEff(k)?'checked':'')+' onchange="upTogKey(\''+k+'\',this.checked)"><span class="tgl-sl"></span></label></div>';
+    }).join('');
+    return '<div style="border:1px solid '+(open?'#cfdcee':'var(--border)')+';border-radius:12px;margin-bottom:8px;background:var(--bg2);overflow:hidden">'
+      +'<div onclick="UP_CTX.open[\''+m.id+'\']=!UP_CTX.open[\''+m.id+'\'];upRender()" style="display:flex;align-items:center;gap:10px;padding:11px 13px;cursor:pointer;flex-wrap:wrap">'
+      +'<div style="width:36px;height:36px;border-radius:10px;background:'+m.bg+';display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">'+m.icon+'</div>'
+      +'<div style="flex:1;min-width:120px"><b style="font-size:12.5px">'+T('m_'+m.id)+'</b>'
+      +'<div style="color:var(--text3);font-size:10px">'+T('m_'+m.id+'_s')+'</div></div>'
+      +'<span style="font-size:10px;font-weight:800;border-radius:20px;padding:3px 10px;background:'+(nOn?'var(--green3);color:var(--green2,#1f7a45)':'var(--bg);color:var(--text3)')+'">'+nOn+'/'+m.keys.length+'</span>'
+      +quick
+      +'<span style="color:var(--text3);font-size:11px;transition:transform .2s;'+(open?'transform:rotate(90deg)':'')+'">◀</span></div>'
+      +(open?'<div style="border-top:1px solid var(--border);background:var(--bg);padding:2px 13px">'+rows+'</div>':'')
+      +'</div>';
+  }).join('');
+  return '<div style="font-size:11.5px;color:var(--text2);line-height:1.8;background:var(--bg);border-radius:10px;padding:9px 13px;margin-bottom:10px">'+T('permHint')+'</div>'
+    +'<input class="fi" style="width:100%;padding:8px 12px;font-size:12.5px;height:auto;margin-bottom:10px" placeholder="🔍 '+T('permSearch')+'" value="'+upEsc(c.psearch)+'" oninput="UP_CTX.psearch=this.value;upRenderKeepPermFocus(this)">'
+    +mods;
+}
+function upRenderKeepPermFocus(inp){
+  var pos=inp.selectionStart;
+  upRender();
+  var els=document.querySelectorAll('#emp-cards input[oninput]');
+  var el=els[els.length-1];
+  if(el){el.focus();try{el.setSelectionRange(pos,pos);}catch(_e){}}
+}
+function upTogKey(k,val){
+  var e=UP_CTX.edit, u=upUser(e.uid);
+  var base=Object.prototype.hasOwnProperty.call(u.defaults,k)?!!u.defaults[k]:u.isSuper;
+  if((!!val)===base)delete e.overrides[k];   // back to the role default → no override stored
+  else e.overrides[k]=!!val;
+  upRender();
+}
+
+function upNotHTML(){
+  var e=UP_CTX.edit, T=upT;
+  var rows=WP_NOTIFY_EVENTS.map(function(ev){
+    var kind=ev[0];
+    return '<div style="display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid var(--border);border-radius:11px;margin-bottom:7px;flex-wrap:wrap;background:var(--bg2)">'
+      +'<span style="flex:1;min-width:160px;font-size:12.5px;font-weight:800">'+T('ev_'+kind)+'</span>'
+      +WP_CHANNELS.map(function(chd){
+        var k=chd[0], on=!!((e.notify.channels[kind]||{})[k]), later=WP_CH_LATER[k];
+        return '<span onclick="upChToggle(\''+kind+'\',\''+k+'\')" style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;user-select:none;'
+          +'border:1.5px solid '+(on?'var(--blue);background:var(--blue3);color:var(--blue2)':'var(--border);color:var(--text3);background:var(--bg2)')
+          +(later?';opacity:.55':'')+'" '+(later?'title="'+T('chSoon')+'"':'')+'>'+T('ch_'+k)
+          +(later?' <small>('+T('chSoon')+')</small>':'')+'</span>';
+      }).join('')+'</div>';
+  }).join('');
+  return '<div style="font-size:11.5px;color:var(--text2);line-height:1.8;background:var(--bg);border-radius:10px;padding:9px 13px;margin-bottom:10px">'+T('notHint')+'</div>'
+    +(upEff('approvals_manage')?'':'<div style="font-size:12px;color:var(--warn);background:#fff4e0;border-radius:10px;padding:8px 13px;margin-bottom:10px;font-weight:700">'+T('needPerm')+'</div>')
+    +rows
+    +'<div class="fg" style="margin-top:10px;max-width:340px"><div class="fl">📱 '+T('fPhone')+'</div>'
+    +'<input type="tel" class="fi" data-phone value="'+upEsc(e.notify.phone)+'" onchange="UP_CTX.edit.notify.phone=this.value" style="direction:ltr"></div>';
+}
+function upChToggle(ev,k){
+  var ch=UP_CTX.edit.notify.channels;
   ch[ev]=ch[ev]||{};
-  ch[ev][k]=!!val;
+  ch[ev][k]=!ch[ev][k];
+  upRender();
 }
-function wpToggle(k,val){
-  const c=WP_CTX; if(!c)return;
-  if((!!val)===(!!c.defaults[k])) delete c.overrides[k];   // back to the role default → no override stored
-  else c.overrides[k]=!!val;
-  document.getElementById('wp-panel').innerHTML=wpPanelHTML();
+
+function upActHTML(){
+  var T=upT, a=UP_CTX.activity;
+  if(!WadiPerms.can('activity_view'))
+    return '<div style="font-size:12.5px;color:var(--text3);padding:14px;text-align:center">'+T('actNoPerm')+'</div>';
+  if(a===null)return '<div style="text-align:center;color:var(--text3);padding:14px">⏳ …</div>';
+  if(!a.length)return '<div style="font-size:12.5px;color:var(--text3);padding:14px;text-align:center">'+T('actNone')+'</div>';
+  return '<div style="font-size:11.5px;color:var(--text2);background:var(--bg);border-radius:10px;padding:9px 13px;margin-bottom:10px">'+T('actHint')+'</div>'
+    +a.map(function(r){
+      return '<div style="padding:9px 13px;border:1px solid var(--border);border-radius:11px;margin-bottom:6px;background:var(--bg2)">'
+        +'<div style="font-size:12.5px;font-weight:700">'+upEsc(r.action)+(r.target?' — '+upEsc(r.target):'')+'</div>'
+        +'<div style="font-size:10.5px;color:var(--text3);margin-top:2px">'+upEsc(r.detail||'')+' · '
+        +new Date(r.at).toLocaleString(upLang()==='ar'?'ar-LB':(upLang()==='fr'?'fr-FR':'en-GB'),{timeZone:'Asia/Beirut'})+'</div></div>';
+    }).join('');
 }
-function wpResetToRole(){ if(!WP_CTX)return; WP_CTX.overrides={}; document.getElementById('wp-panel').innerHTML=wpPanelHTML(); }
-async function wpSave(){
-  const c=WP_CTX; if(!c)return;
+async function upActivityLoad(){
+  if(!UP_CTX||!UP_CTX.edit||!WadiPerms.can('activity_view'))return;
   try{
-    const keys=Object.keys(c.overrides);
+    var r=await sb.from('app_activity').select('at,action,target,detail')
+      .eq('actor_id',UP_CTX.edit.uid).order('at',{ascending:false}).limit(12);
+    UP_CTX.activity=(r&&r.data)||[];
+  }catch(_e){ UP_CTX.activity=[]; }
+  if(UP_CTX.tab==='act')upRender();
+}
+
+function upResetRole(){ if(!UP_CTX||!UP_CTX.edit)return; UP_CTX.edit.overrides={}; upRender(); }
+async function upRoleChange(role){
+  var e=UP_CTX.edit, u=upUser(e.uid);
+  if(!WadiPerms.can('roles_edit')){toast('🚫','err');upRender();return;}
+  try{
+    var del=await sb.from('user_roles').delete().eq('user_id',e.uid).neq('role','super_admin');
+    if(del.error)throw del.error;
+    var ins=await sb.from('user_roles').insert({user_id:e.uid,role:role});
+    if(ins.error)throw ins.error;
+    try{ await adminAPI({action:'update',uid:e.uid,updates:{user_metadata:{role:role}}}); }catch(_e){}
+    e.role=role; u.role=role; u.roles=[role].concat(u.isSuper?['super_admin']:[]);
+    toast(upT('roleChanged')+upRoleLabel(role));
+    trackActivity('تغيير دور مستخدم',u.name+' → '+role,{target:u.name,page:'users'});
+  }catch(err){ toast('⚠️ '+err.message,'err'); }
+  upRender();
+}
+async function upBan(cb){
+  var e=UP_CTX.edit, u=upUser(e.uid), active=cb.checked;
+  var res=await sb.auth.getUser();
+  if(res.data&&res.data.user&&res.data.user.id===e.uid&&!active){
+    alert(upT('selfBan')); cb.checked=true; return;
+  }
+  try{
+    await adminAPI({action:'update',uid:e.uid,updates:{ban_duration:active?'none':'876000h'}});
+    u.active=active;
+    toast((active?upT('banOn'):upT('banOff'))+u.name);
+    trackActivity(active?'تفعيل حساب':'إيقاف حساب',u.name,{target:u.name,page:'users'});
+  }catch(err){ cb.checked=!cb.checked; toast('⚠️ '+err.message,'err'); }
+  upRender();
+}
+async function upPw(){
+  var e=UP_CTX.edit, u=upUser(e.uid);
+  // Masked and confirmed twice — prompt() once showed the password in clear
+  var pw=await wadiAskPassword({title:upT('pwTitle')+u.name,note:upT('pwNote').replace('{n}',u.name)});
+  if(pw===null)return;
+  try{
+    await adminAPI({action:'update',uid:e.uid,updates:{password:pw}});
+    toast(upT('pwDone')+u.name);
+  }catch(err){ toast('⚠️ '+err.message,'err'); }
+}
+async function upDel(){
+  var e=UP_CTX.edit, u=upUser(e.uid);
+  if(!WadiPerms.can('users_delete')){toast('🚫','err');return;}
+  if(!await wadiConfirm(upT('confirmDel').replace('{n}',u.name)))return;
+  try{
+    await adminAPI({action:'delete',uid:e.uid});
+    // leave no orphan role, override or channel rows behind
+    try{ await sb.from('user_roles').delete().eq('user_id',e.uid); }catch(_e){}
+    try{ await sb.from('user_permissions').delete().eq('user_id',e.uid); }catch(_e){}
+    try{ await sb.from('user_notify_prefs').delete().eq('user_id',e.uid); }catch(_e){}
+    toast(upT('delDone')+u.name);
+    trackActivity('حذف حساب',u.name,{target:u.name,page:'users'});
+    UP_CTX.sel=null; UP_CTX.edit=null;
+    loadEmpCards();
+  }catch(err){ toast('⚠️ '+err.message,'err'); }
+}
+
+async function upSave(){
+  var c=UP_CTX; if(!c||!c.edit)return;
+  var e=c.edit, u=upUser(e.uid), T=upT;
+  try{
+    // 1 · the permission overrides — only the differences from the role
+    Object.keys(e.overrides).forEach(function(k){ if(!upIsOv(k))delete e.overrides[k]; });
+    var keys=Object.keys(e.overrides);
     if(!keys.length){
-      await sb.from('user_permissions').delete().eq('user_id',c.uid);
+      await sb.from('user_permissions').delete().eq('user_id',e.uid);
     }else{
-      const{error}=await sb.from('user_permissions')
-        .upsert({user_id:c.uid,perms:c.overrides,updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()},{onConflict:'user_id'});
-      if(error)throw error;
+      var r1=await sb.from('user_permissions')
+        .upsert({user_id:e.uid,perms:e.overrides,updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()},{onConflict:'user_id'});
+      if(r1.error)throw r1.error;
     }
-    // the channels ride the same save button — only what is actually ON is
-    // stored, so an all-off matrix with no phone deletes the row outright
-    if(c.notify&&WadiPerms.can('notify_prefs_edit')){
-      const phEl=document.getElementById('wp-notify-phone');
-      if(phEl)c.notify.phone=phEl.value;
-      const rawPhone=(c.notify.phone||'').trim();
-      const phone=rawPhone?((window.phoneE164&&phoneE164(rawPhone))||rawPhone):'';
-      const chans={};
-      Object.keys(c.notify.channels||{}).forEach(ev=>{
-        const src=c.notify.channels[ev]||{}, dst={};
-        ['email','push','whatsapp','sms'].forEach(k=>{ if(src[k])dst[k]=true; });
+    // 2 · the notification channels — only what is ON is stored
+    if(WadiPerms.can('notify_prefs_edit')){
+      var chans={};
+      Object.keys(e.notify.channels||{}).forEach(function(ev){
+        var src=e.notify.channels[ev]||{},dst={};
+        ['email','push','whatsapp','sms'].forEach(function(k){if(src[k])dst[k]=true;});
         if(Object.keys(dst).length)chans[ev]=dst;
       });
-      const wantsPush=Object.keys(chans).some(ev=>chans[ev].push||chans[ev].whatsapp||chans[ev].sms);
-      if(wantsPush&&!phone)toast('⚠️ الإشعار وواتساب يحتاجان رقم هاتف — احفظ الرقم أيضاً','err');
+      var raw=(e.notify.phone||'').trim();
+      var phone=raw?((window.phoneE164&&phoneE164(raw))||raw):'';
+      var wantsDev=Object.keys(chans).some(function(ev){return chans[ev].push||chans[ev].whatsapp||chans[ev].sms;});
+      if(wantsDev&&!phone)toast(T('needPhone'),'err');
       if(!Object.keys(chans).length&&!phone){
-        await sb.from('user_notify_prefs').delete().eq('user_id',c.uid);
+        await sb.from('user_notify_prefs').delete().eq('user_id',e.uid);
+        u.hadRow=false;
       }else{
-        const{error:nErr}=await sb.from('user_notify_prefs')
-          .upsert({user_id:c.uid,phone:phone||null,channels:chans,
+        var r2=await sb.from('user_notify_prefs')
+          .upsert({user_id:e.uid,phone:phone||null,channels:chans,
                    updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()},{onConflict:'user_id'});
-        if(nErr)throw nErr;
+        if(r2.error)throw r2.error;
+        u.hadRow=true;
       }
+      u.notify={phone:phone,channels:JSON.parse(JSON.stringify(chans))};
+      e.notify.phone=phone;
     }
-    toast('✅ حُفظت صلاحيات '+c.name+(keys.length?(' ('+keys.length+' مخصّصة)'):' (كلها حسب الدور)'));
-    trackActivity('تعديل صلاحيات مستخدم',c.name+' — '+(keys.length?(keys.length+' صلاحية مخصّصة'):'كلها حسب الدور'),{target:c.name,page:'users'});
-    const p=document.getElementById('wp-panel'); if(p)p.remove();
-  }catch(e){ toast('⚠️ '+e.message,'err'); }
+    // 3 · the name, kept on the auth account like before
+    if(e.name!==u.name){
+      try{ await adminAPI({action:'update',uid:e.uid,updates:{user_metadata:{name:e.name}}}); u.name=e.name; }catch(_e){}
+    }
+    u.overrides=JSON.parse(JSON.stringify(e.overrides));
+    toast(T('saved')+u.name);
+    trackActivity('تعديل ملف موظف',u.name+' — '+(keys.length?keys.length+' مخصّصة':'حسب الدور'),{target:u.name,page:'users'});
+    upRender();
+  }catch(err){ toast('⚠️ '+err.message,'err'); }
 }
 
 // ══════════ 🔔 توزيع التنبيهات (notification routing, per EVENT) ══════════
@@ -3512,102 +3887,6 @@ async function nmSave(){
     trackActivity('تعديل توزيع التنبيهات',(ups.length+dels.length)+' موظف',{page:'users'});
     loadNotifyMatrix();
   }catch(e){toast('⚠️ '+e.message,'err');}
-}
-
-// ── EMPLOYEE ACTIONS ──────────────────────────────────────────────────────────
-async function doChRole(sel) {
-  var uid=sel.dataset.uid, name=sel.dataset.nm, role=sel.value;
-  if(!WadiPerms.can('roles_edit')){ toast('🚫 تغيير الأدوار متاح للمشرف العام والمدير','err'); return; }
-  try {
-    // user_roles is what the pages and the database policies read
-    var del = await sb.from('user_roles').delete().eq('user_id',uid).neq('role','super_admin');
-    if(del.error) throw del.error;
-    var ins = await sb.from('user_roles').insert({user_id:uid, role:role});
-    if(ins.error) throw ins.error;
-    // keep the old metadata field in step for anything not yet migrated
-    try { await adminAPI({action:'update',uid:uid,updates:{user_metadata:{role:role}}}); } catch(_e) {}
-    toast('✅ تم تغيير دور '+name+' إلى '+role);
-  }
-  catch(e) { toast('⚠️ '+e.message,'err'); }
-}
-
-async function doTogBan(cb) {
-  var uid=cb.dataset.uid, name=cb.dataset.nm, active=cb.checked;
-  var res = await sb.auth.getUser();
-  if(res.data && res.data.user && res.data.user.id===uid && !active) {
-    alert('⚠️ لا يمكنك إيقاف حسابك الخاص!'); cb.checked=true; return;
-  }
-  try {
-    await adminAPI({action:'update',uid:uid,updates:{ban_duration:active?'none':'876000h'}});
-    toast(active?'✅ تم تفعيل '+name:'🔒 تم إيقاف '+name);
-  } catch(e) { cb.checked=!cb.checked; toast('⚠️ '+e.message,'err'); }
-}
-
-async function doResetPw(btn) {
-  var name=btn.dataset.nm, uid=btn.dataset.uid;
-  // Masked and confirmed twice. prompt() showed the password in clear text on
-  // an administrator's screen, and asked for it only once — one typo locked
-  // the employee out of their own account.
-  var pw=await wadiAskPassword({
-    title:'🔑 كلمة مرور جديدة لـ '+name,
-    note:'لا تقل عن 8 أحرف — سيستخدمها '+name+' لتسجيل الدخول'
-  });
-  if(pw===null)return;
-  try {
-    await adminAPI({action:'update',uid:uid,updates:{password:pw}});
-    toast('✅ تم تغيير كلمة مرور '+name);
-  } catch(e) { toast('⚠️ '+e.message,'err'); }
-}
-
-async function doDelUser(btn) {
-  var uid=btn.dataset.uid, name=btn.dataset.nm;
-  if(!WadiPerms.can('users_delete')){toast('🚫 حذف الحسابات غير مسموح لهذا الحساب','err');return;}
-  if(!await wadiConfirm('حذف حساب "'+name+'"؟ لا يمكن التراجع.'))return;
-  try {
-    await adminAPI({action:'delete',uid:uid});
-    // leave no orphan role or permission rows behind
-    try { await sb.from('user_roles').delete().eq('user_id',uid); } catch(_e) {}
-    try { await sb.from('user_permissions').delete().eq('user_id',uid); } catch(_e) {}
-    toast('🗑️ تم حذف '+name); loadEmpCards();
-  }
-  catch(e) { toast('⚠️ '+e.message,'err'); }
-}
-
-// ── EDIT INDIVIDUAL USER PERMISSIONS ─────────────────────────────────────────
-function openEditUser(btn) {
-  var uid=btn.dataset.uid, name=btn.dataset.nm, rid=btn.dataset.rl;
-  var r=getAdvRoleCfg(rid);
-  var sp=JSON.parse(localStorage.getItem('up_'+uid)||JSON.stringify(r.perms));
-  document.getElementById('MB').innerHTML =
-    '<div>' +
-    '<div style="font-weight:700;font-size:16px;margin-bottom:4px;color:var(--blue2)">👤 '+name+'</div>' +
-    '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">'+r.label+'</div>' +
-    '<div style="font-size:12px;color:var(--blue);background:var(--blue3);padding:8px 12px;border-radius:8px;margin-bottom:14px;line-height:1.7">' +
-    '💡 هذه الصلاحيات تخصيص فردي لهذا الموظف فقط<br>' +
-    '<small style="color:var(--text3)">تتجاوز صلاحيات دوره إذا كانت مختلفة</small></div>' +
-    '<div style="font-size:13px;font-weight:700;margin-bottom:8px">🔐 الصلاحيات والمزايا</div>' +
-    buildPermChips('up-'+uid.slice(0,6), sp) +
-    '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">' +
-    '<div style="font-size:13px;font-weight:700;margin-bottom:6px">🔔 قنوات التنبيه</div>' +
-    // the 📧/💬 toggles that used to sit here wrote user_metadata nothing ever
-    // read; the working channels live in user_notify_prefs, behind 🔑 الصلاحيات
-    '<div style="font-size:12px;color:var(--text3);background:var(--bg2);padding:10px 12px;border-radius:8px;line-height:1.8">' +
-    'قنوات التنبيه (📧 بريد / 🔔 إشعار / 💬 واتساب) تُضبط لكل حدث من زر <b>🔑 الصلاحيات</b> في بطاقة الموظف.' +
-    '</div></div>' +
-    '<button class="btn bp" style="width:100%;justify-content:center;margin-top:16px" onclick="saveUserPerms(\''+uid+'\',\''+rid+'\')">💾 حفظ الإعدادات</button>' +
-    '<button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="openUsers()">← رجوع للقائمة</button>' +
-    '</div>';
-}
-
-async function saveUserPerms(uid, rid) {
-  var us=uid.slice(0,6);
-  var perms=getCheckedPerms('up-'+us);
-  localStorage.setItem('up_'+uid, JSON.stringify(perms));
-  try {
-    await adminAPI({action:'update',uid:uid,updates:{user_metadata:{role:rid,permissions:perms}}});
-    toast('✅ تم حفظ الإعدادات');
-  } catch(e) { toast('⚠️ '+e.message,'err'); }
-  openUsers();
 }
 
 // ── ROLES LIST ────────────────────────────────────────────────────────────────
