@@ -227,13 +227,15 @@ agree about the same person.
   organizer notifications — the `club_game_reg` event in the notify matrix
   (push + email via `notify-club-reg`), resolved per person like every other
   event. Registrants get a confirmation push on the phone they registered with.
-- **The form knows the dalil** (migration 36): a typed phone is looked up via
-  `club_phone_lookup` — answering only for entries the public directory already
-  shows (approved, not hidden, phone not hidden; the civil registry is never
-  touched) — and the name pre-fills. Unknown → «هل أنت من وادي الست؟»: yes
-  queues a PENDING entry through the normal phonebook validation pipeline
-  (`club_dalil_submit`, dedup on phone_norm); no keeps them out of the dalil
-  entirely. Tournament registration never waits for that validation.
+- **The form knows the dalil** (migrations 36–37): a typed phone is looked up
+  via `club_phone_lookup`, which answers only with what the public directory
+  itself shows — approved entries plus registry people through
+  `phonebook_public()`, whose own privacy makes a hidden phone match nothing —
+  and the name pre-fills while typing. Unknown → the «هل أنت من وادي الست؟»
+  popup: yes OPENS the dalil's own add form (`phonebook.html#add=<phone>|<name>`,
+  pre-filled) in a new tab so the person registers themselves through the normal
+  validation pipeline; no keeps them out of the dalil entirely. Tournament
+  registration never waits for any of it.
 - Deliberately **no home-page link** — the page is shared by URL.
 
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule

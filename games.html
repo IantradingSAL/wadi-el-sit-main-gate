@@ -248,7 +248,7 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
       <div class="tk-table"><div class="l">طاولتك</div><div class="n" id="tk-n"></div><div class="l" id="tk-seat"></div></div>
       <div class="tk-rows" id="tk-rows"></div>
       <div class="tk-warn">⚠️ عدم الحضور لا يُسقط الرسم، وتُحتسب المباريات خسارة</div>
-      <a id="tk-dalil" href="phonebook.html" target="_blank" rel="noopener" style="display:none;margin-top:10px;background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:12px;padding:11px;font-size:12.5px;font-weight:800;text-decoration:none">📇 اسمك في طريقه إلى الدليل — أكمل بياناتك من هنا</a>
+      <a id="tk-dalil" href="phonebook.html" target="_blank" rel="noopener" style="display:none;margin-top:10px;background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:12px;padding:11px;font-size:12.5px;font-weight:800;text-decoration:none">📇 لا تنسَ: سجّل نفسك في دليل البلدية من هنا</a>
     </div>
   </div>
 
@@ -512,7 +512,6 @@ async function submitSolo(){
       p_game:CUR,p_name:name,p_phone:(window.phoneE164?phoneE164(phone):phone),
       p_own_board:BOARD,p_photo:photo});
     if(error)throw error;
-    if(DALIL.s==='yes')dalilQueue(name,phone);
     showTicket(data,name,phone);
   }catch(e){err('s-err','⚠️ '+(e.message||e));}
   btn.disabled=false;btn.textContent='✓ تأكيد التسجيل وحجز الطاولة';
@@ -545,8 +544,6 @@ async function submitTeam(){
       p_name2:n2,p_phone2:(window.phoneE164?phoneE164(p2):p2),
       p_team_name:team||null,p_photo:photo});
     if(error)throw error;
-    if(DALIL.t1==='yes')dalilQueue(n1,p1);
-    if(DALIL.t2==='yes')dalilQueue(n2,p2);
     showTicket(data,n1,p1,n2);
   }catch(e){err('t-err','⚠️ '+(e.message||e));}
   btn.disabled=false;btn.textContent='✓ تأكيد تسجيل الفريق وحجز الطاولة';
@@ -554,7 +551,12 @@ async function submitTeam(){
 
 function showTicket(d,name,phone,name2){
   closeM();
-  const w=$('tk-dalil'); if(w)w.style.display='none';
+  const w=$('tk-dalil');
+  if(w){
+    const yes=DALIL.s==='yes'||DALIL.t1==='yes'||DALIL.t2==='yes';
+    w.style.display=yes?'block':'none';
+    if(yes)w.href=LAST_DALIL_URL;
+  }
   $('tk-s').textContent=d.label+(d.team_name?' — '+d.team_name:'');
   $('tk-n').textContent=d.table_label;
   $('tk-seat').textContent=d.waiting
@@ -650,15 +652,31 @@ async function lkCheck(phId,nmId,boxId,key){
 }
 // جواب النافذة يثبت تحت الحقل، مع إمكانية تغييره
 let WADI_ASK=null;
+const WADI_FIELDS={s:['s-phone','s-name'],t1:['t-phone','t-name'],t2:['t-phone2','t-name2']};
+function dalilAddUrl(key){
+  const f=WADI_FIELDS[key]||[];
+  const ph=f[0]&&$(f[0])?$(f[0]).value.trim():'';
+  const nm=f[1]&&$(f[1])?$(f[1]).value.trim():'';
+  return 'phonebook.html#add='+encodeURIComponent(window.phoneE164?phoneE164(ph):ph)+'|'+encodeURIComponent(nm);
+}
 function wadiAnswer(v){
   $('m-wadi').classList.remove('open');
   if(!WADI_ASK)return;
   DALIL[WADI_ASK.key]=v;
   const box=$(WADI_ASK.boxId);
-  if(box)box.innerHTML=v==='yes'
-    ?'<div class="lk ok">🏡 من وادي الست — سيُضاف إلى الدليل بعد التحقق <span style="text-decoration:underline;cursor:pointer" onclick="wadiReask(\''+WADI_ASK.key+'\',\''+WADI_ASK.boxId+'\')">تغيير</span></div>'
-    :'<div class="lk ask">ليس من وادي الست — لن يُضاف إلى الدليل <span style="text-decoration:underline;cursor:pointer" onclick="wadiReask(\''+WADI_ASK.key+'\',\''+WADI_ASK.boxId+'\')">تغيير</span></div>';
+  if(v==='yes'){
+    // «نعم» تفتح نموذج الدليل نفسه في تبويب جديد، ورقمه واسمه معبآن —
+    // يسجّل نفسه هناك عبر مسار التحقق العادي، وتسجيل البطولة يتابع هنا
+    LAST_DALIL_URL=dalilAddUrl(WADI_ASK.key);
+    try{window.open(LAST_DALIL_URL,'_blank');}catch(_e){}
+    if(box)box.innerHTML='<div class="lk ok">🏡 من وادي الست — فتحنا لك نموذج الدليل في صفحة جديدة '
+      +'<a href="'+LAST_DALIL_URL+'" target="_blank" rel="noopener" style="color:inherit">إعادة فتحه</a> · '
+      +'<span style="text-decoration:underline;cursor:pointer" onclick="wadiReask(\''+WADI_ASK.key+'\',\''+WADI_ASK.boxId+'\')">تغيير</span></div>';
+  }else{
+    if(box)box.innerHTML='<div class="lk ask">ليس من وادي الست — لن يُضاف إلى الدليل <span style="text-decoration:underline;cursor:pointer" onclick="wadiReask(\''+WADI_ASK.key+'\',\''+WADI_ASK.boxId+'\')">تغيير</span></div>';
+  }
 }
+let LAST_DALIL_URL='phonebook.html#add';
 function wadiReask(key,boxId){WADI_ASK={key:key,boxId:boxId};$('m-wadi').classList.add('open');}
 // مسجّل مسبقاً في هذه اللعبة؟ نافذة فورية عند إدخال الرقم (والخادم يتحقق أيضاً)
 const DUP={};
@@ -680,15 +698,7 @@ async function dupCheck(phId,key){
   return false;
 }
 function openMyWith(){openMy();if(DUP_PHONE)$('my-phone').value=DUP_PHONE;loadMy();}
-async function dalilQueue(name,phone){
-  try{
-    const{data}=await sb.rpc('club_dalil_submit',{p_name:name,p_phone:(window.phoneE164?phoneE164(phone):phone)});
-    if(data&&data.queued){
-      toast('📇 أُرسل الاسم إلى دليل البلدية — بانتظار التحقق');
-      const w=$('tk-dalil'); if(w)w.style.display='block';
-    }
-  }catch(_e){}
-}
+
 window.addEventListener('load',function(){setTimeout(function(){
   [['s-phone','s-name','s-lk','s'],['t-phone','t-name','t-lk','t1'],['t-phone2','t-name2','t-lk2','t2']]
   .forEach(function(cfgL){
