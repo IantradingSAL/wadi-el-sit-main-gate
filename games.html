@@ -327,13 +327,14 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
   <div class="grab"></div>
   <div class="sh-t" id="st-solo">🎲 تسجيل</div>
   <div class="sh-s">تسجيل فردي · الرسم يصبح مستحقاً بمجرد التسجيل</div>
-  <label class="fm-l">الاسم الكامل *</label><input class="fm-i" id="s-name" placeholder="الاسم والشهرة">
-  <label class="fm-l">رقم الهاتف *</label><input class="fm-i" id="s-phone" style="direction:ltr" data-phone>
+  <label class="fm-l">رقم الهاتف * <small style="color:#8d93a6">— نبحث عنك في دليل البلدية</small></label>
+  <input class="fm-i" id="s-phone" style="direction:ltr" data-phone>
   <div id="s-lk"></div>
+  <label class="fm-l">الاسم الكامل *</label><input class="fm-i" id="s-name" placeholder="يُملأ تلقائياً إن وُجد رقمك في الدليل">
   <label class="fm-l">هل ستحضر طاولة زهر معك؟ * <span style="color:#bf2424">(إلزامي الاختيار)</span></label>
   <div class="opts">
-    <div class="opt" id="op-yes" onclick="pickBoard(true)"><div class="oi">🎲✅</div><div class="ot">معي طاولة</div><div class="op"><span class="fee-b">5</span>$</div></div>
-    <div class="opt" id="op-no" onclick="pickBoard(false)"><div class="oi">🎲</div><div class="ot">بدون طاولة</div><div class="op"><span class="fee-a">10</span>$</div></div>
+    <div class="opt" id="op-yes" onclick="pickBoard(true)"><div class="oi">🎲✅</div><div class="ot">سأحضر طاولة معي</div><div class="op"><span class="fee-b">5</span>$</div></div>
+    <div class="opt" id="op-no" onclick="pickBoard(false)"><div class="oi">🎲</div><div class="ot">لن أحضر طاولة</div><div class="op"><span class="fee-a">10</span>$</div></div>
   </div>
   <div class="photo"><span class="pi">📸</span><span class="pt">صورتك (اختياري) — صور <b>الرابحين</b> ستُنشر على صفحاتنا على وسائل التواصل</span>
     <label class="pb" id="s-photo-l">إرفاق<input type="file" id="s-photo" accept="image/*" onchange="photoPicked(this,'s-photo-l')"></label></div>
@@ -348,15 +349,16 @@ input,select{font-family:inherit;font-size:inherit;color:inherit}
   <div class="grab"></div>
   <div class="sh-t" id="st-team">♠️ تسجيل فريق</div>
   <div class="sh-s">فريق من شخصين · الرسم <span class="fee-t">20</span>$ للفريق (<span class="fee-a">10</span>$ لكل لاعب)</div>
-  <label class="fm-l">اسم الفريق (اختياري — يظهر على شاشة البطولة)</label><input class="fm-i" id="t-team" placeholder="مثال: نسور الوادي">
-  <label class="fm-l">اسمك (قائد الفريق) *</label><input class="fm-i" id="t-name" placeholder="الاسم والشهرة">
-  <label class="fm-l">رقم هاتفك *</label><input class="fm-i" id="t-phone" style="direction:ltr" data-phone>
+  <label class="fm-l">رقم هاتفك (قائد الفريق) * <small style="color:#8d93a6">— نبحث عنك في دليل البلدية</small></label>
+  <input class="fm-i" id="t-phone" style="direction:ltr" data-phone>
   <div id="t-lk"></div>
+  <label class="fm-l">اسمك *</label><input class="fm-i" id="t-name" placeholder="يُملأ تلقائياً إن وُجد رقمك في الدليل">
   <div class="duo"><div class="dt">👥 شريكك في الفريق</div>
-    <label class="fm-l">اسم الشريك *</label><input class="fm-i" id="t-name2" placeholder="الاسم والشهرة">
     <label class="fm-l">هاتف الشريك *</label><input class="fm-i" id="t-phone2" style="direction:ltr" data-phone>
     <div id="t-lk2"></div>
+    <label class="fm-l">اسم الشريك *</label><input class="fm-i" id="t-name2" placeholder="يُملأ تلقائياً إن وُجد في الدليل">
   </div>
+  <label class="fm-l">اسم الفريق (اختياري — يظهر على شاشة البطولة)</label><input class="fm-i" id="t-team" placeholder="مثال: نسور الوادي">
   <div class="photo"><span class="pi">📸</span><span class="pt">صورة الفريق أو اللاعبَين (اختياري) — صور <b>الرابحين</b> ستُنشر على صفحاتنا</span>
     <label class="pb" id="t-photo-l">إرفاق<input type="file" id="t-photo" accept="image/*" onchange="photoPicked(this,'t-photo-l')"></label></div>
   <div class="agree"><input type="checkbox" id="t-agree"><span>أوافق باسم الفريق: الرسم <b><span class="fee-t">20</span>$</b> (<span class="fee-a">10</span>$ لكل لاعب) مستحق بمجرد التسجيل، وفي حال غياب الفريق يبقى مستحقاً وتُحتسب المباريات خسارة.</span></div>
