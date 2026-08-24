@@ -3192,6 +3192,13 @@ async function loadEmpCards() {
       var rr = await sb.from('user_roles').select('user_id,role');
       ((rr && rr.data) || []).forEach(function(r){ (SRV[r.user_id] = SRV[r.user_id] || []).push(r.role); });
     } catch(_e) {}
+    // the real notification channels (user_notify_prefs), not the dead
+    // user_metadata copy the old panel used to write
+    var NP = {};
+    try {
+      var nr = await sb.from('user_notify_prefs').select('user_id,channels');
+      ((nr && nr.data) || []).forEach(function(r){ NP[r.user_id] = r.channels || {}; });
+    } catch(_e) {}
     if(!users.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3)">لا يوجد موظفون بعد</div>'; return; }
     var allR = getAllRoles();
     var roleOpts2 = function(currentRid) {
@@ -3208,8 +3215,9 @@ async function loadEmpCards() {
       var active = !u.banned_until || new Date(u.banned_until) < new Date();
       var name = meta.name || (u.email ? u.email.split('@')[0] : '—');
       var ini = name.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase() || '?';
-      var notif = meta.notifications || {};
-      var ni = [notif.email?'📧':'', notif.whatsapp?'💬':''].filter(Boolean).join(' ');
+      var chs = NP[u.id] || {};
+      var chOn = function(k){ return Object.keys(chs).some(function(ev){ return chs[ev] && chs[ev][k]; }); };
+      var ni = [chOn('email')?'📧':'', chOn('push')?'🔔':'', chOn('whatsapp')?'💬':''].filter(Boolean).join(' ');
       var pc = (meta.permissions || rc.perms || []).length;
       return '<div class="ecard">' +
         '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
@@ -3250,9 +3258,21 @@ const WP_GROUPS=[
   {t:'🏛️ الأرشيف المالي MRS',keys:[['mrs_view','الاطلاع'],['mrs_edit','التعديل']]},
   {t:'🛒 التعاونية والدليل',keys:[['coop_view','التعاونية — اطلاع'],['coop_edit','التعاونية — تعديل'],['phonebook_view','الدليل — اطلاع'],['phonebook_edit','الدليل — تعديل'],['phonebook_registry','سجل النفوس الكامل (اسم الأم وسنة الولادة)']]},
   {t:'📣 الأخبار والإشعارات والبريد',keys:[['news_publish','نشر الأخبار'],['push_send','إرسال الإشعارات'],['push_log_view','سجل الإشعارات (من وصله ومن فتحه)'],['inbox_read','البريد الوارد']]},
-  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين'],['approvals_manage','طلبات التحقق (موافقة/رفض)']]}
+  {t:'👥 المستخدمون والنظام',keys:[['users_view','عرض المستخدمين'],['users_create','إنشاء حساب'],['users_edit','تعديل حساب'],['users_delete','حذف حساب'],['roles_edit','تعديل الأدوار'],['roles_delete','حذف الأدوار'],['settings_edit','إعدادات النظام'],['export_data','تصدير البيانات'],['audit_view','سجل العمليات'],['activity_view','تتبع نشاط الموظفين'],['approvals_manage','طلبات التحقق (موافقة/رفض)'],['notify_prefs_edit','قنوات تنبيه الموظفين (بريد/إشعار)']]}
 ];
-let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}}
+// The notification side of the same panel: the permission decides WHO is told,
+// these channels decide HOW. One jsonb per user in user_notify_prefs, keyed by
+// the approval_requests.kind values — the queue is the registry of events.
+// واتساب يُحفظ الآن ولا يُرسل شيئاً حتى يُربط.
+const WP_NOTIFY_EVENTS=[
+  ['phonebook_new','📇 جهة جديدة في الدليل'],
+  ['phonebook_edit','✏️ تعديل مقترح على الدليل'],
+  ['coop_seller','🛒 بائع جديد في التعاونية'],
+  ['coop_agent','🚚 عامل توصيل جديد'],
+  ['user_account','👤 حساب جديد على البوابة']
+];
+const WP_CHANNELS=[['email','📧 بريد'],['push','🔔 إشعار'],['whatsapp','💬 واتساب']];
+let WP_CTX=null;   // {uid, name, roles:[], defaults:{}, overrides:{}, notify:{phone,channels}}
 
 async function openUserPerms(btn){
   if(!WadiPerms.can('roles_edit')&&!WadiPerms.can('users_edit')){toast('🚫 تعديل الصلاحيات متاح للمشرف العام والمدير','err');return;}
@@ -3261,10 +3281,11 @@ async function openUserPerms(btn){
   const old=document.getElementById('wp-panel'); if(old)old.remove();
   box.insertAdjacentHTML('afterbegin','<div id="wp-panel" style="background:var(--bg2);border:1.5px solid var(--blue);border-radius:12px;padding:14px;margin-bottom:12px">⏳ جاري تحميل الصلاحيات…</div>');
   try{
-    const [rolesRes, defsRes, ovRes] = await Promise.all([
+    const [rolesRes, defsRes, ovRes, npRes] = await Promise.all([
       sb.from('user_roles').select('role').eq('user_id',uid),
       sb.from('role_permissions').select('role,perms'),
-      sb.from('user_permissions').select('perms').eq('user_id',uid).maybeSingle()
+      sb.from('user_permissions').select('perms').eq('user_id',uid).maybeSingle(),
+      sb.from('user_notify_prefs').select('phone,channels').eq('user_id',uid).maybeSingle()
     ]);
     const roles=((rolesRes&&rolesRes.data)||[]).map(r=>r.role);
     const defs={};
@@ -3273,7 +3294,9 @@ async function openUserPerms(btn){
       Object.keys(row.perms||{}).forEach(k=>{ defs[k]=defs[k]===true?true:!!row.perms[k]; });
     });
     const ov=((ovRes&&ovRes.data&&ovRes.data.perms)||{});
-    WP_CTX={uid:uid,name:name,roles:roles,defaults:defs,overrides:ov};
+    const np=(npRes&&npRes.data)||{};
+    WP_CTX={uid:uid,name:name,roles:roles,defaults:defs,overrides:ov,
+            notify:{phone:np.phone||'',channels:np.channels||{}}};
     document.getElementById('wp-panel').innerHTML=wpPanelHTML();
   }catch(e){
     document.getElementById('wp-panel').innerHTML='<div style="color:var(--danger);font-size:13px">⚠️ '+e.message+'</div>';
@@ -3301,7 +3324,42 @@ function wpPanelHTML(){
     +'<div style="display:flex;gap:6px"><button class="btn bp" style="padding:6px 12px;font-size:12px" onclick="wpSave()">✓ حفظ</button>'
     +'<button class="btn bg" style="padding:6px 12px;font-size:12px" onclick="wpResetToRole()">↩️ إعادة لإعداد الدور</button>'
     +'<button class="btn bg" style="padding:6px 12px;font-size:12px" onclick="document.getElementById(\'wp-panel\').remove()">إغلاق</button></div></div>'
-    +groups;
+    +groups+wpNotifyHTML();
+}
+// ── 🔔 the channels grid: one row per approval event, three switches each ──
+// Rendered only for holders of notify_prefs_edit — the database refuses the
+// save for anyone else anyway. State lives in WP_CTX.notify so re-rendering
+// the panel (every permission toggle does) never loses an unsaved choice.
+function wpNotifyHTML(){
+  const c=WP_CTX; if(!c||!c.notify||!WadiPerms.can('notify_prefs_edit'))return '';
+  const ch=c.notify.channels||{};
+  const on=(ev,k)=>!!((ch[ev]||{})[k]);
+  const rows=WP_NOTIFY_EVENTS.map(([ev,lbl])=>
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border-radius:7px;background:var(--bg);border:1px solid var(--border)">'
+    +'<span style="flex:1;min-width:170px;font-size:12.5px">'+lbl+'</span>'
+    +WP_CHANNELS.map(([k,kl])=>
+      '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer'+(k==='whatsapp'?';opacity:.55':'')+'" '
+      +(k==='whatsapp'?'title="يُحفظ الآن ويعمل تلقائياً عند ربط واتساب"':'')+'>'
+      +'<input type="checkbox" '+(on(ev,k)?'checked':'')
+      +' onchange="wpNotifyToggle(\''+ev+'\',\''+k+'\',this.checked)" style="width:14px;height:14px;accent-color:var(--blue)">'
+      +kl+(k==='whatsapp'?' <small style="color:var(--text3)">(قريباً)</small>':'')+'</label>').join('')
+    +'</div>').join('');
+  return '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:10px">'
+    +'<div style="font-size:12px;font-weight:800;color:var(--blue2);margin-bottom:4px">🔔 قنوات التنبيه — متى يصله خبر طلبات التحقق</div>'
+    +'<div style="font-size:11.5px;color:var(--text3);margin-bottom:6px;line-height:1.7">'
+    +'الصلاحية تقرِّر <b>من</b> يُبلَّغ، وهذه القنوات تقرِّر <b>كيف</b>: تعمل فقط ما دام يملك «طلبات التحقق (موافقة/رفض)». '
+    +'البريد يصل على عنوان حسابه، والإشعار على الجهاز الذي فعّل الإشعارات فيه بهذا الرقم، وواتساب يُحفظ الآن ويُفعَّل عند ربطه.</div>'
+    +'<div style="display:grid;gap:4px">'+rows+'</div>'
+    +'<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap">'
+    +'<span style="font-size:12px;color:var(--text3)">📱 رقم هاتفه (للإشعار وواتساب):</span>'
+    +'<input type="tel" class="fi" id="wp-notify-phone" data-phone value="'+String(c.notify.phone||'').replace(/"/g,'&quot;')
+    +'" onchange="if(WP_CTX&&WP_CTX.notify)WP_CTX.notify.phone=this.value" style="direction:ltr;max-width:210px;padding:6px 10px;font-size:12.5px;height:auto"></div></div>';
+}
+function wpNotifyToggle(ev,k,val){
+  const c=WP_CTX; if(!c||!c.notify)return;
+  const ch=c.notify.channels=c.notify.channels||{};
+  ch[ev]=ch[ev]||{};
+  ch[ev][k]=!!val;
 }
 function wpToggle(k,val){
   const c=WP_CTX; if(!c)return;
@@ -3320,6 +3378,30 @@ async function wpSave(){
       const{error}=await sb.from('user_permissions')
         .upsert({user_id:c.uid,perms:c.overrides,updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()},{onConflict:'user_id'});
       if(error)throw error;
+    }
+    // the channels ride the same save button — only what is actually ON is
+    // stored, so an all-off matrix with no phone deletes the row outright
+    if(c.notify&&WadiPerms.can('notify_prefs_edit')){
+      const phEl=document.getElementById('wp-notify-phone');
+      if(phEl)c.notify.phone=phEl.value;
+      const rawPhone=(c.notify.phone||'').trim();
+      const phone=rawPhone?((window.phoneE164&&phoneE164(rawPhone))||rawPhone):'';
+      const chans={};
+      Object.keys(c.notify.channels||{}).forEach(ev=>{
+        const src=c.notify.channels[ev]||{}, dst={};
+        ['email','push','whatsapp'].forEach(k=>{ if(src[k])dst[k]=true; });
+        if(Object.keys(dst).length)chans[ev]=dst;
+      });
+      const wantsPush=Object.keys(chans).some(ev=>chans[ev].push||chans[ev].whatsapp);
+      if(wantsPush&&!phone)toast('⚠️ الإشعار وواتساب يحتاجان رقم هاتف — احفظ الرقم أيضاً','err');
+      if(!Object.keys(chans).length&&!phone){
+        await sb.from('user_notify_prefs').delete().eq('user_id',c.uid);
+      }else{
+        const{error:nErr}=await sb.from('user_notify_prefs')
+          .upsert({user_id:c.uid,phone:phone||null,channels:chans,
+                   updated_by:(currentUser&&currentUser.email)||'',updated_at:new Date().toISOString()},{onConflict:'user_id'});
+        if(nErr)throw nErr;
+      }
     }
     toast('✅ حُفظت صلاحيات '+c.name+(keys.length?(' ('+keys.length+' مخصّصة)'):' (كلها حسب الدور)'));
     trackActivity('تعديل صلاحيات مستخدم',c.name+' — '+(keys.length?(keys.length+' صلاحية مخصّصة'):'كلها حسب الدور'),{target:c.name,page:'users'});
@@ -3391,7 +3473,6 @@ function openEditUser(btn) {
   var uid=btn.dataset.uid, name=btn.dataset.nm, rid=btn.dataset.rl;
   var r=getAdvRoleCfg(rid);
   var sp=JSON.parse(localStorage.getItem('up_'+uid)||JSON.stringify(r.perms));
-  var sn=JSON.parse(localStorage.getItem('un_'+uid)||JSON.stringify({email:true,whatsapp:false,events:r.notifs||[]}));
   document.getElementById('MB').innerHTML =
     '<div>' +
     '<div style="font-weight:700;font-size:16px;margin-bottom:4px;color:var(--blue2)">👤 '+name+'</div>' +
@@ -3402,16 +3483,12 @@ function openEditUser(btn) {
     '<div style="font-size:13px;font-weight:700;margin-bottom:8px">🔐 الصلاحيات والمزايا</div>' +
     buildPermChips('up-'+uid.slice(0,6), sp) +
     '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">' +
-    '<div style="font-size:13px;font-weight:700;margin-bottom:12px">🔔 إشعارات مخصصة</div>' +
-    '<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">' +
-    '<label style="flex:1;min-width:100px;display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;cursor:pointer">' +
-    '<input type="checkbox" id="un-em-'+uid.slice(0,6)+'" '+(sn.email?'checked':'')+' style="width:16px;height:16px;accent-color:var(--blue)"> 📧 <strong>إيميل</strong></label>' +
-    '<label style="flex:1;min-width:100px;display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;cursor:pointer">' +
-    '<input type="checkbox" id="un-wa-'+uid.slice(0,6)+'" '+(sn.whatsapp?'checked':'')+' style="width:16px;height:16px;accent-color:var(--green)"> 💬 <strong>واتساب</strong></label>' +
-    '</div>' +
-    '<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600">أبلغني عند:</div>' +
-    buildNotifChips('un-ev-'+uid.slice(0,6), sn.events||[]) +
-    '</div>' +
+    '<div style="font-size:13px;font-weight:700;margin-bottom:6px">🔔 قنوات التنبيه</div>' +
+    // the 📧/💬 toggles that used to sit here wrote user_metadata nothing ever
+    // read; the working channels live in user_notify_prefs, behind 🔑 الصلاحيات
+    '<div style="font-size:12px;color:var(--text3);background:var(--bg2);padding:10px 12px;border-radius:8px;line-height:1.8">' +
+    'قنوات التنبيه (📧 بريد / 🔔 إشعار / 💬 واتساب) تُضبط لكل حدث من زر <b>🔑 الصلاحيات</b> في بطاقة الموظف.' +
+    '</div></div>' +
     '<button class="btn bp" style="width:100%;justify-content:center;margin-top:16px" onclick="saveUserPerms(\''+uid+'\',\''+rid+'\')">💾 حفظ الإعدادات</button>' +
     '<button class="btn" style="width:100%;justify-content:center;margin-top:8px" onclick="openUsers()">← رجوع للقائمة</button>' +
     '</div>';
@@ -3420,15 +3497,9 @@ function openEditUser(btn) {
 async function saveUserPerms(uid, rid) {
   var us=uid.slice(0,6);
   var perms=getCheckedPerms('up-'+us);
-  var notif={
-    email: document.getElementById('un-em-'+us) ? document.getElementById('un-em-'+us).checked : false,
-    whatsapp: document.getElementById('un-wa-'+us) ? document.getElementById('un-wa-'+us).checked : false,
-    events: getCheckedNotifs('un-ev-'+us),
-  };
   localStorage.setItem('up_'+uid, JSON.stringify(perms));
-  localStorage.setItem('un_'+uid, JSON.stringify(notif));
   try {
-    await adminAPI({action:'update',uid:uid,updates:{user_metadata:{role:rid,permissions:perms,notifications:notif}}});
+    await adminAPI({action:'update',uid:uid,updates:{user_metadata:{role:rid,permissions:perms}}});
     toast('✅ تم حفظ الإعدادات');
   } catch(e) { toast('⚠️ '+e.message,'err'); }
   openUsers();

@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v121';
+const CACHE_NAME   = 'wadi-elsit-v122';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used to report a notification's fate back to the
