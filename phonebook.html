@@ -4228,6 +4228,22 @@ function phbFlash(el){
 }
 async function phbHashRoute(){
   const h = location.hash || '';
+  // #add=<phone>|<name> — صفحة البطولة توجه من قال «أنا من وادي الست» إلى هنا
+  const a = h.match(/^#add(?:=(.*))?$/);
+  if(a){
+    openAdd();
+    setTimeout(function(){
+      try{
+        const parts=(a[1]||'').split('|');
+        const ph=decodeURIComponent(parts[0]||''), nm=decodeURIComponent(parts[1]||'');
+        const phEl=document.getElementById('AD_PH');
+        if(phEl&&ph)phEl.value=(window.phoneDisplay?phoneDisplay(ph):ph);
+        const fullEl=document.getElementById('AD_FULL');
+        if(fullEl&&nm&&!fullEl.value)fullEl.value=nm;
+      }catch(_e){}
+    },350);
+    return;
+  }
   const m = h.match(/^#(review|contact)=(.+)$/);
   if(!m) return;
   const kind = m[1], id = decodeURIComponent(m[2]);
