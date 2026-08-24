@@ -611,19 +611,9 @@ function toast(m,t='ok'){const el=document.getElementById('toast');el.textConten
 function sv(s){document.getElementById('SV').classList.toggle('show',s);}
 function tick(){
   aprCount();
-  // Check for citizen updates badge
-  try{
-    var hasUpdates=(cases||[]).some(function(c){
-      return (c.timeline||[]).some(function(t){return t.cls==="citizen"||t.by==="المواطن";});
-    });
-    // Exclude reviewed from badge count
-    var unreviewed = cases.filter(function(c){
-      if(isCitReviewed(c.id)) return false;
-      return (c.timeline||[]).some(function(t){return t.cls==='citizen'||t.by==='المواطن';});
-    });
-    var badge=document.getElementById("cit-updates-badge");
-    if(badge){badge.style.display=unreviewed.length?"inline":"none";badge.textContent=unreviewed.length||'!';}
-  }catch(e){}
+  // Citizen-updates badge: counts cases with UNREAD citizen entries — the read
+  // stamp lives on the case row, so a review anywhere clears it everywhere
+  try{ citBadgeRefresh(); }catch(e){}
 document.getElementById('LD').textContent=new Date().toLocaleString('ar-LB',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function getRoleCfg(){
   const base=ROLE_CFG[userRole]||ROLE_CFG.officer;
@@ -1715,29 +1705,11 @@ function render(){
 
 // ── DETAIL ────────────────────────────────────────────────────────────────────
 function openDetail(id){
-  // Auto-mark citizen updates as reviewed when opening case
-  if (typeof isCitReviewed === 'function' && !isCitReviewed(id)) {
-    var hasCitUpdate = false;
-    var caseObj = cases.find(function(x){return String(x.id)===String(id);});
-    if (caseObj) {
-      hasCitUpdate = (caseObj.timeline||[]).some(function(t){return t.cls==='citizen'||t.by==='المواطن';});
-    }
-    if (hasCitUpdate) {
-      localStorage.setItem('cit_reviewed_'+id, new Date().toISOString().slice(0,10));
-      // Update badge
-      var unreviewedNow = cases.filter(function(c){
-        if(isCitReviewed(c.id)) return false;
-        return (c.timeline||[]).some(function(t){return t.cls==='citizen'||t.by==='المواطن';});
-      });
-      var b=document.getElementById('cit-updates-badge');
-      if(b){b.style.display=unreviewedNow.length?'inline':'none';b.textContent=unreviewedNow.length||'!';}
-    }
-  }
+  // Opening the case IS the review — recorded on the case row itself, so the
+  // badge clears on every station, not just this browser (localStorage kept
+  // the mark per-device, which is why a case reviewed elsewhere still glowed here)
+  markCitReviewed(id);
   const c=cases.find(x=>String(x.id)===String(id));if(!c)return;
-  // Auto-mark citizen updates as reviewed
-  localStorage.setItem('cit_reviewed_'+String(id),'1');
-  // Update badge
-  var badge=document.getElementById('cit-updates-badge');if(badge)badge.style.display='none';
   const R=getRoleCfg();
   document.getElementById('MT').textContent='طلب #'+String(id).slice(-4);
   const[fc,bc]=avc(c.name);
@@ -4724,12 +4696,9 @@ async function openCitizenUpdates() {
       .limit(100);
     if (res.error) throw res.error;
 
-    // Filter cases that have citizen updates (timeline entries with cls:'citizen')
-    var updated = (res.data || []).filter(function(c) {
-      if (localStorage.getItem('cit_reviewed_' + c.id)) return false;
-      var tl = c.timeline || [];
-      return tl.some(function(t) { return t.cls === 'citizen' || (t.by === 'المواطن'); });
-    });
+    // Only cases with citizen entries not yet reviewed ANYWHERE — the read
+    // stamp on the timeline entry is the shared truth, not this browser
+    var updated = (res.data || []).filter(citUnread);
 
     if (!updated.length) {
       document.getElementById('MB').innerHTML =
@@ -5117,8 +5086,9 @@ function closeWnModal() {
 
 // ── DISMISS CITIZEN UPDATE ────────────────────────────────────────────────────
 function dismissCitUpdate(caseId) {
-  var key = 'cit_reviewed_' + caseId;
-  localStorage.setItem(key, '1');
+  // the review is written onto the case row (markCitReviewed), never into
+  // localStorage: a case validated on one station must disappear on all of them
+  markCitReviewed(caseId);
   // Find and remove the card by data-cid
   var card = document.querySelector('[data-cid="' + caseId + '"]');
   if (card) {
@@ -5140,17 +5110,50 @@ function dismissCitUpdate(caseId) {
     }, 300);
   }
   toast('✅ تم تحديد طلب #' + caseId + ' كمراجع');
-  // Update badge
-  var unreviewedAfter = (typeof cases !== 'undefined' ? cases : []).filter(function(c){
-    if(isCitReviewed(c.id)) return false;
-    return (c.timeline||[]).some(function(t){return t.cls==='citizen'||t.by==='المواطن';});
-  });
-  var bd=document.getElementById('cit-updates-badge');
-  if(bd){bd.style.display=unreviewedAfter.length?'inline':'none';bd.textContent=unreviewedAfter.length||'!';}
 }
 
-function isCitReviewed(caseId) {
-  return !!localStorage.getItem('cit_reviewed_' + caseId);
+// A citizen entry is "pending review" until somebody — anybody, on any
+// station — opens the case or presses ✓ تم المراجعة. The stamp is `read:true`
+// on the timeline entry itself, inside the cases row, so every browser reads
+// the same truth. (localStorage used to hold this mark per-device: a case
+// validated elsewhere kept glowing here, and a dismissed case never came back
+// even when the citizen wrote again. Both wrong, both fixed by the stamp.)
+function citUnread(c) {
+  return ((c && c.timeline) || []).some(function(t){
+    return (t.cls === 'citizen' || t.by === 'المواطن') && !t.read;
+  });
+}
+
+function citBadgeRefresh() {
+  var n = (typeof cases !== 'undefined' ? cases : []).filter(citUnread).length;
+  var b = document.getElementById('cit-updates-badge');
+  if (b) { b.style.display = n ? 'inline' : 'none'; b.textContent = n || '!'; }
+}
+
+async function markCitReviewed(caseId) {
+  try {
+    // fetch fresh so a concurrent edit on another station is not overwritten
+    var res = await sb.from('cases').select('timeline').eq('id', caseId).maybeSingle();
+    var tl = res && res.data && res.data.timeline;
+    if (Array.isArray(tl)) {
+      var touched = false;
+      tl.forEach(function(t){
+        if ((t.cls === 'citizen' || t.by === 'المواطن') && !t.read) {
+          t.read = true;
+          t.read_by = (currentUser && currentUser.email) || '';
+          t.read_at = new Date().toISOString();
+          touched = true;
+        }
+      });
+      if (touched) {
+        var up = await sb.from('cases').update({timeline: tl}).eq('id', caseId);
+        if (up.error) throw up.error;
+      }
+    }
+    var local = (typeof cases !== 'undefined' ? cases : []).find(function(x){ return String(x.id) === String(caseId); });
+    if (local && Array.isArray(tl)) local.timeline = tl;
+    citBadgeRefresh();
+  } catch(e) { console.warn('markCitReviewed:', e); }
 }
 
 // ── MANAGE REQUIRED DOCS ──────────────────────────────────────────────────────
