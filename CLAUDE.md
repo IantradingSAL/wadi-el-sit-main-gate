@@ -243,6 +243,18 @@ agree about the same person.
   `true`, answered «لا» → `false`, never asked → `null`, shown as «غير محدد»
   rather than guessed. المستحق is Σfee (a no-show still owes), المدفوع is Σfee
   where `paid`.
+- **A table is two consecutive seats, grouped by number not by label.** `club_bracket`'s
+  registration view groups on `ceil(seq/2)`, not on the stored `table_label`
+  string, so a prefix that drifted between versions («ف1» vs «ف-1») can no
+  longer split one table's two players into two cards. Migration 40 also
+  repaired the drifted labels for any game whose bracket isn't generated yet.
+- **The referee can rearrange seats before the bracket.** 🏆 الجدول tab, while
+  still in registration, shows the tables as cards with two tappable seats;
+  tap two players/teams to swap their places (across tables too). `club_seat_swap`
+  exchanges the pair's `(seq, table_label, side)` under the game's advisory lock,
+  refuses once any `club_matches` row exists for the game, and is gated by
+  `has_perm('club_games_manage')`. Once the bracket is generated the same tab
+  becomes the read-only scoring view.
 - Deliberately **no home-page link** — the page is shared by URL.
 
 ## Phone numbers are Lebanese, and `number-format.js` owns the rule
