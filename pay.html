@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth-common.js" defer></script>
+<script src="wadi-perms.js" defer></script>
 <script src="number-format.js" defer></script>
 <script src="pwa.js" defer></script>
 <style>
@@ -147,6 +148,25 @@ a{color:#0f4d82}
 .tk-r b{direction:ltr;unicode-bidi:embed;font-variant-numeric:tabular-nums}
 .tk-paid{display:inline-block;margin-top:12px;background:linear-gradient(135deg,#16a34a,#15803d);border-radius:99px;padding:6px 18px;font-size:12.5px;font-weight:900;box-shadow:0 4px 14px rgba(22,163,74,.45)}
 
+/* ⚙️ الإدارة — كما في صفحة البطولة */
+.adm-fab{position:fixed;bottom:18px;left:18px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#0f4d82,#1a6eb5);color:#fff;font-size:24px;box-shadow:0 8px 24px rgba(15,77,130,.4);display:none;align-items:center;justify-content:center;z-index:100;border:3px solid #fff}
+.adm-fab.on{display:flex}
+.adm-row{display:flex;gap:6px;align-items:center;margin-top:8px;background:#fafbfd;border:1.5px solid #dce0ea;border-radius:12px;padding:8px}
+.adm-row input{padding:8px 9px;border:1.5px solid #dce0ea;border-radius:9px;background:#fff;font-size:13px;outline:none}
+.adm-row input:focus{border-color:#1a6eb5}
+.adm-row .ic{width:44px;text-align:center}
+.adm-row .lb{flex:1;min-width:0}
+.adm-row .fe{width:62px;direction:ltr;text-align:center;font-variant-numeric:tabular-nums}
+.adm-tg{border-radius:9px;padding:7px 8px;font-size:12px;font-weight:800;border:1.5px solid #dce0ea;background:#fff;color:#b0b6c6;flex-shrink:0}
+.adm-tg.prop.on{background:#fdf6e3;border-color:#e9c463;color:#8a6d1a}
+.adm-tg.act.on{background:#f0faf2;border-color:#9ed8ab;color:#15803d}
+.adm-del{color:#a52833;font-size:15px;flex-shrink:0;padding:4px}
+.adm-hint{font-size:11.5px;color:#8d93a6;line-height:1.8;margin-top:10px;text-align:right}
+.btn-sub{width:100%;margin-top:12px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;padding:13px;border-radius:13px;font-size:14px;font-weight:900;box-shadow:0 6px 18px rgba(22,163,74,.35)}
+.btn-add{width:100%;margin-top:10px;background:#eef5fc;color:#0f4d82;border:1.5px dashed #b4d4ed;border-radius:12px;padding:11px;font-size:13px;font-weight:800}
+.toastc{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:#081f38;color:#fff;font-size:13px;font-weight:800;padding:10px 20px;border-radius:99px;box-shadow:0 8px 24px rgba(8,31,56,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:300;max-width:90vw;text-align:center}
+.toastc.show{opacity:1}
+
 /* سجل الإيصالات */
 .rc{background:#fafbfd;border:1.5px solid #dce0ea;border-radius:14px;padding:11px 13px;margin-top:9px;text-align:right}
 .rc.sample{opacity:.6}
@@ -243,6 +263,21 @@ a{color:#0f4d82}
   </div>
 </section>
 
+<!-- ⚙️ إدارة الخدمات (pay_manage) -->
+<button class="adm-fab" id="adm-fab" onclick="openAdmin()" aria-label="إدارة الدفع">⚙️</button>
+<div class="modal" id="m-adm" role="dialog" aria-modal="true"><div class="sheet" style="text-align:right">
+  <div class="grab"></div>
+  <div class="pop-t" style="text-align:center">⚙️ خدمات الدفع الإلكتروني</div>
+  <div class="pop-s" style="text-align:center">ما يظهر للمواطن على هذه الصفحة — يُحفظ في إعدادات البلدية</div>
+  <div id="adm-list"></div>
+  <button class="btn-add" onclick="admAdd()">＋ خدمة جديدة</button>
+  <div class="adm-hint">💵 الرسم فارغاً = الدافع يكتب المبلغ بحسب التكليف · 🏠 = رقم العقار إلزامي · «مخفي» يزيل الخدمة من الصفحة دون حذفها.</div>
+  <button class="btn-sub" onclick="admSave()">💾 حفظ الخدمات</button>
+  <button class="pop-btn no" onclick="closeM('m-adm')">إغلاق</button>
+</div></div>
+
+<div class="toastc" id="toastc"></div>
+
 <!-- التسجيل الإلزامي في الدليل -->
 <div class="modal" id="m-reg" role="dialog" aria-modal="true"><div class="sheet">
   <div class="grab"></div>
@@ -302,25 +337,45 @@ const $=function(id){return document.getElementById(id)};
 function esc(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function openM(id){$(id).classList.add('open')}
 function closeM(id){$(id).classList.remove('open')}
+function toast(m){const t=$('toastc');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3200);}
 
-// بنود صندوق البلدية — عند الإطلاق تأتي من settings.pay_services لا من الكود
-const SVCS=[
+// بنود صندوق البلدية — من settings.pay_services (⚙️ الإدارة)، وهذه القائمة
+// احتياط العرض فقط ريثما يصل الإعداد أو إن تعذّر
+let SVCS=[
   {k:'jibaya', i:'🏛️', t:'جباية ورسوم بلدية', prop:true,  amt:null},
   {k:'nifayat',i:'🗑️', t:'بدل نفايات',         prop:true,  amt:null},
   {k:'ta2jir', i:'🏠', t:'قيمة تأجيرية',        prop:true,  amt:null},
   {k:'rukhas', i:'📄', t:'رسوم رخص وإفادات',    prop:false, amt:null},
   {k:'gharama',i:'⚖️', t:'غرامات',              prop:false, amt:null}
 ];
-const SEL={};
-$('svcs').innerHTML=SVCS.map(function(s){
-  return '<div class="svc" id="svc-'+s.k+'" onclick="tog(\''+s.k+'\',event)">'
-  +'<div class="svc-row"><div class="svc-i">'+s.i+'</div>'
-  +'<div style="flex:1"><div class="svc-t">'+s.t+'</div><div class="svc-tags">'
-  +(s.prop?'<span class="tag prop">🏠 يتطلب رقم العقار</span>':'')
-  +(s.amt?'<span class="tag">رسم محدد: $'+s.amt+'</span>':'<span class="tag">المبلغ بحسب التكليف</span>')
-  +'</div></div><div class="svc-chk" id="chk-'+s.k+'"></div></div>'
-  +'<div class="svc-amt"><label>المبلغ</label><input inputmode="decimal" id="amt-'+s.k+'" '+(s.amt?'value="'+s.amt+'" readonly':'placeholder="0"')+' oninput="refresh()" onclick="event.stopPropagation()"><span class="cur">USD</span></div>'
-  +'</div>';}).join('');
+let SEL={};
+function renderSvcs(){
+  SEL={};
+  $('svcs').innerHTML=SVCS.map(function(s){
+    return '<div class="svc" id="svc-'+s.k+'" onclick="tog(\''+s.k+'\',event)">'
+    +'<div class="svc-row"><div class="svc-i">'+s.i+'</div>'
+    +'<div style="flex:1"><div class="svc-t">'+esc(s.t)+'</div><div class="svc-tags">'
+    +(s.prop?'<span class="tag prop">🏠 يتطلب رقم العقار</span>':'')
+    +(s.amt?'<span class="tag">رسم محدد: $'+s.amt+'</span>':'<span class="tag">المبلغ بحسب التكليف</span>')
+    +'</div></div><div class="svc-chk" id="chk-'+s.k+'"></div></div>'
+    +'<div class="svc-amt"><label>المبلغ</label><input inputmode="decimal" id="amt-'+s.k+'" '+(s.amt?'value="'+s.amt+'" readonly':'placeholder="0"')+' oninput="refresh()" onclick="event.stopPropagation()"><span class="cur">USD</span></div>'
+    +'</div>';}).join('');
+  refresh();
+}
+// الإعداد الحي: {services:[{key,label,icon,fee,prop,active}]}
+function cfgToSvcs(list){
+  return list.filter(function(s){return s.active!==false})
+    .map(function(s){return {k:s.key,i:s.icon||'💳',t:s.label||'',prop:!!s.prop,amt:(s.fee==null?null:s.fee)};});
+}
+async function loadCfg(){
+  try{
+    const r=await sb.rpc('pay_config');
+    if(r&&r.data&&Array.isArray(r.data.services)){
+      const list=cfgToSvcs(r.data.services);
+      if(list.length){SVCS=list;renderSvcs();}
+    }
+  }catch(_e){}
+}
 
 function tog(k,ev){
   if(ev&&ev.target.tagName==='INPUT')return;
@@ -397,7 +452,65 @@ function refresh(){
   $('pay').disabled=!ok;
   $('pay-amt').textContent=t>0?('· $'+t.toFixed(2)):'';
 }
-document.addEventListener('DOMContentLoaded',function(){$('prop').addEventListener('input',refresh);refresh();});
+document.addEventListener('DOMContentLoaded',function(){$('prop').addEventListener('input',refresh);renderSvcs();loadCfg();});
+
+// ── ⚙️ الإدارة (pay_manage) — بوابة الصفحة، والقاعدة تتحقق مجدداً في pay_set_config ──
+async function adminGate(){
+  try{
+    if(!window.WadiPerms||!sb)return;
+    const u=await sb.auth.getUser();
+    if(!u||!u.data||!u.data.user)return;      // موظف مسجّل دخوله فقط
+    if(!WadiPerms.loaded())await WadiPerms.load(sb);
+    if(WadiPerms.can('pay_manage'))$('adm-fab').classList.add('on');
+  }catch(_e){}
+}
+window.addEventListener('load',function(){setTimeout(adminGate,900);});
+
+let ADM_LIST=[];
+async function openAdmin(){
+  ADM_LIST=SVCS.map(function(s){return {key:s.k,label:s.t,icon:s.i,fee:s.amt,prop:s.prop,active:true};});
+  try{
+    const r=await sb.rpc('pay_config');
+    if(r&&r.data&&Array.isArray(r.data.services))
+      ADM_LIST=r.data.services.map(function(s){return Object.assign({},s);});
+  }catch(_e){}
+  admRender();
+  openM('m-adm');
+}
+function admRender(){
+  $('adm-list').innerHTML=ADM_LIST.map(function(s,i){
+    return '<div class="adm-row">'
+    +'<input class="ic" value="'+esc(s.icon||'💳')+'" oninput="ADM_LIST['+i+'].icon=this.value" aria-label="أيقونة">'
+    +'<input class="lb" value="'+esc(s.label||'')+'" oninput="ADM_LIST['+i+'].label=this.value" placeholder="اسم الخدمة" aria-label="اسم الخدمة">'
+    +'<input class="fe" inputmode="decimal" value="'+(s.fee==null?'':s.fee)+'" oninput="ADM_LIST['+i+'].fee=(parseFloat(this.value)||null)" placeholder="$" aria-label="الرسم">'
+    +'<button class="adm-tg prop'+(s.prop?' on':'')+'" onclick="admTog('+i+',\'prop\')" title="رقم العقار إلزامي">🏠</button>'
+    +'<button class="adm-tg act'+(s.active!==false?' on':'')+'" onclick="admTog('+i+',\'active\')">'+(s.active!==false?'ظاهر':'مخفي')+'</button>'
+    +'<button class="adm-del" onclick="admDel('+i+')" title="حذف">✕</button>'
+    +'</div>';}).join('')||'<div class="sum-empty">لا خدمات — أضف الأولى</div>';
+}
+function admTog(i,f){
+  if(f==='active')ADM_LIST[i].active=!(ADM_LIST[i].active!==false);
+  else ADM_LIST[i][f]=!ADM_LIST[i][f];
+  admRender();
+}
+function admDel(i){ADM_LIST.splice(i,1);admRender();}
+function admAdd(){
+  ADM_LIST.push({key:'srv-'+Math.random().toString(36).slice(2,8),label:'',icon:'💳',fee:null,prop:false,active:true});
+  admRender();
+}
+async function admSave(){
+  const list=ADM_LIST.map(function(s){return {key:s.key,label:(s.label||'').trim(),icon:(s.icon||'💳').trim()||'💳',
+    fee:(s.fee==null||isNaN(s.fee)?null:s.fee),prop:!!s.prop,active:s.active!==false};});
+  if(list.some(function(s){return !s.label;})){toast('⚠️ لكل خدمة اسم');return;}
+  try{
+    const r=await sb.rpc('pay_set_config',{p:{services:list}});
+    if(r.error)throw r.error;
+    toast('✅ حُفظت الخدمات');
+    closeM('m-adm');
+    SVCS=cfgToSvcs((r.data&&r.data.services)||list);
+    renderSvcs();
+  }catch(e){toast('⚠️ '+(e.message||e));}
+}
 
 function openWhish(){$('wh-amt').textContent='$'+total().toFixed(2);openM('m-whish')}
 function whishPaid(){
