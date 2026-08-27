@@ -273,6 +273,24 @@ a{color:#0f4d82}
   <button class="btn-add" onclick="admAdd()">＋ خدمة جديدة</button>
   <div class="adm-hint">💵 الرسم فارغاً = الدافع يكتب المبلغ بحسب التكليف · 🏠 = رقم العقار إلزامي · «مخفي» يزيل الخدمة من الصفحة دون حذفها.</div>
   <button class="btn-sub" onclick="admSave()">💾 حفظ الخدمات</button>
+
+  <div class="pop-t" style="text-align:center;margin-top:22px">🔌 ربط Whish</div>
+  <div class="pop-s" style="text-align:center">يوم تصلكم بيانات التاجر من Whish تُلصق هنا — تُحفظ في قاعدة البلدية ولا يقرأها إلا حامل صلاحية الدفع، ولا تظهر للزوار أبداً.</div>
+  <label class="fm-l" for="wh-url">رابط API</label>
+  <input class="fm-i" id="wh-url" style="direction:ltr;text-align:left" placeholder="https://…" autocomplete="off">
+  <label class="fm-l" for="wh-channel">رقم القناة / التاجر (Channel)</label>
+  <input class="fm-i" id="wh-channel" style="direction:ltr;text-align:left" autocomplete="off">
+  <label class="fm-l" for="wh-secret">المفتاح السري (Secret)</label>
+  <input class="fm-i" id="wh-secret" type="password" style="direction:ltr;text-align:left" autocomplete="new-password" placeholder="يبقى المحفوظ إن تُرك فارغاً">
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button class="adm-tg" id="wh-mode-sandbox" style="flex:1" onclick="whMode('sandbox')">🧪 تجريبي (Sandbox)</button>
+    <button class="adm-tg" id="wh-mode-live" style="flex:1" onclick="whMode('live')">🟢 فعلي (Live)</button>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:12px;background:#fafbfd;border:1.5px solid #dce0ea;border-radius:12px;padding:10px 12px">
+    <button class="adm-tg act" id="wh-enabled" onclick="whTogEnabled()">متوقف</button>
+    <span style="flex:1;font-size:12px;color:#515668;line-height:1.7">تشغيل الدفع الفعلي — يعمل فور إطلاق التكامل؛ حتى ذلك الحين تبقى الصفحة «قريباً» مهما كان وضع المفتاح.</span>
+  </div>
+  <button class="btn-sub" onclick="whSave()">🔌 حفظ ربط Whish</button>
   <button class="pop-btn no" onclick="closeM('m-adm')">إغلاق</button>
 </div></div>
 
@@ -461,7 +479,11 @@ async function adminGate(){
     const u=await sb.auth.getUser();
     if(!u||!u.data||!u.data.user)return;      // موظف مسجّل دخوله فقط
     if(!WadiPerms.loaded())await WadiPerms.load(sb);
-    if(WadiPerms.can('pay_manage'))$('adm-fab').classList.add('on');
+    if(WadiPerms.can('pay_manage')){
+      $('adm-fab').classList.add('on');
+      // لوحة التحكم ترسل إلى ⚙️ مباشرة عبر pay.html#admin
+      if(location.hash==='#admin')openAdmin();
+    }
   }catch(_e){}
 }
 window.addEventListener('load',function(){setTimeout(adminGate,900);});
@@ -476,6 +498,43 @@ async function openAdmin(){
   }catch(_e){}
   admRender();
   openM('m-adm');
+  whLoad();
+}
+
+// ── 🔌 ربط Whish — pay_whish_get/set، كلاهما خلف pay_manage في القاعدة ──
+let WH={mode:'sandbox',enabled:false};
+function whRender(){
+  $('wh-mode-sandbox').classList.toggle('on',WH.mode!=='live');
+  $('wh-mode-live').classList.toggle('on',WH.mode==='live');
+  const en=$('wh-enabled');
+  en.classList.toggle('on',!!WH.enabled);
+  en.textContent=WH.enabled?'مفعّل':'متوقف';
+}
+async function whLoad(){
+  try{
+    const r=await sb.rpc('pay_whish_get');
+    if(r&&r.data){
+      $('wh-url').value=r.data.api_url||'';
+      $('wh-channel').value=r.data.channel||'';
+      $('wh-secret').value='';
+      WH.mode=r.data.mode||'sandbox';
+      WH.enabled=!!r.data.enabled;
+    }
+  }catch(_e){}
+  whRender();
+}
+function whMode(m){WH.mode=m;whRender();}
+function whTogEnabled(){WH.enabled=!WH.enabled;whRender();}
+async function whSave(){
+  const p={api_url:$('wh-url').value.trim(),channel:$('wh-channel').value.trim(),mode:WH.mode,enabled:WH.enabled};
+  const sec=$('wh-secret').value.trim();
+  if(sec)p.secret=sec;                     // فارغاً = يبقى السر المحفوظ كما هو
+  try{
+    const r=await sb.rpc('pay_whish_set',{p:p});
+    if(r.error)throw r.error;
+    $('wh-secret').value='';
+    toast('✅ حُفظ ربط Whish');
+  }catch(e){toast('⚠️ '+(e.message||e));}
 }
 function admRender(){
   $('adm-list').innerHTML=ADM_LIST.map(function(s,i){

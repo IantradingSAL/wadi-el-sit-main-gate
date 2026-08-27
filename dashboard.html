@@ -336,6 +336,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       <div class="ni" onclick="window.location='news-admin.html'"><span class="nii">📝</span> إدارة الأخبار</div>
       <div class="ni" id="nav-water" onclick="openWaterSchedule()" style="display:none"><span class="nii">💧</span> دورة المياه <span id="water-badge" style="background:#0891b2;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;display:none"></span></div>
       <div class="ni" id="nav-sandouk" onclick="window.location='sandouk.html'" style="display:none"><span class="nii">💰</span> صندوق البلدية</div>
+      <div class="ni" id="nav-pay" onclick="window.location='pay.html#admin'" style="display:none"><span class="nii">💳</span> الدفع الإلكتروني ⚙️</div>
       <div class="ni" onclick="openProfile()"><span class="nii">🪪</span> ملفي الوظيفي</div>
       <div class="ni" id="nav-whatsnew" onclick="openManageNews()" style="display:none"><span class="nii">🚀</span> ما الجديد</div>
       <div class="ni feature-export" onclick="exportCSV()"><span class="nii">⬇️</span> تصدير CSV</div>
@@ -632,7 +633,8 @@ function getRoleCfg(){
     activity:WadiPerms.can('activity_view'),
     pushlog:WadiPerms.can('push_log_view'),
     approvals:WadiPerms.can('approvals_manage'),
-    f_water:WadiPerms.can('water_view')
+    f_water:WadiPerms.can('water_view'),
+    pay:WadiPerms.can('pay_manage')
   });
 }
 function canDo(action){return !!getRoleCfg()[action];}
@@ -658,6 +660,7 @@ function applyRoleVisibility(){
   show('#nav-cit-msgs',R.admin||R.activity,'flex');
   show('#nav-water', canDo('f_water'), 'flex');
   show('#nav-sandouk', R.admin || userRole==='sandouk', 'flex');
+  show('#nav-pay', R.pay, 'flex');
   // sandouk-only: this dashboard is not for them — send straight to the sandouk page
   if (userRole === 'sandouk') { window.location = 'sandouk.html'; return; }
   show('.feature-export',R.export,'inline-flex');
