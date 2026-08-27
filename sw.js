@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v140';
+const CACHE_NAME   = 'wadi-elsit-v142';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used to report a notification's fate back to the
@@ -35,6 +35,7 @@ const APP_SHELL = [
   './bus-trip.html',
   './games.html',
   './games-screen.html',
+  './pay.html',
   './privacy.html',
   './404.html',
   './analytics.js',

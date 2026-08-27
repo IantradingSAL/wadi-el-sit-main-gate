@@ -91,6 +91,11 @@ html::-webkit-scrollbar{display:none}
 .svc-arrow{font-size:18px;opacity:.4}
 .svc-tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--bg)}
 .new-badge{background:#dcfce7;color:#15803d;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px}
+.svc-card.pay::before{background:#e30613}
+.svc-card.pay .svc-icon-wrap{background:#fde8e9}
+.svc-card.pay .svc-title{color:#c00511}
+.svc-card.pay .svc-badge{background:#fde8e9;color:#c00511}
+.soon-badge{background:#fdf6e3;color:#8a6d1a;border:1px solid #e9c463;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px}
 .yp-badge{background:linear-gradient(135deg,#f5a623,#d88e0a);color:#3a2502;font-size:10px;font-weight:800;padding:2px 8px;border-radius:6px;box-shadow:0 2px 6px rgba(245,166,35,.4)}
 
 /* full-width featured card */
@@ -455,6 +460,21 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:contain}
       </div>
     </div>
 
+    <!-- Pay online (Whish) — full width -->
+    <div class="svc-card pay svc-wide" onclick="window.location='pay.html'">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div class="svc-icon-wrap">💳</div>
+        <div>
+          <div class="svc-title" data-i18n="svc7Title">الدفع الإلكتروني</div>
+          <div class="svc-desc" data-i18n="svc7Desc">ادفع رسومك البلدية من هاتفك عبر Whish — والإيصال الرسمي يصلك فوراً. لأهل وادي الست المسجّلين في الدليل.</div>
+        </div>
+      </div>
+      <div class="svc-footer">
+        <span class="svc-badge" data-i18n="svc7Badge">🧾 إيصال رسمي فوري</span>
+        <span class="soon-badge" data-i18n="soonBadge">⏳ قريباً</span>
+      </div>
+    </div>
+
     <!-- Directory (Phonebook) — full width -->
     <div class="svc-card directory svc-wide" onclick="window.location='phonebook.html'">
       <div style="display:flex;align-items:flex-start;gap:12px">
@@ -590,6 +610,10 @@ const T = {
     svc4Desc: 'منتجات أهل القرية — اشترِ مباشرة من المنتج',
     svc4Badge: '🌿 منتجات محلية',
     newBadge: 'جديد',
+    svc7Title: 'الدفع الإلكتروني',
+    svc7Desc: 'ادفع رسومك البلدية من هاتفك عبر Whish — والإيصال الرسمي يصلك فوراً. لأهل وادي الست المسجّلين في الدليل.',
+    svc7Badge: '🧾 إيصال رسمي فوري',
+    soonBadge: '⏳ قريباً',
     svc5Title: 'دليل البلدية',
     svc5Desc: 'دليل وادي الست — أرقام، عائلات، مهن، ومواقع. ابحث بالعربية أو الإنكليزية أو الفرنسية، أو برقم الهاتف.',
     svc5Badge: '🔍 ابحث في الدليل',
@@ -678,6 +702,10 @@ const T = {
     svc4Desc: 'Village products — buy directly from the producer',
     svc4Badge: '🌿 Local Products',
     newBadge: 'New',
+    svc7Title: 'Pay Online',
+    svc7Desc: 'Pay your municipal fees from your phone via Whish — your official receipt arrives instantly. For Wadi El Sit residents registered in the directory.',
+    svc7Badge: '🧾 Instant official receipt',
+    soonBadge: '⏳ Coming soon',
     svc5Title: 'Municipality Directory',
     svc5Desc: 'Wadi El Sit directory — numbers, families, occupations, and locations. Search in Arabic, English or French, or by phone number.',
     svc5Badge: '🔍 Search Directory',
@@ -766,6 +794,10 @@ const T = {
     svc4Desc: 'Produits du village — achetez directement du producteur',
     svc4Badge: '🌿 Produits locaux',
     newBadge: 'Nouveau',
+    svc7Title: 'Paiement en ligne',
+    svc7Desc: 'Payez vos taxes municipales depuis votre téléphone via Whish — votre reçu officiel arrive instantanément. Pour les habitants de Wadi El Sit inscrits dans l\'annuaire.',
+    svc7Badge: '🧾 Reçu officiel instantané',
+    soonBadge: '⏳ Bientôt',
     svc5Title: 'Annuaire de la Municipalité',
     svc5Desc: 'Annuaire de Wadi El Sit — numéros, familles, professions, et lieux. Recherchez en arabe, anglais ou français, ou par numéro de téléphone.',
     svc5Badge: "🔍 Rechercher dans l'annuaire",
