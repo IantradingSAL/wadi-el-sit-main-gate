@@ -3216,6 +3216,7 @@ ar:{
   m_coop:'التعاونية',m_coop_s:'البائعون والتوصيل والطلبات',
   m_mrs:'الأرشيف المالي MRS',m_mrs_s:'الاطلاع والتعديل',
   m_club:'بطولة وادي الست',m_club_s:'التسجيلات والجدول والنتائج وشاشة العرض',
+  m_pay:'الدفع الإلكتروني',m_pay_s:'خدمات الدفع عبر Whish وإيصالاتها',
   m_sys:'المستخدمون والنظام',m_sys_s:'الحسابات والأدوار والإعدادات وقنوات التنبيه',
   pk_phonebook_view:'الاطلاع على الدليل',pk_phonebook_edit:'تعديل الدليل',pks_phonebook_edit:'إضافة وتصحيح مباشر دون تحقق',
   pk_phonebook_registry:'سجل النفوس الكامل',pks_phonebook_registry:'اسم الأم وسنة الولادة — بيانات حساسة',
@@ -3232,6 +3233,7 @@ ar:{
   pk_roles_edit:'تعديل الأدوار',pk_roles_delete:'حذف الأدوار',pk_settings_edit:'إعدادات النظام',pk_export_data:'تصدير البيانات',
   pk_audit_view:'سجل العمليات',pk_activity_view:'تتبع نشاط الموظفين',pk_notify_prefs_edit:'قنوات تنبيه الموظفين',
   pk_club_games_manage:'إدارة البطولة (طاولة وورق)',pks_club_games_manage:'التسجيلات والرسوم والجدول والنتائج — games.html',
+  pk_pay_manage:'إدارة الدفع الإلكتروني',pks_pay_manage:'خدمات الدفع ورسومها وشرط رقم العقار — pay.html',
   ev_club_game_reg:'🎲 تسجيل في بطولة وادي الست'
 },
 en:{
@@ -3266,6 +3268,7 @@ en:{
   m_coop:'Cooperative',m_coop_s:'Sellers, delivery and orders',
   m_mrs:'MRS financial archive',m_mrs_s:'View and edit',
   m_club:'Wadi El Sitt championship',m_club_s:'Registrations, bracket, results and the big screen',
+  m_pay:'Online payment',m_pay_s:'Whish payment services and their receipts',
   m_sys:'Users & system',m_sys_s:'Accounts, roles, settings and notify channels',
   pk_phonebook_view:'View the directory',pk_phonebook_edit:'Edit the directory',pks_phonebook_edit:'Direct add & correct without review',
   pk_phonebook_registry:'Full civil registry',pks_phonebook_registry:'Mother’s name & birth year — sensitive data',
@@ -3282,6 +3285,7 @@ en:{
   pk_roles_edit:'Edit roles',pk_roles_delete:'Delete roles',pk_settings_edit:'System settings',pk_export_data:'Export data',
   pk_audit_view:'Audit log',pk_activity_view:'Staff activity',pk_notify_prefs_edit:'Staff notify channels',
   pk_club_games_manage:'Run the championship (tawle & cards)',pks_club_games_manage:'Registrations, fees, bracket and results — games.html',
+  pk_pay_manage:'Manage online payment',pks_pay_manage:'Payment services, fees and the property-number rule — pay.html',
   ev_club_game_reg:'🎲 Championship registration'
 },
 fr:{
@@ -3316,6 +3320,7 @@ fr:{
   m_coop:'Coopérative',m_coop_s:'Vendeurs, livraison et commandes',
   m_mrs:'Archives financières MRS',m_mrs_s:'Consultation et modification',
   m_club:'Championnat de Wadi El Sitt',m_club_s:'Inscriptions, tableau, résultats et grand écran',
+  m_pay:'Paiement en ligne',m_pay_s:'Services de paiement Whish et leurs reçus',
   m_sys:'Utilisateurs & système',m_sys_s:'Comptes, rôles, réglages et canaux',
   pk_phonebook_view:'Consulter l’annuaire',pk_phonebook_edit:'Modifier l’annuaire',pks_phonebook_edit:'Ajout et correction directs sans validation',
   pk_phonebook_registry:'Registre civil complet',pks_phonebook_registry:'Nom de la mère et année de naissance — données sensibles',
@@ -3332,6 +3337,7 @@ fr:{
   pk_roles_edit:'Modifier les rôles',pk_roles_delete:'Supprimer les rôles',pk_settings_edit:'Réglages système',pk_export_data:'Exporter les données',
   pk_audit_view:'Journal des opérations',pk_activity_view:'Activité du personnel',pk_notify_prefs_edit:'Canaux de notification du personnel',
   pk_club_games_manage:'Gérer le championnat (tawlé & cartes)',pks_club_games_manage:'Inscriptions, frais, tableau et résultats — games.html',
+  pk_pay_manage:'Gérer le paiement en ligne',pks_pay_manage:'Services de paiement, frais et règle du numéro de parcelle — pay.html',
   ev_club_game_reg:'🎲 Inscription au championnat'
 }};
 
@@ -3354,6 +3360,8 @@ const UP_MODULES=[
    keys:['mrs_view','mrs_edit']},
   {id:'club',  icon:'🎲', bg:'#fff5d6', quick:[['club_games_manage','qEdit']],
    keys:['club_games_manage']},
+  {id:'pay',   icon:'💳', bg:'#fde8e9', quick:[['pay_manage','qEdit']],
+   keys:['pay_manage']},
   {id:'sys',   icon:'👥', bg:'#fdecea', quick:[['users_view','qView']],
    keys:['users_view','users_create','users_edit','users_delete','roles_edit','roles_delete',
          'settings_edit','export_data','audit_view','activity_view','notify_prefs_edit']}
