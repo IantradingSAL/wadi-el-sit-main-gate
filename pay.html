@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#081f38">
+<title>الدفع الإلكتروني — بلدية وادي الست</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth-common.js" defer></script>
+<script src="number-format.js" defer></script>
+<script src="pwa.js" defer></script>
+<style>
+/* نظام الموقع نفسه — Tajawal، كحلي/ذهبي، بطاقات — والأحمر حصراً لزر Whish */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Tajawal',Tahoma,sans-serif;background:#f2f4fa;color:#191c24;font-size:15px;line-height:1.6;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input{font-family:inherit;font-size:inherit;color:inherit}
+a{color:#0f4d82}
+:focus-visible{outline:3px solid #1a6eb5;outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* شريط «قريباً» */
+.soon{background:linear-gradient(135deg,#a07a0b,#d4a017);color:#fff;font-size:12.5px;font-weight:800;padding:9px 14px;text-align:center;line-height:1.9;box-shadow:0 2px 10px rgba(160,122,11,.35)}
+.soon b{background:rgba(255,255,255,.22);border-radius:99px;padding:2px 12px;margin-inline-end:6px}
+
+/* الترويسة */
+.hd{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,#081f38,#0f4d82);color:#fff;padding:13px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 14px rgba(8,31,56,.35)}
+.hd-back{background:rgba(255,255,255,.15);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;text-decoration:none;flex-shrink:0}
+.hd-title{flex:1;font-size:15px;font-weight:800}
+.hd-whish{background:#fff;color:#e30613;font-weight:900;font-size:12px;border-radius:99px;padding:5px 12px;letter-spacing:.3px}
+
+/* البطل */
+.hero{position:relative;padding:40px 20px 104px;background:
+  radial-gradient(1100px 500px at 80% -80px,rgba(212,160,23,.32),transparent 60%),
+  radial-gradient(800px 400px at 10% 110%,rgba(227,6,19,.14),transparent 55%),
+  linear-gradient(160deg,#081f38,#0f4d82 55%,#123c66);color:#fff;text-align:center;overflow:hidden}
+.float{position:absolute;font-size:32px;opacity:.15;animation:drift 7s ease-in-out infinite;user-select:none;pointer-events:none}
+@keyframes drift{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-16px) rotate(8deg)}}
+.crest{width:86px;height:86px;margin:0 auto 10px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#ffe9ad,#d4a017 70%);display:flex;align-items:center;justify-content:center;font-size:42px;box-shadow:0 10px 34px rgba(212,160,23,.55),inset 0 -4px 10px rgba(122,84,0,.4);border:3px solid #ffd76b}
+.hero h1{font-size:24px;font-weight:900;margin:4px 0 2px;text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.hero p{font-size:13.5px;opacity:.92;max-width:34ch;margin:0 auto}
+.hero-meta{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.hm{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:99px;padding:7px 15px;font-size:12px;font-weight:800}
+.hm.gold{background:linear-gradient(135deg,#d4a017,#a07a0b);border-color:#ffd76b;box-shadow:0 4px 16px rgba(212,160,23,.5)}
+
+.main{max-width:560px;margin:-72px auto 30px;padding:0 14px 10px;position:relative;z-index:2}
+
+/* بطاقة الخطوة */
+.step{background:#fff;border-radius:22px;box-shadow:0 12px 36px rgba(15,77,130,.13);padding:18px;margin-bottom:14px;border:1px solid #dce0ea;position:relative;overflow:hidden}
+.step:before{content:'';position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,#d4a017,#ffd76b)}
+.step.locked{opacity:.55;pointer-events:none;filter:grayscale(.3)}
+.st-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.st-num{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#081f38,#0f4d82);color:#ffd76b;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.st-t{font-size:15.5px;font-weight:900;color:#0f4d82}
+.st-s{font-size:12px;color:#515668}
+
+.fm-i{width:100%;padding:12px 14px;border:1.5px solid #dce0ea;border-radius:12px;font-size:15px;background:#fafbfd;outline:none}
+.fm-i:focus{border-color:#1a6eb5;background:#fff;box-shadow:0 0 0 3px rgba(26,110,181,.12)}
+.fm-l{font-size:12.5px;color:#515668;font-weight:700;margin:10px 0 5px;display:block}
+
+/* جواب الدليل */
+.lk{margin-top:9px;border-radius:11px;padding:9px 12px;font-size:12.5px;font-weight:700;line-height:1.8}
+.lk.ok{background:#f0faf2;border:1.5px solid #9ed8ab;color:#15803d}
+.lk.ask{background:#fff9e8;border:1.5px solid #e9c463;color:#8a6d1a}
+.lk.no{background:#fdf0f1;border:1.5px solid #f2b3b8;color:#a52833}
+
+/* بطاقات الخدمات */
+.svc{border:2px solid #dce0ea;border-radius:15px;background:#fafbfd;padding:12px 13px;margin-top:9px;cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s}
+.svc.on{border-color:#d4a017;background:linear-gradient(135deg,#fff9e8,#fff3cf);box-shadow:0 4px 14px rgba(212,160,23,.25)}
+.svc-row{display:flex;align-items:center;gap:11px}
+.svc-i{width:42px;height:42px;border-radius:12px;background:#eef5fc;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+.svc.on .svc-i{background:#fff}
+.svc-t{font-size:14px;font-weight:900;color:#0f4d82}
+.svc-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.tag{font-size:10px;font-weight:800;border-radius:99px;padding:2px 9px;background:#eef1f7;color:#515668}
+.tag.prop{background:#fdf6e3;border:1px solid #e9c463;color:#8a6d1a}
+.svc-chk{width:26px;height:26px;border-radius:9px;border:2px solid #c7d2e2;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:14px;flex-shrink:0;background:#fff}
+.svc.on .svc-chk{background:linear-gradient(135deg,#d4a017,#a07a0b);border-color:#a07a0b}
+.svc-amt{display:none;margin-top:10px;padding-top:10px;border-top:1.5px dashed #e9c463;align-items:center;gap:9px}
+.svc.on .svc-amt{display:flex}
+.svc-amt label{font-size:12px;font-weight:800;color:#8a6d1a;flex-shrink:0}
+.svc-amt input{flex:1;min-width:0;padding:9px 12px;border:1.5px solid #e9c463;border-radius:10px;background:#fff;direction:ltr;text-align:left;font-weight:800;font-variant-numeric:tabular-nums}
+.svc-amt .cur{font-size:12.5px;font-weight:900;color:#8a6d1a}
+
+/* رقم العقار */
+.step.prop-on:before{background:linear-gradient(90deg,#0f4d82,#60a5fa)}
+.prop-note{font-size:12px;color:#8a6d1a;background:#fdf6e3;border:1px solid #e9c463;border-radius:10px;padding:7px 11px;margin-top:8px;font-weight:700;line-height:1.8}
+
+/* الملخص */
+.sum-row{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;font-size:13.5px;border-bottom:1px dashed #eef0f6}
+.sum-row b{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed}
+.sum-tot{display:flex;justify-content:space-between;align-items:center;padding:12px 2px 2px;font-size:15px;font-weight:900;color:#0f4d82}
+.sum-tot .v{font-size:21px;color:#a07a0b;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed}
+.sum-empty{color:#8d93a6;font-size:13px;text-align:center;padding:14px 0}
+
+/* زر Whish — البقعة الحمراء الوحيدة في الصفحة */
+.btn-whish{width:100%;margin-top:13px;color:#fff;padding:15px;border-radius:14px;font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(135deg,#e30613,#a3050e);box-shadow:0 8px 24px rgba(227,6,19,.4);transition:transform .12s}
+.btn-whish:active{transform:scale(.98)}
+.btn-whish:disabled{background:#c7d2e2;box-shadow:none;cursor:not-allowed}
+.btn-whish .wlogo{background:#fff;color:#e30613;border-radius:8px;padding:2px 9px;font-size:13px;font-weight:900}
+.pay-hint{font-size:11.5px;color:#8d93a6;text-align:center;margin-top:9px;line-height:1.8}
+
+/* إيصالاتي */
+.mylk{background:#fff;border-radius:18px;border:1px solid #dce0ea;padding:13px 16px;margin:16px 0;display:flex;gap:10px;align-items:center;box-shadow:0 4px 14px rgba(15,77,130,.07)}
+.mylk .t{flex:1;font-size:13px;font-weight:800;color:#0f4d82}
+.mylk button{background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:99px;padding:8px 16px;font-size:12.5px;font-weight:800}
+
+/* شرح للمستخدم */
+.rules{max-width:560px;margin:0 auto 40px;padding:0 14px}
+.rules-card{background:#fff;border-radius:20px;border:1px solid #dce0ea;padding:16px;box-shadow:0 6px 20px rgba(15,77,130,.07)}
+.rules h2{font-size:15px;font-weight:900;color:#0f4d82;margin-bottom:8px}
+.rl{display:flex;gap:10px;align-items:flex-start;padding:9px 0;font-size:13px;border-bottom:1px dashed #eef0f6;line-height:1.9}
+.rl:last-child{border-bottom:none}
+.rl .i{width:30px;height:30px;border-radius:9px;background:#f2f5fa;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+
+/* النوافذ */
+.modal{position:fixed;inset:0;background:rgba(8,20,38,.7);display:none;align-items:flex-end;justify-content:center;z-index:200;backdrop-filter:blur(2px)}
+.modal.open{display:flex}
+.sheet{background:#fff;border-radius:26px 26px 0 0;width:100%;max-width:560px;max-height:92vh;overflow:auto;padding:10px 20px 26px;text-align:center}
+.grab{width:44px;height:5px;border-radius:99px;background:#dce0ea;margin:4px auto 14px}
+.pop-i{font-size:44px;display:block}
+.pop-t{font-size:17px;font-weight:900;color:#0f4d82;margin:6px 0 4px}
+.pop-s{font-size:13px;color:#515668;line-height:1.9;max-width:40ch;margin:0 auto 14px}
+.pop-btn{display:block;width:100%;border-radius:13px;padding:13px;font-size:14px;font-weight:900;margin-top:9px}
+.pop-btn.yes{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;box-shadow:0 6px 18px rgba(22,163,74,.35)}
+.pop-btn.no{background:#eef1f7;color:#515668}
+.pop-btn.gold{background:linear-gradient(135deg,#d4a017,#a07a0b);color:#fff;box-shadow:0 6px 18px rgba(212,160,23,.4)}
+
+/* معاينة صفحة Whish */
+.wh-frame{border:2px solid #f2b3b8;border-radius:18px;padding:16px;background:#fff8f8;text-align:center;margin-top:6px}
+.wh-brand{display:inline-block;background:#e30613;color:#fff;font-weight:900;font-size:15px;border-radius:10px;padding:5px 16px;letter-spacing:.4px}
+.wh-step{display:flex;align-items:center;gap:10px;text-align:right;font-size:12.5px;padding:8px 0;border-bottom:1px dashed #f2d5d7;color:#515668}
+.wh-step:last-of-type{border-bottom:none}
+.wh-step .n{width:24px;height:24px;border-radius:50%;background:#e30613;color:#fff;font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* نموذج الإيصال */
+.ticket{background:linear-gradient(150deg,#1c2c44,#0f4d82 70%,#155a91);border-radius:20px;color:#fff;padding:18px;text-align:center;border:1px solid rgba(255,215,107,.4);margin-top:6px;position:relative;overflow:hidden}
+.ticket .sample{position:absolute;top:12px;left:-34px;background:#a07a0b;color:#fff;font-size:10.5px;font-weight:900;padding:4px 40px;transform:rotate(-35deg)}
+.ticket .no{font-size:24px;font-weight:900;color:#ffd76b;direction:ltr;unicode-bidi:embed;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.ticket .lbl{font-size:11px;opacity:.75;font-weight:700}
+.tk-rows{background:rgba(255,255,255,.08);border-radius:13px;padding:10px 13px;margin-top:12px;text-align:right}
+.tk-r{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0;border-bottom:1px dashed rgba(255,255,255,.15)}
+.tk-r:last-child{border-bottom:none}
+.tk-r b{direction:ltr;unicode-bidi:embed;font-variant-numeric:tabular-nums}
+.tk-paid{display:inline-block;margin-top:12px;background:linear-gradient(135deg,#16a34a,#15803d);border-radius:99px;padding:6px 18px;font-size:12.5px;font-weight:900;box-shadow:0 4px 14px rgba(22,163,74,.45)}
+
+/* سجل الإيصالات */
+.rc{background:#fafbfd;border:1.5px solid #dce0ea;border-radius:14px;padding:11px 13px;margin-top:9px;text-align:right}
+.rc.sample{opacity:.6}
+.rc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rc-no{font-weight:900;color:#0f4d82;direction:ltr;unicode-bidi:embed;font-variant-numeric:tabular-nums}
+.rc-amt{font-weight:900;color:#a07a0b;direction:ltr;unicode-bidi:embed;font-variant-numeric:tabular-nums}
+.rc-sub{font-size:11.5px;color:#8d93a6;margin-top:3px}
+</style>
+</head>
+<body>
+
+<div class="soon">⏳ <b>قريباً</b> خدمة الدفع الإلكتروني قيد التحضير مع Whish — هذه الصفحة معاينة لتتعرف كيف ستعمل، ولا يمكن الدفع فعلياً بعد.</div>
+
+<header class="hd">
+  <a class="hd-back" href="index.html" aria-label="رجوع">←</a>
+  <div class="hd-title">💳 الدفع الإلكتروني — بلدية وادي الست</div>
+  <span class="hd-whish">whish</span>
+</header>
+
+<section class="hero">
+  <span class="float" style="top:26px;right:8%">🧾</span>
+  <span class="float" style="top:60px;left:10%;animation-delay:1.2s">💳</span>
+  <span class="float" style="bottom:120px;right:16%;animation-delay:2.1s">🏛️</span>
+  <div class="crest">💳</div>
+  <h1>ادفع رسومك البلدية من هاتفك</h1>
+  <p>بأمان عبر Whish — والإيصال الرسمي يصلك فوراً برقم متسلسل من صندوق البلدية</p>
+  <div class="hero-meta">
+    <span class="hm gold">⏳ قريباً</span>
+    <span class="hm">🧾 إيصال رسمي فوري</span>
+    <span class="hm">📇 عبر دليل البلدية</span>
+  </div>
+</section>
+
+<main class="main">
+
+  <!-- ١ · الهاتف -->
+  <div class="step" id="st1">
+    <div class="st-head">
+      <div class="st-num">١</div>
+      <div><div class="st-t">رقم هاتفك</div><div class="st-s">الدليل يتعرّف عليك — الدفع لأهل وادي الست المسجّلين</div></div>
+    </div>
+    <input class="fm-i" id="ph" style="direction:ltr" data-phone aria-label="رقم الهاتف">
+    <div id="ph-box"></div>
+    <label class="fm-l" for="nm">الاسم الثلاثي</label>
+    <input class="fm-i" id="nm" placeholder="يُملأ تلقائياً من الدليل" readonly>
+  </div>
+
+  <!-- ٢ · الخدمات -->
+  <div class="step locked" id="st2">
+    <div class="st-head">
+      <div class="st-num">٢</div>
+      <div><div class="st-t">ماذا تريد أن تدفع؟</div><div class="st-s">اختر خدمة أو أكثر — البنود نفسها المعتمدة في صندوق البلدية</div></div>
+    </div>
+    <div id="svcs"></div>
+  </div>
+
+  <!-- ٣ · رقم العقار -->
+  <div class="step locked" id="st3">
+    <div class="st-head">
+      <div class="st-num">٣</div>
+      <div><div class="st-t">رقم العقار</div><div class="st-s" id="prop-sub">مطلوب للرسوم المرتبطة بعقار</div></div>
+    </div>
+    <input class="fm-i" id="prop" style="direction:ltr;text-align:left" placeholder="مثال: 1245/شوف" aria-label="رقم العقار">
+    <div class="prop-note" id="prop-note" style="display:none">🏠 اخترت خدمة مرتبطة بعقار — رقم العقار <b>إلزامي</b> ويُطبع على الإيصال الرسمي كما في دفتر الصندوق.</div>
+  </div>
+
+  <!-- ٤ · الملخص والدفع -->
+  <div class="step locked" id="st4">
+    <div class="st-head">
+      <div class="st-num">٤</div>
+      <div><div class="st-t">الملخص والدفع</div><div class="st-s">تُنقل إلى صفحة Whish الآمنة لإتمام الدفع</div></div>
+    </div>
+    <div id="sum"><div class="sum-empty">اختر خدمة ليظهر الملخص</div></div>
+    <button class="btn-whish" id="pay" disabled onclick="openWhish()">ادفع عبر <span class="wlogo">whish</span> <span id="pay-amt"></span></button>
+    <div class="pay-hint">الدفع يتم على صفحة Whish الرسمية برمز OTP من تطبيقك · عمولة الخدمة 1٪ تظهر قبل التأكيد</div>
+  </div>
+
+  <div class="mylk">
+    <span style="font-size:22px">🧾</span>
+    <span class="t">دفعت سابقاً؟ إيصالاتك محفوظة برقم هاتفك</span>
+    <button onclick="openM('m-my')">إيصالاتي</button>
+  </div>
+</main>
+
+<!-- شرح للمستخدم -->
+<section class="rules">
+  <div class="rules-card">
+    <h2>❓ كيف يعمل الدفع الإلكتروني؟</h2>
+    <div class="rl"><span class="i">📇</span><div><b>لمن هذه الخدمة؟</b> لأهل وادي الست المسجّلين في دليل البلدية. رقمك غير مسجّل؟ نفتح لك نموذج «أضف نفسك» في الدليل ورقمك معبّأ مسبقاً — وبعد تحقق البلدية واعتماد طلبك تعود وتدفع من هنا.</div></div>
+    <div class="rl"><span class="i">🏠</span><div><b>رقم العقار.</b> الرسوم المرتبطة بعقار — الجباية، بدل النفايات، القيمة التأجيرية — تحتاج رقم عقارك كما هو في التكليف، ويُطبع على إيصالك الرسمي.</div></div>
+    <div class="rl"><span class="i">💳</span><div><b>الدفع عبر Whish.</b> تُنقل إلى صفحة Whish الرسمية وتؤكد الدفع برمز OTP يصلك على تطبيق Whish. البلدية لا ترى ولا تحفظ أي بيانات من حسابك — عمولة خدمة Whish البالغة 1٪ تظهر أمامك قبل التأكيد.</div></div>
+    <div class="rl"><span class="i">🧾</span><div><b>إيصالك الرسمي.</b> فور الدفع يصدر إيصال قبض برقم متسلسل من دفتر صندوق البلدية نفسه (Q-2026-…)، يصلك به إشعار، ويبقى محفوظاً في «إيصالاتي» برقم هاتفك — لا حاجة للمرور بالبلدية.</div></div>
+    <div class="rl"><span class="i">⏳</span><div><b>متى تُطلق؟</b> عند اكتمال ربط حساب البلدية مع Whish. تابع أخبار البلدية — وسيصل إشعار عند الإطلاق.</div></div>
+  </div>
+</section>
+
+<!-- التسجيل الإلزامي في الدليل -->
+<div class="modal" id="m-reg" role="dialog" aria-modal="true"><div class="sheet">
+  <div class="grab"></div>
+  <span class="pop-i">📇</span>
+  <div class="pop-t">هذا الرقم غير مسجّل في دليل البلدية</div>
+  <div class="pop-s">الدفع الإلكتروني <b>لأهل وادي الست المسجّلين في الدليل</b>.<br>سجّل الآن — رقمك معبّأ مسبقاً — وبعد تحقق البلدية واعتماد طلبك تعود وتدفع من هذه الصفحة.</div>
+  <button class="pop-btn yes" onclick="openPhonebook()">🏡 سجّلني في دليل البلدية</button>
+  <button class="pop-btn no" onclick="closeM('m-reg')">تغيير الرقم</button>
+</div></div>
+
+<!-- معاينة صفحة Whish -->
+<div class="modal" id="m-whish" role="dialog" aria-modal="true"><div class="sheet">
+  <div class="grab"></div>
+  <div class="wh-frame">
+    <span class="wh-brand">whish</span>
+    <div style="font-size:13px;font-weight:900;color:#a3050e;margin:10px 0 2px">صفحة الدفع الآمنة <span style="color:#8d93a6;font-weight:700">(معاينة — الخدمة قريباً)</span></div>
+    <div style="font-size:20px;font-weight:900;color:#191c24;direction:ltr;font-variant-numeric:tabular-nums" id="wh-amt">$0</div>
+    <div class="wh-step"><span class="n">1</span> تُدخل رقم حساب Whish الخاص بك</div>
+    <div class="wh-step"><span class="n">2</span> يصلك رمز OTP على تطبيق Whish</div>
+    <div class="wh-step"><span class="n">3</span> تؤكد — والمبلغ يصل حساب البلدية في اليوم نفسه</div>
+  </div>
+  <button class="pop-btn yes" onclick="whishPaid()">👀 شاهد شكل الإيصال (معاينة)</button>
+  <button class="pop-btn no" onclick="closeM('m-whish')">إغلاق</button>
+</div></div>
+
+<!-- نموذج الإيصال -->
+<div class="modal" id="m-done" role="dialog" aria-modal="true"><div class="sheet">
+  <div class="grab"></div>
+  <span class="pop-i">🧾</span>
+  <div class="pop-t">هكذا سيصلك إيصالك الرسمي</div>
+  <div class="ticket">
+    <span class="sample">نموذج للمعاينة</span>
+    <div class="lbl">إيصال قبض — صندوق بلدية وادي الست</div>
+    <div class="no">Q-2026-XXX</div>
+    <div class="tk-rows" id="tk-rows"></div>
+    <span class="tk-paid">✓ مدفوع عبر Whish</span>
+  </div>
+  <div class="pop-s" style="margin-top:12px">عند الإطلاق: يصلك إشعار بالإيصال فور الدفع، ويُقيّد تلقائياً في دفتر صندوق البلدية.</div>
+  <button class="pop-btn no" onclick="closeM('m-done')">إغلاق</button>
+</div></div>
+
+<!-- إيصالاتي -->
+<div class="modal" id="m-my" role="dialog" aria-modal="true"><div class="sheet" style="text-align:right">
+  <div class="grab"></div>
+  <div class="pop-t" style="text-align:center">🧾 إيصالاتي</div>
+  <div class="pop-s" style="text-align:center">⏳ قريباً — عند إطلاق الخدمة تجد هنا كل ما دفعته لبلدية وادي الست برقم هاتفك. هكذا سيبدو:</div>
+  <div class="rc sample"><div class="rc-top"><span class="rc-no">Q-2026-XXX</span><span class="rc-amt">$95.00</span></div><div class="rc-sub">مثال — جباية ورسوم بلدية + بدل نفايات · عقار 1245/شوف · Whish ✓</div></div>
+  <button class="pop-btn no" onclick="closeM('m-my')">إغلاق</button>
+</div></div>
+
+<script>
+const SB_URL="https://onjbwhkmmtqnymhjnplw.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uamJ3aGttbXRxbnltaGpucGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDY4MjUsImV4cCI6MjA5MDM4MjgyNX0.lhlsRdOqVHZuOXCJa0lCNuZkYJHhf1AZ_zOwqHHAeG4";
+let sb=null;
+try{sb=window.sb||supabase.createClient(SB_URL,SB_KEY);window.sb=sb;}catch(e){console.warn(e);}
+const $=function(id){return document.getElementById(id)};
+function esc(s){return(s==null?'':s).toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function openM(id){$(id).classList.add('open')}
+function closeM(id){$(id).classList.remove('open')}
+
+// بنود صندوق البلدية — عند الإطلاق تأتي من settings.pay_services لا من الكود
+const SVCS=[
+  {k:'jibaya', i:'🏛️', t:'جباية ورسوم بلدية', prop:true,  amt:null},
+  {k:'nifayat',i:'🗑️', t:'بدل نفايات',         prop:true,  amt:null},
+  {k:'ta2jir', i:'🏠', t:'قيمة تأجيرية',        prop:true,  amt:null},
+  {k:'rukhas', i:'📄', t:'رسوم رخص وإفادات',    prop:false, amt:null},
+  {k:'gharama',i:'⚖️', t:'غرامات',              prop:false, amt:null}
+];
+const SEL={};
+$('svcs').innerHTML=SVCS.map(function(s){
+  return '<div class="svc" id="svc-'+s.k+'" onclick="tog(\''+s.k+'\',event)">'
+  +'<div class="svc-row"><div class="svc-i">'+s.i+'</div>'
+  +'<div style="flex:1"><div class="svc-t">'+s.t+'</div><div class="svc-tags">'
+  +(s.prop?'<span class="tag prop">🏠 يتطلب رقم العقار</span>':'')
+  +(s.amt?'<span class="tag">رسم محدد: $'+s.amt+'</span>':'<span class="tag">المبلغ بحسب التكليف</span>')
+  +'</div></div><div class="svc-chk" id="chk-'+s.k+'"></div></div>'
+  +'<div class="svc-amt"><label>المبلغ</label><input inputmode="decimal" id="amt-'+s.k+'" '+(s.amt?'value="'+s.amt+'" readonly':'placeholder="0"')+' oninput="refresh()" onclick="event.stopPropagation()"><span class="cur">USD</span></div>'
+  +'</div>';}).join('');
+
+function tog(k,ev){
+  if(ev&&ev.target.tagName==='INPUT')return;
+  SEL[k]=!SEL[k];
+  $('svc-'+k).classList.toggle('on',!!SEL[k]);
+  $('chk-'+k).textContent=SEL[k]?'✓':'';
+  refresh();
+}
+
+// ── الدليل يتعرف على الرقم — المسار نفسه المعتمد في صفحة البطولة ──
+// موجود → الاسم يُملأ وحده. غير موجود → التسجيل في الدليل شرط، لا خيار «تابع بدونه».
+let FOUND=false,LK_LAST='';
+async function lookup(){
+  const v=$('ph').value.trim(),box=$('ph-box');
+  const norm=v?((window.phoneE164&&phoneE164(v))||v):'';
+  if(LK_LAST===norm&&box.innerHTML!=='')return;
+  LK_LAST=norm;
+  FOUND=false;$('nm').value='';box.innerHTML='';refresh();
+  if(!v||(window.phoneValid&&!phoneValid(v)))return;
+  try{
+    const r=await sb.rpc('club_phone_lookup',{p_phone:norm});
+    if(r.error)return;
+    if(r.data&&r.data.found){
+      FOUND=true;$('nm').value=r.data.name;
+      box.innerHTML='<div class="lk ok">📇 موجود في دليل البلدية: <b>'+esc(r.data.name)+'</b> — الاسم مُلئ تلقائياً</div>';
+    }else{
+      box.innerHTML='<div class="lk no">📇 غير مسجّل في الدليل — التسجيل شرط للدفع الإلكتروني</div>';
+      openM('m-reg');
+    }
+  }catch(_e){}
+  refresh();
+}
+window.addEventListener('load',function(){setTimeout(function(){
+  const el=$('ph'); if(!el)return;
+  el.addEventListener('blur',lookup);
+  el.addEventListener('change',lookup);
+  let t=null;
+  el.addEventListener('input',function(){
+    clearTimeout(t);
+    t=setTimeout(function(){if(window.phoneValid&&phoneValid(el.value.trim()))lookup();},500);
+  });
+},800);});
+
+// «نعم» تفتح نموذج الدليل نفسه في تبويب جديد، ورقمه واسمه معبآن —
+// يسجّل نفسه هناك عبر مسار التحقق العادي (المسار نفسه المعتمد في البطولة)
+function openPhonebook(){
+  closeM('m-reg');
+  const ph=$('ph').value.trim(),nm=$('nm').value.trim();
+  const url='phonebook.html#add='+encodeURIComponent(window.phoneE164?phoneE164(ph):ph)+'|'+encodeURIComponent(nm)+'|'+encodeURIComponent('pay');
+  try{window.open(url,'_blank');}catch(_e){}
+  $('ph-box').innerHTML='<div class="lk ask">🏡 فتحنا لك نموذج الدليل في صفحة جديدة — '
+    +'<a href="'+url+'" target="_blank" rel="noopener" style="color:inherit">إعادة فتحه</a> · '
+    +'بعد اعتماد البلدية عُد وادفع من هنا</div>';
+}
+
+function propNeeded(){return SVCS.some(function(s){return SEL[s.k]&&s.prop})}
+function total(){var t=0;SVCS.forEach(function(s){if(SEL[s.k])t+=parseFloat($('amt-'+s.k).value)||0});return t}
+function refresh(){
+  const need=propNeeded(),t=total(),anySel=SVCS.some(function(s){return !!SEL[s.k]});
+  $('st2').classList.toggle('locked',!FOUND);
+  $('st3').classList.toggle('locked',!FOUND||!anySel);
+  $('st4').classList.toggle('locked',!FOUND||!anySel);
+  $('st3').classList.toggle('prop-on',need);
+  $('prop-note').style.display=need?'block':'none';
+  $('prop-sub').textContent=need?'إلزامي — إحدى خدماتك مرتبطة بعقار':'اختياري لخدماتك الحالية';
+  const rows=SVCS.filter(function(s){return SEL[s.k]}).map(function(s){
+    const a=parseFloat($('amt-'+s.k).value)||0;
+    return '<div class="sum-row"><span>'+s.i+' '+s.t+'</span><b>$'+a.toFixed(2)+'</b></div>';
+  }).join('');
+  $('sum').innerHTML=rows
+    ?rows+'<div class="sum-tot"><span>المجموع</span><span class="v">$'+t.toFixed(2)+'</span></div>'
+    :'<div class="sum-empty">اختر خدمة ليظهر الملخص</div>';
+  const ok=FOUND&&anySel&&t>0&&(!need||$('prop').value.trim());
+  $('pay').disabled=!ok;
+  $('pay-amt').textContent=t>0?('· $'+t.toFixed(2)):'';
+}
+document.addEventListener('DOMContentLoaded',function(){$('prop').addEventListener('input',refresh);refresh();});
+
+function openWhish(){$('wh-amt').textContent='$'+total().toFixed(2);openM('m-whish')}
+function whishPaid(){
+  closeM('m-whish');
+  const rows=SVCS.filter(function(s){return SEL[s.k]}).map(function(s){
+    return '<div class="tk-r"><span>'+s.t+'</span><b>$'+(parseFloat($('amt-'+s.k).value)||0).toFixed(2)+'</b></div>';}).join('')
+    +'<div class="tk-r"><span>الاسم</span><b style="direction:rtl">'+esc($('nm').value||'—')+'</b></div>'
+    +(propNeeded()?'<div class="tk-r"><span>رقم العقار</span><b>'+esc($('prop').value||'—')+'</b></div>':'')
+    +'<div class="tk-r"><span>المجموع</span><b>$'+total().toFixed(2)+'</b></div>';
+  $('tk-rows').innerHTML=rows;
+  openM('m-done');
+}
+</script>
+</body>
+</html>
