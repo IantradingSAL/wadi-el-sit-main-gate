@@ -111,6 +111,25 @@ alter table public.orders add constraint orders_status_check check (status in
 -- Portioning settings live on the product (BOM editor edits them)
 alter table public.products add column if not exists portion_g numeric(8,1);
 alter table public.products add column if not exists batch_portions int not null default 1;
+-- Process times per step, minutes per batch: {"Prep & wash":10,"Cook":25,...}
+-- Drives the kitchen production clock, the overdue alarm, and the time cost
+-- (minutes x kitchen rate / batch portions) added to the material cost.
+alter table public.products add column if not exists step_minutes jsonb not null default '{}';
+
+-- Production clock on the order (stamped when sent to kitchen)
+alter table public.orders add column if not exists kitchen_start timestamptz;
+alter table public.orders add column if not exists kitchen_due timestamptz;
+
+-- Global settings (kitchen time rate $/hour lives here as key 'kitchen_rate_h')
+create table if not exists public.tt_settings (
+  key text primary key,
+  value jsonb not null
+);
+alter table public.tt_settings enable row level security;
+create policy "settings read" on public.tt_settings for select to authenticated using (true);
+create policy "settings write" on public.tt_settings for all to authenticated
+  using (public.tt_has_perm('bom_manage')) with check (public.tt_has_perm('bom_manage'));
+insert into public.tt_settings (key, value) values ('kitchen_rate_h', '12') on conflict do nothing;
 
 create table if not exists public.tt_agents (
   id uuid primary key default gen_random_uuid(),
