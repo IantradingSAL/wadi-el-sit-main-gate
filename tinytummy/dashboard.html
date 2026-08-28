@@ -174,6 +174,8 @@ table.t tbody tr:nth-child(even) td { background:#fffdf9; }
 .srow select { width:100%; padding:4px 6px; font-size:.78rem; }
 .srow .tmr { text-align:center; }
 .srow .acts { display:flex; gap:6px; justify-content:flex-end; }
+.srow.hdr { background:transparent; border:none; padding:2px 10px; margin-bottom:2px; font-size:.62rem; font-weight:700; letter-spacing:.06em; color:var(--soft); }
+.srow.hdr .acts { justify-content:flex-end; }
 @media (max-width:900px){ .srow { grid-template-columns:28px 1fr 90px; } .srow select,.srow .tmr { grid-column:2/-1; } }
 /* Order pipeline strip: every stage with the time it was entered */
 .pstrip { display:flex; flex-wrap:wrap; gap:4px; align-items:stretch; margin:8px 0 2px; }
@@ -1066,7 +1068,9 @@ function stepStart(oid, idx) {
 function stepControls(o) {
   var defs = stepDefs(o);
   var staff = store('staff').all().map(normStaff);
-  return defs.map(function (def, i) {
+  var header = '<div class="srow hdr"><div></div><div>STEP · STATION</div><div class="plan">PLAN</div>' +
+    '<div>👤 RESPONSIBLE — assign here</div><div class="tmr">TIMER</div><div class="acts">ACTIONS</div></div>';
+  return header + defs.map(function (def, i) {
     var st = o.steps.find(function (x) { return x.s === def.name; });
     var done = st && st.done;
     var running = st && st.started_at && !done;
@@ -1081,8 +1085,8 @@ function stepControls(o) {
     var eligible = staff.filter(function (u) {
       return u.role === 'super_admin' || u.role === 'manager' || (u.stations || []).indexOf(station) >= 0;
     });
-    var assignSel = '<select onchange="stepAssign(\'' + o.id + '\',' + i + ',this.value)">' +
-      '<option value="">— responsible —</option>' +
+    var assignSel = '<select ' + (st && st.assigned ? 'style="border-color:var(--pea);font-weight:700;color:var(--pea-dark)" ' : 'style="border-color:var(--gold)" ') + 'onchange="stepAssign(\'' + o.id + '\',' + i + ',this.value)">' +
+      '<option value="">👤 Assign to…</option>' +
       eligible.map(function (u) {
         var short = u.name.split(' ')[0].replace('—', '').trim();
         return '<option' + ((st && st.assigned === u.name) ? ' selected' : '') + ' value="' + esc(u.name) + '">' + esc(short) + '</option>';
