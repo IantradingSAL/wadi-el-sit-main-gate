@@ -64,6 +64,11 @@ table.t th, table.t td { padding:8px 9px; border-bottom:1px solid var(--line); t
 table.t th { color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
 table.t td.num, table.t th.num { text-align:right; font-variant-numeric:tabular-nums; }
 table.t tr:hover td { background:#fffcf7; }
+/* Register-style tables: columns never crush — cells stay on one line and
+   the table scrolls sideways in its own container; only .wrap cells wrap. */
+table.reg { min-width:900px; }
+table.reg th, table.reg td { white-space:nowrap; }
+table.reg td.wrap { white-space:normal; min-width:240px; max-width:340px; }
 
 .btn { display:inline-block; text-decoration:none; font-weight:700; border-radius:999px; padding:8px 16px; border:none; font-size:.85rem; }
 .btn.p { background:var(--carrot); color:#fff; } .btn.p:hover { background:var(--carrot-dark); }
@@ -740,14 +745,14 @@ RENDER.orders = function () {
     var ag = o.agent ? (byId(agents, o.agent) || {}).name : '';
     return '<tr><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.created) + '</span></td>' +
       '<td>' + esc(o.customer) + '<br><span class="muted">' + esc(o.phone) + '</span></td>' +
-      '<td>' + esc(items) + '</td>' +
+      '<td class="wrap">' + esc(items) + '</td>' +
       '<td><span class="chip ' + o.status + '">' + o.status + '</span>' + (ag ? '<br><span class="muted">🚚 ' + esc(ag) + '</span>' : '') + '</td>' +
       '<td class="num">' + money(t.rev) + '<br><span class="muted">' + t.pct + '% margin</span></td>' +
       '<td><button class="btn p s" onclick="openOrder(\'' + o.id + '\')">Open</button></td></tr>';
   }).join('');
   return '<div class="pagehead"><div><h1>🛒 Orders</h1><div class="sub">Ordering → kitchen → portioning → QC → dispatch → delivery — the whole pipeline lives on the order</div></div>' +
     '<button class="btn p" onclick="newOrder()">＋ New order</button></div>' +
-    '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<div class="panel"><div class="tbl-scroll"><table class="t reg"><thead><tr>' +
     '<th>Order</th><th>Customer</th><th>Items</th><th>Status</th><th class="num">Value</th><th></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 };
@@ -1072,7 +1077,7 @@ RENDER.inventory = function () {
       '<td class="num">' + (Math.round(s * 1000) / 1000) + ' ' + g.unit + (low ? ' <span class="chip low">LOW</span>' : '') + '</td>' +
       '<td class="num">' + g.min + ' ' + g.unit + '</td>' +
       '<td class="num">' + money(s * g.cost) + '</td>' +
-      '<td>' + lotHtml + '</td>' +
+      '<td class="wrap" style="max-width:420px">' + lotHtml + '</td>' +
       '<td><button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">＋ Receive lot</button></td></tr>';
   }).join('') || '<tr><td colspan="6" class="muted">Nothing matches this view.</td></tr>';
 
@@ -1088,7 +1093,7 @@ RENDER.inventory = function () {
     '<div class="panel"><div class="toolbar"><div class="chan">' +
     pill('all', 'All') + pill('low', '⚠️ Below minimum') + pill('expiring', '⏳ Expiring ≤7d') +
     '</div><input class="search-in" placeholder="Search ingredient or lot…" value="' + esc(invSearch) + '" oninput="invSearchGo(this.value)"></div>' +
-    '<div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
     '<th>Ingredient</th><th class="num">On hand</th><th class="num">Min</th><th class="num">Value</th><th>Lots (FEFO order)</th><th></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 };
@@ -1269,7 +1274,7 @@ RENDER.delivery = function () {
     var t = o.track || { p: 0, km: roadKm(o.code), promised: Date.now() + etaMin(roadKm(o.code)) * 60000, delayed: false };
     var remainMin = Math.max(0, Math.round((t.promised - Date.now()) / 60000));
     return '<tr' + (t.delayed ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.customer) + '</span></td>' +
-      '<td>' + esc(o.address) + '<br><span class="muted">' + t.km + ' km by road</span></td>' +
+      '<td class="wrap">' + esc(o.address) + '<br><span class="muted">' + t.km + ' km by road</span></td>' +
       '<td>🛵 ' + esc(a ? a.name : '') + '</td>' +
       '<td style="min-width:130px"><div class="bar-wrap"><div class="bar-fill" style="width:' + t.p + '%"></div></div>' +
       '<span class="muted">' + t.p + '% · ETA ' + fmtClock(t.promised) + ' (' + remainMin + ' min)' + (t.delayed ? ' <span class="chip exp">delayed</span>' : '') + '</span></td>' +
@@ -1281,7 +1286,7 @@ RENDER.delivery = function () {
     '<div class="panel"><h3>🗺️ Live map</h3>' + deliveryMap(out, agents) +
     '<p class="muted" style="margin-top:8px">Demo positions — in production each 📍 ping is the agent\'s phone GPS posting to <code>tt_agent_pings</code>, and the marker moves on its own.</p></div>' +
     '<div class="panel"><h3>📦 Ready for dispatch</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Customer</th><th>Address</th><th></th></tr></thead><tbody>' + readyRows + '</tbody></table></div></div>' +
-    '<div class="panel"><h3>🛵 Out for delivery</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Destination</th><th>Agent</th><th>Progress · ETA</th><th></th></tr></thead><tbody>' + outRows + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>🛵 Out for delivery</h3><div class="tbl-scroll"><table class="t reg"><thead><tr><th>Order</th><th>Destination</th><th>Agent</th><th>Progress · ETA</th><th></th></tr></thead><tbody>' + outRows + '</tbody></table></div></div>' +
     '<div class="panel"><h3>👤 Agents</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Carrying</th></tr></thead><tbody>' + agentRows + '</tbody></table></div></div>';
 };
 
@@ -1362,7 +1367,7 @@ function monthChart(byMonth) {
       '<text x="' + (x + bw / 2) + '" y="' + (base - h - 5) + '" text-anchor="middle" font-size="10.5" fill="#64808e" style="font-variant-numeric:tabular-nums">' + money(byMonth[k]) + '</text>' +
       '<text x="' + (x + bw / 2) + '" y="' + (base + 14) + '" text-anchor="middle" font-size="10.5" fill="#17455e" font-weight="600">' + k.slice(2) + '</text>';
   }).join('');
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img">' + g + bars + '</svg>';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:640px;height:auto;display:block" role="img">' + g + bars + '</svg>';
 }
 
 RENDER.suppliers = function () {
@@ -1396,7 +1401,7 @@ RENDER.suppliers = function () {
     var od = invOverdue(v);
     return '<tr' + (od ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(v.code) + '</b><br><span class="muted">' + esc(v.date) + ' · due ' + esc(v.due) + '</span></td>' +
       '<td>' + esc(p ? p.name : '?') + '<br><span class="chip ' + (p && p.type === 'employee' ? 'auto' : 'fefo') + '">' + (p && p.type === 'employee' ? '👷 employee' : '🏭 supplier') + '</span></td>' +
-      '<td style="max-width:260px">' + invSummary(v, ings) + (v.kind === 'goods' ? '<br><span class="chip done">📦 stock received</span>' : '') + '</td>' +
+      '<td class="wrap">' + invSummary(v, ings) + (v.kind === 'goods' ? '<br><span class="chip done">📦 stock received</span>' : '') + '</td>' +
       '<td class="num"><b>' + money(invTotal(v)) + '</b></td>' +
       '<td>' + (v.status === 'paid' ? '<span class="chip done">paid ' + esc(v.paid_at || '') + '</span>' : od ? '<span class="chip open">OVERDUE</span>' : '<span class="chip progress">unpaid</span>') + '</td>' +
       '<td><button class="btn ' + (v.status === 'paid' ? 'o' : 'g') + ' s" onclick="invPay(\'' + v.id + '\')">' + (v.status === 'paid' ? '↩ Unpay' : '💵 Mark paid') + '</button></td></tr>';
@@ -1406,7 +1411,7 @@ RENDER.suppliers = function () {
     var mine = invs.filter(function (v) { return v.provider === p.id; });
     var t = 0, u = 0; mine.forEach(function (v) { var x = invTotal(v); t += x; if (v.status === 'unpaid') u += x; });
     return '<tr><td><b>' + esc(p.name) + '</b><br><span class="chip ' + (p.type === 'employee' ? 'auto' : 'fefo') + '">' + (p.type === 'employee' ? '👷 employee' : '🏭 supplier') + '</span></td>' +
-      '<td>' + esc(p.category) + '</td><td>' + esc(p.phone) + '</td>' +
+      '<td class="wrap">' + esc(p.category) + '</td><td>' + esc(p.phone) + '</td>' +
       '<td class="num">' + (p.terms ? p.terms + ' days' : 'on receipt') + '</td>' +
       '<td class="num">' + money(t) + '</td>' +
       '<td class="num">' + (u ? '<b style="color:var(--warn)">' + money(u) + '</b>' : '<span class="muted">—</span>') + '</td></tr>';
@@ -1428,8 +1433,8 @@ RENDER.suppliers = function () {
     '<div class="panel"><h3>📈 Monthly spend</h3>' + monthChart(byMonth) + '</div>' +
     '<div class="panel"><div class="toolbar"><h3>🧾 Invoices</h3>' +
     '<div class="chan">' + pill('all', 'All') + pill('unpaid', 'Unpaid') + pill('overdue', 'Overdue') + pill('paid', 'Paid') + pill('goods', '📦 Goods') + pill('employees', '👷 Employees') + '</div></div>' +
-    '<div class="tbl-scroll"><table class="t"><thead><tr><th>Invoice</th><th>Provider</th><th>Lines</th><th class="num">Total</th><th>Status</th><th></th></tr></thead><tbody>' + invRows + '</tbody></table></div></div>' +
-    '<div class="panel"><h3>📇 Provider registry</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Provider</th><th>Category</th><th>Phone</th><th class="num">Terms</th><th class="num">Total invoiced</th><th class="num">Outstanding</th></tr></thead><tbody>' + provRows + '</tbody></table></div></div>';
+    '<div class="tbl-scroll"><table class="t reg"><thead><tr><th>Invoice</th><th>Provider</th><th>Lines</th><th class="num">Total</th><th>Status</th><th></th></tr></thead><tbody>' + invRows + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>📇 Provider registry</h3><div class="tbl-scroll"><table class="t reg"><thead><tr><th>Provider</th><th>Category</th><th>Phone</th><th class="num">Terms</th><th class="num">Total invoiced</th><th class="num">Outstanding</th></tr></thead><tbody>' + provRows + '</tbody></table></div></div>';
 };
 function supGo(f) { supFilter = f; render(); }
 
@@ -1623,16 +1628,15 @@ RENDER.complaints = function () {
   });
   var rows = shown.map(function (c) {
     return '<tr><td><b>' + esc(c.code) + '</b><br><span class="muted">' + esc(c.created) + '</span></td>' +
-      '<td><b>' + esc(c.summary) + '</b><br><span class="muted">' + esc((c.desc || '').slice(0, 70)) + ((c.desc || '').length > 70 ? '…' : '') + '</span></td>' +
+      '<td class="wrap"><b>' + esc(c.summary) + '</b><br><span class="muted">' + esc((c.desc || '').slice(0, 60)) + ((c.desc || '').length > 60 ? '…' : '') + '</span>' +
+      '<br><span class="muted">' + esc(c.category || '—') + (c.order ? ' · <b>' + esc(c.order) + '</b>' : '') + '</span></td>' +
       '<td><span class="chip t-' + c.type + '">' + TYPE_META[c.type] + '</span></td>' +
-      '<td>' + esc(c.category || '—') + '</td>' +
-      '<td>' + (c.order ? '<b>' + esc(c.order) + '</b>' : '<span class="muted">—</span>') + '</td>' +
       '<td><span class="chip ' + prioClass(c.priority) + '">' + c.priority + '</span></td>' +
       '<td>' + (c.assigned ? esc(c.assigned) + (c.second ? ' <span class="chip fefo">' + esc(c.second) + '</span>' : '') : '<span class="chip lowp">unassigned</span>') + '</td>' +
       '<td>' + followCell(c) + '</td>' +
       '<td><span class="chip ' + statusClass(c.status) + '">' + c.status + '</span></td>' +
       '<td><button class="btn p s" onclick="openCase(\'' + c.id + '\')">Open</button></td></tr>';
-  }).join('') || '<tr><td colspan="10" class="muted">Nothing matches this view.</td></tr>';
+  }).join('') || '<tr><td colspan="8" class="muted">Nothing matches this view.</td></tr>';
 
   function pill(k, label) { return '<button class="' + (caseFilter === k ? 'active' : '') + '" onclick="caseGo(\'' + k + '\')">' + label + '</button>'; }
   return '<div class="pagehead"><div><h1>📣 Feedback &amp; Complaints Register</h1><div class="sub">Every customer voice — complaints, inquiries, suggestions and praise — as numbered records with priority, assignee, follow-up and status. High food cases always link the order and its batch lot.</div></div>' +
@@ -1647,8 +1651,8 @@ RENDER.complaints = function () {
     pill('all', 'All') + pill('mine', 'Assigned to me') + pill('due', 'Follow-up due') + pill('unassigned', 'Unassigned') +
     pill('complaint', '🚫') + pill('inquiry', '❓') + pill('suggestion', '💡') + pill('feedback', '👍') +
     '</div><input class="search-in" placeholder="Search subject, case, order…" value="' + esc(caseSearch) + '" oninput="caseSearchGo(this.value)"></div>' +
-    '<div class="tbl-scroll"><table class="t"><thead><tr>' +
-    '<th>Ref #</th><th>Subject</th><th>Type</th><th>Category</th><th>Order</th><th>Priority</th><th>Assigned</th><th>Follow-up</th><th>Status</th><th></th>' +
+    '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
+    '<th>Ref #</th><th>Subject · Category · Order</th><th>Type</th><th>Priority</th><th>Assigned</th><th>Follow-up</th><th>Status</th><th></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 };
 function caseGo(f) { caseFilter = f; render(); }
