@@ -1,18 +1,20 @@
 /* Tiny Tummy — shared styles */
 :root {
-  --cream: #fff8f0;
+  /* Tiny Tummy brand palette — deep navy, warm cream, gold (tinytummylb.com) */
+  --cream: #f8f4ea;
   --paper: #ffffff;
-  --ink: #3d3229;
-  --soft: #8a7a6b;
-  --carrot: #f28c38;
-  --carrot-dark: #d9731f;
-  --pea: #7fb069;
-  --pea-dark: #5e8c4a;
+  --ink: #17455e;
+  --soft: #64808e;
+  --carrot: #17455e;       /* primary = brand navy */
+  --carrot-dark: #0e3345;
+  --gold: #f0b64b;
+  --pea: #17455e;          /* announcement bar = navy like the live site header */
+  --pea-dark: #226a58;
   --berry: #d95d76;
   --sky: #7fb4d9;
-  --line: #f0e4d6;
+  --line: #e7e1d2;
   --radius: 18px;
-  --shadow: 0 6px 24px rgba(61, 50, 41, .08);
+  --shadow: 0 6px 24px rgba(23, 69, 94, .10);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -98,7 +100,7 @@ nav.links a.active { background: var(--carrot); color: #fff; }
 
 /* ── Hero ─────────────────────────────────────── */
 .hero {
-  background: linear-gradient(135deg, #ffe9d2 0%, var(--cream) 55%, #eef5e6 100%);
+  background: linear-gradient(135deg, #fdf2d9 0%, var(--cream) 55%, #e3edf2 100%);
   padding: 64px 20px;
 }
 .hero-inner {
@@ -287,7 +289,7 @@ section.block.alt { background: var(--paper); }
 /* ── Footer ───────────────────────────────────── */
 footer.site {
   background: var(--ink);
-  color: #efe6db;
+  color: #e9eef1;
   padding: 44px 20px 26px;
   margin-top: 56px;
 }
@@ -299,8 +301,8 @@ footer.site {
   gap: 30px;
 }
 .foot h4 { font-family: 'Baloo 2', sans-serif; color: #fff; margin-bottom: 10px; }
-.foot a { color: #efe6db; text-decoration: none; }
-.foot a:hover { color: var(--carrot); }
+.foot a { color: #e9eef1; text-decoration: none; }
+.foot a:hover { color: var(--gold); }
 .foot ul { list-style: none; display: grid; gap: 6px; }
 .copyright {
   max-width: 1100px;
@@ -308,6 +310,6 @@ footer.site {
   padding-top: 18px;
   border-top: 1px solid rgba(255,255,255,.15);
   font-size: .85rem;
-  color: #b7a897;
+  color: #8fa8b4;
   text-align: center;
 }

@@ -92,9 +92,17 @@ alter table public.orders add column if not exists agent_id uuid;
 alter table public.orders add column if not exists program_id uuid;
 alter table public.orders add column if not exists kitchen_steps jsonb not null default '[]';
 alter table public.orders add column if not exists history jsonb not null default '[]';
+alter table public.orders add column if not exists ccp_records jsonb not null default '[]';   -- CCP temps: {step,value,pass,by,at}
+alter table public.orders add column if not exists portioning jsonb;                          -- {planned,actual,target_g,avg_g,dev_pct,by,at,ok}
+alter table public.orders add column if not exists batch_lot text;                            -- printed batch lot label
+alter table public.orders add column if not exists track jsonb;                               -- {km,eta_min,promised,delayed,...}
 alter table public.orders drop constraint if exists orders_status_check;
 alter table public.orders add constraint orders_status_check check (status in
   ('new','confirmed','kitchen','portioning','qc','dispatch','delivering','delivered','cancelled'));
+
+-- Portioning settings live on the product (BOM editor edits them)
+alter table public.products add column if not exists portion_g numeric(8,1);
+alter table public.products add column if not exists batch_portions int not null default 1;
 
 create table if not exists public.tt_agents (
   id uuid primary key default gen_random_uuid(),
@@ -102,6 +110,20 @@ create table if not exists public.tt_agents (
   phone text not null,
   active boolean not null default true
 );
+
+-- Live map tracking: the agent's phone posts GPS pings while delivering;
+-- the dashboard map reads the latest ping per agent and recomputes the ETA
+-- (road distance / city speed). A delay past the promised time triggers the
+-- customer push with the new estimate.
+create table if not exists public.tt_agent_pings (
+  id uuid primary key default gen_random_uuid(),
+  agent_id uuid not null references public.tt_agents(id) on delete cascade,
+  order_id uuid references public.orders(id) on delete set null,
+  lat double precision not null,
+  lng double precision not null,
+  at timestamptz not null default now()
+);
+create index if not exists tt_pings_latest on public.tt_agent_pings (agent_id, at desc);
 
 -- FEFO consumption: called when an order is sent to the kitchen.
 -- Deducts each BOM ingredient from lots in earliest-expiry order and opens
@@ -267,6 +289,12 @@ create policy "bom write" on public.tt_bom for all to authenticated
 create policy "agents read" on public.tt_agents for select to authenticated using (true);
 create policy "agents write" on public.tt_agents for all to authenticated
   using (public.tt_has_perm('delivery_manage')) with check (public.tt_has_perm('delivery_manage'));
+
+alter table public.tt_agent_pings enable row level security;
+create policy "pings write" on public.tt_agent_pings for insert to authenticated
+  with check (public.tt_has_perm('delivery_manage'));
+create policy "pings read" on public.tt_agent_pings for select to authenticated
+  using (public.tt_has_perm('delivery_manage') or public.tt_has_perm('orders_manage'));
 
 create policy "reqs read" on public.tt_requisitions for select to authenticated using (true);
 create policy "reqs write" on public.tt_requisitions for all to authenticated

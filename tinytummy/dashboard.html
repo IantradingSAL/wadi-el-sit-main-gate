@@ -10,11 +10,13 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
 <style>
 :root {
-  --cream:#fff8f0; --paper:#ffffff; --ink:#3d3229; --soft:#8a7a6b;
-  --carrot:#f28c38; --carrot-dark:#d9731f; --pea:#7fb069; --pea-dark:#5e8c4a;
-  --berry:#d95d76; --sky:#4a90c4; --line:#f0e4d6;
-  --ok:#5e8c4a; --warn:#c98a1b; --bad:#b23a48;
-  --radius:14px; --shadow:0 4px 18px rgba(61,50,41,.08);
+  /* Tiny Tummy brand: deep navy, warm cream, gold — from tinytummylb.com */
+  --cream:#f8f4ea; --paper:#ffffff; --ink:#17455e; --soft:#64808e;
+  --carrot:#17455e; --carrot-dark:#0e3345; --gold:#f0b64b; --gold-dark:#d99a26;
+  --pea:#2e8770; --pea-dark:#226a58;
+  --berry:#d95d76; --sky:#4a90c4; --line:#e7e1d2;
+  --ok:#226a58; --warn:#c98a1b; --bad:#b23a48;
+  --radius:14px; --shadow:0 4px 18px rgba(23,69,94,.10);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Quicksand','Segoe UI',system-ui,sans-serif; background:var(--cream); color:var(--ink); line-height:1.5; font-size:15px; }
@@ -25,15 +27,15 @@ input,select,textarea { font-family:inherit; font-size:.92rem; padding:7px 10px;
 input:focus,select:focus,textarea:focus { outline:2px solid var(--carrot); border-color:var(--carrot); }
 
 .app { display:flex; min-height:100vh; }
-aside { width:225px; background:var(--ink); color:#efe6db; padding:16px 10px; position:sticky; top:0; height:100vh; overflow-y:auto; flex-shrink:0; }
-aside .logo { color:var(--carrot); font-size:1.25rem; padding:4px 10px 14px; display:block; }
-aside .logo small { display:block; font-size:.6rem; color:#b7a897; letter-spacing:.1em; font-family:'Quicksand'; }
+aside { width:225px; background:#12394e; color:#e9eef1; padding:16px 10px; position:sticky; top:0; height:100vh; overflow-y:auto; flex-shrink:0; }
+aside .logo { color:var(--gold); font-size:1.25rem; padding:4px 10px 14px; display:block; }
+aside .logo small { display:block; font-size:.6rem; color:#8fa8b4; letter-spacing:.1em; font-family:'Quicksand'; }
 aside nav a { display:flex; align-items:center; gap:9px; padding:8px 12px; border-radius:9px; font-weight:600; font-size:.88rem; text-decoration:none; cursor:pointer; margin-bottom:2px; }
 aside nav a:hover { background:rgba(255,255,255,.08); }
-aside nav a.active { background:var(--carrot); color:#fff; }
-aside nav .grp { font-size:.66rem; letter-spacing:.12em; color:#8a7a6b; padding:12px 12px 4px; text-transform:uppercase; }
+aside nav a.active { background:var(--gold); color:#12394e; }
+aside nav .grp { font-size:.66rem; letter-spacing:.12em; color:#7d99a6; padding:12px 12px 4px; text-transform:uppercase; }
 aside .who { margin-top:14px; padding:10px 12px; background:rgba(255,255,255,.06); border-radius:10px; font-size:.8rem; }
-aside .who select { width:100%; margin-top:6px; background:#4a4036; color:#efe6db; border-color:#5a5046; }
+aside .who select { width:100%; margin-top:6px; background:#0e3345; color:#e9eef1; border-color:#2a5a72; }
 
 main { flex:1; padding:22px 26px 60px; min-width:0; }
 .pagehead { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
@@ -123,6 +125,14 @@ aside nav a em { font-style:normal; }
 .chan button { border:2px solid var(--carrot); background:transparent; color:var(--carrot-dark); border-radius:999px; padding:5px 14px; font-weight:700; font-size:.8rem; }
 .chan button.active { background:var(--carrot); color:#fff; }
 
+.powered { margin-top:12px; padding:10px 12px; text-align:center; font-size:.68rem; color:#7d99a6; letter-spacing:.06em; text-transform:uppercase; }
+.powered b { color:var(--gold); font-size:.78rem; letter-spacing:.1em; }
+table.t tbody tr:nth-child(even) td { background:#fffdf9; }
+.inline-num { width:76px !important; text-align:right; font-variant-numeric:tabular-nums; }
+.bom-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 12px; background:var(--cream); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; }
+.bom-head .kv { display:flex; align-items:center; gap:6px; font-size:.8rem; font-weight:700; color:var(--soft); }
+.stat-line { display:flex; gap:18px; flex-wrap:wrap; padding:10px 12px; background:#fbf6ee; border-radius:10px; margin-top:10px; font-size:.84rem; }
+.stat-line b { font-variant-numeric:tabular-nums; }
 .matrix td, .matrix th { text-align:center; }
 .matrix td:first-child, .matrix th:first-child { text-align:left; }
 .matrix input[type=checkbox]{ width:17px; height:17px; accent-color:var(--pea); }
@@ -166,6 +176,7 @@ dialog::backdrop { background:rgba(61,50,41,.45); }
     Signed in as
     <select id="whoami"></select>
   </div>
+  <div class="powered">Powered by<br><b>IAN Trading SAL</b></div>
 </aside>
 
 <main>
@@ -289,14 +300,14 @@ SEED.lots = [
   { id: 'l15', ing: 'g14', lot: 'EGG-240826', qty: 48, expiry: today(12), received: today(-1) }
 ];
 SEED.products = [
-  { id: 'p1', handle: 'puree-pack', name: 'Puree Pack', category: 'purees', age: '6M+', price: 18 },
-  { id: 'p2', handle: 'ratatouille', name: 'Ratatouille', category: 'purees', age: '6M+', price: 5 },
-  { id: 'p3', handle: 'milletflower', name: 'Milletflower', category: 'purees', age: '6M+', price: 5 },
-  { id: 'p4', handle: 'heartbeet', name: 'Heartbeet', category: 'purees', age: '6M+', price: 5 },
-  { id: 'p5', handle: 'tropical-quinoa', name: 'Tropical Quinoa', category: 'purees', age: '6M+', price: 5 },
-  { id: 'p6', handle: 'labneh', name: 'Labneh', category: 'meals', age: '7M+', price: 6 },
-  { id: 'p7', handle: 'tiny-balls-24m', name: 'Tiny Balls (24M+)', category: 'meals', age: '24M+', price: 7 },
-  { id: 'p8', handle: 'cake', name: 'Baby-Friendly Cake', category: 'cakes', age: '12M+', price: 25 }
+  { id: 'p1', handle: 'puree-pack', name: 'Puree Pack', category: 'purees', age: '6M+', price: 18, portion_g: 120, batch_portions: 28 },
+  { id: 'p2', handle: 'ratatouille', name: 'Ratatouille', category: 'purees', age: '6M+', price: 5, portion_g: 120, batch_portions: 24 },
+  { id: 'p3', handle: 'milletflower', name: 'Milletflower', category: 'purees', age: '6M+', price: 5, portion_g: 120, batch_portions: 24 },
+  { id: 'p4', handle: 'heartbeet', name: 'Heartbeet', category: 'purees', age: '6M+', price: 5, portion_g: 120, batch_portions: 24 },
+  { id: 'p5', handle: 'tropical-quinoa', name: 'Tropical Quinoa', category: 'purees', age: '6M+', price: 5, portion_g: 120, batch_portions: 24 },
+  { id: 'p6', handle: 'labneh', name: 'Labneh', category: 'meals', age: '7M+', price: 6, portion_g: 150, batch_portions: 16 },
+  { id: 'p7', handle: 'tiny-balls-24m', name: 'Tiny Balls (24M+)', category: 'meals', age: '24M+', price: 7, portion_g: 35, batch_portions: 40 },
+  { id: 'p8', handle: 'cake', name: 'Baby-Friendly Cake', category: 'cakes', age: '12M+', price: 25, portion_g: 900, batch_portions: 4 }
 ];
 SEED.bom = [
   { id: 'b1', product: 'p2', ing: 'g1', qty: 0.12 }, { id: 'b2', product: 'p2', ing: 'g2', qty: 0.12 },
@@ -313,6 +324,16 @@ SEED.bom = [
   { id: 'b24', product: 'p8', ing: 'g1', qty: 0.20 }, { id: 'b25', product: 'p8', ing: 'g8', qty: 0.20 }
 ];
 var KITCHEN_STEPS = ['Prep & wash', 'Cook', 'Blend / assemble', 'Portioning', 'Blast chill', 'Pack + lot label', 'QC check'];
+/* CCP steps record a measured value (HACCP critical limits) */
+var CCP_META = {
+  'Cook': { ask: 'Core cooking temperature (°C) — critical limit ≥ 85', unit: '°C', pass: function (v) { return v >= 85; } },
+  'Blast chill': { ask: 'Temperature after blast chill (°C) — critical limit ≤ 5 within 90 min', unit: '°C', pass: function (v) { return v <= 5; } }
+};
+/* Map scale + ETA model — declared before the seeds that use roadKm() */
+var KITCHEN_XY = { x: 150, y: 210 };
+var MAP_KM_PER_PX = 16 / 640;      // map scale: full width ≈ 16 km
+var ROAD_FACTOR = 1.35;            // road distance vs straight line
+var CITY_SPEED_KMH = 22;           // average delivery speed in traffic
 SEED.agents = [
   { id: 'a1', name: 'Ali H.', phone: '+961 70 111 222', active: true },
   { id: 'a2', name: 'Marwan D.', phone: '+961 76 333 444', active: true }
@@ -327,6 +348,7 @@ SEED.orders = [
     history: [{ at: nowTs(), what: 'Order placed' }, { at: nowTs(), what: 'Confirmed · sent to kitchen (stock consumed FEFO)' }], created: today(0) },
   { id: 'o3', code: 'TT-2026-039', customer: 'Maya A.', phone: '+961 71 553 210', address: 'Jounieh',
     items: [{ product: 'p8', qty: 1 }], status: 'delivering', agent: 'a1', program: null,
+    track: { p: 55, km: roadKm('TT-2026-039'), eta_min: etaMin(roadKm('TT-2026-039')), started: Date.now() - 9 * 60000, promised: Date.now() + 12 * 60000, delayed: false },
     steps: KITCHEN_STEPS.map(function (s) { return { s: s, done: true }; }),
     history: [{ at: nowTs(), what: 'Order placed' }, { at: nowTs(), what: 'Kitchen complete · QC passed' }, { at: nowTs(), what: 'Dispatched with Ali H.' }], created: today(-1) },
   { id: 'o4', code: 'TT-2026-038', customer: 'Joelle S.', phone: '+961 81 224 678', address: 'Baabda',
@@ -670,18 +692,79 @@ function openOrder(id) {
     '<div class="tbl-scroll" style="margin:12px 0"><table class="t"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Cost (BOM)</th><th class="num">Margin</th></tr></thead>' +
     '<tbody>' + items + '</tbody>' +
     '<tfoot><tr><th colspan="2">Totals</th><th class="num">' + money(t.rev) + '</th><th class="num">' + money(t.cost) + '</th><th class="num">' + money(t.margin) + ' (' + t.pct + '%)</th></tr></tfoot></table></div>' +
-    '<h4>👨‍🍳 Kitchen steps</h4><div class="steps" style="margin:8px 0 14px">' + steps + '</div>' +
-    '<div class="pill-row" style="margin-bottom:14px">' + actions + '</div>' +
+    '<h4>👨‍🍳 Kitchen steps</h4><div class="steps" style="margin:8px 0 8px">' + steps + '</div>' +
+    kitchenDetail(o) +
+    '<div class="pill-row" style="margin:14px 0">' + actions + '</div>' +
     '<h4>📍 Tracking</h4><ul class="timeline" style="margin-top:8px">' + hist + '</ul>');
 }
 
 function stepToggle(oid, step, checked) {
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  // Portioning has its own control sheet — checking it opens the form.
+  if (step === 'Portioning' && checked) { portioningForm(oid); return; }
+  // CCP steps must record a measured value against the critical limit.
+  if (checked && CCP_META[step]) {
+    var meta = CCP_META[step];
+    var v = prompt(meta.ask + ':');
+    if (v === null) { render(); return; }
+    var val = Number(v);
+    var pass = meta.pass(val);
+    o.ccp = o.ccp || [];
+    o.ccp.push({ step: step, value: val, unit: meta.unit, pass: pass, by: currentUser().name, at: nowTs() });
+    o.history.push({ at: nowTs(), what: 'CCP · ' + step + ': ' + val + meta.unit + (pass ? ' ✓ within limit' : ' ✗ OUT OF LIMIT — corrective action required') + ' — ' + currentUser().name });
+    if (!pass) {
+      pushDemo('CCP out of limit 🚨', o.code + ' · ' + step + ' measured ' + val + meta.unit, 'Role · manager');
+      alert('OUT OF CRITICAL LIMIT.\nStep stays open — apply the corrective action (re-cook / continue chilling), then measure again.');
+      store('orders').save(orders); openOrder(oid); render(); return;
+    }
+  }
   var st = o.steps.find(function (x) { return x.s === step; });
-  if (st) st.done = checked; else o.steps.push({ s: step, done: checked });
-  if (step === 'Portioning' && checked && o.status === 'kitchen') o.status = 'portioning';
+  if (st) { st.done = checked; st.by = checked ? currentUser().name : null; st.at = checked ? nowTs() : null; }
+  else o.steps.push({ s: step, done: checked, by: currentUser().name, at: nowTs() });
+  if (step === 'Pack + lot label' && checked && !o.batch_lot) {
+    o.batch_lot = 'B-' + o.code.replace('TT-', '') + '-' + today(0).replace(/-/g, '').slice(4);
+    o.history.push({ at: nowTs(), what: 'Batch lot label printed: ' + o.batch_lot });
+  }
   store('orders').save(orders);
   openOrder(oid); render();
+}
+
+/* ── portioning control sheet ── */
+function portioningForm(oid) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var products = store('products').all();
+  var planned = 0, weightSum = 0;
+  var lines = o.items.map(function (it) {
+    var p = byId(products, it.product); if (!p) return '';
+    planned += it.qty;
+    weightSum += (p.portion_g || 0) * it.qty;
+    return '<tr><td>' + esc(p.name) + '</td><td class="num">' + it.qty + '</td><td class="num">' + (p.portion_g || 0) + ' g</td></tr>';
+  }).join('');
+  var target = planned ? Math.round(weightSum / planned) : 0;
+  showDlg('<h3>⚖️ Portioning — ' + esc(o.code) + '</h3>' +
+    '<div class="tbl-scroll" style="margin:10px 0"><table class="t"><thead><tr><th>Item</th><th class="num">Portions planned</th><th class="num">Target weight</th></tr></thead>' +
+    '<tbody>' + lines + '</tbody></table></div>' +
+    '<div class="frm">' +
+    '<div class="row"><label>Portions actually produced<input id="pt-actual" type="number" value="' + planned + '"></label>' +
+    '<label>Average portion weight (g)<input id="pt-avg" type="number" value="' + target + '"></label></div>' +
+    '<p class="muted">Tolerance: average weight within ±5% of the ' + target + ' g target. Short portions or over-portioning both show up in the margin.</p>' +
+    '<button class="btn p" onclick="savePortioning(\'' + oid + '\',' + planned + ',' + target + ')">Record portioning & sign</button></div>');
+}
+function savePortioning(oid, planned, target) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var actual = Number(document.getElementById('pt-actual').value) || 0;
+  var avg = Number(document.getElementById('pt-avg').value) || 0;
+  var devPct = target ? Math.round((avg - target) / target * 100) : 0;
+  var ok = Math.abs(devPct) <= 5 && actual >= planned;
+  o.portioning = { planned: planned, actual: actual, target_g: target, avg_g: avg, dev_pct: devPct, by: currentUser().name, at: nowTs(), ok: ok };
+  var st = o.steps.find(function (x) { return x.s === 'Portioning'; });
+  if (st) { st.done = true; st.by = currentUser().name; st.at = nowTs(); }
+  else o.steps.push({ s: 'Portioning', done: true, by: currentUser().name, at: nowTs() });
+  if (o.status === 'kitchen') o.status = 'portioning';
+  o.history.push({ at: nowTs(), what: 'Portioned ' + actual + '/' + planned + ' portions · avg ' + avg + ' g (target ' + target + ' g, ' + (devPct >= 0 ? '+' : '') + devPct + '%)' + (ok ? ' ✓' : ' ⚠️ outside tolerance') + ' — ' + currentUser().name });
+  if (!ok) pushDemo('Portioning variance ⚠️', o.code + ': avg ' + avg + 'g vs target ' + target + 'g', 'Role · manager');
+  store('orders').save(orders);
+  closeDlg(); openOrder(oid); render();
 }
 
 function orderAct(oid, act) {
@@ -699,8 +782,11 @@ function orderAct(oid, act) {
     var sel = document.getElementById('dl-agent');
     o.agent = sel ? sel.value : null;
     var agents = store('agents').all(); var a = byId(agents, o.agent);
-    o.status = 'delivering'; log('Dispatched with ' + (a ? a.name : 'agent'));
-    pushDemo('Out for delivery 🚚', o.code + ' is on the way with ' + (a ? a.name : 'our agent'), 'Customer · ' + o.customer);
+    var km = roadKm(o.code); var eta = etaMin(km);
+    o.track = { p: 0, km: km, eta_min: eta, started: Date.now(), promised: Date.now() + eta * 60000, delayed: false };
+    o.status = 'delivering';
+    log('Dispatched with ' + (a ? a.name : 'agent') + ' · ' + km + ' km by road · ETA ' + fmtClock(o.track.promised));
+    pushDemo('Your order has left the kitchen 🚚', o.code + ' is on the way with ' + (a ? a.name : 'our agent') + ' — arriving around ' + fmtClock(o.track.promised) + ' (' + km + ' km)', 'Customer · ' + o.customer);
   }
   if (act === 'delivered') { o.status = 'delivered'; log('Delivered ✓'); pushDemo('Delivered 📦', 'Enjoy! Rate your ' + o.code + ' meals', 'Customer · ' + o.customer); }
   if (act === 'cancel') { if (!confirm('Cancel this order?')) return; o.status = 'cancelled'; log('Order cancelled'); }
@@ -742,39 +828,118 @@ RENDER.kitchen = function () {
       return '<label class="' + (done ? 'done' : '') + '"><input type="checkbox" ' + (done ? 'checked' : '') +
         ' onchange="stepToggle(\'' + o.id + '\',\'' + s + '\',this.checked)">' + s + '</label>';
     }).join('');
-    return '<div class="panel"><h3>' + esc(o.code) + ' <span class="chip ' + o.status + '">' + o.status + '</span></h3>' +
+    return '<div class="panel"><h3>' + esc(o.code) + ' <span class="chip ' + o.status + '">' + o.status + '</span>' +
+      (o.batch_lot ? ' <span class="chip fefo">lot ' + esc(o.batch_lot) + '</span>' : '') + '</h3>' +
       '<p class="muted">' + esc(items) + '</p>' +
       '<div class="bar-wrap" style="margin:10px 0"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="steps">' + steps + '</div>' +
+      kitchenDetail(o) +
       (pct === 100 ? '<p style="margin-top:10px"><button class="btn g s" onclick="orderAct(\'' + o.id + '\',\'qcpass\')">✅ QC pass → dispatch</button></p>' : '') +
       '</div>';
   }).join('');
-  return '<div class="pagehead"><div><h1>👨‍🍳 Kitchen</h1><div class="sub">Production queue — prep, cook, portioning, chill, pack with lot label, QC. Ticking steps updates the order pipeline.</div></div></div>' +
+  return '<div class="pagehead"><div><h1>👨‍🍳 Kitchen</h1><div class="sub">Production control — each step signed with who &amp; when; Cook and Blast chill are CCPs that record a temperature against the critical limit; Portioning has its own control sheet with tolerance.</div></div></div>' +
     (cards || '<div class="panel"><p class="muted">Nothing in the kitchen right now. Confirm an order and send it to the kitchen — its FEFO stock picking happens at that moment.</p></div>');
 };
 
-/* ── BOM / Recipes ── */
+/* CCP readings, portioning record and sign-offs shown on the card */
+function kitchenDetail(o) {
+  var bits = [];
+  (o.ccp || []).forEach(function (c) {
+    bits.push('<span class="chip ' + (c.pass ? 'done' : 'open') + '">🌡 ' + c.step + ' ' + c.value + c.unit + (c.pass ? ' ✓' : ' ✗') + ' · ' + esc(c.by) + '</span>');
+  });
+  if (o.portioning) {
+    var p = o.portioning;
+    bits.push('<span class="chip ' + (p.ok ? 'done' : 'progress') + '">⚖️ ' + p.actual + '/' + p.planned + ' portions · avg ' + p.avg_g + 'g (' + (p.dev_pct >= 0 ? '+' : '') + p.dev_pct + '%) · ' + esc(p.by) + '</span>');
+  }
+  var signed = (o.steps || []).filter(function (s) { return s.done && s.by; });
+  if (signed.length) {
+    var last = signed[signed.length - 1];
+    bits.push('<span class="chip fefo">✍️ last: ' + esc(last.s) + ' — ' + esc(last.by) + '</span>');
+  }
+  return bits.length ? '<div class="pill-row" style="margin-top:10px">' + bits.join(' ') + '</div>' : '';
+}
+
+/* ── BOM / Recipes — full editor ── */
 RENDER.bom = function () {
   var products = store('products').all(), bom = store('bom').all(), ings = store('ingredients').all();
   var cards = products.map(function (p) {
     var lines = bom.filter(function (b) { return b.product === p.id; }).map(function (b) {
       var g = byId(ings, b.ing);
-      return '<tr><td>' + esc(g ? g.name : '?') + '</td><td class="num">' + b.qty + ' ' + (g ? g.unit : '') + '</td>' +
-        '<td class="num">' + money(b.qty * (g ? g.cost : 0)) + '</td></tr>';
+      var opts = ings.map(function (x) {
+        return '<option value="' + x.id + '"' + (b.ing === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>';
+      }).join('');
+      return '<tr>' +
+        '<td><select onchange="bomSet(\'' + b.id + '\',\'ing\',this.value)">' + opts + '</select></td>' +
+        '<td class="num"><input class="inline-num" type="number" step="0.001" value="' + b.qty + '" onchange="bomSet(\'' + b.id + '\',\'qty\',this.value)"> <span class="muted">' + (g ? g.unit : '') + '</span></td>' +
+        '<td class="num">' + money(g ? g.cost : 0) + '/' + (g ? g.unit : '') + '</td>' +
+        '<td class="num"><b>' + money(b.qty * (g ? g.cost : 0)) + '</b></td>' +
+        '<td><button class="btn r s" title="Remove line" onclick="bomDel(\'' + b.id + '\')">✕</button></td></tr>';
     }).join('');
     var cost = productCost(p.id, bom, ings);
     var margin = p.price - cost;
     var pct = p.price ? Math.round(margin / p.price * 100) : 0;
+    var foodCost = p.price ? Math.round(cost / p.price * 100) : 0;
+    var batchCost = cost * (p.batch_portions || 1);
+    var costPer100 = p.portion_g ? cost / p.portion_g * 100 : 0;
     return '<div class="panel"><h3>' + esc(p.name) + ' <span class="chip fefo">' + esc(p.age) + '</span></h3>' +
-      '<div class="tbl-scroll"><table class="t"><thead><tr><th>Ingredient / portion</th><th class="num">Qty</th><th class="num">Cost</th></tr></thead>' +
-      '<tbody>' + lines + '</tbody>' +
-      '<tfoot><tr><th>Unit cost</th><th></th><th class="num">' + money(cost) + '</th></tr>' +
-      '<tr><th>Sell price</th><th></th><th class="num">' + money(p.price) + '</th></tr>' +
-      '<tr><th>Margin</th><th></th><th class="num" style="color:var(--ok)">' + money(margin) + ' · ' + pct + '%</th></tr></tfoot></table></div></div>';
+      '<div class="bom-head">' +
+      '<span class="kv">Sell price $<input class="inline-num" type="number" step="0.5" value="' + p.price + '" onchange="prodSet(\'' + p.id + '\',\'price\',this.value)"></span>' +
+      '<span class="kv">Portion <input class="inline-num" type="number" step="5" value="' + (p.portion_g || 0) + '" onchange="prodSet(\'' + p.id + '\',\'portion_g\',this.value)"> g</span>' +
+      '<span class="kv">Portions / batch <input class="inline-num" type="number" step="1" value="' + (p.batch_portions || 1) + '" onchange="prodSet(\'' + p.id + '\',\'batch_portions\',this.value)"></span>' +
+      '</div>' +
+      '<div class="tbl-scroll"><table class="t"><thead><tr>' +
+      '<th>Ingredient</th><th class="num">Qty / portion</th><th class="num">Unit cost</th><th class="num">Line cost</th><th></th>' +
+      '</tr></thead><tbody>' + lines + '</tbody></table></div>' +
+      '<p style="margin-top:8px"><button class="btn o s" onclick="bomAdd(\'' + p.id + '\')">＋ Add ingredient line</button></p>' +
+      '<div class="stat-line">' +
+      '<span>Unit cost <b>' + money(cost) + '</b></span>' +
+      '<span>Food cost <b style="color:' + (foodCost > 50 ? 'var(--bad)' : 'var(--ok)') + '">' + foodCost + '%</b></span>' +
+      '<span>Margin <b style="color:var(--ok)">' + money(margin) + ' · ' + pct + '%</b></span>' +
+      '<span>Batch (' + (p.batch_portions || 1) + ' portions) <b>' + money(batchCost) + '</b></span>' +
+      '<span>Cost / 100g <b>' + money(costPer100) + '</b></span>' +
+      '</div></div>';
   }).join('');
-  return '<div class="pagehead"><div><h1>🍽️ Recipes · BOM</h1><div class="sub">Every product\'s bill of materials per portion — this is what FEFO consumption and profit margins are computed from</div></div></div>' +
-    '<div class="grid2">' + cards + '</div>';
+  return '<div class="pagehead"><div><h1>🍽️ Recipes · BOM</h1><div class="sub">Bill of materials per portion — fully editable. Quantities here drive FEFO stock consumption, food-cost % and every margin figure. Target food cost for this category: ≤ 40%.</div></div>' +
+    '<button class="btn p" onclick="newProduct()">＋ New product</button></div>' + cards;
 };
+function bomSet(id, field, value) {
+  var bom = store('bom').all(); var b = byId(bom, id); if (!b) return;
+  if (field === 'qty') b.qty = Number(value) || 0; else b[field] = value;
+  store('bom').save(bom); render();
+}
+function bomDel(id) {
+  var bom = store('bom').all().filter(function (b) { return b.id !== id; });
+  store('bom').save(bom); render();
+}
+function bomAdd(productId) {
+  var bom = store('bom').all(); var ings = store('ingredients').all();
+  bom.push({ id: uid(), product: productId, ing: ings[0].id, qty: 0.05 });
+  store('bom').save(bom); render();
+}
+function prodSet(id, field, value) {
+  var products = store('products').all(); var p = byId(products, id); if (!p) return;
+  p[field] = Number(value) || 0;
+  store('products').save(products); render();
+}
+function newProduct() {
+  showDlg('<h3>＋ New product</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Name<input id="np-name"></label><label>Category<select id="np-cat"><option>purees</option><option>meals</option><option>cakes</option></select></label></div>' +
+    '<div class="row"><label>Age label<input id="np-age" value="6M+"></label><label>Sell price $<input id="np-price" type="number" step="0.5" value="5"></label></div>' +
+    '<div class="row"><label>Portion (g)<input id="np-portion" type="number" value="120"></label><label>Portions / batch<input id="np-batch" type="number" value="24"></label></div>' +
+    '<button class="btn p" onclick="saveProduct()">Create product</button></div>');
+}
+function saveProduct() {
+  var products = store('products').all();
+  var name = document.getElementById('np-name').value.trim();
+  if (!name) { alert('Name required'); return; }
+  products.push({ id: uid(), handle: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), name: name,
+    category: document.getElementById('np-cat').value, age: document.getElementById('np-age').value,
+    price: Number(document.getElementById('np-price').value) || 0,
+    portion_g: Number(document.getElementById('np-portion').value) || 0,
+    batch_portions: Number(document.getElementById('np-batch').value) || 1 });
+  store('products').save(products);
+  closeDlg(); render();
+}
 
 /* ── Inventory ── */
 RENDER.inventory = function () {
@@ -796,11 +961,30 @@ RENDER.inventory = function () {
       '<td>' + lotHtml + '</td>' +
       '<td><button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">＋ Receive lot</button></td></tr>';
   }).join('');
-  return '<div class="pagehead"><div><h1>📦 Inventory · Lots</h1><div class="sub">Lot-level stock with FEFO picking order (first-expired, first-out). Falling below minimum opens an auto-requisition.</div></div></div>' +
+  return '<div class="pagehead"><div><h1>📦 Inventory · Lots</h1><div class="sub">Lot-level stock with FEFO picking order (first-expired, first-out). Falling below minimum opens an auto-requisition.</div></div>' +
+    '<button class="btn p" onclick="newIngredient()">＋ New ingredient</button></div>' +
     '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
     '<th>Ingredient</th><th class="num">On hand</th><th class="num">Min</th><th>Lots (FEFO order)</th><th></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 };
+function newIngredient() {
+  showDlg('<h3>＋ New ingredient</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Name<input id="ni-name"></label><label>Unit<select id="ni-unit"><option>kg</option><option>L</option><option>pc</option></select></label></div>' +
+    '<div class="row"><label>Cost per unit ($)<input id="ni-cost" type="number" step="0.01"></label><label>Minimum level<input id="ni-min" type="number" step="0.1"></label></div>' +
+    '<label>Reorder quantity (auto-requisition size)<input id="ni-reorder" type="number" step="0.1"></label>' +
+    '<button class="btn p" onclick="saveIngredient()">Add ingredient</button></div>');
+}
+function saveIngredient() {
+  var name = document.getElementById('ni-name').value.trim();
+  if (!name) { alert('Name required'); return; }
+  var ings = store('ingredients').all();
+  ings.push({ id: uid(), name: name, unit: document.getElementById('ni-unit').value,
+    cost: Number(document.getElementById('ni-cost').value) || 0,
+    min: Number(document.getElementById('ni-min').value) || 0,
+    reorder: Number(document.getElementById('ni-reorder').value) || 0 });
+  store('ingredients').save(ings);
+  closeDlg(); render();
+}
 function receiveLot(ingId) {
   var ings = store('ingredients').all(); var g = byId(ings, ingId);
   showDlg('<h3>＋ Receive lot — ' + esc(g.name) + '</h3><div class="frm" style="margin-top:10px">' +
@@ -854,8 +1038,75 @@ function saveReq() {
   closeDlg(); render();
 }
 
-/* ── Delivery ── */
+/* ── Delivery: map tracking + road-distance ETA ── */
+function destPoint(code) {         // stable pseudo-position from the order code
+  var h = 0; for (var i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) % 99991;
+  return { x: 260 + (h % 340), y: 60 + ((h >> 3) % 280) };
+}
+function roadKm(code) {
+  var d = destPoint(code);
+  var dx = d.x - KITCHEN_XY.x, dy = d.y - KITCHEN_XY.y;
+  return Math.round(Math.sqrt(dx * dx + dy * dy) * MAP_KM_PER_PX * ROAD_FACTOR * 10) / 10;
+}
+function etaMin(km) { return Math.max(8, Math.round(km / CITY_SPEED_KMH * 60)); }
+function fmtClock(ms) { return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+function trackPing(oid) {          // in production this is the agent's GPS ping (tt_agent_pings)
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o || !o.track) return;
+  var was = o.track.p;
+  o.track.p = Math.min(100, o.track.p + 25);
+  if (was < 80 && o.track.p >= 80)
+    pushDemo('Arriving soon 🚪', o.code + ' is minutes away — ' + fmtClock(Date.now() + 5 * 60000), 'Customer · ' + o.customer);
+  store('orders').save(orders); render();
+}
+function trackDelay(oid) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o || !o.track) return;
+  o.track.promised += 15 * 60000; o.track.delayed = true;
+  o.history.push({ at: nowTs(), what: 'Delay reported by agent — new ETA ' + fmtClock(o.track.promised) });
+  pushDemo('Small delay ⏱', o.code + ': traffic on the way — new arrival estimate ' + fmtClock(o.track.promised), 'Customer · ' + o.customer);
+  store('orders').save(orders); render();
+}
+function checkDelays() {           // automatic: past the promised time and not delivered → notify once
+  var orders = store('orders').all(); var changed = false;
+  orders.forEach(function (o) {
+    if (o.status === 'delivering' && o.track && !o.track.delayed && o.track.p < 100 && Date.now() > o.track.promised) {
+      o.track.delayed = true; o.track.promised += 15 * 60000; changed = true;
+      o.history.push({ at: nowTs(), what: 'Automatic delay alert — past promised time, new ETA ' + fmtClock(o.track.promised) });
+      pushDemo('Delivery delayed ⏱', o.code + ' is running late — new arrival estimate ' + fmtClock(o.track.promised), 'Customer · ' + o.customer);
+    }
+  });
+  if (changed) store('orders').save(orders);
+}
+
+function deliveryMap(out, agents) {
+  var marks = out.map(function (o) {
+    var d = destPoint(o.code);
+    var p = (o.track && o.track.p || 0) / 100;
+    var ax = KITCHEN_XY.x + (d.x - KITCHEN_XY.x) * p;
+    var ay = KITCHEN_XY.y + (d.y - KITCHEN_XY.y) * p;
+    var a = byId(agents, o.agent);
+    return '<line x1="' + KITCHEN_XY.x + '" y1="' + KITCHEN_XY.y + '" x2="' + d.x + '" y2="' + d.y + '" stroke="#d9731f" stroke-width="2" stroke-dasharray="6 5" opacity=".55"/>' +
+      '<circle cx="' + d.x + '" cy="' + d.y + '" r="7" fill="#d95d76"/>' +
+      '<text x="' + (d.x + 11) + '" y="' + (d.y + 4) + '" font-size="11" fill="#3d3229" font-weight="700">' + esc(o.code.slice(-3)) + ' · ' + esc(o.customer.split(' ')[0]) + '</text>' +
+      '<g transform="translate(' + ax + ',' + ay + ')"><circle r="11" fill="#f28c38" stroke="#fff" stroke-width="2.5"/>' +
+      '<text y="4" x="0" text-anchor="middle" font-size="11">🛵</text>' +
+      '<text y="-15" x="0" text-anchor="middle" font-size="10" font-weight="700" fill="#d9731f">' + esc(a ? a.name.split(' ')[0] : '') + '</text></g>';
+  }).join('');
+  return '<svg viewBox="0 0 640 400" role="img" aria-label="Live delivery map" style="width:100%;height:auto;border-radius:12px;background:#f6efe4">' +
+    '<rect width="88" height="400" fill="#cfe3ee"/><path d="M88 0 C 70 90, 108 200, 82 300 C 74 350, 90 380, 84 400 L 0 400 L 0 0 Z" fill="#bcd8e8"/>' +
+    '<path d="M100 40 L 610 70" stroke="#e6d9c6" stroke-width="10" fill="none"/>' +
+    '<path d="M120 380 C 260 300, 300 180, 620 150" stroke="#e6d9c6" stroke-width="12" fill="none"/>' +
+    '<path d="M150 20 L 190 390" stroke="#e6d9c6" stroke-width="8" fill="none"/>' +
+    '<path d="M320 30 L 360 390" stroke="#e6d9c6" stroke-width="8" fill="none"/>' +
+    '<path d="M480 20 L 520 390" stroke="#e6d9c6" stroke-width="8" fill="none"/>' +
+    marks +
+    '<g transform="translate(' + KITCHEN_XY.x + ',' + KITCHEN_XY.y + ')"><rect x="-13" y="-13" width="26" height="26" rx="7" fill="#3d3229"/><text y="5" text-anchor="middle" font-size="13">🥕</text>' +
+    '<text y="27" text-anchor="middle" font-size="10" font-weight="700" fill="#3d3229">KITCHEN</text></g>' +
+    '</svg>';
+}
+
 RENDER.delivery = function () {
+  checkDelays();
   var agents = store('agents').all(), orders = store('orders').all();
   var ready = orders.filter(function (o) { return o.status === 'dispatch'; });
   var out = orders.filter(function (o) { return o.status === 'delivering'; });
@@ -871,13 +1122,22 @@ RENDER.delivery = function () {
   }).join('') || '<tr><td colspan="4" class="muted">Nothing waiting for dispatch.</td></tr>';
   var outRows = out.map(function (o) {
     var a = byId(agents, o.agent);
-    return '<tr><td><b>' + esc(o.code) + '</b></td><td>' + esc(o.customer) + ' · ' + esc(o.address) + '</td>' +
-      '<td>🚚 ' + esc(a ? a.name : '') + '</td>' +
-      '<td><button class="btn g s" onclick="orderAct(\'' + o.id + '\',\'delivered\')">Mark delivered</button></td></tr>';
-  }).join('') || '<tr><td colspan="4" class="muted">No orders on the road.</td></tr>';
-  return '<div class="pagehead"><div><h1>🚚 Dispatch · Agents</h1><div class="sub">Ready-to-go orders, live deliveries, and the agent roster</div></div></div>' +
+    var t = o.track || { p: 0, km: roadKm(o.code), promised: Date.now() + etaMin(roadKm(o.code)) * 60000, delayed: false };
+    var remainMin = Math.max(0, Math.round((t.promised - Date.now()) / 60000));
+    return '<tr' + (t.delayed ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.customer) + '</span></td>' +
+      '<td>' + esc(o.address) + '<br><span class="muted">' + t.km + ' km by road</span></td>' +
+      '<td>🛵 ' + esc(a ? a.name : '') + '</td>' +
+      '<td style="min-width:130px"><div class="bar-wrap"><div class="bar-fill" style="width:' + t.p + '%"></div></div>' +
+      '<span class="muted">' + t.p + '% · ETA ' + fmtClock(t.promised) + ' (' + remainMin + ' min)' + (t.delayed ? ' <span class="chip exp">delayed</span>' : '') + '</span></td>' +
+      '<td class="pill-row"><button class="btn o s" onclick="trackPing(\'' + o.id + '\')">📍 Agent ping</button>' +
+      '<button class="btn o s" onclick="trackDelay(\'' + o.id + '\')">⏱ +15 min</button>' +
+      (t.p >= 100 ? '<button class="btn g s" onclick="orderAct(\'' + o.id + '\',\'delivered\')">Delivered ✓</button>' : '') + '</td></tr>';
+  }).join('') || '<tr><td colspan="5" class="muted">No orders on the road.</td></tr>';
+  return '<div class="pagehead"><div><h1>🚚 Dispatch · Delivery tracking</h1><div class="sub">Live map of every agent on the road — ETA computed from road distance (' + CITY_SPEED_KMH + ' km/h city average, road factor ×' + ROAD_FACTOR + '). The customer is pushed when the order leaves, when it\'s near, and on any delay with the new ETA.</div></div></div>' +
+    '<div class="panel"><h3>🗺️ Live map</h3>' + deliveryMap(out, agents) +
+    '<p class="muted" style="margin-top:8px">Demo positions — in production each 📍 ping is the agent\'s phone GPS posting to <code>tt_agent_pings</code>, and the marker moves on its own.</p></div>' +
     '<div class="panel"><h3>📦 Ready for dispatch</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Customer</th><th>Address</th><th></th></tr></thead><tbody>' + readyRows + '</tbody></table></div></div>' +
-    '<div class="panel"><h3>🛵 Out for delivery</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Where</th><th>Agent</th><th></th></tr></thead><tbody>' + outRows + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>🛵 Out for delivery</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Destination</th><th>Agent</th><th>Progress · ETA</th><th></th></tr></thead><tbody>' + outRows + '</tbody></table></div></div>' +
     '<div class="panel"><h3>👤 Agents</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Carrying</th></tr></thead><tbody>' + agentRows + '</tbody></table></div></div>';
 };
 

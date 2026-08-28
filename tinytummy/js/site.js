@@ -10,12 +10,12 @@ function ttPlaceholder(name) {
   var letter = (name || '?').trim().charAt(0).toUpperCase();
   var svg =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">' +
-    '<rect width="400" height="400" fill="#ffe9d2"/>' +
-    '<circle cx="200" cy="170" r="90" fill="#f28c38" opacity="0.25"/>' +
+    '<rect width="400" height="400" fill="#f3ead2"/>' +
+    '<circle cx="200" cy="170" r="90" fill="#f0b64b" opacity="0.25"/>' +
     '<text x="200" y="205" font-family="Verdana,sans-serif" font-size="110" font-weight="bold" ' +
-    'fill="#d9731f" text-anchor="middle">' + letter + '</text>' +
+    'fill="#17455e" text-anchor="middle">' + letter + '</text>' +
     '<text x="200" y="330" font-family="Verdana,sans-serif" font-size="26" ' +
-    'fill="#8a7a6b" text-anchor="middle">photo coming soon</text>' +
+    'fill="#64808e" text-anchor="middle">photo coming soon</text>' +
     '</svg>';
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
 }
