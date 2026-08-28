@@ -1,250 +1,1151 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Tiny Tummy</title>
-  <meta name="robots" content="noindex">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🥕%3C/text%3E%3C/svg%3E">
-  <style>
-    .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius);
-             box-shadow: var(--shadow); padding: 22px; margin-bottom: 22px; }
-    table.admin { width: 100%; border-collapse: collapse; font-size: .92rem; }
-    table.admin th, table.admin td { padding: 9px 10px; border-bottom: 1px solid var(--line); text-align: left; }
-    table.admin th { color: var(--soft); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
-    table.admin input, table.admin select { width: 100%; min-width: 70px; font-family: inherit;
-      padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); }
-    .table-scroll { overflow-x: auto; }
-    .pill { border: none; border-radius: 999px; padding: 4px 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .pill.on { background: #eef5e6; color: var(--pea-dark); }
-    .pill.off { background: #fde7e7; color: #b23a48; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-    .status-new { color: var(--berry); font-weight: 700; }
-    #login-panel { max-width: 420px; margin: 60px auto; }
-    .muted { color: var(--soft); font-size: .9rem; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiny Tummy Ops</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
+<style>
+:root {
+  --cream:#fff8f0; --paper:#ffffff; --ink:#3d3229; --soft:#8a7a6b;
+  --carrot:#f28c38; --carrot-dark:#d9731f; --pea:#7fb069; --pea-dark:#5e8c4a;
+  --berry:#d95d76; --sky:#4a90c4; --line:#f0e4d6;
+  --ok:#5e8c4a; --warn:#c98a1b; --bad:#b23a48;
+  --radius:14px; --shadow:0 4px 18px rgba(61,50,41,.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Quicksand','Segoe UI',system-ui,sans-serif; background:var(--cream); color:var(--ink); line-height:1.5; font-size:15px; }
+h1,h2,h3,h4,.logo { font-family:'Baloo 2','Quicksand',sans-serif; }
+a { color:inherit; }
+button { font-family:inherit; cursor:pointer; }
+input,select,textarea { font-family:inherit; font-size:.92rem; padding:7px 10px; border-radius:9px; border:1.5px solid var(--line); background:var(--paper); color:var(--ink); }
+input:focus,select:focus,textarea:focus { outline:2px solid var(--carrot); border-color:var(--carrot); }
+
+.app { display:flex; min-height:100vh; }
+aside { width:225px; background:var(--ink); color:#efe6db; padding:16px 10px; position:sticky; top:0; height:100vh; overflow-y:auto; flex-shrink:0; }
+aside .logo { color:var(--carrot); font-size:1.25rem; padding:4px 10px 14px; display:block; }
+aside .logo small { display:block; font-size:.6rem; color:#b7a897; letter-spacing:.1em; font-family:'Quicksand'; }
+aside nav a { display:flex; align-items:center; gap:9px; padding:8px 12px; border-radius:9px; font-weight:600; font-size:.88rem; text-decoration:none; cursor:pointer; margin-bottom:2px; }
+aside nav a:hover { background:rgba(255,255,255,.08); }
+aside nav a.active { background:var(--carrot); color:#fff; }
+aside nav .grp { font-size:.66rem; letter-spacing:.12em; color:#8a7a6b; padding:12px 12px 4px; text-transform:uppercase; }
+aside .who { margin-top:14px; padding:10px 12px; background:rgba(255,255,255,.06); border-radius:10px; font-size:.8rem; }
+aside .who select { width:100%; margin-top:6px; background:#4a4036; color:#efe6db; border-color:#5a5046; }
+
+main { flex:1; padding:22px 26px 60px; min-width:0; }
+.pagehead { display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+.pagehead h1 { font-size:1.5rem; }
+.pagehead .sub { color:var(--soft); font-size:.88rem; }
+
+.demo-note { background:#e8f1fa; border:1px solid #c4dcf0; border-radius:10px; padding:9px 14px; font-size:.83rem; color:#2f5a80; margin-bottom:16px; }
+.demo-note b { color:#1d4568; }
+
+.view { display:none; } .view.on { display:block; }
+
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+.kpi { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow); }
+.kpi .v { font-family:'Baloo 2'; font-size:1.5rem; font-weight:700; font-variant-numeric:tabular-nums; }
+.kpi .l { font-size:.76rem; color:var(--soft); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.kpi.good .v { color:var(--ok); } .kpi.warn .v { color:var(--warn); } .kpi.bad .v { color:var(--bad); }
+
+.panel { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; margin-bottom:18px; }
+.panel h3 { margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.toolbar h3 { margin-bottom:0; }
+
+.tbl-scroll { overflow-x:auto; }
+table.t { width:100%; border-collapse:collapse; font-size:.88rem; }
+table.t th, table.t td { padding:8px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }
+table.t th { color:var(--soft); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+table.t td.num, table.t th.num { text-align:right; font-variant-numeric:tabular-nums; }
+table.t tr:hover td { background:#fffcf7; }
+
+.btn { display:inline-block; text-decoration:none; font-weight:700; border-radius:999px; padding:8px 16px; border:none; font-size:.85rem; }
+.btn.p { background:var(--carrot); color:#fff; } .btn.p:hover { background:var(--carrot-dark); }
+.btn.o { background:transparent; color:var(--carrot-dark); border:2px solid var(--carrot); }
+.btn.g { background:var(--pea); color:#fff; }
+.btn.r { background:var(--berry); color:#fff; }
+.btn.s { padding:4px 11px; font-size:.78rem; }
+.btn:focus-visible { outline:3px solid var(--carrot-dark); outline-offset:2px; }
+
+.chip { display:inline-block; font-size:.72rem; font-weight:700; border-radius:999px; padding:3px 10px; white-space:nowrap; }
+.chip.new { background:#fde7e7; color:var(--bad); }
+.chip.confirmed { background:#e8f1fa; color:#2f5a80; }
+.chip.kitchen { background:#fdf3e3; color:#7a5c2e; }
+.chip.portioning { background:#fdf3e3; color:#7a5c2e; }
+.chip.qc { background:#efe9fa; color:#5b4a8a; }
+.chip.dispatch { background:#e8f1fa; color:#2f5a80; }
+.chip.delivering { background:#e8f1fa; color:#2f5a80; }
+.chip.delivered { background:#eef5e6; color:var(--ok); }
+.chip.cancelled { background:#eee; color:#777; }
+.chip.done { background:#eef5e6; color:var(--ok); }
+.chip.progress { background:#fdf3e3; color:var(--warn); }
+.chip.todo { background:#fde7e7; color:var(--bad); }
+.chip.open { background:#fde7e7; color:var(--bad); }
+.chip.investigating { background:#fdf3e3; color:var(--warn); }
+.chip.escalated { background:#efe9fa; color:#5b4a8a; }
+.chip.resolved { background:#eef5e6; color:var(--ok); }
+.chip.low { background:#fde7e7; color:var(--bad); }
+.chip.fefo { background:#e8f1fa; color:#2f5a80; }
+.chip.exp { background:#fdf3e3; color:var(--warn); }
+.chip.auto { background:#efe9fa; color:#5b4a8a; }
+
+.bar-wrap { background:var(--line); border-radius:999px; height:10px; overflow:hidden; }
+.bar-fill { height:100%; background:var(--pea); border-radius:999px; transition:width .3s; }
+@media (prefers-reduced-motion:reduce){ .bar-fill{transition:none;} }
+
+.timeline { list-style:none; padding-left:4px; }
+.timeline li { position:relative; padding:0 0 12px 22px; border-left:2px solid var(--line); margin-left:6px; font-size:.84rem; }
+.timeline li::before { content:''; position:absolute; left:-6px; top:2px; width:10px; height:10px; border-radius:50%; background:var(--carrot); }
+.timeline li b { display:block; }
+.timeline li span { color:var(--soft); font-size:.76rem; }
+
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+@media (max-width:900px){ .grid2{grid-template-columns:1fr;} aside{width:64px;} aside .logo small,aside nav a em,aside .grp,aside .who{display:none;} aside nav a{justify-content:center;padding:10px;} main{padding:16px;} }
+aside nav a em { font-style:normal; }
+
+.steps { display:flex; flex-wrap:wrap; gap:6px; }
+.steps label { display:flex; align-items:center; gap:5px; background:var(--cream); border:1px solid var(--line); border-radius:999px; padding:4px 11px; font-size:.78rem; font-weight:700; cursor:pointer; }
+.steps label.done { background:#eef5e6; border-color:#cfe3c2; color:var(--ok); }
+
+.chat-box { display:flex; flex-direction:column; height:420px; }
+.chat-msgs { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:8px 4px; }
+.msg { max-width:75%; background:var(--cream); border:1px solid var(--line); border-radius:12px 12px 12px 3px; padding:7px 11px; font-size:.86rem; }
+.msg.me { align-self:flex-end; background:#eef5e6; border-radius:12px 12px 3px 12px; }
+.msg b { display:block; font-size:.72rem; color:var(--carrot-dark); }
+.msg span.ts { display:block; font-size:.68rem; color:var(--soft); margin-top:2px; }
+.chat-send { display:flex; gap:8px; margin-top:8px; }
+.chat-send input { flex:1; }
+.chan { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+.chan button { border:2px solid var(--carrot); background:transparent; color:var(--carrot-dark); border-radius:999px; padding:5px 14px; font-weight:700; font-size:.8rem; }
+.chan button.active { background:var(--carrot); color:#fff; }
+
+.matrix td, .matrix th { text-align:center; }
+.matrix td:first-child, .matrix th:first-child { text-align:left; }
+.matrix input[type=checkbox]{ width:17px; height:17px; accent-color:var(--pea); }
+
+.muted { color:var(--soft); font-size:.84rem; }
+.pill-row { display:flex; gap:6px; flex-wrap:wrap; }
+dialog { border:none; border-radius:var(--radius); box-shadow:0 12px 50px rgba(0,0,0,.25); padding:20px; max-width:640px; width:92vw; max-height:85vh; overflow-y:auto; }
+dialog::backdrop { background:rgba(61,50,41,.45); }
+.frm { display:grid; gap:10px; }
+.frm label { font-weight:700; font-size:.82rem; display:grid; gap:4px; }
+.frm .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+</style>
 </head>
 <body>
 
-<header class="site">
-  <div class="nav">
-    <a class="logo" href="index.html">🥕 Tiny Tummy <small>PRODUCTION DASHBOARD</small></a>
-    <nav class="links">
-      <a href="index.html">← View site</a>
-      <a href="#" id="logout-link" style="display:none" onclick="ttLogout();return false">Sign out</a>
-    </nav>
+<div class="app">
+<aside>
+  <span class="logo">🥕 Tiny Tummy <small>OPERATIONS DASHBOARD</small></span>
+  <nav id="sidenav">
+    <a data-m="overview" class="active"><span>📊</span><em>Overview</em></a>
+    <div class="grp">Sales</div>
+    <a data-m="orders"><span>🛒</span><em>Orders</em></a>
+    <a data-m="programs"><span>👶</span><em>Age Programs</em></a>
+    <div class="grp">Production</div>
+    <a data-m="kitchen"><span>👨‍🍳</span><em>Kitchen</em></a>
+    <a data-m="bom"><span>🍽️</span><em>Recipes · BOM</em></a>
+    <a data-m="inventory"><span>📦</span><em>Inventory · Lots</em></a>
+    <a data-m="requisitions"><span>🧾</span><em>Requisitions</em></a>
+    <div class="grp">Delivery</div>
+    <a data-m="delivery"><span>🚚</span><em>Dispatch · Agents</em></a>
+    <div class="grp">Quality</div>
+    <a data-m="iso"><span>🛡️</span><em>ISO 22000</em></a>
+    <a data-m="complaints"><span>📣</span><em>Complaints</em></a>
+    <div class="grp">Team</div>
+    <a data-m="chat"><span>💬</span><em>Team Chat</em></a>
+    <a data-m="notify"><span>🔔</span><em>Notifications</em></a>
+    <a data-m="users"><span>👥</span><em>Users · Roles</em></a>
+    <a data-m="settings"><span>⚙️</span><em>Settings</em></a>
+  </nav>
+  <div class="who">
+    Signed in as
+    <select id="whoami"></select>
   </div>
-</header>
+</aside>
 
-<div class="wrap" style="padding-top:34px">
-
-  <div id="setup-panel" class="panel" style="display:none">
-    <h2>⚙️ Connect Supabase first</h2>
-    <p class="muted" style="margin:10px 0">
-      This dashboard needs your Supabase project. Three steps:
-    </p>
-    <ol style="margin:0 0 10px 22px" class="muted">
-      <li>In Supabase: <b>SQL editor</b> → run <code>supabase/schema.sql</code> from this repo.</li>
-      <li><b>Project Settings → API</b> → copy the URL and anon key into <code>js/supabase-config.js</code>.</li>
-      <li><b>Authentication → Users</b> → “Add user” to create your own admin login (email + password).</li>
-    </ol>
-    <p class="muted">Reload this page when done.</p>
-  </div>
-
-  <div id="login-panel" class="panel" style="display:none">
-    <h2 style="margin-bottom:12px">🔐 Staff sign in</h2>
-    <form class="form" onsubmit="return ttLogin(this)">
-      <label>Email <input name="email" type="email" required autocomplete="username"></label>
-      <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
-      <button class="btn btn-primary" type="submit">Sign in</button>
-      <p class="muted" id="login-error"></p>
-    </form>
-  </div>
-
-  <div id="admin" style="display:none">
-
-    <div class="panel">
-      <div class="toolbar">
-        <h2>🥣 Products</h2>
-        <button class="btn btn-primary btn-sm" onclick="ttAddProduct()">＋ Add product</button>
-      </div>
-      <div class="table-scroll">
-        <table class="admin" id="products-table">
-          <thead><tr>
-            <th>Handle</th><th>Name</th><th>Category</th><th>Age</th>
-            <th>Price $</th><th>Description</th><th>Image URL</th><th>Sort</th><th>Live</th><th></th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="muted" style="margin-top:10px">Edit a cell then press <b>Save</b> on that row. “Live” controls whether the public site shows the product.</p>
-    </div>
-
-    <div class="panel">
-      <div class="toolbar">
-        <h2>📦 Orders</h2>
-        <button class="btn btn-outline btn-sm" onclick="ttLoadOrders()">↻ Refresh</button>
-      </div>
-      <div class="table-scroll">
-        <table class="admin" id="orders-table">
-          <thead><tr>
-            <th>Date</th><th>Customer</th><th>Phone</th><th>Address</th><th>Items</th><th>Notes</th><th>Status</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="muted" style="margin-top:10px">Orders placed through the site land here the moment they happen.</p>
-    </div>
-
-  </div>
+<main>
+  <div class="demo-note" id="modebar"></div>
+  <div id="views"></div>
+</main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/products-data.js"></script>
+<dialog id="dlg"></dialog>
+
 <script src="js/supabase-config.js"></script>
 <script>
-var db = null;
+'use strict';
+/* ════════════════════════════════════════════════════════════════════
+   Tiny Tummy Ops — full operations dashboard.
+   Runs on built-in demo data (saved in this browser) until Supabase is
+   connected via js/supabase-config.js + supabase/schema2_operations.sql;
+   the data layer below then reads/writes the tt_* tables instead.
+   ════════════════════════════════════════════════════════════════════ */
 
-function esc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
+var SUPA_URL = (typeof TT_SUPABASE_URL !== 'undefined') ? TT_SUPABASE_URL : '';
+var CONNECTED = !!SUPA_URL;
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function today(offsetDays) {
+  var d = new Date(); d.setDate(d.getDate() + (offsetDays || 0));
+  return d.toISOString().slice(0, 10);
 }
+function nowTs() { return new Date().toLocaleString(); }
+function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+function money(n) { return '$' + Number(n || 0).toFixed(2); }
 
-async function ttInit() {
-  db = ttSupabase();
-  if (!db) { document.getElementById('setup-panel').style.display = 'block'; return; }
-  var s = await db.auth.getSession();
-  if (s.data.session) ttShowAdmin(); else document.getElementById('login-panel').style.display = 'block';
+/* ── data layer: localStorage demo store (Supabase-ready shapes) ── */
+var SEED = {};
+function store(name) {
+  var key = 'ttops_' + name;
+  return {
+    all: function () {
+      try { var raw = localStorage.getItem(key); if (raw) return JSON.parse(raw); } catch (e) {}
+      return JSON.parse(JSON.stringify(SEED[name] || []));
+    },
+    save: function (rows) { try { localStorage.setItem(key, JSON.stringify(rows)); } catch (e) {} }
+  };
 }
-
-async function ttLogin(f) {
-  var r = await db.auth.signInWithPassword({ email: f.email.value, password: f.password.value });
-  if (r.error) document.getElementById('login-error').textContent = '❌ ' + r.error.message;
-  else { document.getElementById('login-panel').style.display = 'none'; ttShowAdmin(); }
-  return false;
-}
-
-async function ttLogout() {
-  await db.auth.signOut();
+function resetDemo() {
+  if (!confirm('Reset all demo data to the samples?')) return;
+  Object.keys(SEED).forEach(function (n) { try { localStorage.removeItem('ttops_' + n); } catch (e) {} });
   location.reload();
 }
 
-function ttShowAdmin() {
-  document.getElementById('admin').style.display = 'block';
-  document.getElementById('logout-link').style.display = 'inline-block';
-  ttLoadProductsAdmin();
-  ttLoadOrders();
+/* ── seed data ── */
+SEED.staff = [
+  { id: 'u1', name: 'Owner (you)', email: 'owner@tinytummy', role: 'super_admin' },
+  { id: 'u2', name: 'Chef Nadim', email: 'kitchen@tinytummy', role: 'kitchen' },
+  { id: 'u3', name: 'Sara — Support', email: 'support@tinytummy', role: 'support' },
+  { id: 'u4', name: 'Ali — Delivery', email: 'ali@tinytummy', role: 'delivery' },
+  { id: 'u5', name: 'Lina — Manager', email: 'manager@tinytummy', role: 'manager' }
+];
+var PERM_KEYS = [
+  ['orders_manage', 'Manage orders & dispatch'],
+  ['kitchen_manage', 'Kitchen production & portioning'],
+  ['inventory_manage', 'Inventory, lots & requisitions'],
+  ['bom_manage', 'Recipes / BOM & costs'],
+  ['delivery_manage', 'Delivery agents & assignment'],
+  ['iso_manage', 'ISO 22000 checklist'],
+  ['complaints_manage', 'Complaints & escalation'],
+  ['programs_manage', 'Age programs'],
+  ['chat_use', 'Team chat'],
+  ['push_send', 'Send push notifications'],
+  ['reports_view', 'Margins & reports'],
+  ['users_manage', 'Users & permissions']
+];
+var ROLES = ['super_admin', 'manager', 'kitchen', 'delivery', 'support'];
+SEED.role_perms = (function () {
+  var def = {
+    manager: ['orders_manage','kitchen_manage','inventory_manage','bom_manage','delivery_manage','iso_manage','complaints_manage','programs_manage','chat_use','push_send','reports_view'],
+    kitchen: ['kitchen_manage','inventory_manage','chat_use'],
+    delivery: ['delivery_manage','chat_use'],
+    support: ['orders_manage','complaints_manage','chat_use']
+  };
+  var rows = [];
+  ROLES.forEach(function (r) {
+    PERM_KEYS.forEach(function (pk) {
+      rows.push({ role: r, key: pk[0], allowed: r === 'super_admin' ? true : (def[r] || []).indexOf(pk[0]) >= 0 });
+    });
+  });
+  return rows;
+})();
+
+SEED.ingredients = [
+  { id: 'g1', name: 'Carrots', unit: 'kg', cost: 1.2, min: 5, reorder: 10 },
+  { id: 'g2', name: 'Zucchini', unit: 'kg', cost: 1.5, min: 4, reorder: 8 },
+  { id: 'g3', name: 'Millet', unit: 'kg', cost: 3.0, min: 3, reorder: 6 },
+  { id: 'g4', name: 'Cauliflower', unit: 'kg', cost: 1.8, min: 3, reorder: 6 },
+  { id: 'g5', name: 'Beetroot', unit: 'kg', cost: 1.4, min: 3, reorder: 6 },
+  { id: 'g6', name: 'Quinoa', unit: 'kg', cost: 5.5, min: 2, reorder: 4 },
+  { id: 'g7', name: 'Mango', unit: 'kg', cost: 3.2, min: 2, reorder: 5 },
+  { id: 'g8', name: 'Full-fat cow milk', unit: 'L', cost: 1.1, min: 10, reorder: 20 },
+  { id: 'g9', name: 'Walnuts', unit: 'kg', cost: 9.0, min: 1, reorder: 2 },
+  { id: 'g10', name: 'Cocoa', unit: 'kg', cost: 7.0, min: 1, reorder: 2 },
+  { id: 'g11', name: 'Carob molasses', unit: 'kg', cost: 4.5, min: 1, reorder: 2 },
+  { id: 'g12', name: 'Biscuits (baby-safe)', unit: 'kg', cost: 4.0, min: 2, reorder: 4 },
+  { id: 'g13', name: 'Flour', unit: 'kg', cost: 0.9, min: 5, reorder: 10 },
+  { id: 'g14', name: 'Eggs', unit: 'pc', cost: 0.18, min: 30, reorder: 60 }
+];
+SEED.lots = [
+  { id: 'l1', ing: 'g1', lot: 'CAR-240818', qty: 6, expiry: today(3), received: today(-9) },
+  { id: 'l2', ing: 'g1', lot: 'CAR-240825', qty: 8, expiry: today(9), received: today(-2) },
+  { id: 'l3', ing: 'g2', lot: 'ZUC-240824', qty: 5, expiry: today(4), received: today(-3) },
+  { id: 'l4', ing: 'g3', lot: 'MIL-240701', qty: 7, expiry: today(120), received: today(-30) },
+  { id: 'l5', ing: 'g4', lot: 'CFL-240826', qty: 4, expiry: today(5), received: today(-1) },
+  { id: 'l6', ing: 'g5', lot: 'BEE-240822', qty: 5, expiry: today(6), received: today(-5) },
+  { id: 'l7', ing: 'g6', lot: 'QUI-240610', qty: 3, expiry: today(200), received: today(-60) },
+  { id: 'l8', ing: 'g7', lot: 'MNG-240826', qty: 2.5, expiry: today(2), received: today(-1) },
+  { id: 'l9', ing: 'g8', lot: 'MLK-240827', qty: 14, expiry: today(4), received: today(0) },
+  { id: 'l10', ing: 'g9', lot: 'WAL-240501', qty: 1.5, expiry: today(90), received: today(-90) },
+  { id: 'l11', ing: 'g10', lot: 'COC-240401', qty: 1.2, expiry: today(150), received: today(-120) },
+  { id: 'l12', ing: 'g11', lot: 'CRB-240301', qty: 1.8, expiry: today(180), received: today(-150) },
+  { id: 'l13', ing: 'g12', lot: 'BIS-240801', qty: 3, expiry: today(60), received: today(-20) },
+  { id: 'l14', ing: 'g13', lot: 'FLR-240715', qty: 9, expiry: today(100), received: today(-40) },
+  { id: 'l15', ing: 'g14', lot: 'EGG-240826', qty: 48, expiry: today(12), received: today(-1) }
+];
+SEED.products = [
+  { id: 'p1', handle: 'puree-pack', name: 'Puree Pack', category: 'purees', age: '6M+', price: 18 },
+  { id: 'p2', handle: 'ratatouille', name: 'Ratatouille', category: 'purees', age: '6M+', price: 5 },
+  { id: 'p3', handle: 'milletflower', name: 'Milletflower', category: 'purees', age: '6M+', price: 5 },
+  { id: 'p4', handle: 'heartbeet', name: 'Heartbeet', category: 'purees', age: '6M+', price: 5 },
+  { id: 'p5', handle: 'tropical-quinoa', name: 'Tropical Quinoa', category: 'purees', age: '6M+', price: 5 },
+  { id: 'p6', handle: 'labneh', name: 'Labneh', category: 'meals', age: '7M+', price: 6 },
+  { id: 'p7', handle: 'tiny-balls-24m', name: 'Tiny Balls (24M+)', category: 'meals', age: '24M+', price: 7 },
+  { id: 'p8', handle: 'cake', name: 'Baby-Friendly Cake', category: 'cakes', age: '12M+', price: 25 }
+];
+SEED.bom = [
+  { id: 'b1', product: 'p2', ing: 'g1', qty: 0.12 }, { id: 'b2', product: 'p2', ing: 'g2', qty: 0.12 },
+  { id: 'b3', product: 'p3', ing: 'g3', qty: 0.08 }, { id: 'b4', product: 'p3', ing: 'g4', qty: 0.10 }, { id: 'b5', product: 'p3', ing: 'g8', qty: 0.05 },
+  { id: 'b6', product: 'p4', ing: 'g5', qty: 0.15 }, { id: 'b7', product: 'p4', ing: 'g1', qty: 0.05 },
+  { id: 'b8', product: 'p5', ing: 'g6', qty: 0.06 }, { id: 'b9', product: 'p5', ing: 'g7', qty: 0.10 },
+  { id: 'b10', product: 'p6', ing: 'g8', qty: 0.30 },
+  { id: 'b11', product: 'p7', ing: 'g12', qty: 0.05 }, { id: 'b12', product: 'p7', ing: 'g9', qty: 0.03 },
+  { id: 'b13', product: 'p7', ing: 'g10', qty: 0.01 }, { id: 'b14', product: 'p7', ing: 'g11', qty: 0.02 },
+  { id: 'b15', product: 'p1', ing: 'g1', qty: 0.12 }, { id: 'b16', product: 'p1', ing: 'g2', qty: 0.12 },
+  { id: 'b17', product: 'p1', ing: 'g3', qty: 0.08 }, { id: 'b18', product: 'p1', ing: 'g4', qty: 0.10 },
+  { id: 'b19', product: 'p1', ing: 'g5', qty: 0.15 }, { id: 'b20', product: 'p1', ing: 'g6', qty: 0.06 }, { id: 'b21', product: 'p1', ing: 'g7', qty: 0.10 },
+  { id: 'b22', product: 'p8', ing: 'g13', qty: 0.35 }, { id: 'b23', product: 'p8', ing: 'g14', qty: 4 },
+  { id: 'b24', product: 'p8', ing: 'g1', qty: 0.20 }, { id: 'b25', product: 'p8', ing: 'g8', qty: 0.20 }
+];
+var KITCHEN_STEPS = ['Prep & wash', 'Cook', 'Blend / assemble', 'Portioning', 'Blast chill', 'Pack + lot label', 'QC check'];
+SEED.agents = [
+  { id: 'a1', name: 'Ali H.', phone: '+961 70 111 222', active: true },
+  { id: 'a2', name: 'Marwan D.', phone: '+961 76 333 444', active: true }
+];
+SEED.orders = [
+  { id: 'o1', code: 'TT-2026-041', customer: 'Rana K.', phone: '+961 3 922 209', address: 'Achrafieh, Beirut',
+    items: [{ product: 'p1', qty: 2 }, { product: 'p6', qty: 1 }], status: 'new', agent: null, program: null,
+    steps: [], history: [{ at: nowTs(), what: 'Order placed on website' }], created: today(0) },
+  { id: 'o2', code: 'TT-2026-040', customer: 'Hussein M.', phone: '+961 76 789 039', address: 'Hamra, Beirut',
+    items: [{ product: 'p7', qty: 3 }], status: 'kitchen', agent: null, program: null,
+    steps: [{ s: 'Prep & wash', done: true }, { s: 'Cook', done: true }],
+    history: [{ at: nowTs(), what: 'Order placed' }, { at: nowTs(), what: 'Confirmed · sent to kitchen (stock consumed FEFO)' }], created: today(0) },
+  { id: 'o3', code: 'TT-2026-039', customer: 'Maya A.', phone: '+961 71 553 210', address: 'Jounieh',
+    items: [{ product: 'p8', qty: 1 }], status: 'delivering', agent: 'a1', program: null,
+    steps: KITCHEN_STEPS.map(function (s) { return { s: s, done: true }; }),
+    history: [{ at: nowTs(), what: 'Order placed' }, { at: nowTs(), what: 'Kitchen complete · QC passed' }, { at: nowTs(), what: 'Dispatched with Ali H.' }], created: today(-1) },
+  { id: 'o4', code: 'TT-2026-038', customer: 'Joelle S.', phone: '+961 81 224 678', address: 'Baabda',
+    items: [{ product: 'p4', qty: 3 }, { product: 'p2', qty: 3 }], status: 'delivered', agent: 'a2', program: 'pr1',
+    steps: KITCHEN_STEPS.map(function (s) { return { s: s, done: true }; }),
+    history: [{ at: nowTs(), what: 'Weekly program order (First Tastes)' }, { at: nowTs(), what: 'Delivered by Marwan D. ✓' }], created: today(-1) }
+];
+SEED.requisitions = [
+  { id: 'q1', ing: 'g7', qty: 5, reason: 'auto', status: 'open', note: 'Mango fell below minimum after order TT-2026-037', created: today(-1) }
+];
+SEED.complaints = [
+  { id: 'c1', code: 'CASE-012', order: 'TT-2026-035', customer: 'Nour B.', phone: '+961 3 555 777',
+    summary: 'Seal on one puree jar was open on arrival', severity: 'high', status: 'escalated',
+    assigned: 'Sara — Support', escalatedTo: 'Lina — Manager', sla: today(0),
+    log: [{ at: nowTs(), what: 'Case opened by support' }, { at: nowTs(), what: 'Photos requested from customer' }, { at: nowTs(), what: 'Escalated to manager — possible packing issue, lot BEE-240822 flagged for review' }], created: today(-1) },
+  { id: 'c2', code: 'CASE-013', order: 'TT-2026-040', customer: 'Hussein M.', phone: '+961 76 789 039',
+    summary: 'Delivery arrived after the promised window', severity: 'medium', status: 'investigating',
+    assigned: 'Sara — Support', escalatedTo: null, sla: today(1),
+    log: [{ at: nowTs(), what: 'Case opened' }], created: today(0) }
+];
+SEED.chat = [
+  { id: 'm1', channel: 'kitchen', sender: 'Chef Nadim', text: 'Mango is low — I used the last of lot MNG-240826 for TT-2026-040.', at: nowTs() },
+  { id: 'm2', channel: 'kitchen', sender: 'Owner (you)', text: 'Auto-requisition already opened, supplier delivers tomorrow morning.', at: nowTs() },
+  { id: 'm3', channel: 'delivery', sender: 'Ali H.', text: 'On my way to Jounieh with TT-2026-039.', at: nowTs() },
+  { id: 'm4', channel: 'management', sender: 'Lina — Manager', text: 'CASE-012: I want the packing checklist signed per batch starting today. Added it to ISO 8.5.', at: nowTs() }
+];
+SEED.programs = [
+  { id: 'pr1', name: 'First Tastes', band: '6–7 months', price: 79, enrolled: 14,
+    desc: 'Single-vegetable smooth purees, one new taste every 3 days.', menu: 'Mon Ratatouille · Wed Heartbeet · Fri Milletflower' },
+  { id: 'pr2', name: 'Little Explorers', band: '7–12 months', price: 89, enrolled: 22,
+    desc: 'Thicker textures + first finger food, iron-rich mix.', menu: 'Mon Milletflower · Wed Labneh + veg sticks · Fri Tropical Quinoa' },
+  { id: 'pr3', name: 'Toddler Table', band: '12–24 months', price: 95, enrolled: 17,
+    desc: 'Family-style small meals, self-feeding portions.', menu: 'Mon mini meals · Wed Labneh bowl · Fri surprise + fruit' },
+  { id: 'pr4', name: 'Big Kids Club', band: '2–5 years', price: 99, enrolled: 9,
+    desc: 'Lunchbox program for nursery days, nut-aware options.', menu: 'Daily lunchbox · Tiny Balls snack twice a week' }
+];
+SEED.iso = [
+  { id: 'i1', clause: '4 · Context', item: 'Scope of the food safety management system defined and written down', status: 'done', owner: 'Owner', evidence: 'FSMS-SCOPE-01' },
+  { id: 'i2', clause: '4 · Context', item: 'Interested parties and their requirements listed (parents, MoPH, suppliers)', status: 'done', owner: 'Owner', evidence: 'FSMS-CTX-01' },
+  { id: 'i3', clause: '5 · Leadership', item: 'Food safety policy written, signed and displayed in the kitchen', status: 'done', owner: 'Owner', evidence: 'POL-01' },
+  { id: 'i4', clause: '5 · Leadership', item: 'Roles and responsibilities for food safety assigned (this Users screen)', status: 'progress', owner: 'Manager', evidence: '' },
+  { id: 'i5', clause: '6 · Planning', item: 'Risks and opportunities for the FSMS assessed with actions', status: 'progress', owner: 'Manager', evidence: '' },
+  { id: 'i6', clause: '6 · Planning', item: 'Food safety objectives set and tracked (complaints, temp logs)', status: 'todo', owner: '', evidence: '' },
+  { id: 'i7', clause: '7 · Support', item: 'Team trained on hygiene and allergen handling; records kept', status: 'progress', owner: 'Chef', evidence: 'TRN-2026-1' },
+  { id: 'i8', clause: '7 · Support', item: 'Calibrated thermometers for fridges, freezers and blast chiller', status: 'done', owner: 'Chef', evidence: 'CAL-05' },
+  { id: 'i9', clause: '7 · Support', item: 'Documented information controlled (versions, who can edit)', status: 'todo', owner: '', evidence: '' },
+  { id: 'i10', clause: '8 · Operation · PRPs', item: 'Cleaning & sanitation schedule per area, signed daily', status: 'done', owner: 'Kitchen', evidence: 'CLN-SHEET' },
+  { id: 'i11', clause: '8 · Operation · PRPs', item: 'Pest control contract and inspection log', status: 'done', owner: 'Manager', evidence: 'PEST-2026' },
+  { id: 'i12', clause: '8 · Operation · PRPs', item: 'Supplier approval list with certificates for every ingredient', status: 'progress', owner: 'Manager', evidence: 'SUP-LIST' },
+  { id: 'i13', clause: '8 · Operation · PRPs', item: 'Personal hygiene rules: uniforms, handwash stations, illness policy', status: 'done', owner: 'Chef', evidence: 'HYG-01' },
+  { id: 'i14', clause: '8 · Operation · PRPs', item: 'Water potability tested and recorded', status: 'todo', owner: '', evidence: '' },
+  { id: 'i15', clause: '8 · Operation · HACCP', item: 'Flow diagram for each product family (puree / finger food / cake)', status: 'done', owner: 'Chef', evidence: 'FLOW-01..03' },
+  { id: 'i16', clause: '8 · Operation · HACCP', item: 'Hazard analysis per step (biological, chemical, physical, allergen)', status: 'progress', owner: 'Chef', evidence: 'HAZ-01' },
+  { id: 'i17', clause: '8 · Operation · HACCP', item: 'CCPs set with critical limits (cook core temp, chill time, cold chain)', status: 'progress', owner: 'Chef', evidence: '' },
+  { id: 'i18', clause: '8 · Operation · HACCP', item: 'Monitoring records for each CCP with corrective actions', status: 'todo', owner: '', evidence: '' },
+  { id: 'i19', clause: '8 · Operation', item: 'Full lot traceability: ingredient lot → batch → order (this dashboard)', status: 'progress', owner: 'Owner', evidence: 'Inventory module' },
+  { id: 'i20', clause: '8 · Operation', item: 'FEFO stock rotation enforced at picking (earliest expiry first)', status: 'done', owner: 'Kitchen', evidence: 'Inventory module' },
+  { id: 'i21', clause: '8 · Operation', item: 'Allergen labelling on every pack; nut-aware age programs flagged', status: 'progress', owner: 'Chef', evidence: '' },
+  { id: 'i22', clause: '8 · Operation', item: 'Recall / withdrawal procedure written and tested once', status: 'todo', owner: '', evidence: '' },
+  { id: 'i23', clause: '8 · Operation', item: 'Cold-chain delivery: insulated boxes, max transit time defined', status: 'progress', owner: 'Delivery', evidence: '' },
+  { id: 'i24', clause: '9 · Evaluation', item: 'Customer complaints reviewed weekly and linked to lots (Complaints module)', status: 'done', owner: 'Support', evidence: 'CASE log' },
+  { id: 'i25', clause: '9 · Evaluation', item: 'Internal audit plan — at least one full audit per year', status: 'todo', owner: '', evidence: '' },
+  { id: 'i26', clause: '9 · Evaluation', item: 'Management review meeting with minutes', status: 'todo', owner: '', evidence: '' },
+  { id: 'i27', clause: '10 · Improvement', item: 'Corrective actions tracked to closure with root cause', status: 'progress', owner: 'Manager', evidence: 'CASE-012' },
+  { id: 'i28', clause: '10 · Improvement', item: 'FSMS updated when menu, suppliers or process change', status: 'todo', owner: '', evidence: '' }
+];
+SEED.pushlog = [
+  { id: 'n1', title: 'Order confirmed 🥕', body: 'TT-2026-040 is being prepared', audience: 'Customer · Hussein M.', sent: nowTs(), delivered: nowTs(), opened: nowTs() },
+  { id: 'n2', title: 'New order', body: 'TT-2026-041 waiting for confirmation', audience: 'Role · manager', sent: nowTs(), delivered: nowTs(), opened: '' },
+  { id: 'n3', title: 'Stock low ⚠️', body: 'Mango below minimum — requisition opened', audience: 'Role · kitchen', sent: nowTs(), delivered: '', opened: '' }
+];
+
+/* ── lookups ── */
+function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+function productCost(pid, bom, ings) {
+  var c = 0;
+  bom.forEach(function (b) { if (b.product === pid) { var g = byId(ings, b.ing); if (g) c += b.qty * g.cost; } });
+  return c;
+}
+function stockOf(ingId, lots) {
+  var s = 0; lots.forEach(function (l) { if (l.ing === ingId) s += l.qty; }); return s;
+}
+function orderTotals(o, products, bom, ings) {
+  var rev = 0, cost = 0;
+  (o.items || []).forEach(function (it) {
+    var p = byId(products, it.product); if (!p) return;
+    rev += p.price * it.qty;
+    cost += productCost(p.id, bom, ings) * it.qty;
+  });
+  return { rev: rev, cost: cost, margin: rev - cost, pct: rev ? Math.round((rev - cost) / rev * 100) : 0 };
 }
 
-/* ── Products CRUD ── */
-function productRow(p) {
-  var tr = document.createElement('tr');
-  tr.dataset.id = p.id || '';
-  tr.innerHTML =
-    '<td><input name="handle" value="' + esc(p.handle) + '"></td>' +
-    '<td><input name="name" value="' + esc(p.name) + '"></td>' +
-    '<td><select name="category">' +
-      ['purees', 'meals', 'cakes'].map(function (c) {
-        return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>';
-      }).join('') + '</select></td>' +
-    '<td><input name="age" value="' + esc(p.age) + '" style="min-width:55px"></td>' +
-    '<td><input name="price" type="number" step="0.01" value="' + esc(p.price) + '" style="min-width:70px"></td>' +
-    '<td><input name="description" value="' + esc(p.description) + '" style="min-width:200px"></td>' +
-    '<td><input name="image_url" value="' + esc(p.image_url) + '" style="min-width:150px"></td>' +
-    '<td><input name="sort" type="number" value="' + esc(p.sort == null ? 100 : p.sort) + '" style="min-width:55px"></td>' +
-    '<td><button class="pill ' + (p.available ? 'on' : 'off') + '" onclick="ttToggle(this)">' +
-        (p.available ? 'Live' : 'Hidden') + '</button></td>' +
-    '<td style="white-space:nowrap">' +
-      '<button class="btn btn-primary btn-sm" onclick="ttSaveRow(this)">Save</button> ' +
-      '<button class="btn btn-outline btn-sm" onclick="ttDeleteRow(this)">🗑</button></td>';
-  return tr;
+/* ── permissions (demo: driven by the "signed in as" selector) ── */
+function currentUser() {
+  var staff = store('staff').all();
+  var id = localStorage.getItem('ttops_whoami') || 'u1';
+  return byId(staff, id) || staff[0];
+}
+function can(key) {
+  var u = currentUser();
+  if (u.role === 'super_admin') return true;
+  var rp = store('role_perms').all();
+  for (var i = 0; i < rp.length; i++) if (rp[i].role === u.role && rp[i].key === key) return rp[i].allowed;
+  return false;
+}
+var MODULE_PERMS = {
+  overview: 'reports_view', orders: 'orders_manage', programs: 'programs_manage',
+  kitchen: 'kitchen_manage', bom: 'bom_manage', inventory: 'inventory_manage',
+  requisitions: 'inventory_manage', delivery: 'delivery_manage', iso: 'iso_manage',
+  complaints: 'complaints_manage', chat: 'chat_use', notify: 'push_send',
+  users: 'users_manage', settings: null
+};
+
+/* ── FEFO consumption + auto-requisition ── */
+function consumeFEFO(order) {
+  var lots = store('lots').all();
+  var ings = store('ingredients').all();
+  var bom = store('bom').all();
+  var need = {}; // ingId -> qty
+  order.items.forEach(function (it) {
+    bom.forEach(function (b) {
+      if (b.product === it.product) need[b.ing] = (need[b.ing] || 0) + b.qty * it.qty;
+    });
+  });
+  var picked = [];
+  Object.keys(need).forEach(function (ingId) {
+    var remaining = need[ingId];
+    var mine = lots.filter(function (l) { return l.ing === ingId && l.qty > 0; })
+      .sort(function (a, b) { return a.expiry < b.expiry ? -1 : 1; }); // FEFO: earliest expiry first
+    mine.forEach(function (l) {
+      if (remaining <= 0) return;
+      var take = Math.min(l.qty, remaining);
+      l.qty = Math.round((l.qty - take) * 1000) / 1000;
+      remaining = Math.round((remaining - take) * 1000) / 1000;
+      var g = byId(ings, ingId);
+      picked.push(take + ' ' + (g ? g.unit : '') + ' ' + (g ? g.name : ingId) + ' ← lot ' + l.lot);
+    });
+    if (remaining > 0) {
+      var g2 = byId(ings, ingId);
+      picked.push('⚠️ SHORT ' + remaining + ' ' + (g2 ? g2.unit + ' ' + g2.name : ingId));
+    }
+  });
+  store('lots').save(lots);
+  // auto-requisition anything now below minimum
+  var reqs = store('requisitions').all();
+  var opened = [];
+  ings.forEach(function (g) {
+    var s = stockOf(g.id, lots);
+    var already = reqs.some(function (r) { return r.ing === g.id && r.status === 'open'; });
+    if (s < g.min && !already) {
+      reqs.push({ id: uid(), ing: g.id, qty: g.reorder, reason: 'auto', status: 'open',
+        note: g.name + ' fell below minimum (' + s + ' ' + g.unit + ' left) after ' + order.code, created: today(0) });
+      opened.push(g.name);
+    }
+  });
+  store('requisitions').save(reqs);
+  if (opened.length) pushDemo('Stock low ⚠️', opened.join(', ') + ' below minimum — auto-requisition opened', 'Role · kitchen');
+  return picked;
 }
 
-async function ttLoadProductsAdmin() {
-  var r = await db.from('products').select('*').order('sort');
-  var tb = document.querySelector('#products-table tbody');
-  tb.innerHTML = '';
-  (r.data || []).forEach(function (p) { tb.appendChild(productRow(p)); });
+function pushDemo(title, body, audience) {
+  var log = store('pushlog').all();
+  var row = { id: uid(), title: title, body: body, audience: audience, sent: nowTs(), delivered: '', opened: '' };
+  log.unshift(row);
+  store('pushlog').save(log);
+  setTimeout(function () { // simulate the device receipt, like push_receipts in the municipality build
+    var l2 = store('pushlog').all();
+    var r2 = byId(l2, row.id); if (r2) { r2.delivered = nowTs(); store('pushlog').save(l2); if (location.hash === '#notify') render(); }
+  }, 1500);
 }
 
-function ttAddProduct() {
-  var tb = document.querySelector('#products-table tbody');
-  tb.prepend(productRow({ handle: '', name: '', category: 'purees', age: '6M+', price: '', description: '', image_url: '', sort: 100, available: true }));
+/* ── router ── */
+var VIEWS = ['overview','orders','programs','kitchen','bom','inventory','requisitions','delivery','iso','complaints','chat','notify','users','settings'];
+var current = 'overview';
+function nav(m) {
+  current = m; location.hash = m;
+  document.querySelectorAll('#sidenav a').forEach(function (a) { a.classList.toggle('active', a.dataset.m === m); });
+  render();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('#sidenav a').forEach(function (a) {
+  a.addEventListener('click', function () { nav(a.dataset.m); });
+});
+
+function guard(m) {
+  var k = MODULE_PERMS[m];
+  if (!k || can(k)) return null;
+  return '<div class="panel"><h3>🔒 No access</h3><p class="muted">Your role (<b>' + esc(currentUser().role) + '</b>) does not hold the <code>' + esc(k) + '</code> permission. A super admin can grant it per role or per person in <b>Users · Roles</b> — same idea as the municipality build: one permission key per capability, role default plus per-person override.</p></div>';
 }
 
-function ttToggle(btn) {
-  var on = btn.classList.toggle('on');
-  btn.classList.toggle('off', !on);
-  btn.textContent = on ? 'Live' : 'Hidden';
+/* ═════════ RENDERERS ═════════ */
+function render() {
+  var host = document.getElementById('views');
+  var blocked = guard(current);
+  host.innerHTML = blocked || RENDER[current]();
+  if (!blocked && AFTER[current]) AFTER[current]();
+  var u = currentUser();
+  document.getElementById('modebar').innerHTML = CONNECTED
+    ? '🟢 <b>Connected to Supabase.</b> Data shown is stored in this browser until the tt_* tables wiring is enabled in Settings.'
+    : '🧪 <b>Demo mode</b> — every action works and is saved in this browser. Connect Supabase (Settings) + run <b>supabase/schema2_operations.sql</b> to go multi-user with real logins, RLS and push. Signed in as <b>' + esc(u.name) + '</b> (' + esc(u.role) + ') — switch user bottom-left to feel the permissions.';
 }
+var RENDER = {}, AFTER = {};
 
-function rowData(tr) {
-  var d = {};
-  tr.querySelectorAll('input,select').forEach(function (i) { d[i.name] = i.value; });
-  d.price = d.price === '' ? null : Number(d.price);
-  d.sort = Number(d.sort) || 100;
-  d.available = tr.querySelector('.pill').classList.contains('on');
-  return d;
-}
+/* ── Overview ── */
+RENDER.overview = function () {
+  var orders = store('orders').all(), products = store('products').all(),
+      bom = store('bom').all(), ings = store('ingredients').all(),
+      lots = store('lots').all(), comps = store('complaints').all(), iso = store('iso').all();
+  var rev = 0, cost = 0, active = 0;
+  orders.forEach(function (o) {
+    if (o.status === 'cancelled') return;
+    var t = orderTotals(o, products, bom, ings); rev += t.rev; cost += t.cost;
+    if (o.status !== 'delivered') active++;
+  });
+  var low = ings.filter(function (g) { return stockOf(g.id, lots) < g.min; }).length;
+  var expiring = lots.filter(function (l) { return l.qty > 0 && l.expiry <= today(7); }).length;
+  var openC = comps.filter(function (c) { return c.status !== 'resolved'; }).length;
+  var isoDone = iso.filter(function (i) { return i.status === 'done'; }).length;
+  var isoPct = Math.round(isoDone / iso.length * 100);
+  var marginPct = rev ? Math.round((rev - cost) / rev * 100) : 0;
 
-async function ttSaveRow(btn) {
-  var tr = btn.closest('tr');
-  var d = rowData(tr);
-  if (!d.handle || !d.name) { alert('Handle and name are required'); return; }
-  var r = tr.dataset.id
-    ? await db.from('products').update(d).eq('id', tr.dataset.id)
-    : await db.from('products').insert(d).select('id').single();
-  if (r.error) { alert('Save failed: ' + r.error.message); return; }
-  if (!tr.dataset.id && r.data) tr.dataset.id = r.data.id;
-  btn.textContent = '✓ Saved';
-  setTimeout(function () { btn.textContent = 'Save'; }, 1500);
-}
+  var recent = orders.slice(0, 5).map(function (o) {
+    var t = orderTotals(o, products, bom, ings);
+    return '<tr><td><b>' + esc(o.code) + '</b></td><td>' + esc(o.customer) + '</td>' +
+      '<td><span class="chip ' + o.status + '">' + o.status + '</span></td>' +
+      '<td class="num">' + money(t.rev) + '</td><td class="num">' + t.pct + '%</td></tr>';
+  }).join('');
 
-async function ttDeleteRow(btn) {
-  var tr = btn.closest('tr');
-  if (!confirm('Delete this product?')) return;
-  if (tr.dataset.id) {
-    var r = await db.from('products').delete().eq('id', tr.dataset.id);
-    if (r.error) { alert('Delete failed: ' + r.error.message); return; }
-  }
-  tr.remove();
+  return '<div class="pagehead"><div><h1>📊 Overview</h1><div class="sub">Today across the whole operation</div></div>' +
+    '<button class="btn o s" onclick="resetDemo()">↺ Reset demo data</button></div>' +
+    '<div class="kpis">' +
+    '<div class="kpi"><div class="v">' + orders.length + '</div><div class="l">Orders</div></div>' +
+    '<div class="kpi"><div class="v">' + active + '</div><div class="l">In pipeline</div></div>' +
+    '<div class="kpi good"><div class="v">' + money(rev) + '</div><div class="l">Revenue</div></div>' +
+    '<div class="kpi good"><div class="v">' + money(rev - cost) + ' · ' + marginPct + '%</div><div class="l">Profit margin</div></div>' +
+    '<div class="kpi ' + (low ? 'bad' : 'good') + '"><div class="v">' + low + '</div><div class="l">Low stock</div></div>' +
+    '<div class="kpi ' + (expiring ? 'warn' : 'good') + '"><div class="v">' + expiring + '</div><div class="l">Lots expiring ≤7d</div></div>' +
+    '<div class="kpi ' + (openC ? 'bad' : 'good') + '"><div class="v">' + openC + '</div><div class="l">Open complaints</div></div>' +
+    '<div class="kpi ' + (isoPct >= 80 ? 'good' : 'warn') + '"><div class="v">' + isoPct + '%</div><div class="l">ISO 22000 done</div></div>' +
+    '</div>' +
+    '<div class="grid2"><div class="panel"><h3>🛒 Latest orders</h3><div class="tbl-scroll"><table class="t">' +
+    '<thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="num">Value</th><th class="num">Margin</th></tr></thead>' +
+    '<tbody>' + recent + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>🛡️ ISO 22000 readiness</h3>' +
+    '<div class="bar-wrap"><div class="bar-fill" style="width:' + isoPct + '%"></div></div>' +
+    '<p class="muted" style="margin-top:8px">' + isoDone + ' of ' + iso.length + ' checklist items complete. The full clause-by-clause sheet with flags is in the <b>ISO 22000</b> module.</p>' +
+    '<h3 style="margin-top:16px">💡 Advisor</h3>' + adviseHtml() + '</div></div>';
+};
+
+/* Live recommendations computed from the actual data — not a static list. */
+function adviseHtml() {
+  var ings = store('ingredients').all(), lots = store('lots').all(),
+      products = store('products').all(), bom = store('bom').all(),
+      iso = store('iso').all(), comps = store('complaints').all(),
+      orders = store('orders').all();
+  var tips = [];
+  ings.forEach(function (g) {
+    var s = stockOf(g.id, lots);
+    if (s < g.min) tips.push('📦 <b>' + esc(g.name) + '</b> is below minimum (' + (Math.round(s * 100) / 100) + ' ' + g.unit + ') — receive the open requisition before tomorrow\'s kitchen run.');
+  });
+  lots.forEach(function (l) {
+    if (l.qty > 0 && l.expiry <= today(3)) {
+      var g = byId(ings, l.ing);
+      tips.push('⏳ Lot <b>' + esc(l.lot) + '</b> (' + esc(g ? g.name : '') + ') expires ' + esc(l.expiry) + ' — FEFO will pick it first, but plan a recipe that uses it or write it off.');
+    }
+  });
+  products.forEach(function (p) {
+    var c = productCost(p.id, bom, ings);
+    if (p.price && c && (p.price - c) / p.price < 0.5)
+      tips.push('💰 <b>' + esc(p.name) + '</b> margin is under 50% (' + Math.round((p.price - c) / p.price * 100) + '%) — review the price or the BOM quantities.');
+  });
+  comps.forEach(function (c) {
+    if (c.status !== 'resolved' && c.sla <= today(0))
+      tips.push('🚨 <b>' + esc(c.code) + '</b> is at/past its SLA — resolve or escalate today; an aging case is the fastest way to lose a family.');
+  });
+  var todoHaccp = iso.filter(function (i) { return i.status === 'todo' && i.clause.indexOf('HACCP') >= 0; });
+  if (todoHaccp.length) tips.push('🛡️ ' + todoHaccp.length + ' HACCP item(s) still not done — for a kids-food kitchen these are the audit\'s first stop; start with CCP monitoring records.');
+  if (iso.some(function (i) { return i.item.indexOf('Recall') >= 0 && i.status === 'todo'; }))
+    tips.push('🛡️ No tested recall procedure yet — with lot traceability already in this dashboard, a mock recall drill is one afternoon of work.');
+  var stuck = orders.filter(function (o) { return o.status === 'new'; });
+  if (stuck.length) tips.push('🛒 ' + stuck.length + ' order(s) still unconfirmed — confirm before the 3 PM cutoff to keep the next-day promise.');
+  if (!tips.length) tips.push('✅ Nothing urgent — stock, margins, cases and ISO are all inside their limits.');
+  return '<ul style="margin:6px 0 0 18px;font-size:.86rem;display:grid;gap:6px">' +
+    tips.slice(0, 6).map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>';
 }
 
 /* ── Orders ── */
-async function ttLoadOrders() {
-  var r = await db.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
-  var tb = document.querySelector('#orders-table tbody');
-  tb.innerHTML = '';
-  (r.data || []).forEach(function (o) {
-    var tr = document.createElement('tr');
-    var items = (o.items || []).map(function (i) { return (i.qty || 1) + '× ' + i.name; }).join(', ');
-    tr.innerHTML =
-      '<td>' + new Date(o.created_at).toLocaleString() + '</td>' +
-      '<td>' + esc(o.customer) + '</td>' +
-      '<td><a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a></td>' +
-      '<td>' + esc(o.address) + '</td>' +
+RENDER.orders = function () {
+  var orders = store('orders').all(), products = store('products').all(),
+      bom = store('bom').all(), ings = store('ingredients').all(), agents = store('agents').all();
+  var rows = orders.map(function (o) {
+    var t = orderTotals(o, products, bom, ings);
+    var items = o.items.map(function (it) { var p = byId(products, it.product); return it.qty + '× ' + (p ? p.name : '?'); }).join(', ');
+    var ag = o.agent ? (byId(agents, o.agent) || {}).name : '';
+    return '<tr><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.created) + '</span></td>' +
+      '<td>' + esc(o.customer) + '<br><span class="muted">' + esc(o.phone) + '</span></td>' +
       '<td>' + esc(items) + '</td>' +
-      '<td>' + esc(o.notes) + '</td>' +
-      '<td><select onchange="ttOrderStatus(\'' + o.id + '\', this.value)">' +
-        ['new', 'confirmed', 'preparing', 'delivered', 'cancelled'].map(function (s) {
-          return '<option' + (o.status === s ? ' selected' : '') + '>' + s + '</option>';
-        }).join('') + '</select></td>';
-    if (o.status === 'new') tr.querySelector('td').classList.add('status-new');
-    tb.appendChild(tr);
+      '<td><span class="chip ' + o.status + '">' + o.status + '</span>' + (ag ? '<br><span class="muted">🚚 ' + esc(ag) + '</span>' : '') + '</td>' +
+      '<td class="num">' + money(t.rev) + '<br><span class="muted">' + t.pct + '% margin</span></td>' +
+      '<td><button class="btn p s" onclick="openOrder(\'' + o.id + '\')">Open</button></td></tr>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>🛒 Orders</h1><div class="sub">Ordering → kitchen → portioning → QC → dispatch → delivery — the whole pipeline lives on the order</div></div>' +
+    '<button class="btn p" onclick="newOrder()">＋ New order</button></div>' +
+    '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<th>Order</th><th>Customer</th><th>Items</th><th>Status</th><th class="num">Value</th><th></th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+};
+
+function openOrder(id) {
+  var orders = store('orders').all(); var o = byId(orders, id); if (!o) return;
+  var products = store('products').all(), bom = store('bom').all(), ings = store('ingredients').all(), agents = store('agents').all();
+  var t = orderTotals(o, products, bom, ings);
+  var items = o.items.map(function (it) {
+    var p = byId(products, it.product);
+    var c = productCost(it.product, bom, ings);
+    return '<tr><td>' + esc(p ? p.name : '?') + '</td><td class="num">' + it.qty + '</td>' +
+      '<td class="num">' + money(p ? p.price : 0) + '</td><td class="num">' + money(c) + '</td>' +
+      '<td class="num">' + money((p ? p.price : 0) - c) + '</td></tr>';
+  }).join('');
+  var hist = o.history.map(function (h) { return '<li><b>' + esc(h.what) + '</b><span>' + esc(h.at) + '</span></li>'; }).join('');
+  var steps = KITCHEN_STEPS.map(function (s) {
+    var st = o.steps.find(function (x) { return x.s === s; });
+    var done = st && st.done;
+    return '<label class="' + (done ? 'done' : '') + '"><input type="checkbox" ' + (done ? 'checked' : '') +
+      ' onchange="stepToggle(\'' + o.id + '\',\'' + s + '\',this.checked)">' + s + '</label>';
+  }).join('');
+  var agentOpts = agents.filter(function (a) { return a.active; })
+    .map(function (a) { return '<option value="' + a.id + '"' + (o.agent === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('');
+  var actions = '';
+  if (o.status === 'new') actions = '<button class="btn p" onclick="orderAct(\'' + o.id + '\',\'confirm\')">✓ Confirm order</button>';
+  else if (o.status === 'confirmed') actions = '<button class="btn p" onclick="orderAct(\'' + o.id + '\',\'tokitchen\')">👨‍🍳 Send to kitchen (consume stock FEFO)</button>';
+  else if (o.status === 'kitchen' || o.status === 'portioning') actions = '<button class="btn p" onclick="orderAct(\'' + o.id + '\',\'qc\')">🔎 Kitchen done → QC</button>';
+  else if (o.status === 'qc') actions = '<button class="btn g" onclick="orderAct(\'' + o.id + '\',\'qcpass\')">✅ QC pass → ready to dispatch</button>';
+  else if (o.status === 'dispatch') actions = '<select id="dl-agent">' + agentOpts + '</select> <button class="btn p" onclick="orderAct(\'' + o.id + '\',\'dispatch\')">🚚 Dispatch with agent</button>';
+  else if (o.status === 'delivering') actions = '<button class="btn g" onclick="orderAct(\'' + o.id + '\',\'delivered\')">📦 Mark delivered</button>';
+  if (o.status !== 'delivered' && o.status !== 'cancelled')
+    actions += ' <button class="btn r s" onclick="orderAct(\'' + o.id + '\',\'cancel\')">✕ Cancel</button>';
+
+  showDlg('<h3>' + esc(o.code) + ' — ' + esc(o.customer) + ' <span class="chip ' + o.status + '">' + o.status + '</span></h3>' +
+    '<p class="muted">' + esc(o.phone) + ' · ' + esc(o.address) + '</p>' +
+    '<div class="tbl-scroll" style="margin:12px 0"><table class="t"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Cost (BOM)</th><th class="num">Margin</th></tr></thead>' +
+    '<tbody>' + items + '</tbody>' +
+    '<tfoot><tr><th colspan="2">Totals</th><th class="num">' + money(t.rev) + '</th><th class="num">' + money(t.cost) + '</th><th class="num">' + money(t.margin) + ' (' + t.pct + '%)</th></tr></tfoot></table></div>' +
+    '<h4>👨‍🍳 Kitchen steps</h4><div class="steps" style="margin:8px 0 14px">' + steps + '</div>' +
+    '<div class="pill-row" style="margin-bottom:14px">' + actions + '</div>' +
+    '<h4>📍 Tracking</h4><ul class="timeline" style="margin-top:8px">' + hist + '</ul>');
+}
+
+function stepToggle(oid, step, checked) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var st = o.steps.find(function (x) { return x.s === step; });
+  if (st) st.done = checked; else o.steps.push({ s: step, done: checked });
+  if (step === 'Portioning' && checked && o.status === 'kitchen') o.status = 'portioning';
+  store('orders').save(orders);
+  openOrder(oid); render();
+}
+
+function orderAct(oid, act) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  function log(w) { o.history.push({ at: nowTs(), what: w }); }
+  if (act === 'confirm') { o.status = 'confirmed'; log('Order confirmed'); pushDemo('Order confirmed 🥕', o.code + ' is confirmed and heading to the kitchen', 'Customer · ' + o.customer); }
+  if (act === 'tokitchen') {
+    var picked = consumeFEFO(o);
+    o.status = 'kitchen';
+    log('Sent to kitchen · stock consumed FEFO: ' + picked.join(' · '));
+  }
+  if (act === 'qc') { o.status = 'qc'; log('Kitchen complete — waiting QC'); }
+  if (act === 'qcpass') { o.status = 'dispatch'; log('QC passed ✓ ready for dispatch'); }
+  if (act === 'dispatch') {
+    var sel = document.getElementById('dl-agent');
+    o.agent = sel ? sel.value : null;
+    var agents = store('agents').all(); var a = byId(agents, o.agent);
+    o.status = 'delivering'; log('Dispatched with ' + (a ? a.name : 'agent'));
+    pushDemo('Out for delivery 🚚', o.code + ' is on the way with ' + (a ? a.name : 'our agent'), 'Customer · ' + o.customer);
+  }
+  if (act === 'delivered') { o.status = 'delivered'; log('Delivered ✓'); pushDemo('Delivered 📦', 'Enjoy! Rate your ' + o.code + ' meals', 'Customer · ' + o.customer); }
+  if (act === 'cancel') { if (!confirm('Cancel this order?')) return; o.status = 'cancelled'; log('Order cancelled'); }
+  store('orders').save(orders);
+  openOrder(oid); render();
+}
+
+function newOrder() {
+  var products = store('products').all();
+  var opts = products.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + ' (' + money(p.price) + ')</option>'; }).join('');
+  showDlg('<h3>＋ New order</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Customer<input id="no-name"></label><label>Phone<input id="no-phone" placeholder="+961 ..."></label></div>' +
+    '<label>Address<input id="no-addr"></label>' +
+    '<div class="row"><label>Product<select id="no-prod">' + opts + '</select></label><label>Qty<input id="no-qty" type="number" value="1" min="1"></label></div>' +
+    '<button class="btn p" onclick="saveOrder()">Create order</button></div>');
+}
+function saveOrder() {
+  var orders = store('orders').all();
+  var n = orders.length + 42;
+  var o = { id: uid(), code: 'TT-2026-0' + n, customer: document.getElementById('no-name').value || 'Walk-in',
+    phone: document.getElementById('no-phone').value, address: document.getElementById('no-addr').value,
+    items: [{ product: document.getElementById('no-prod').value, qty: Number(document.getElementById('no-qty').value) || 1 }],
+    status: 'new', agent: null, steps: [], history: [{ at: nowTs(), what: 'Order created from dashboard' }], created: today(0) };
+  orders.unshift(o); store('orders').save(orders);
+  pushDemo('New order', o.code + ' waiting for confirmation', 'Role · manager');
+  closeDlg(); render();
+}
+
+/* ── Kitchen ── */
+RENDER.kitchen = function () {
+  var orders = store('orders').all().filter(function (o) { return ['kitchen', 'portioning', 'qc'].indexOf(o.status) >= 0; });
+  var products = store('products').all();
+  var cards = orders.map(function (o) {
+    var items = o.items.map(function (it) { var p = byId(products, it.product); return it.qty + '× ' + (p ? p.name : '?'); }).join(', ');
+    var doneN = o.steps.filter(function (s) { return s.done; }).length;
+    var pct = Math.round(doneN / KITCHEN_STEPS.length * 100);
+    var steps = KITCHEN_STEPS.map(function (s) {
+      var st = o.steps.find(function (x) { return x.s === s; }); var done = st && st.done;
+      return '<label class="' + (done ? 'done' : '') + '"><input type="checkbox" ' + (done ? 'checked' : '') +
+        ' onchange="stepToggle(\'' + o.id + '\',\'' + s + '\',this.checked)">' + s + '</label>';
+    }).join('');
+    return '<div class="panel"><h3>' + esc(o.code) + ' <span class="chip ' + o.status + '">' + o.status + '</span></h3>' +
+      '<p class="muted">' + esc(items) + '</p>' +
+      '<div class="bar-wrap" style="margin:10px 0"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="steps">' + steps + '</div>' +
+      (pct === 100 ? '<p style="margin-top:10px"><button class="btn g s" onclick="orderAct(\'' + o.id + '\',\'qcpass\')">✅ QC pass → dispatch</button></p>' : '') +
+      '</div>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>👨‍🍳 Kitchen</h1><div class="sub">Production queue — prep, cook, portioning, chill, pack with lot label, QC. Ticking steps updates the order pipeline.</div></div></div>' +
+    (cards || '<div class="panel"><p class="muted">Nothing in the kitchen right now. Confirm an order and send it to the kitchen — its FEFO stock picking happens at that moment.</p></div>');
+};
+
+/* ── BOM / Recipes ── */
+RENDER.bom = function () {
+  var products = store('products').all(), bom = store('bom').all(), ings = store('ingredients').all();
+  var cards = products.map(function (p) {
+    var lines = bom.filter(function (b) { return b.product === p.id; }).map(function (b) {
+      var g = byId(ings, b.ing);
+      return '<tr><td>' + esc(g ? g.name : '?') + '</td><td class="num">' + b.qty + ' ' + (g ? g.unit : '') + '</td>' +
+        '<td class="num">' + money(b.qty * (g ? g.cost : 0)) + '</td></tr>';
+    }).join('');
+    var cost = productCost(p.id, bom, ings);
+    var margin = p.price - cost;
+    var pct = p.price ? Math.round(margin / p.price * 100) : 0;
+    return '<div class="panel"><h3>' + esc(p.name) + ' <span class="chip fefo">' + esc(p.age) + '</span></h3>' +
+      '<div class="tbl-scroll"><table class="t"><thead><tr><th>Ingredient / portion</th><th class="num">Qty</th><th class="num">Cost</th></tr></thead>' +
+      '<tbody>' + lines + '</tbody>' +
+      '<tfoot><tr><th>Unit cost</th><th></th><th class="num">' + money(cost) + '</th></tr>' +
+      '<tr><th>Sell price</th><th></th><th class="num">' + money(p.price) + '</th></tr>' +
+      '<tr><th>Margin</th><th></th><th class="num" style="color:var(--ok)">' + money(margin) + ' · ' + pct + '%</th></tr></tfoot></table></div></div>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>🍽️ Recipes · BOM</h1><div class="sub">Every product\'s bill of materials per portion — this is what FEFO consumption and profit margins are computed from</div></div></div>' +
+    '<div class="grid2">' + cards + '</div>';
+};
+
+/* ── Inventory ── */
+RENDER.inventory = function () {
+  var ings = store('ingredients').all(), lots = store('lots').all();
+  var rows = ings.map(function (g) {
+    var s = stockOf(g.id, lots);
+    var mine = lots.filter(function (l) { return l.ing === g.id && l.qty > 0; })
+      .sort(function (a, b) { return a.expiry < b.expiry ? -1 : 1; });
+    var lotHtml = mine.map(function (l, i) {
+      var expSoon = l.expiry <= today(7);
+      return '<div>' + (i === 0 ? '<span class="chip fefo">FEFO next</span> ' : '') +
+        '<b>' + esc(l.lot) + '</b> · ' + l.qty + ' ' + g.unit + ' · exp ' + esc(l.expiry) +
+        (expSoon ? ' <span class="chip exp">≤7d</span>' : '') + '</div>';
+    }).join('') || '<span class="muted">no stock</span>';
+    var low = s < g.min;
+    return '<tr><td><b>' + esc(g.name) + '</b><br><span class="muted">' + money(g.cost) + '/' + g.unit + '</span></td>' +
+      '<td class="num">' + (Math.round(s * 1000) / 1000) + ' ' + g.unit + (low ? ' <span class="chip low">LOW</span>' : '') + '</td>' +
+      '<td class="num">' + g.min + ' ' + g.unit + '</td>' +
+      '<td>' + lotHtml + '</td>' +
+      '<td><button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">＋ Receive lot</button></td></tr>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>📦 Inventory · Lots</h1><div class="sub">Lot-level stock with FEFO picking order (first-expired, first-out). Falling below minimum opens an auto-requisition.</div></div></div>' +
+    '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<th>Ingredient</th><th class="num">On hand</th><th class="num">Min</th><th>Lots (FEFO order)</th><th></th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+};
+function receiveLot(ingId) {
+  var ings = store('ingredients').all(); var g = byId(ings, ingId);
+  showDlg('<h3>＋ Receive lot — ' + esc(g.name) + '</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Lot number<input id="rl-lot" placeholder="e.g. CAR-240901"></label>' +
+    '<label>Quantity (' + g.unit + ')<input id="rl-qty" type="number" step="0.1"></label></div>' +
+    '<label>Expiry date<input id="rl-exp" type="date" value="' + today(7) + '"></label>' +
+    '<button class="btn p" onclick="saveLot(\'' + ingId + '\')">Receive into stock</button></div>');
+}
+function saveLot(ingId) {
+  var lots = store('lots').all();
+  lots.push({ id: uid(), ing: ingId, lot: document.getElementById('rl-lot').value || ('LOT-' + uid()),
+    qty: Number(document.getElementById('rl-qty').value) || 0,
+    expiry: document.getElementById('rl-exp').value, received: today(0) });
+  store('lots').save(lots);
+  var reqs = store('requisitions').all();
+  reqs.forEach(function (r) { if (r.ing === ingId && r.status === 'open') r.status = 'received'; });
+  store('requisitions').save(reqs);
+  closeDlg(); render();
+}
+
+/* ── Requisitions ── */
+RENDER.requisitions = function () {
+  var reqs = store('requisitions').all(), ings = store('ingredients').all();
+  var rows = reqs.map(function (r) {
+    var g = byId(ings, r.ing);
+    return '<tr><td>' + (r.reason === 'auto' ? '<span class="chip auto">AUTO</span>' : '<span class="chip fefo">manual</span>') + '</td>' +
+      '<td><b>' + esc(g ? g.name : '?') + '</b></td><td class="num">' + r.qty + ' ' + (g ? g.unit : '') + '</td>' +
+      '<td>' + esc(r.note || '') + '</td><td>' + esc(r.created) + '</td>' +
+      '<td><span class="chip ' + (r.status === 'open' ? 'open' : 'done') + '">' + r.status + '</span></td>' +
+      (r.status === 'open' && g ? '<td><button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">Receive</button></td>' : '<td></td>') + '</tr>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>🧾 Requisitions</h1><div class="sub">Auto-opened when stock drops below the ingredient minimum; closed when the lot is received</div></div>' +
+    '<button class="btn p" onclick="manualReq()">＋ Manual requisition</button></div>' +
+    '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<th></th><th>Ingredient</th><th class="num">Qty</th><th>Why</th><th>Date</th><th>Status</th><th></th>' +
+    '</tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="muted">No requisitions.</td></tr>') + '</tbody></table></div></div>';
+};
+function manualReq() {
+  var ings = store('ingredients').all();
+  var opts = ings.map(function (g) { return '<option value="' + g.id + '">' + esc(g.name) + '</option>'; }).join('');
+  showDlg('<h3>＋ Manual requisition</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Ingredient<select id="mr-ing">' + opts + '</select></label><label>Quantity<input id="mr-qty" type="number" step="0.1"></label></div>' +
+    '<label>Note<input id="mr-note"></label><button class="btn p" onclick="saveReq()">Open requisition</button></div>');
+}
+function saveReq() {
+  var reqs = store('requisitions').all();
+  reqs.unshift({ id: uid(), ing: document.getElementById('mr-ing').value,
+    qty: Number(document.getElementById('mr-qty').value) || 0, reason: 'manual', status: 'open',
+    note: document.getElementById('mr-note').value, created: today(0) });
+  store('requisitions').save(reqs);
+  closeDlg(); render();
+}
+
+/* ── Delivery ── */
+RENDER.delivery = function () {
+  var agents = store('agents').all(), orders = store('orders').all();
+  var ready = orders.filter(function (o) { return o.status === 'dispatch'; });
+  var out = orders.filter(function (o) { return o.status === 'delivering'; });
+  var agentRows = agents.map(function (a) {
+    var mine = out.filter(function (o) { return o.agent === a.id; }).map(function (o) { return o.code; }).join(', ') || '—';
+    return '<tr><td><b>' + esc(a.name) + '</b></td><td>' + esc(a.phone) + '</td>' +
+      '<td>' + (a.active ? '<span class="chip done">active</span>' : '<span class="chip todo">off</span>') + '</td>' +
+      '<td>' + esc(mine) + '</td></tr>';
+  }).join('');
+  var readyRows = ready.map(function (o) {
+    return '<tr><td><b>' + esc(o.code) + '</b></td><td>' + esc(o.customer) + '</td><td>' + esc(o.address) + '</td>' +
+      '<td><button class="btn p s" onclick="openOrder(\'' + o.id + '\')">Assign & dispatch</button></td></tr>';
+  }).join('') || '<tr><td colspan="4" class="muted">Nothing waiting for dispatch.</td></tr>';
+  var outRows = out.map(function (o) {
+    var a = byId(agents, o.agent);
+    return '<tr><td><b>' + esc(o.code) + '</b></td><td>' + esc(o.customer) + ' · ' + esc(o.address) + '</td>' +
+      '<td>🚚 ' + esc(a ? a.name : '') + '</td>' +
+      '<td><button class="btn g s" onclick="orderAct(\'' + o.id + '\',\'delivered\')">Mark delivered</button></td></tr>';
+  }).join('') || '<tr><td colspan="4" class="muted">No orders on the road.</td></tr>';
+  return '<div class="pagehead"><div><h1>🚚 Dispatch · Agents</h1><div class="sub">Ready-to-go orders, live deliveries, and the agent roster</div></div></div>' +
+    '<div class="panel"><h3>📦 Ready for dispatch</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Customer</th><th>Address</th><th></th></tr></thead><tbody>' + readyRows + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>🛵 Out for delivery</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Order</th><th>Where</th><th>Agent</th><th></th></tr></thead><tbody>' + outRows + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>👤 Agents</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Carrying</th></tr></thead><tbody>' + agentRows + '</tbody></table></div></div>';
+};
+
+/* ── ISO 22000 ── */
+RENDER.iso = function () {
+  var iso = store('iso').all();
+  var clauses = [];
+  iso.forEach(function (i) { if (clauses.indexOf(i.clause) < 0) clauses.push(i.clause); });
+  var done = iso.filter(function (i) { return i.status === 'done'; }).length;
+  var pct = Math.round(done / iso.length * 100);
+  var groups = clauses.map(function (c) {
+    var mine = iso.filter(function (i) { return i.clause === c; });
+    var d = mine.filter(function (i) { return i.status === 'done'; }).length;
+    var rows = mine.map(function (i) {
+      return '<tr><td>' + esc(i.item) + '</td>' +
+        '<td><select onchange="isoSet(\'' + i.id + '\',\'status\',this.value)">' +
+        ['done', 'progress', 'todo'].map(function (s) {
+          var lbl = s === 'done' ? '✅ done' : s === 'progress' ? '🟡 in progress' : '🔴 not done';
+          return '<option value="' + s + '"' + (i.status === s ? ' selected' : '') + '>' + lbl + '</option>';
+        }).join('') + '</select></td>' +
+        '<td><input value="' + esc(i.owner) + '" placeholder="owner" style="width:110px" onchange="isoSet(\'' + i.id + '\',\'owner\',this.value)"></td>' +
+        '<td><input value="' + esc(i.evidence) + '" placeholder="evidence / doc ref" style="width:150px" onchange="isoSet(\'' + i.id + '\',\'evidence\',this.value)"></td></tr>';
+    }).join('');
+    return '<div class="panel"><h3>' + esc(c) + ' <span class="muted" style="font-family:Quicksand;font-size:.8rem">' + d + '/' + mine.length + '</span></h3>' +
+      '<div class="tbl-scroll"><table class="t"><thead><tr><th>Requirement</th><th>Flag</th><th>Owner</th><th>Evidence</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>🛡️ ISO 22000 checklist</h1><div class="sub">Food safety management readiness sheet, clause by clause — flag each item done / in progress / not done. (Working summary; certification uses the official standard text.)</div></div>' +
+    '<div class="pill-row"><button class="btn o s" onclick="isoCsv()">📋 Copy as CSV sheet</button></div></div>' +
+    '<div class="panel"><div class="toolbar"><h3>Overall readiness</h3><b>' + pct + '%</b></div>' +
+    '<div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%"></div></div></div>' + groups;
+};
+function isoSet(id, field, value) {
+  var iso = store('iso').all(); var i = byId(iso, id);
+  if (i) { i[field] = value; store('iso').save(iso); }
+  if (field === 'status') render();
+}
+function isoCsv() {
+  var iso = store('iso').all();
+  var lines = ['Clause,Requirement,Status,Owner,Evidence'];
+  iso.forEach(function (i) {
+    lines.push('"' + i.clause + '","' + i.item.replace(/"/g, '""') + '","' + i.status + '","' + (i.owner || '') + '","' + (i.evidence || '') + '"');
   });
-  if (!(r.data || []).length) tb.innerHTML = '<tr><td colspan="7" class="muted">No orders yet.</td></tr>';
+  var csv = lines.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(csv).then(function () { alert('CSV copied — paste into Excel / Google Sheets. (Also committed as tinytummy/iso22000-checklist.csv)'); });
+  else alert(csv);
 }
 
-async function ttOrderStatus(id, status) {
-  var r = await db.from('orders').update({ status: status }).eq('id', id);
-  if (r.error) alert('Update failed: ' + r.error.message);
+/* ── Complaints ── */
+RENDER.complaints = function () {
+  var comps = store('complaints').all();
+  var rows = comps.map(function (c) {
+    var sevChip = c.severity === 'high' ? 'open' : c.severity === 'medium' ? 'progress' : 'fefo';
+    return '<tr><td><b>' + esc(c.code) + '</b><br><span class="muted">order ' + esc(c.order) + '</span></td>' +
+      '<td>' + esc(c.customer) + '</td><td>' + esc(c.summary) + '</td>' +
+      '<td><span class="chip ' + sevChip + '">' + c.severity + '</span></td>' +
+      '<td><span class="chip ' + c.status + '">' + c.status + '</span>' + (c.escalatedTo ? '<br><span class="muted">→ ' + esc(c.escalatedTo) + '</span>' : '') + '</td>' +
+      '<td>' + esc(c.sla) + '</td>' +
+      '<td><button class="btn p s" onclick="openCase(\'' + c.id + '\')">Open</button></td></tr>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>📣 Complaints · Cases</h1><div class="sub">Customer cases with severity, SLA and an escalation chain — support → manager → owner, every step logged</div></div>' +
+    '<button class="btn p" onclick="newCase()">＋ New case</button></div>' +
+    '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<th>Case</th><th>Customer</th><th>Summary</th><th>Severity</th><th>Status</th><th>SLA</th><th></th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+};
+function openCase(id) {
+  var comps = store('complaints').all(); var c = byId(comps, id); if (!c) return;
+  var log = c.log.map(function (h) { return '<li><b>' + esc(h.what) + '</b><span>' + esc(h.at) + '</span></li>'; }).join('');
+  var acts = '';
+  if (c.status !== 'resolved') {
+    if (c.status !== 'escalated') acts += '<button class="btn o s" onclick="caseAct(\'' + c.id + '\',\'escalate\')">⤴ Escalate to manager</button> ';
+    acts += '<button class="btn g s" onclick="caseAct(\'' + c.id + '\',\'resolve\')">✅ Resolve case</button> ';
+    acts += '<button class="btn p s" onclick="caseAct(\'' + c.id + '\',\'note\')">＋ Add note</button>';
+  }
+  showDlg('<h3>' + esc(c.code) + ' <span class="chip ' + c.status + '">' + c.status + '</span></h3>' +
+    '<p class="muted">' + esc(c.customer) + ' · ' + esc(c.phone) + ' · order ' + esc(c.order) + ' · SLA ' + esc(c.sla) + '</p>' +
+    '<p style="margin:10px 0"><b>' + esc(c.summary) + '</b></p>' +
+    '<div class="pill-row" style="margin-bottom:12px">' + acts + '</div>' +
+    '<h4>Case log</h4><ul class="timeline" style="margin-top:8px">' + log + '</ul>');
+}
+function caseAct(id, act) {
+  var comps = store('complaints').all(); var c = byId(comps, id); if (!c) return;
+  if (act === 'escalate') {
+    c.status = 'escalated'; c.escalatedTo = 'Lina — Manager';
+    c.log.push({ at: nowTs(), what: 'Escalated to Lina — Manager' });
+    pushDemo('Case escalated ⤴', c.code + ': ' + c.summary, 'Role · manager');
+  }
+  if (act === 'resolve') { c.status = 'resolved'; c.log.push({ at: nowTs(), what: 'Resolved ✓ customer informed' }); }
+  if (act === 'note') {
+    var n = prompt('Note to add to the case log:');
+    if (!n) return;
+    c.log.push({ at: nowTs(), what: n });
+    if (c.status === 'open') c.status = 'investigating';
+  }
+  store('complaints').save(comps);
+  openCase(id); render();
+}
+function newCase() {
+  showDlg('<h3>＋ New case</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Customer<input id="nc-name"></label><label>Phone<input id="nc-phone"></label></div>' +
+    '<div class="row"><label>Order code<input id="nc-order" placeholder="TT-2026-…"></label><label>Severity<select id="nc-sev"><option>low</option><option selected>medium</option><option>high</option></select></label></div>' +
+    '<label>What happened<textarea id="nc-sum" rows="3"></textarea></label>' +
+    '<button class="btn p" onclick="saveCase()">Open case</button></div>');
+}
+function saveCase() {
+  var comps = store('complaints').all();
+  comps.unshift({ id: uid(), code: 'CASE-0' + (comps.length + 14), order: document.getElementById('nc-order').value,
+    customer: document.getElementById('nc-name').value, phone: document.getElementById('nc-phone').value,
+    summary: document.getElementById('nc-sum').value, severity: document.getElementById('nc-sev').value,
+    status: 'open', assigned: currentUser().name, escalatedTo: null, sla: today(2),
+    log: [{ at: nowTs(), what: 'Case opened by ' + currentUser().name }], created: today(0) });
+  store('complaints').save(comps);
+  closeDlg(); render();
 }
 
-ttInit();
+/* ── Chat ── */
+var chatChannel = 'kitchen';
+RENDER.chat = function () {
+  var chans = ['kitchen', 'delivery', 'management'];
+  var btns = chans.map(function (c) {
+    return '<button class="' + (chatChannel === c ? 'active' : '') + '" onclick="chatGo(\'' + c + '\')">#' + c + '</button>';
+  }).join('');
+  var msgs = store('chat').all().filter(function (m) { return m.channel === chatChannel; });
+  var me = currentUser().name;
+  var html = msgs.map(function (m) {
+    return '<div class="msg' + (m.sender === me ? ' me' : '') + '"><b>' + esc(m.sender) + '</b>' + esc(m.text) +
+      '<span class="ts">' + esc(m.at) + '</span></div>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>💬 Team Chat</h1><div class="sub">Kitchen ↔ delivery ↔ management in one place — stock alerts and escalations land here too</div></div></div>' +
+    '<div class="panel"><div class="chan">' + btns + '</div>' +
+    '<div class="chat-box"><div class="chat-msgs" id="chatmsgs">' + html + '</div>' +
+    '<div class="chat-send"><input id="chat-in" placeholder="Message #' + chatChannel + '…" onkeydown="if(event.key===\'Enter\')chatSend()">' +
+    '<button class="btn p" onclick="chatSend()">Send</button></div></div></div>';
+};
+AFTER.chat = function () { var el = document.getElementById('chatmsgs'); if (el) el.scrollTop = el.scrollHeight; };
+function chatGo(c) { chatChannel = c; render(); }
+function chatSend() {
+  var inp = document.getElementById('chat-in'); if (!inp || !inp.value.trim()) return;
+  var chat = store('chat').all();
+  chat.push({ id: uid(), channel: chatChannel, sender: currentUser().name, text: inp.value.trim(), at: nowTs() });
+  store('chat').save(chat);
+  render();
+}
+
+/* ── Notifications ── */
+RENDER.notify = function () {
+  var log = store('pushlog').all();
+  var rows = log.map(function (n) {
+    return '<tr><td><b>' + esc(n.title) + '</b><br><span class="muted">' + esc(n.body) + '</span></td>' +
+      '<td>' + esc(n.audience) + '</td>' +
+      '<td>' + (n.sent ? '✅<br><span class="muted">' + esc(n.sent) + '</span>' : '—') + '</td>' +
+      '<td>' + (n.delivered ? '📲<br><span class="muted">' + esc(n.delivered) + '</span>' : '<span class="muted">…</span>') + '</td>' +
+      '<td>' + (n.opened ? '👁<br><span class="muted">' + esc(n.opened) + '</span>' : '<span class="muted">—</span>') + '</td></tr>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>🔔 Notifications</h1><div class="sub">Same doctrine as the municipality build: <b>Sent</b>, <b>Delivered</b> and <b>Opened</b> are three different facts, tracked apart — and a send with no audience is refused</div></div></div>' +
+    '<div class="panel"><h3>📣 Compose push</h3><div class="frm">' +
+    '<div class="row"><label>Title<input id="pn-title" placeholder="e.g. Friday menu is out 🥕"></label>' +
+    '<label>Audience<select id="pn-aud"><option>Role · manager</option><option>Role · kitchen</option><option>Role · delivery</option><option>All customers</option><option>Program · First Tastes</option><option>Program · Little Explorers</option><option>Program · Toddler Table</option><option>Program · Big Kids Club</option></select></label></div>' +
+    '<label>Message<input id="pn-body"></label>' +
+    '<button class="btn p" onclick="sendPush()">Send push</button>' +
+    '<p class="muted">Order events (confirmed / out for delivery / delivered), stock alerts and case escalations send automatically.</p></div></div>' +
+    '<div class="panel"><h3>📬 Push log</h3><div class="tbl-scroll"><table class="t"><thead><tr>' +
+    '<th>Notification</th><th>Audience</th><th>Sent</th><th>Delivered</th><th>Opened</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+};
+function sendPush() {
+  var t = document.getElementById('pn-title').value, b = document.getElementById('pn-body').value;
+  if (!t) { alert('Title required'); return; }
+  pushDemo(t, b, document.getElementById('pn-aud').value);
+  render();
+}
+
+/* ── Age Programs ── */
+RENDER.programs = function () {
+  var progs = store('programs').all();
+  var cards = progs.map(function (p) {
+    return '<div class="panel"><h3>👶 ' + esc(p.name) + ' <span class="chip fefo">' + esc(p.band) + '</span></h3>' +
+      '<p class="muted" style="margin-bottom:8px">' + esc(p.desc) + '</p>' +
+      '<p style="font-size:.86rem"><b>Weekly plan:</b> ' + esc(p.menu) + '</p>' +
+      '<div class="toolbar" style="margin-top:10px"><span><b>' + money(p.price) + '</b>/month · <b>' + p.enrolled + '</b> enrolled</span>' +
+      '<span class="pill-row"><button class="btn o s" onclick="progEnroll(\'' + p.id + '\',1)">＋ Enroll</button>' +
+      '<button class="btn o s" onclick="progEnroll(\'' + p.id + '\',-1)">−</button></span></div></div>';
+  }).join('');
+  var totalRev = progs.reduce(function (s, p) { return s + p.price * p.enrolled; }, 0);
+  return '<div class="pagehead"><div><h1>👶 Age Programs</h1><div class="sub">Subscription meal programs per age band — weekly plans, enrollment and recurring revenue</div></div>' +
+    '<span><b>' + money(totalRev) + '</b> <span class="muted">/month recurring</span></span></div>' +
+    '<div class="grid2">' + cards + '</div>';
+};
+function progEnroll(id, d) {
+  var progs = store('programs').all(); var p = byId(progs, id);
+  if (p) { p.enrolled = Math.max(0, p.enrolled + d); store('programs').save(progs); render(); }
+}
+
+/* ── Users ── */
+RENDER.users = function () {
+  var staff = store('staff').all();
+  var rows = staff.map(function (u) {
+    var roleOpts = ROLES.map(function (r) { return '<option' + (u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('');
+    return '<tr><td><b>' + esc(u.name) + '</b></td><td>' + esc(u.email) + '</td>' +
+      '<td><select onchange="setRole(\'' + u.id + '\',this.value)">' + roleOpts + '</select></td></tr>';
+  }).join('');
+  var rp = store('role_perms').all();
+  var head = ROLES.map(function (r) { return '<th>' + r.replace('_', ' ') + '</th>'; }).join('');
+  var matrix = PERM_KEYS.map(function (pk) {
+    var cells = ROLES.map(function (r) {
+      var row = rp.find(function (x) { return x.role === r && x.key === pk[0]; });
+      var checked = row && row.allowed;
+      var lock = r === 'super_admin';
+      return '<td><input type="checkbox" ' + (checked ? 'checked' : '') + (lock ? ' disabled' : '') +
+        ' onchange="setPerm(\'' + r + '\',\'' + pk[0] + '\',this.checked)"></td>';
+    }).join('');
+    return '<tr><td><b>' + pk[0] + '</b><br><span class="muted">' + pk[1] + '</span></td>' + cells + '</tr>';
+  }).join('');
+  return '<div class="pagehead"><div><h1>👥 Users · Roles</h1><div class="sub">One permission key per capability — role defaults here, per-person overrides in Supabase (has_perm: override → role → super_admin), exactly the municipality pattern</div></div></div>' +
+    '<div class="panel"><h3>Team</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<p class="muted" style="margin-top:8px">Real logins are Supabase Auth users; this list maps them to roles.</p></div>' +
+    '<div class="panel"><h3>🔐 Permission matrix</h3><div class="tbl-scroll"><table class="t matrix"><thead><tr><th>Permission</th>' + head + '</tr></thead><tbody>' + matrix + '</tbody></table></div>' +
+    '<p class="muted" style="margin-top:8px">super_admin always holds everything. Try it: switch the signed-in user (bottom-left) to Chef Nadim and watch the sidebar shrink to his permissions.</p></div>';
+};
+function setRole(id, role) {
+  var staff = store('staff').all(); var u = byId(staff, id);
+  if (u) { u.role = role; store('staff').save(staff); render(); }
+}
+function setPerm(role, key, allowed) {
+  var rp = store('role_perms').all();
+  var row = rp.find(function (x) { return x.role === role && x.key === key; });
+  if (row) row.allowed = allowed; else rp.push({ role: role, key: key, allowed: allowed });
+  store('role_perms').save(rp);
+}
+
+/* ── Settings ── */
+RENDER.settings = function () {
+  return '<div class="pagehead"><div><h1>⚙️ Settings</h1></div></div>' +
+    '<div class="panel"><h3>🔌 Supabase</h3>' +
+    '<p>' + (CONNECTED ? '🟢 URL configured in <code>js/supabase-config.js</code>.' : '🔴 Not connected — the dashboard runs on demo data saved in this browser.') + '</p>' +
+    '<ol class="muted" style="margin:10px 0 0 20px">' +
+    '<li>Run <b>supabase/schema.sql</b> (site) then <b>supabase/schema2_operations.sql</b> (this dashboard) in the Supabase SQL editor.</li>' +
+    '<li>Paste the project URL + anon key into <b>js/supabase-config.js</b>.</li>' +
+    '<li>Create staff logins in Supabase → Authentication → Users, then map them to roles in the Users module.</li>' +
+    '<li>For real push notifications, deploy the send-push edge function with VAPID keys — same architecture as the municipality: device registry, send log, and per-device delivered/opened receipts.</li></ol></div>' +
+    '<div class="panel"><h3>🧪 Demo data</h3><p class="muted">Everything you click is saved in this browser only.</p>' +
+    '<p style="margin-top:10px"><button class="btn r s" onclick="resetDemo()">↺ Reset demo data</button></p></div>';
+};
+
+/* ── dialog helpers ── */
+function showDlg(html) {
+  var d = document.getElementById('dlg');
+  d.innerHTML = '<div style="display:flex;justify-content:flex-end"><button class="btn o s" onclick="closeDlg()">✕ Close</button></div>' + html;
+  if (!d.open) d.showModal();
+}
+function closeDlg() { document.getElementById('dlg').close(); }
+
+/* ── boot ── */
+(function () {
+  var sel = document.getElementById('whoami');
+  store('staff').all().forEach(function (u) {
+    var o = document.createElement('option');
+    o.value = u.id; o.textContent = u.name + ' (' + u.role + ')';
+    if (u.id === (localStorage.getItem('ttops_whoami') || 'u1')) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.addEventListener('change', function () {
+    localStorage.setItem('ttops_whoami', sel.value);
+    render();
+  });
+  var h = (location.hash || '').replace('#', '');
+  nav(VIEWS.indexOf(h) >= 0 ? h : 'overview');
+})();
 </script>
 </body>
 </html>

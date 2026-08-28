@@ -13,7 +13,9 @@ with a Supabase-backed production dashboard.
 | `why-us.html` | Why Us — dietitian designed, chef crafted, Shark Tank |
 | `how-it-works.html` | Pick → we cook → delivered (next-day before 3 PM) |
 | `contact.html` | Phone / WhatsApp / email + message form |
-| `dashboard.html` | **Production dashboard** — staff login, product CRUD, orders |
+| `dashboard.html` | **Ops dashboard** — full operation: orders pipeline (order → kitchen → portioning → QC → dispatch → delivery), lot inventory with BOM + FEFO and auto-requisitions, profit margins, ISO 22000 checklist, complaints with escalation, team chat, push log (sent/delivered/opened), age programs, users & permission matrix. Runs on demo data in the browser until Supabase is connected. |
+| `supabase/schema2_operations.sql` | Operations tables (`tt_*`) with `tt_has_perm()` RLS + FEFO consume function + seeds |
+| `iso22000-checklist.csv` | ISO 22000 template sheet (clause / requirement / status / owner / evidence) |
 | `js/products-data.js` | Static catalog (fallback until Supabase is connected) |
 | `js/supabase-config.js` | Paste your Supabase URL + anon key here |
 | `supabase/schema.sql` | Tables, RLS policies and seed data for Supabase |
