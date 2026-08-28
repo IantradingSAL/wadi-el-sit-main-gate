@@ -296,37 +296,45 @@ SEED.role_perms = (function () {
 })();
 
 SEED.ingredients = [
-  { id: 'g1', name: 'Carrots', unit: 'kg', cost: 1.2, min: 5, reorder: 10 },
-  { id: 'g2', name: 'Zucchini', unit: 'kg', cost: 1.5, min: 4, reorder: 8 },
-  { id: 'g3', name: 'Millet', unit: 'kg', cost: 3.0, min: 3, reorder: 6 },
-  { id: 'g4', name: 'Cauliflower', unit: 'kg', cost: 1.8, min: 3, reorder: 6 },
-  { id: 'g5', name: 'Beetroot', unit: 'kg', cost: 1.4, min: 3, reorder: 6 },
-  { id: 'g6', name: 'Quinoa', unit: 'kg', cost: 5.5, min: 2, reorder: 4 },
-  { id: 'g7', name: 'Mango', unit: 'kg', cost: 3.2, min: 2, reorder: 5 },
-  { id: 'g8', name: 'Full-fat cow milk', unit: 'L', cost: 1.1, min: 10, reorder: 20 },
-  { id: 'g9', name: 'Walnuts', unit: 'kg', cost: 9.0, min: 1, reorder: 2 },
-  { id: 'g10', name: 'Cocoa', unit: 'kg', cost: 7.0, min: 1, reorder: 2 },
-  { id: 'g11', name: 'Carob molasses', unit: 'kg', cost: 4.5, min: 1, reorder: 2 },
-  { id: 'g12', name: 'Biscuits (baby-safe)', unit: 'kg', cost: 4.0, min: 2, reorder: 4 },
-  { id: 'g13', name: 'Flour', unit: 'kg', cost: 0.9, min: 5, reorder: 10 },
-  { id: 'g14', name: 'Eggs', unit: 'pc', cost: 0.18, min: 30, reorder: 60 }
+  { id: 'g1', name: 'Carrots', cat: 'Vegetables', unit: 'kg', cost: 1.2, min: 5, max: 20, use_m: 45, lead: 1, auto: true, reorder: 10 },
+  { id: 'g2', name: 'Zucchini', cat: 'Vegetables', unit: 'kg', cost: 1.5, min: 4, max: 15, use_m: 30, lead: 1, auto: true, reorder: 8 },
+  { id: 'g3', name: 'Millet', cat: 'Dry goods', unit: 'kg', cost: 3.0, min: 3, max: 12, use_m: 14, lead: 3, auto: true, reorder: 6 },
+  { id: 'g4', name: 'Cauliflower', cat: 'Vegetables', unit: 'kg', cost: 1.8, min: 3, max: 10, use_m: 18, lead: 1, auto: true, reorder: 6 },
+  { id: 'g5', name: 'Beetroot', cat: 'Vegetables', unit: 'kg', cost: 1.4, min: 3, max: 12, use_m: 22, lead: 1, auto: true, reorder: 6 },
+  { id: 'g6', name: 'Quinoa', cat: 'Dry goods', unit: 'kg', cost: 5.5, min: 2, max: 8, use_m: 9, lead: 5, auto: true, reorder: 4 },
+  { id: 'g7', name: 'Mango', cat: 'Fruit', unit: 'kg', cost: 3.2, min: 2, max: 8, use_m: 16, lead: 1, auto: true, reorder: 5 },
+  { id: 'g8', name: 'Full-fat cow milk', cat: 'Dairy', unit: 'L', cost: 1.1, min: 10, max: 30, use_m: 80, lead: 1, auto: true, reorder: 20 },
+  { id: 'g9', name: 'Walnuts', cat: 'Dry goods', unit: 'kg', cost: 9.0, min: 1, max: 4, use_m: 3, lead: 7, auto: true, reorder: 2 },
+  { id: 'g10', name: 'Cocoa', cat: 'Dry goods', unit: 'kg', cost: 7.0, min: 1, max: 3, use_m: 1.5, lead: 7, auto: false, reorder: 2 },
+  { id: 'g11', name: 'Carob molasses', cat: 'Dry goods', unit: 'kg', cost: 4.5, min: 1, max: 4, use_m: 2, lead: 5, auto: false, reorder: 2 },
+  { id: 'g12', name: 'Biscuits (baby-safe)', cat: 'Bakery', unit: 'kg', cost: 4.0, min: 2, max: 8, use_m: 6, lead: 3, auto: true, reorder: 4 },
+  { id: 'g13', name: 'Flour', cat: 'Dry goods', unit: 'kg', cost: 0.9, min: 5, max: 20, use_m: 12, lead: 2, auto: true, reorder: 10 },
+  { id: 'g14', name: 'Eggs', cat: 'Dairy', unit: 'pc', cost: 0.18, min: 30, max: 120, use_m: 160, lead: 1, auto: true, reorder: 60 }
 ];
+function normIng(g) { // older saved data lacks the item-master fields
+  if (g.cat === undefined) g.cat = 'Other';
+  if (g.max === undefined) g.max = g.min * 3 || 10;
+  if (g.use_m === undefined) g.use_m = '';
+  if (g.lead === undefined) g.lead = 2;
+  if (g.auto === undefined) g.auto = true;
+  return g;
+}
 SEED.lots = [
-  { id: 'l1', ing: 'g1', lot: 'CAR-240818', qty: 6, expiry: today(3), received: today(-9) },
-  { id: 'l2', ing: 'g1', lot: 'CAR-240825', qty: 8, expiry: today(9), received: today(-2) },
-  { id: 'l3', ing: 'g2', lot: 'ZUC-240824', qty: 5, expiry: today(4), received: today(-3) },
-  { id: 'l4', ing: 'g3', lot: 'MIL-240701', qty: 7, expiry: today(120), received: today(-30) },
-  { id: 'l5', ing: 'g4', lot: 'CFL-240826', qty: 4, expiry: today(5), received: today(-1) },
-  { id: 'l6', ing: 'g5', lot: 'BEE-240822', qty: 5, expiry: today(6), received: today(-5) },
-  { id: 'l7', ing: 'g6', lot: 'QUI-240610', qty: 3, expiry: today(200), received: today(-60) },
-  { id: 'l8', ing: 'g7', lot: 'MNG-240826', qty: 2.5, expiry: today(2), received: today(-1) },
-  { id: 'l9', ing: 'g8', lot: 'MLK-240827', qty: 14, expiry: today(4), received: today(0) },
-  { id: 'l10', ing: 'g9', lot: 'WAL-240501', qty: 1.5, expiry: today(90), received: today(-90) },
-  { id: 'l11', ing: 'g10', lot: 'COC-240401', qty: 1.2, expiry: today(150), received: today(-120) },
-  { id: 'l12', ing: 'g11', lot: 'CRB-240301', qty: 1.8, expiry: today(180), received: today(-150) },
-  { id: 'l13', ing: 'g12', lot: 'BIS-240801', qty: 3, expiry: today(60), received: today(-20) },
-  { id: 'l14', ing: 'g13', lot: 'FLR-240715', qty: 9, expiry: today(100), received: today(-40) },
-  { id: 'l15', ing: 'g14', lot: 'EGG-240826', qty: 48, expiry: today(12), received: today(-1) }
+  { id: 'l1', loc: 'Fridge A', ing: 'g1', lot: 'CAR-240818', qty: 6, expiry: today(3), received: today(-9) },
+  { id: 'l2', loc: 'Fridge A', ing: 'g1', lot: 'CAR-240825', qty: 8, expiry: today(9), received: today(-2) },
+  { id: 'l3', loc: 'Fridge A', ing: 'g2', lot: 'ZUC-240824', qty: 5, expiry: today(4), received: today(-3) },
+  { id: 'l4', loc: 'Dry store', ing: 'g3', lot: 'MIL-240701', qty: 7, expiry: today(120), received: today(-30) },
+  { id: 'l5', loc: 'Fridge B', ing: 'g4', lot: 'CFL-240826', qty: 4, expiry: today(5), received: today(-1) },
+  { id: 'l6', loc: 'Fridge B', ing: 'g5', lot: 'BEE-240822', qty: 5, expiry: today(6), received: today(-5) },
+  { id: 'l7', loc: 'Dry store', ing: 'g6', lot: 'QUI-240610', qty: 3, expiry: today(200), received: today(-60) },
+  { id: 'l8', loc: 'Fridge A', ing: 'g7', lot: 'MNG-240826', qty: 2.5, expiry: today(2), received: today(-1) },
+  { id: 'l9', loc: 'Fridge B', ing: 'g8', lot: 'MLK-240827', qty: 14, expiry: today(4), received: today(0) },
+  { id: 'l10', loc: 'Dry store', ing: 'g9', lot: 'WAL-240501', qty: 1.5, expiry: today(90), received: today(-90) },
+  { id: 'l11', loc: 'Dry store', ing: 'g10', lot: 'COC-240401', qty: 1.2, expiry: today(150), received: today(-120) },
+  { id: 'l12', loc: 'Dry store', ing: 'g11', lot: 'CRB-240301', qty: 1.8, expiry: today(180), received: today(-150) },
+  { id: 'l13', loc: 'Dry store', ing: 'g12', lot: 'BIS-240801', qty: 3, expiry: today(60), received: today(-20) },
+  { id: 'l14', loc: 'Dry store', ing: 'g13', lot: 'FLR-240715', qty: 9, expiry: today(100), received: today(-40) },
+  { id: 'l15', loc: 'Fridge B', ing: 'g14', lot: 'EGG-240826', qty: 48, expiry: today(12), received: today(-1) }
 ];
 SEED.products = [
   { id: 'p1', handle: 'puree-pack', name: 'Puree Pack', category: 'purees', age: '6M+', price: 18, portion_g: 120, batch_portions: 28 },
@@ -589,12 +597,14 @@ function consumeFEFO(order) {
   // auto-requisition anything now below minimum
   var reqs = store('requisitions').all();
   var opened = [];
-  ings.forEach(function (g) {
+  ings.map(normIng).forEach(function (g) {
+    if (!g.auto) return;
     var s = stockOf(g.id, lots);
-    var already = reqs.some(function (r) { return r.ing === g.id && r.status === 'open'; });
+    var already = reqs.map(normReq).some(function (r) { return r.ing === g.id && (r.status === 'pending' || r.status === 'approved'); });
     if (s < g.min && !already) {
-      reqs.push({ id: uid(), ing: g.id, qty: g.reorder, reason: 'auto', status: 'open',
-        note: g.name + ' fell below minimum (' + s + ' ' + g.unit + ' left) after ' + order.code, created: today(0) });
+      var qty = Math.max(g.reorder || 0, Math.round((g.max - s) * 10) / 10); // refill to Max
+      reqs.push({ id: uid(), ing: g.id, qty: qty, reason: 'auto', status: 'pending',
+        note: g.name + ' below minimum (' + s + ' ' + g.unit + ' left) after ' + order.code + ' — refill to max ' + g.max, created: today(0) });
       opened.push(g.name);
     }
   });
@@ -1041,70 +1051,119 @@ function saveProduct() {
   closeDlg(); render();
 }
 
-/* ── Inventory register ── */
-var invFilter = 'all', invSearch = '';
+/* ── Inventory (Bloom-style): Stock by lot + Item master ── */
+var invFilter = 'all', invSearch = '', invTab = 'lots';
+function lotStatus(l, g, lots) {
+  if (l.expiry < today(0)) return ['expired', 'open'];
+  if (l.expiry <= today(7)) return ['expiring', 'exp'];
+  if (stockOf(g.id, lots) < g.min) return ['low', 'low'];
+  return ['ok', 'done'];
+}
 RENDER.inventory = function () {
-  var ings = store('ingredients').all(), lots = store('lots').all(), reqs = store('requisitions').all();
+  var ings = store('ingredients').all().map(normIng), lots = store('lots').all(), reqs = store('requisitions').all();
   var stockValue = 0, lowN = 0, expN = 0;
   ings.forEach(function (g) {
-    var s = stockOf(g.id, lots); stockValue += s * g.cost;
-    if (s < g.min) lowN++;
+    var st = stockOf(g.id, lots); stockValue += st * g.cost;
+    if (st < g.min) lowN++;
   });
   lots.forEach(function (l) { if (l.qty > 0 && l.expiry <= today(7)) expN++; });
-  var openReqs = reqs.filter(function (r) { return r.status === 'open'; }).length;
-
+  var openReqs = reqs.filter(function (r) { return r.status === 'pending' || r.status === 'open' || r.status === 'approved'; }).length;
   var q = invSearch.toLowerCase();
-  var shown = ings.filter(function (g) {
-    var s = stockOf(g.id, lots);
-    if (invFilter === 'low' && s >= g.min) return false;
-    if (invFilter === 'expiring' && !lots.some(function (l) { return l.ing === g.id && l.qty > 0 && l.expiry <= today(7); })) return false;
-    if (q && (g.name + ' ' + lots.filter(function (l) { return l.ing === g.id; }).map(function (l) { return l.lot; }).join(' ')).toLowerCase().indexOf(q) < 0) return false;
-    return true;
-  });
-  var rows = shown.map(function (g) {
-    var s = stockOf(g.id, lots);
-    var mine = lots.filter(function (l) { return l.ing === g.id && l.qty > 0; })
-      .sort(function (a, b) { return a.expiry < b.expiry ? -1 : 1; });
-    var lotHtml = mine.map(function (l, i) {
-      var expSoon = l.expiry <= today(7);
-      return '<div>' + (i === 0 ? '<span class="chip fefo">FEFO next</span> ' : '') +
-        '<b>' + esc(l.lot) + '</b> · ' + l.qty + ' ' + g.unit + ' · exp ' + esc(l.expiry) +
-        (expSoon ? ' <span class="chip exp">≤7d</span>' : '') +
-        ' <button class="btn o s" style="padding:1px 8px;font-size:.7rem" onclick="lotWriteOff(\'' + l.id + '\')">write-off</button></div>';
-    }).join('') || '<span class="muted">no stock</span>';
-    var low = s < g.min;
-    return '<tr' + (low ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(g.name) + '</b><br><span class="muted">' + money(g.cost) + '/' + g.unit + '</span></td>' +
-      '<td class="num">' + (Math.round(s * 1000) / 1000) + ' ' + g.unit + (low ? ' <span class="chip low">LOW</span>' : '') + '</td>' +
-      '<td class="num">' + g.min + ' ' + g.unit + '</td>' +
-      '<td class="num">' + money(s * g.cost) + '</td>' +
-      '<td class="wrap" style="max-width:420px">' + lotHtml + '</td>' +
-      '<td><button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">＋ Receive lot</button></td></tr>';
-  }).join('') || '<tr><td colspan="6" class="muted">Nothing matches this view.</td></tr>';
+
+  var body = '';
+  if (invTab === 'lots') {
+    var flat = [];
+    lots.forEach(function (l) {
+      if (l.qty <= 0) return;
+      var g = byId(ings, l.ing); if (!g) return;
+      if (invFilter === 'low' && stockOf(g.id, lots) >= g.min) return;
+      if (invFilter === 'expiring' && l.expiry > today(7)) return;
+      if (q && (g.name + ' ' + l.lot + ' ' + (l.loc || '')).toLowerCase().indexOf(q) < 0) return;
+      flat.push({ l: l, g: g });
+    });
+    flat.sort(function (a, b) { return a.l.expiry < b.l.expiry ? -1 : 1; });
+    var rows = flat.map(function (x) {
+      var st = lotStatus(x.l, x.g, lots);
+      return '<tr><td><b>' + esc(x.g.name) + '</b><br><span class="muted">' + esc(x.g.cat) + '</span></td>' +
+        '<td><b>' + esc(x.l.lot) + '</b></td>' +
+        '<td class="num">' + x.l.qty + ' ' + x.g.unit + '</td>' +
+        '<td class="num">' + money(x.g.cost) + '</td>' +
+        '<td class="num">' + money(x.l.qty * x.g.cost) + '</td>' +
+        '<td>' + esc(x.l.expiry) + '</td>' +
+        '<td>' + esc(x.l.loc || '—') + '</td>' +
+        '<td><span class="chip ' + st[1] + '">' + st[0] + '</span></td>' +
+        '<td><button class="btn o s" onclick="lotWriteOff(\'' + x.l.id + '\')">write-off</button></td></tr>';
+    }).join('') || '<tr><td colspan="9" class="muted">No lots match this view.</td></tr>';
+    body = '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
+      '<th>Item</th><th>Lot No.</th><th class="num">Stock</th><th class="num">Unit Cost</th><th class="num">Value</th><th>Expiry</th><th>Location / Shelf</th><th>Status</th><th></th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  } else {
+    var rows2 = ings.filter(function (g) {
+      if (invFilter === 'low' && stockOf(g.id, lots) >= g.min) return false;
+      if (q && (g.name + ' ' + g.cat).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).map(function (g) {
+      var st = stockOf(g.id, lots);
+      var low = st < g.min;
+      return '<tr' + (low ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(g.name) + '</b></td>' +
+        '<td>' + esc(g.cat) + '</td><td>' + g.unit + '</td>' +
+        '<td class="num">' + g.min + '</td><td class="num">' + g.max + '</td>' +
+        '<td class="num">' + (g.use_m || '—') + '</td>' +
+        '<td class="num">' + g.lead + ' d</td>' +
+        '<td><button class="pill ' + (g.auto ? 'on' : 'off') + '" onclick="ingAutoToggle(\'' + g.id + '\')">' + (g.auto ? 'Auto' : 'Off') + '</button></td>' +
+        '<td class="num">' + (Math.round(st * 100) / 100) + ' ' + g.unit + (low ? ' <span class="chip low">LOW</span>' : '') + '</td>' +
+        '<td class="pill-row"><button class="btn o s" onclick="editIngredient(\'' + g.id + '\')">Edit</button>' +
+        '<button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">＋ Lot</button></td></tr>';
+    }).join('') || '<tr><td colspan="10" class="muted">No items match.</td></tr>';
+    body = '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
+      '<th>Item Name</th><th>Category</th><th>Unit</th><th class="num">Min</th><th class="num">Max</th><th class="num">Monthly Use</th><th class="num">Lead Time</th><th>Auto Req</th><th class="num">Current Stock</th><th>Actions</th>' +
+      '</tr></thead><tbody>' + rows2 + '</tbody></table></div>' +
+      '<p class="muted" style="margin-top:8px">Auto Req on = falling below Min opens a requisition sized to refill up to Max. Lead time feeds the buy-before date.</p>';
+  }
 
   function pill(k, label) { return '<button class="' + (invFilter === k ? 'active' : '') + '" onclick="invGo(\'' + k + '\')">' + label + '</button>'; }
-  return '<div class="pagehead"><div><h1>📦 Inventory · Lots</h1><div class="sub">Lot-level stock with FEFO picking (first-expired, first-out). Below minimum opens an auto-requisition; supplier goods invoices receive straight into these lots. Write-offs are logged — expired food never ships.</div></div>' +
-    '<button class="btn p" onclick="newIngredient()">＋ New ingredient</button></div>' +
+  function tab(k, label) { return '<button class="' + (invTab === k ? 'active' : '') + '" onclick="invTabGo(\'' + k + '\')">' + label + '</button>'; }
+  return '<div class="pagehead"><div><h1>📦 Inventory · Lots</h1><div class="sub">Same tool as the Bloom production inventory, adapted to food: a flat stock-by-lot register (FEFO order, value, location, status) and an item master with min/max, monthly use, lead time and per-item auto-requisition.</div></div>' +
+    '<button class="btn p" onclick="newIngredient()">＋ New item</button></div>' +
     '<div class="kpis">' +
-    '<div class="kpi b-navy"><div class="v">' + ings.length + '</div><div class="l">Ingredients</div></div>' +
+    '<div class="kpi b-navy"><div class="v">' + ings.length + '</div><div class="l">Items</div></div>' +
     '<div class="kpi b-blue"><div class="v">' + money(stockValue) + '</div><div class="l">Stock value</div></div>' +
     '<div class="kpi ' + (lowN ? 'bad b-red' : 'good b-green') + '"><div class="v">' + lowN + '</div><div class="l">Below minimum</div></div>' +
     '<div class="kpi ' + (expN ? 'warn b-gold' : 'good b-green') + '"><div class="v">' + expN + '</div><div class="l">Lots expiring ≤7d</div></div>' +
     '<div class="kpi ' + (openReqs ? 'warn b-gold' : 'good b-green') + '"><div class="v">' + openReqs + '</div><div class="l">Open requisitions</div></div></div>' +
-    '<div class="panel"><div class="toolbar"><div class="chan">' +
-    pill('all', 'All') + pill('low', '⚠️ Below minimum') + pill('expiring', '⏳ Expiring ≤7d') +
-    '</div><input class="search-in" placeholder="Search ingredient or lot…" value="' + esc(invSearch) + '" oninput="invSearchGo(this.value)"></div>' +
-    '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
-    '<th>Ingredient</th><th class="num">On hand</th><th class="num">Min</th><th class="num">Value</th><th>Lots (FEFO order)</th><th></th>' +
-    '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    '<div class="panel"><div class="toolbar"><div class="chan">' + tab('lots', '📦 Stock by lot') + tab('master', '📋 Item master') + '</div>' +
+    '<div class="chan">' + pill('all', 'All') + pill('low', '⚠️ Low') + pill('expiring', '⏳ ≤7d') + '</div>' +
+    '<input class="search-in" placeholder="Search item, lot, location…" value="' + esc(invSearch) + '" oninput="invSearchGo(this.value)"></div>' + body + '</div>';
 };
 function invGo(f) { invFilter = f; render(); }
-function invSearchGo(v) {
-  invSearch = v;
-  var inp0 = document.querySelector('.search-in');
-  var pos = inp0 ? inp0.selectionStart : 0;
-  render();
-  var inp = document.querySelector('.search-in');
-  if (inp) { inp.focus(); inp.setSelectionRange(pos, pos); }
+function invTabGo(t) { invTab = t; render(); }
+function ingAutoToggle(id) {
+  var ings = store('ingredients').all().map(normIng); var g = byId(ings, id);
+  if (g) { g.auto = !g.auto; store('ingredients').save(ings); render(); }
+}
+function editIngredient(id) {
+  var g = byId(store('ingredients').all().map(normIng), id); if (!g) return;
+  showDlg('<h3>✏️ ' + esc(g.name) + '</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Name<input id="ei-name" value="' + esc(g.name) + '"></label>' +
+    '<label>Category<select id="ei-cat">' + ['Vegetables', 'Fruit', 'Dairy', 'Dry goods', 'Bakery', 'Other'].map(function (c) { return '<option' + (g.cat === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
+    '<div class="row"><label>Unit cost ($/' + g.unit + ')<input id="ei-cost" type="number" step="0.01" value="' + g.cost + '"></label>' +
+    '<label>Monthly use (' + g.unit + ')<input id="ei-use" type="number" step="0.1" value="' + (g.use_m || '') + '"></label></div>' +
+    '<div class="row"><label>Min level<input id="ei-min" type="number" step="0.1" value="' + g.min + '"></label>' +
+    '<label>Max level<input id="ei-max" type="number" step="0.1" value="' + g.max + '"></label></div>' +
+    '<label>Lead time (days)<input id="ei-lead" type="number" value="' + g.lead + '"></label>' +
+    '<button class="btn p" onclick="saveIngredientEdit(\'' + id + '\')">Save item</button></div>');
+}
+function saveIngredientEdit(id) {
+  var ings = store('ingredients').all().map(normIng); var g = byId(ings, id); if (!g) return;
+  g.name = document.getElementById('ei-name').value || g.name;
+  g.cat = document.getElementById('ei-cat').value;
+  g.cost = Number(document.getElementById('ei-cost').value) || g.cost;
+  g.use_m = Number(document.getElementById('ei-use').value) || '';
+  g.min = Number(document.getElementById('ei-min').value) || 0;
+  g.max = Number(document.getElementById('ei-max').value) || g.min * 3;
+  g.lead = Number(document.getElementById('ei-lead').value) || 1;
+  store('ingredients').save(ings);
+  closeDlg(); render();
 }
 function lotWriteOff(lotId) {
   var lots = store('lots').all(); var l = byId(lots, lotId); if (!l) return;
@@ -1127,10 +1186,10 @@ function saveIngredient() {
   var name = document.getElementById('ni-name').value.trim();
   if (!name) { alert('Name required'); return; }
   var ings = store('ingredients').all();
-  ings.push({ id: uid(), name: name, unit: document.getElementById('ni-unit').value,
+  ings.push(normIng({ id: uid(), name: name, unit: document.getElementById('ni-unit').value,
     cost: Number(document.getElementById('ni-cost').value) || 0,
     min: Number(document.getElementById('ni-min').value) || 0,
-    reorder: Number(document.getElementById('ni-reorder').value) || 0 });
+    reorder: Number(document.getElementById('ni-reorder').value) || 0 }));
   store('ingredients').save(ings);
   closeDlg(); render();
 }
@@ -1139,54 +1198,52 @@ function receiveLot(ingId) {
   showDlg('<h3>＋ Receive lot — ' + esc(g.name) + '</h3><div class="frm" style="margin-top:10px">' +
     '<div class="row"><label>Lot number<input id="rl-lot" placeholder="e.g. CAR-240901"></label>' +
     '<label>Quantity (' + g.unit + ')<input id="rl-qty" type="number" step="0.1"></label></div>' +
-    '<label>Expiry date<input id="rl-exp" type="date" value="' + today(7) + '"></label>' +
+    '<div class="row"><label>Expiry date<input id="rl-exp" type="date" value="' + today(7) + '"></label>' +
+    '<label>Location / Shelf<select id="rl-loc"><option>Fridge A</option><option>Fridge B</option><option>Freezer</option><option>Dry store</option></select></label></div>' +
     '<button class="btn p" onclick="saveLot(\'' + ingId + '\')">Receive into stock</button></div>');
 }
 function saveLot(ingId) {
   var lots = store('lots').all();
   lots.push({ id: uid(), ing: ingId, lot: document.getElementById('rl-lot').value || ('LOT-' + uid()),
-    qty: Number(document.getElementById('rl-qty').value) || 0,
+    qty: Number(document.getElementById('rl-qty').value) || 0, loc: document.getElementById('rl-loc').value,
     expiry: document.getElementById('rl-exp').value, received: today(0) });
   store('lots').save(lots);
   var reqs = store('requisitions').all();
-  reqs.forEach(function (r) { if (r.ing === ingId && r.status === 'open') r.status = 'received'; });
+  reqs.map(normReq).forEach(function (r) { if (r.ing === ingId && (r.status === 'pending' || r.status === 'approved')) r.status = 'received'; });
   store('requisitions').save(reqs);
   closeDlg(); render();
 }
 
-/* ── Requisitions ── */
+/* ── Requisitions (Bloom workflow: pending → approve → receive) ── */
+function normReq(r) { if (r.status === 'open') r.status = 'pending'; return r; }
 RENDER.requisitions = function () {
-  var reqs = store('requisitions').all(), ings = store('ingredients').all();
+  var reqs = store('requisitions').all().map(normReq), ings = store('ingredients').all().map(normIng);
   var rows = reqs.map(function (r) {
     var g = byId(ings, r.ing);
+    var buyBy = g ? today(0) : '';
+    var stChip = r.status === 'pending' ? 'open' : r.status === 'approved' ? 'progress' : r.status === 'received' ? 'done' : 'cancelled';
+    var acts = '';
+    if (r.status === 'pending') acts = '<button class="btn p s" onclick="reqAct(\'' + r.id + '\',\'approve\')">✓ Approve</button> <button class="btn o s" onclick="reqAct(\'' + r.id + '\',\'cancel\')">✕</button>';
+    else if (r.status === 'approved' && g) acts = '<button class="btn g s" onclick="receiveLot(\'' + g.id + '\')">📦 Receive</button>';
     return '<tr><td>' + (r.reason === 'auto' ? '<span class="chip auto">AUTO</span>' : '<span class="chip fefo">manual</span>') + '</td>' +
       '<td><b>' + esc(g ? g.name : '?') + '</b></td><td class="num">' + r.qty + ' ' + (g ? g.unit : '') + '</td>' +
-      '<td>' + esc(r.note || '') + '</td><td>' + esc(r.created) + '</td>' +
-      '<td><span class="chip ' + (r.status === 'open' ? 'open' : 'done') + '">' + r.status + '</span></td>' +
-      (r.status === 'open' && g ? '<td><button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">Receive</button></td>' : '<td></td>') + '</tr>';
+      '<td class="num">' + (g ? g.lead + ' d' : '—') + '</td>' +
+      '<td class="wrap">' + esc(r.note || '') + '</td><td>' + esc(r.created) + '</td>' +
+      '<td><span class="chip ' + stChip + '">' + r.status + '</span></td>' +
+      '<td class="pill-row">' + acts + '</td></tr>';
   }).join('');
-  return '<div class="pagehead"><div><h1>🧾 Requisitions</h1><div class="sub">Auto-opened when stock drops below the ingredient minimum; closed when the lot is received</div></div>' +
+  return '<div class="pagehead"><div><h1>🧾 Requisitions</h1><div class="sub">Bloom workflow: auto-opened below minimum (sized to refill to Max) → approved by a manager → received as a lot via the supplier invoice or directly. Lead time says how urgent the approval is.</div></div>' +
     '<button class="btn p" onclick="manualReq()">＋ Manual requisition</button></div>' +
-    '<div class="panel"><div class="tbl-scroll"><table class="t"><thead><tr>' +
-    '<th></th><th>Ingredient</th><th class="num">Qty</th><th>Why</th><th>Date</th><th>Status</th><th></th>' +
-    '</tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="muted">No requisitions.</td></tr>') + '</tbody></table></div></div>';
+    '<div class="panel"><div class="tbl-scroll"><table class="t reg"><thead><tr>' +
+    '<th></th><th>Ingredient</th><th class="num">Qty</th><th class="num">Lead</th><th>Why</th><th>Date</th><th>Status</th><th>Actions</th>' +
+    '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" class="muted">No requisitions.</td></tr>') + '</tbody></table></div></div>';
 };
-function manualReq() {
-  var ings = store('ingredients').all();
-  var opts = ings.map(function (g) { return '<option value="' + g.id + '">' + esc(g.name) + '</option>'; }).join('');
-  showDlg('<h3>＋ Manual requisition</h3><div class="frm" style="margin-top:10px">' +
-    '<div class="row"><label>Ingredient<select id="mr-ing">' + opts + '</select></label><label>Quantity<input id="mr-qty" type="number" step="0.1"></label></div>' +
-    '<label>Note<input id="mr-note"></label><button class="btn p" onclick="saveReq()">Open requisition</button></div>');
+function reqAct(id, act) {
+  var reqs = store('requisitions').all().map(normReq); var r = byId(reqs, id); if (!r) return;
+  if (act === 'approve') { r.status = 'approved'; pushDemo('Requisition approved ✓', 'Order it from the supplier — receiving happens via the invoice', 'Role · kitchen'); }
+  if (act === 'cancel') { if (!confirm('Cancel this requisition?')) return; r.status = 'cancelled'; }
+  store('requisitions').save(reqs); render();
 }
-function saveReq() {
-  var reqs = store('requisitions').all();
-  reqs.unshift({ id: uid(), ing: document.getElementById('mr-ing').value,
-    qty: Number(document.getElementById('mr-qty').value) || 0, reason: 'manual', status: 'open',
-    note: document.getElementById('mr-note').value, created: today(0) });
-  store('requisitions').save(reqs);
-  closeDlg(); render();
-}
-
 /* ── Delivery: map tracking + road-distance ETA ── */
 function destPoint(code) {         // stable pseudo-position from the order code
   var h = 0; for (var i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) % 99991;
@@ -1534,7 +1591,7 @@ function saveInvoice() {
       lots.push({ id: uid(), ing: l.ing, lot: l.lot, qty: l.qty, expiry: l.expiry, received: today(0) });
       var g = byId(ings, l.ing);
       if (g) { if (l.cost) g.cost = l.cost; received.push(l.qty + ' ' + g.unit + ' ' + g.name); }
-      reqs.forEach(function (r) { if (r.ing === l.ing && r.status === 'open') r.status = 'received'; });
+      reqs.map(normReq).forEach(function (r) { if (r.ing === l.ing && (r.status === 'pending' || r.status === 'approved')) r.status = 'received'; });
     });
     store('lots').save(lots); store('ingredients').save(ings); store('requisitions').save(reqs);
     pushDemo('Stock received 📦', (prov ? prov.name : 'Supplier') + ' · ' + inv.code + ': ' + received.join(', '), 'Role · kitchen');
@@ -1588,7 +1645,7 @@ function isoCsv() {
 
 /* ── Feedback & Complaints Register ── */
 var TYPE_META = { complaint: '🚫 Complaint', inquiry: '❓ Inquiry', feedback: '👍 Feedback', suggestion: '💡 Suggestion' };
-var caseFilter = 'all', caseSearch = '';
+var caseFilter = 'all', caseSearch = '', caseCat = 'all';
 function normCase(c) { // accept records saved by the older module shape
   if (!c.type) c.type = 'complaint';
   if (!c.priority) c.priority = c.severity || 'medium';
@@ -1623,6 +1680,7 @@ RENDER.complaints = function () {
     if (caseFilter === 'due' && !(c.follow_up && c.follow_up <= today(0) && caseOpenSet(c))) return false;
     if (caseFilter === 'unassigned' && c.assigned) return false;
     if (['complaint', 'inquiry', 'feedback', 'suggestion'].indexOf(caseFilter) >= 0 && c.type !== caseFilter) return false;
+    if (caseCat !== 'all' && (c.category || 'Other') !== caseCat) return false;
     if (q && (c.code + ' ' + c.summary + ' ' + (c.desc || '') + ' ' + (c.order || '') + ' ' + c.customer).toLowerCase().indexOf(q) < 0) return false;
     return true;
   });
@@ -1635,9 +1693,16 @@ RENDER.complaints = function () {
       '<td>' + (c.assigned ? esc(c.assigned) + (c.second ? ' <span class="chip fefo">' + esc(c.second) + '</span>' : '') : '<span class="chip lowp">unassigned</span>') + '</td>' +
       '<td>' + followCell(c) + '</td>' +
       '<td><span class="chip ' + statusClass(c.status) + '">' + c.status + '</span></td>' +
-      '<td><button class="btn p s" onclick="openCase(\'' + c.id + '\')">Open</button></td></tr>';
+      '<td class="pill-row"><button class="btn p s" onclick="openCase(\'' + c.id + '\')">Open</button>' + (caseOpenSet(c) ? '<button class="btn o s" title="Pass the ball" onclick="passBall(\'' + c.id + '\')">⚽</button>' : '') + '</td></tr>';
   }).join('') || '<tr><td colspan="8" class="muted">Nothing matches this view.</td></tr>';
 
+  var cats = {};
+  comps.forEach(function (c) { var k = c.category || 'Other'; cats[k] = (cats[k] || 0) + 1; });
+  var catRows = Object.keys(cats).map(function (k) { return { label: k, value: cats[k] }; })
+    .sort(function (a, b) { return b.value - a.value; });
+  var catOpts = '<option value="all">All categories</option>' + Object.keys(cats).sort().map(function (k) {
+    return '<option' + (caseCat === k ? ' selected' : '') + '>' + esc(k) + '</option>';
+  }).join('');
   function pill(k, label) { return '<button class="' + (caseFilter === k ? 'active' : '') + '" onclick="caseGo(\'' + k + '\')">' + label + '</button>'; }
   return '<div class="pagehead"><div><h1>📣 Feedback &amp; Complaints Register</h1><div class="sub">Every customer voice — complaints, inquiries, suggestions and praise — as numbered records with priority, assignee, follow-up and status. High food cases always link the order and its batch lot.</div></div>' +
     '<span class="pill-row"><button class="btn o s" onclick="caseCsv()">📋 CSV</button><button class="btn p" onclick="newCase()">＋ Log feedback</button></span></div>' +
@@ -1647,15 +1712,18 @@ RENDER.complaints = function () {
     '<div class="kpi b-green"><div class="v">' + nResolved + '</div><div class="l">Resolved</div></div>' +
     '<div class="kpi b-blue"><div class="v">' + nPositive + '</div><div class="l">Positive feedback</div></div>' +
     '<div class="kpi b-navy"><div class="v">' + comps.length + '</div><div class="l">Total records</div></div></div>' +
+    '<div class="panel"><h3>📊 Records by category</h3>' + hBarChart(catRows, CHART.blue, function (v) { return v + ' record' + (v > 1 ? 's' : ''); }) + '</div>' +
     '<div class="panel"><div class="toolbar"><div class="chan">' +
     pill('all', 'All') + pill('mine', 'Assigned to me') + pill('due', 'Follow-up due') + pill('unassigned', 'Unassigned') +
     pill('complaint', '🚫') + pill('inquiry', '❓') + pill('suggestion', '💡') + pill('feedback', '👍') +
-    '</div><input class="search-in" placeholder="Search subject, case, order…" value="' + esc(caseSearch) + '" oninput="caseSearchGo(this.value)"></div>' +
+    '</div><span class="pill-row"><select onchange="caseCatGo(this.value)">' + catOpts + '</select>' +
+    '<input class="search-in" placeholder="Search subject, case, order…" value="' + esc(caseSearch) + '" oninput="caseSearchGo(this.value)"></span></div>' +
     '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
     '<th>Ref #</th><th>Subject · Category · Order</th><th>Type</th><th>Priority</th><th>Assigned</th><th>Follow-up</th><th>Status</th><th></th>' +
     '</tr></thead><tbody>' + rows + '</tbody></table></div></div>';
 };
 function caseGo(f) { caseFilter = f; render(); }
+function caseCatGo(c) { caseCat = c; render(); }
 function caseSearchGo(v) {
   caseSearch = v;
   var tb = document.querySelector('#views table tbody');
@@ -1676,6 +1744,37 @@ function caseCsv() {
   var csv = lines.join('\n');
   if (navigator.clipboard) navigator.clipboard.writeText(csv).then(function () { alert('Register copied as CSV — paste into Excel / Google Sheets.'); });
   else alert(csv);
+}
+
+
+/* ⚽ Pass the ball (Bloom handover): reassign to a person or a role, with a
+   note; the previous assignee stays visible as the secondary chip, the
+   handover is logged, and the new owner is pushed. */
+function passBall(id) {
+  var c = byId(store('complaints').all().map(normCase), id); if (!c) return;
+  var staff = store('staff').all();
+  var opts = '<optgroup label="People">' + staff.map(function (u) {
+    var short = u.name.split(' ')[0].replace('—', '').trim();
+    return '<option>' + esc(short) + '</option>';
+  }).join('') + '</optgroup><optgroup label="Roles">' +
+    ROLES.filter(function (r) { return r !== 'super_admin'; }).map(function (r) { return '<option>' + r + ' (role)</option>'; }).join('') + '</optgroup>';
+  showDlg('<h3>⚽ Pass the ball — ' + esc(c.code) + '</h3>' +
+    '<p class="muted" style="margin:6px 0 10px">' + esc(c.summary) + '<br>Currently with: <b>' + esc(c.assigned || 'unassigned') + '</b></p>' +
+    '<div class="frm"><label>Pass to<select id="pb-to">' + opts + '</select></label>' +
+    '<label>Handover note<input id="pb-note" placeholder="what the next person needs to know"></label>' +
+    '<button class="btn p" onclick="savePass(\'' + id + '\')">⚽ Pass it</button></div>');
+}
+function savePass(id) {
+  var comps = store('complaints').all().map(normCase); var c = byId(comps, id); if (!c) return;
+  var to = document.getElementById('pb-to').value;
+  var note = document.getElementById('pb-note').value;
+  c.second = c.assigned || null;      // previous owner stays visible on the record
+  c.assigned = to;
+  if (c.status === 'new') c.status = 'in progress';
+  c.log.push({ at: nowTs(), what: '⚽ Passed from ' + (c.second || 'unassigned') + ' to ' + to + (note ? ' — ' + note : '') + ' (by ' + currentUser().name + ')' });
+  store('complaints').save(comps);
+  pushDemo('Case passed to you ⚽', c.code + ': ' + c.summary + (note ? ' — ' + note : ''), to.indexOf('(role)') > 0 ? 'Role · ' + to.replace(' (role)', '') : 'Staff · ' + to);
+  closeDlg(); openCase(id); render();
 }
 
 /* Welcome popup: cases waiting for the signed-in user (Bloom Aligner pattern) */
@@ -1702,16 +1801,22 @@ function openCase(id) {
   var comps = store('complaints').all().map(normCase); var c = byId(comps, id); if (!c) return;
   var staff = store('staff').all();
   var log = c.log.map(function (h) { return '<li><b>' + esc(h.what) + '</b><span>' + esc(h.at) + '</span></li>'; }).join('');
-  var assignOpts = '<option value="">— unassigned —</option>' + staff.map(function (u) {
-    var short = u.name.split(' ')[0].replace('—', '').trim();
-    return '<option' + ((c.assigned || '').indexOf(short) >= 0 ? ' selected' : '') + '>' + esc(short) + '</option>';
-  }).join('');
+  var assignOpts = '<option value="">— unassigned —</option>' +
+    '<optgroup label="People">' + staff.map(function (u) {
+      var short = u.name.split(' ')[0].replace('—', '').trim();
+      return '<option' + (c.assigned === short ? ' selected' : '') + '>' + esc(short) + '</option>';
+    }).join('') + '</optgroup>' +
+    '<optgroup label="Roles">' + ROLES.filter(function (r) { return r !== 'super_admin'; }).map(function (r) {
+      var v = r + ' (role)';
+      return '<option' + (c.assigned === v ? ' selected' : '') + '>' + v + '</option>';
+    }).join('') + '</optgroup>';
   var acts = '';
   if (caseOpenSet(c)) {
     if (c.status !== 'escalated') acts += '<button class="btn o s" onclick="caseAct(\'' + c.id + '\',\'escalate\')">⤴ Escalate to manager</button> ';
     acts += '<button class="btn g s" onclick="caseAct(\'' + c.id + '\',\'resolve\')">✅ Resolve</button> ';
     acts += '<button class="btn o s" onclick="caseAct(\'' + c.id + '\',\'close\')">Close</button> ';
-    acts += '<button class="btn p s" onclick="caseAct(\'' + c.id + '\',\'note\')">＋ Note</button>';
+    acts += '<button class="btn p s" onclick="caseAct(\'' + c.id + '\',\'note\')">＋ Note</button> ';
+    acts += '<button class="btn o s" onclick="passBall(\'' + c.id + '\')">⚽ Pass the ball</button>';
   } else {
     acts += '<button class="btn o s" onclick="caseAct(\'' + c.id + '\',\'reopen\')">↩ Reopen</button>';
   }

@@ -59,12 +59,19 @@ from unnest(array['super_admin','manager','kitchen','delivery','support']) r,
 on conflict (role, key) do nothing;
 
 -- ── ingredients, lots (FEFO), BOM ───────────────────────────────────────
+-- Item master (Bloom inventory pattern): min/max levels, monthly use,
+-- lead time and a per-item auto-requisition switch.
 create table if not exists public.tt_ingredients (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  category text not null default 'Other',
   unit text not null default 'kg',
-  cost numeric(10,3) not null default 0,     -- cost per unit
+  cost numeric(10,3) not null default 0,     -- cost per unit (latest purchase)
   min_level numeric(10,3) not null default 0,
+  max_level numeric(10,3) not null default 0, -- auto-req refills up to this
+  monthly_use numeric(10,3),
+  lead_days int not null default 2,
+  auto_req boolean not null default true,
   reorder_qty numeric(10,3) not null default 0
 );
 
@@ -74,6 +81,7 @@ create table if not exists public.tt_lots (
   lot_no text not null,
   qty numeric(10,3) not null default 0,
   expiry date not null,
+  location text,                              -- Location / Shelf (Fridge A, Freezer, Dry store…)
   received_at date not null default current_date
 );
 create index if not exists tt_lots_fefo on public.tt_lots (ingredient_id, expiry); -- FEFO pick order
@@ -157,7 +165,7 @@ begin
     from tt_ingredients g
     where g.id = r.ingredient_id
       and (select coalesce(sum(qty),0) from tt_lots where ingredient_id = g.id) < g.min_level
-      and not exists (select 1 from tt_requisitions q where q.ingredient_id = g.id and q.status = 'open');
+      and not exists (select 1 from tt_requisitions q where q.ingredient_id = g.id and q.status in ('pending','approved'));
   end loop;
   return picked;
 end $$;
@@ -167,7 +175,8 @@ create table if not exists public.tt_requisitions (
   ingredient_id uuid not null references public.tt_ingredients(id) on delete cascade,
   qty numeric(10,3) not null,
   reason text not null default 'manual' check (reason in ('auto','manual')),
-  status text not null default 'open' check (status in ('open','ordered','received','cancelled')),
+  -- Bloom workflow: pending → approved (by a manager) → received; or cancelled
+  status text not null default 'pending' check (status in ('pending','approved','received','cancelled')),
   note text,
   created_at timestamptz not null default now()
 );
@@ -219,7 +228,7 @@ begin
     update tt_ingredients set cost = coalesce((l->>'cost')::numeric, cost)
       where id = (l->>'ingredient_id')::uuid and (l->>'cost') is not null;
     update tt_requisitions set status = 'received'
-      where ingredient_id = (l->>'ingredient_id')::uuid and status = 'open';
+      where ingredient_id = (l->>'ingredient_id')::uuid and status in ('pending','approved');
   end loop;
 end $$;
 
