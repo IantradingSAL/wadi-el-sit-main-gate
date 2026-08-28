@@ -1332,7 +1332,7 @@ RENDER.kitchen = function () {
     '<div class="kpi b-blue"><div class="v">' + portions + '</div><div class="l">Portions in production</div></div>' +
     '<div class="kpi b-gold"><div class="v">' + minsQueued + ' min</div><div class="l">Work queued</div></div>' +
     '<div class="kpi ' + (overdueN ? 'bad b-red' : 'good b-green') + '"><div class="v">' + overdueN + '</div><div class="l">⏰ Overdue</div></div></div>' +
-    (stationRows.length ? '<div class="panel"><h3>🏭 Station load (minutes of work remaining per step)</h3>' + hBarChart(stationRows, CHART.blue, function (v) { return v + ' min'; }) + '</div>' : '') +
+    (stationRows.length ? '<div class="panel" style="padding:14px 18px"><div class="toolbar" style="margin-bottom:8px"><h3 style="font-size:1rem">🏭 Station load</h3><span class="muted">minutes of work remaining per step</span></div>' + hBarChart(stationRows, CHART.blue, function (v) { return v + ' min'; }) + '</div>' : '') +
     (cards || '<div class="panel"><p class="muted">Nothing in production. Confirm an order and send it to the kitchen — the production clock starts at that moment.</p></div>');
 };
 
@@ -1804,7 +1804,7 @@ function invSummary(inv, ings) {
 function hBarChart(rows, color, valueFmt) {
   if (!rows.length) return '<p class="muted">No data yet.</p>';
   var max = Math.max.apply(null, rows.map(function (r) { return r.value; })) || 1;
-  var barH = 20, gap = 10, labelW = 150, valW = 66, W = 560, plotW = W - labelW - valW;
+  var barH = 16, gap = 8, labelW = 130, valW = 64, W = 520, plotW = W - labelW - valW;
   var H = rows.length * (barH + gap);
   var g = [0.25, 0.5, 0.75, 1].map(function (f) {
     var x = labelW + plotW * f;
@@ -1813,11 +1813,16 @@ function hBarChart(rows, color, valueFmt) {
   var bars = rows.map(function (r, i) {
     var y = i * (barH + gap);
     var w = Math.max(2, plotW * r.value / max);
-    return '<text x="' + (labelW - 8) + '" y="' + (y + 14) + '" text-anchor="end" font-size="11.5" fill="#17455e" font-weight="600">' + esc(r.label) + '</text>' +
-      '<rect x="' + labelW + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="4" fill="' + color + '"><title>' + esc(r.label) + ': ' + valueFmt(r.value) + '</title></rect>' +
-      '<text x="' + (labelW + w + 6) + '" y="' + (y + 14) + '" font-size="11" fill="#64808e" style="font-variant-numeric:tabular-nums">' + valueFmt(r.value) + '</text>';
+    // near-full bars carry the value inside, so it never clips at the edge
+    var inside = w > plotW - 54;
+    var valTxt = inside
+      ? '<text x="' + (labelW + w - 6) + '" y="' + (y + 12) + '" text-anchor="end" font-size="10.5" fill="#fff" font-weight="700" style="font-variant-numeric:tabular-nums">' + valueFmt(r.value) + '</text>'
+      : '<text x="' + (labelW + w + 6) + '" y="' + (y + 12) + '" font-size="10.5" fill="#64808e" style="font-variant-numeric:tabular-nums">' + valueFmt(r.value) + '</text>';
+    return '<text x="' + (labelW - 8) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11" fill="#17455e" font-weight="600">' + esc(r.label) + '</text>' +
+      '<rect x="' + labelW + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="4" fill="' + color + '"><title>' + esc(r.label) + ': ' + valueFmt(r.value) + '</title></rect>' + valTxt;
   }).join('');
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img">' + g + bars + '</svg>';
+  // capped: the chart keeps its natural size instead of scaling to the panel
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:540px;height:auto;display:block" role="img">' + g + bars + '</svg>';
 }
 function stackedPayChart(rows) {
   if (!rows.length) return '<p class="muted">No data yet.</p>';
@@ -1836,7 +1841,7 @@ function stackedPayChart(rows) {
   var legend = '<div class="pill-row" style="margin-top:6px;font-size:.78rem;font-weight:700">' +
     '<span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:' + CHART.teal + ';margin-right:4px"></span>Paid</span>' +
     '<span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:' + CHART.gold + ';margin-right:4px"></span>Outstanding (labeled)</span></div>';
-  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img">' + bars + '</svg>' + legend;
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:560px;height:auto;display:block" role="img">' + bars + '</svg>' + legend;
 }
 function monthChart(byMonth) {
   var keys = Object.keys(byMonth).sort().slice(-6);
