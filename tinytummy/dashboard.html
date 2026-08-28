@@ -163,6 +163,8 @@ dialog::backdrop { background:rgba(61,50,41,.45); }
     <a data-m="requisitions"><span>🧾</span><em>Requisitions</em></a>
     <div class="grp">Delivery</div>
     <a data-m="delivery"><span>🚚</span><em>Dispatch · Agents</em></a>
+    <div class="grp">Finance</div>
+    <a data-m="suppliers"><span>🏭</span><em>Suppliers · Payables</em></a>
     <div class="grp">Quality</div>
     <a data-m="iso"><span>🛡️</span><em>ISO 22000</em></a>
     <a data-m="complaints"><span>📣</span><em>Complaints</em></a>
@@ -173,8 +175,9 @@ dialog::backdrop { background:rgba(61,50,41,.45); }
     <a data-m="settings"><span>⚙️</span><em>Settings</em></a>
   </nav>
   <div class="who">
-    Signed in as
+    <span id="who-label">👑 Super admin · act as</span>
     <select id="whoami"></select>
+    <button id="who-back" class="btn s" style="display:none;width:100%;margin-top:6px;background:var(--gold);color:#12394e" onclick="actAsBack()">↩ Back to super admin</button>
   </div>
   <div class="powered">Powered by<br><b>IAN Trading SAL</b></div>
 </aside>
@@ -241,6 +244,7 @@ var PERM_KEYS = [
   ['inventory_manage', 'Inventory, lots & requisitions'],
   ['bom_manage', 'Recipes / BOM & costs'],
   ['delivery_manage', 'Delivery agents & assignment'],
+  ['suppliers_manage', 'Suppliers, invoices & payables'],
   ['iso_manage', 'ISO 22000 checklist'],
   ['complaints_manage', 'Complaints & escalation'],
   ['programs_manage', 'Age programs'],
@@ -252,7 +256,7 @@ var PERM_KEYS = [
 var ROLES = ['super_admin', 'manager', 'kitchen', 'delivery', 'support'];
 SEED.role_perms = (function () {
   var def = {
-    manager: ['orders_manage','kitchen_manage','inventory_manage','bom_manage','delivery_manage','iso_manage','complaints_manage','programs_manage','chat_use','push_send','reports_view'],
+    manager: ['orders_manage','kitchen_manage','inventory_manage','bom_manage','delivery_manage','suppliers_manage','iso_manage','complaints_manage','programs_manage','chat_use','push_send','reports_view'],
     kitchen: ['kitchen_manage','inventory_manage','chat_use'],
     delivery: ['delivery_manage','chat_use'],
     support: ['orders_manage','complaints_manage','chat_use']
@@ -337,6 +341,40 @@ var CITY_SPEED_KMH = 22;           // average delivery speed in traffic
 SEED.agents = [
   { id: 'a1', name: 'Ali H.', phone: '+961 70 111 222', active: true },
   { id: 'a2', name: 'Marwan D.', phone: '+961 76 333 444', active: true }
+];
+
+/* Providers = suppliers of goods AND employees as service providers */
+SEED.providers = [
+  { id: 'sp1', name: 'Fresh Fields Farm', type: 'supplier', category: 'Vegetables & fruit', phone: '+961 3 111 222', terms: 30 },
+  { id: 'sp2', name: 'Daily Dairy Co', type: 'supplier', category: 'Dairy', phone: '+961 71 222 333', terms: 15 },
+  { id: 'sp3', name: 'PackPro Lebanon', type: 'supplier', category: 'Packaging', phone: '+961 76 444 555', terms: 30 },
+  { id: 'sp4', name: 'City Cold Transport', type: 'supplier', category: 'Cold-chain logistics', phone: '+961 70 666 777', terms: 15 },
+  { id: 'em1', name: 'Chef Nadim', type: 'employee', category: 'Kitchen — salary', phone: '+961 70 123 456', terms: 0 },
+  { id: 'em2', name: 'Ali H.', type: 'employee', category: 'Delivery — commission', phone: '+961 70 111 222', terms: 0 },
+  { id: 'em3', name: 'Sara', type: 'employee', category: 'Support — salary', phone: '+961 71 333 444', terms: 0 },
+  { id: 'em4', name: 'Lina', type: 'employee', category: 'Management — salary', phone: '+961 3 555 666', terms: 0 }
+];
+SEED.sup_invoices = [
+  { id: 'v1', code: 'INV-FF-1042', provider: 'sp1', kind: 'goods', date: today(-3), due: today(-1), status: 'unpaid', paid_at: null,
+    lines: [{ ing: 'g1', qty: 10, cost: 1.15, lot: 'CAR-240825B', expiry: today(10) }, { ing: 'g2', qty: 6, cost: 1.45, lot: 'ZUC-240825B', expiry: today(8) }] },
+  { id: 'v2', code: 'INV-DD-208', provider: 'sp2', kind: 'goods', date: today(-2), due: today(13), status: 'paid', paid_at: today(-1),
+    lines: [{ ing: 'g8', qty: 20, cost: 1.05, lot: 'MLK-240826B', expiry: today(5) }] },
+  { id: 'v3', code: 'INV-PP-771', provider: 'sp3', kind: 'service', date: today(-6), due: today(24), status: 'unpaid', paid_at: null,
+    lines: [{ desc: 'Glass jars 120 ml × 500 + lids', amount: 210 }] },
+  { id: 'v4', code: 'INV-CC-330', provider: 'sp4', kind: 'service', date: today(-8), due: today(-4), status: 'paid', paid_at: today(-5),
+    lines: [{ desc: 'Insulated box refurbishment ×6', amount: 96 }] },
+  { id: 'v5', code: 'SAL-2026-08-N', provider: 'em1', kind: 'service', date: today(-1), due: today(2), status: 'unpaid', paid_at: null,
+    lines: [{ desc: 'August salary — head chef', amount: 900 }] },
+  { id: 'v6', code: 'COM-2026-08-A', provider: 'em2', kind: 'service', date: today(-1), due: today(2), status: 'unpaid', paid_at: null,
+    lines: [{ desc: 'August delivery commissions (61 drops)', amount: 305 }] },
+  { id: 'v7', code: 'SAL-2026-08-S', provider: 'em3', kind: 'service', date: today(-1), due: today(2), status: 'paid', paid_at: today(0),
+    lines: [{ desc: 'August salary — support', amount: 600 }] },
+  { id: 'v8', code: 'INV-FF-0991', provider: 'sp1', kind: 'goods', date: today(-34), due: today(-4), status: 'paid', paid_at: today(-6),
+    lines: [{ ing: 'g5', qty: 8, cost: 1.4, lot: 'BEE-240720', expiry: today(-20) }, { ing: 'g7', qty: 4, cost: 3.1, lot: 'MNG-240721', expiry: today(-25) }] },
+  { id: 'v9', code: 'INV-DD-190', provider: 'sp2', kind: 'goods', date: today(-40), due: today(-25), status: 'paid', paid_at: today(-26),
+    lines: [{ ing: 'g8', qty: 25, cost: 1.1, lot: 'MLK-240715', expiry: today(-30) }] },
+  { id: 'v10', code: 'INV-FF-0870', provider: 'sp1', kind: 'goods', date: today(-65), due: today(-35), status: 'paid', paid_at: today(-36),
+    lines: [{ ing: 'g1', qty: 12, cost: 1.2, lot: 'CAR-240620', expiry: today(-50) }] }
 ];
 SEED.orders = [
   { id: 'o1', code: 'TT-2026-041', customer: 'Rana K.', phone: '+961 3 922 209', address: 'Achrafieh, Beirut',
@@ -457,7 +495,7 @@ function can(key) {
 var MODULE_PERMS = {
   overview: 'reports_view', orders: 'orders_manage', programs: 'programs_manage',
   kitchen: 'kitchen_manage', bom: 'bom_manage', inventory: 'inventory_manage',
-  requisitions: 'inventory_manage', delivery: 'delivery_manage', iso: 'iso_manage',
+  requisitions: 'inventory_manage', delivery: 'delivery_manage', suppliers: 'suppliers_manage', iso: 'iso_manage',
   complaints: 'complaints_manage', chat: 'chat_use', notify: 'push_send',
   users: 'users_manage', settings: null
 };
@@ -521,7 +559,7 @@ function pushDemo(title, body, audience) {
 }
 
 /* ── router ── */
-var VIEWS = ['overview','orders','programs','kitchen','bom','inventory','requisitions','delivery','iso','complaints','chat','notify','users','settings'];
+var VIEWS = ['overview','orders','programs','kitchen','bom','inventory','requisitions','delivery','suppliers','iso','complaints','chat','notify','users','settings'];
 var current = 'overview';
 function nav(m) {
   current = m; location.hash = m;
@@ -628,6 +666,12 @@ function adviseHtml() {
   if (todoHaccp.length) tips.push('🛡️ ' + todoHaccp.length + ' HACCP item(s) still not done — for a kids-food kitchen these are the audit\'s first stop; start with CCP monitoring records.');
   if (iso.some(function (i) { return i.item.indexOf('Recall') >= 0 && i.status === 'todo'; }))
     tips.push('🛡️ No tested recall procedure yet — with lot traceability already in this dashboard, a mock recall drill is one afternoon of work.');
+  store('sup_invoices').all().forEach(function (v) {
+    if (invOverdue(v)) {
+      var pv = byId(store('providers').all(), v.provider);
+      tips.push('🧾 <b>' + esc(v.code) + '</b> (' + esc(pv ? pv.name : '?') + ', ' + money(invTotal(v)) + ') is overdue — settle it; paying farm suppliers late costs you priority on the freshest produce.');
+    }
+  });
   var stuck = orders.filter(function (o) { return o.status === 'new'; });
   if (stuck.length) tips.push('🛒 ' + stuck.length + ' order(s) still unconfirmed — confirm before the 3 PM cutoff to keep the next-day promise.');
   if (!tips.length) tips.push('✅ Nothing urgent — stock, margins, cases and ISO are all inside their limits.');
@@ -1141,6 +1185,258 @@ RENDER.delivery = function () {
     '<div class="panel"><h3>👤 Agents</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Carrying</th></tr></thead><tbody>' + agentRows + '</tbody></table></div></div>';
 };
 
+/* ── Suppliers · Payables ─────────────────────────────────────────────
+   Providers = goods suppliers + employees (service providers).
+   Posting a goods invoice AUTOMATICALLY receives its lines into stock as
+   lots (FEFO-ready), updates each ingredient's latest cost, and closes
+   any open requisition for it. Paid / unpaid / overdue tracked per
+   invoice; charts show spend, payment state and the monthly trend.     */
+var CHART = { blue: '#3273b3', teal: '#0ea777', gold: '#c98f1c' }; // validated palette
+var supFilter = 'all';
+
+function invTotal(inv) {
+  return inv.lines.reduce(function (s, l) {
+    return s + (l.amount != null ? Number(l.amount) : (Number(l.qty) || 0) * (Number(l.cost) || 0));
+  }, 0);
+}
+function invOverdue(inv) { return inv.status === 'unpaid' && inv.due < today(0); }
+function invSummary(inv, ings) {
+  return inv.lines.map(function (l) {
+    if (l.amount != null) return esc(l.desc);
+    var g = byId(ings, l.ing);
+    return l.qty + ' ' + (g ? g.unit + ' ' + g.name : '?') + ' (lot ' + esc(l.lot) + ')';
+  }).join(' · ');
+}
+
+/* — charts (inline SVG, brand-validated palette, one axis, faint grid) — */
+function hBarChart(rows, color, valueFmt) {
+  if (!rows.length) return '<p class="muted">No data yet.</p>';
+  var max = Math.max.apply(null, rows.map(function (r) { return r.value; })) || 1;
+  var barH = 20, gap = 10, labelW = 150, valW = 66, W = 560, plotW = W - labelW - valW;
+  var H = rows.length * (barH + gap);
+  var g = [0.25, 0.5, 0.75, 1].map(function (f) {
+    var x = labelW + plotW * f;
+    return '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + H + '" stroke="#eee7d8" stroke-width="1"/>';
+  }).join('');
+  var bars = rows.map(function (r, i) {
+    var y = i * (barH + gap);
+    var w = Math.max(2, plotW * r.value / max);
+    return '<text x="' + (labelW - 8) + '" y="' + (y + 14) + '" text-anchor="end" font-size="11.5" fill="#17455e" font-weight="600">' + esc(r.label) + '</text>' +
+      '<rect x="' + labelW + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="4" fill="' + color + '"><title>' + esc(r.label) + ': ' + valueFmt(r.value) + '</title></rect>' +
+      '<text x="' + (labelW + w + 6) + '" y="' + (y + 14) + '" font-size="11" fill="#64808e" style="font-variant-numeric:tabular-nums">' + valueFmt(r.value) + '</text>';
+  }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img">' + g + bars + '</svg>';
+}
+function stackedPayChart(rows) {
+  if (!rows.length) return '<p class="muted">No data yet.</p>';
+  var max = Math.max.apply(null, rows.map(function (r) { return r.paid + r.unpaid; })) || 1;
+  var barH = 20, gap = 10, labelW = 150, valW = 70, W = 560, plotW = W - labelW - valW;
+  var H = rows.length * (barH + gap);
+  var bars = rows.map(function (r, i) {
+    var y = i * (barH + gap);
+    var wP = plotW * r.paid / max, wU = plotW * r.unpaid / max;
+    var seg = '<text x="' + (labelW - 8) + '" y="' + (y + 14) + '" text-anchor="end" font-size="11.5" fill="#17455e" font-weight="600">' + esc(r.label) + '</text>';
+    if (wP > 0) seg += '<rect x="' + labelW + '" y="' + y + '" width="' + Math.max(2, wP) + '" height="' + barH + '" rx="4" fill="' + CHART.teal + '"><title>' + esc(r.label) + ' paid: ' + money(r.paid) + '</title></rect>';
+    if (wU > 0) seg += '<rect x="' + (labelW + wP + 2) + '" y="' + y + '" width="' + Math.max(2, wU) + '" height="' + barH + '" rx="4" fill="' + CHART.gold + '"><title>' + esc(r.label) + ' outstanding: ' + money(r.unpaid) + '</title></rect>' +
+      '<text x="' + (labelW + wP + wU + 8) + '" y="' + (y + 14) + '" font-size="11" fill="#a3720d" font-weight="700" style="font-variant-numeric:tabular-nums">' + money(r.unpaid) + '</text>';
+    return seg;
+  }).join('');
+  var legend = '<div class="pill-row" style="margin-top:6px;font-size:.78rem;font-weight:700">' +
+    '<span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:' + CHART.teal + ';margin-right:4px"></span>Paid</span>' +
+    '<span><span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:' + CHART.gold + ';margin-right:4px"></span>Outstanding (labeled)</span></div>';
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img">' + bars + '</svg>' + legend;
+}
+function monthChart(byMonth) {
+  var keys = Object.keys(byMonth).sort().slice(-6);
+  if (!keys.length) return '<p class="muted">No data yet.</p>';
+  var max = Math.max.apply(null, keys.map(function (k) { return byMonth[k]; })) || 1;
+  var W = 560, H = 150, base = 128, plotH = 110, bw = Math.min(56, (W - 40) / keys.length - 14);
+  var g = [0.5, 1].map(function (f) {
+    var y = base - plotH * f;
+    return '<line x1="0" y1="' + y + '" x2="' + W + '" y2="' + y + '" stroke="#eee7d8"/>';
+  }).join('');
+  var bars = keys.map(function (k, i) {
+    var x = 30 + i * ((W - 50) / keys.length);
+    var h = Math.max(2, plotH * byMonth[k] / max);
+    return '<rect x="' + x + '" y="' + (base - h) + '" width="' + bw + '" height="' + h + '" rx="4" fill="' + CHART.blue + '"><title>' + k + ': ' + money(byMonth[k]) + '</title></rect>' +
+      '<text x="' + (x + bw / 2) + '" y="' + (base - h - 5) + '" text-anchor="middle" font-size="10.5" fill="#64808e" style="font-variant-numeric:tabular-nums">' + money(byMonth[k]) + '</text>' +
+      '<text x="' + (x + bw / 2) + '" y="' + (base + 14) + '" text-anchor="middle" font-size="10.5" fill="#17455e" font-weight="600">' + k.slice(2) + '</text>';
+  }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto" role="img">' + g + bars + '</svg>';
+}
+
+RENDER.suppliers = function () {
+  var provs = store('providers').all(), invs = store('sup_invoices').all(), ings = store('ingredients').all();
+  var total = 0, unpaid = 0, overdueN = 0;
+  var byProv = {}, payByProv = {}, byMonth = {};
+  invs.forEach(function (v) {
+    var t = invTotal(v); total += t;
+    var p = byId(provs, v.provider); var pn = p ? p.name : '?';
+    byProv[pn] = (byProv[pn] || 0) + t;
+    payByProv[pn] = payByProv[pn] || { paid: 0, unpaid: 0 };
+    if (v.status === 'paid') payByProv[pn].paid += t; else { payByProv[pn].unpaid += t; unpaid += t; if (invOverdue(v)) overdueN++; }
+    var m = v.date.slice(0, 7); byMonth[m] = (byMonth[m] || 0) + t;
+  });
+  var spendRows = Object.keys(byProv).map(function (k) { return { label: k, value: byProv[k] }; })
+    .sort(function (a, b) { return b.value - a.value; }).slice(0, 8);
+  var payRows = Object.keys(payByProv).map(function (k) { return { label: k, paid: payByProv[k].paid, unpaid: payByProv[k].unpaid }; })
+    .sort(function (a, b) { return (b.paid + b.unpaid) - (a.paid + a.unpaid); }).slice(0, 8);
+
+  var shown = invs.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).filter(function (v) {
+    var p = byId(provs, v.provider);
+    if (supFilter === 'unpaid') return v.status === 'unpaid';
+    if (supFilter === 'overdue') return invOverdue(v);
+    if (supFilter === 'paid') return v.status === 'paid';
+    if (supFilter === 'goods') return v.kind === 'goods';
+    if (supFilter === 'employees') return p && p.type === 'employee';
+    return true;
+  });
+  var invRows = shown.map(function (v) {
+    var p = byId(provs, v.provider);
+    var od = invOverdue(v);
+    return '<tr' + (od ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(v.code) + '</b><br><span class="muted">' + esc(v.date) + ' · due ' + esc(v.due) + '</span></td>' +
+      '<td>' + esc(p ? p.name : '?') + '<br><span class="chip ' + (p && p.type === 'employee' ? 'auto' : 'fefo') + '">' + (p && p.type === 'employee' ? '👷 employee' : '🏭 supplier') + '</span></td>' +
+      '<td style="max-width:260px">' + invSummary(v, ings) + (v.kind === 'goods' ? '<br><span class="chip done">📦 stock received</span>' : '') + '</td>' +
+      '<td class="num"><b>' + money(invTotal(v)) + '</b></td>' +
+      '<td>' + (v.status === 'paid' ? '<span class="chip done">paid ' + esc(v.paid_at || '') + '</span>' : od ? '<span class="chip open">OVERDUE</span>' : '<span class="chip progress">unpaid</span>') + '</td>' +
+      '<td><button class="btn ' + (v.status === 'paid' ? 'o' : 'g') + ' s" onclick="invPay(\'' + v.id + '\')">' + (v.status === 'paid' ? '↩ Unpay' : '💵 Mark paid') + '</button></td></tr>';
+  }).join('') || '<tr><td colspan="6" class="muted">No invoices match this filter.</td></tr>';
+
+  var provRows = provs.map(function (p) {
+    var mine = invs.filter(function (v) { return v.provider === p.id; });
+    var t = 0, u = 0; mine.forEach(function (v) { var x = invTotal(v); t += x; if (v.status === 'unpaid') u += x; });
+    return '<tr><td><b>' + esc(p.name) + '</b><br><span class="chip ' + (p.type === 'employee' ? 'auto' : 'fefo') + '">' + (p.type === 'employee' ? '👷 employee' : '🏭 supplier') + '</span></td>' +
+      '<td>' + esc(p.category) + '</td><td>' + esc(p.phone) + '</td>' +
+      '<td class="num">' + (p.terms ? p.terms + ' days' : 'on receipt') + '</td>' +
+      '<td class="num">' + money(t) + '</td>' +
+      '<td class="num">' + (u ? '<b style="color:var(--warn)">' + money(u) + '</b>' : '<span class="muted">—</span>') + '</td></tr>';
+  }).join('');
+
+  function pill(key, label) {
+    return '<button class="' + (supFilter === key ? 'active' : '') + '" onclick="supGo(\'' + key + '\')">' + label + '</button>';
+  }
+  return '<div class="pagehead"><div><h1>🏭 Suppliers · Payables</h1><div class="sub">Goods suppliers and employees as service providers, in one payables book. Posting a goods invoice receives its lines straight into stock as lots, updates the ingredient\'s latest cost, and closes its open requisitions.</div></div>' +
+    '<span class="pill-row"><button class="btn p" onclick="newInvoice()">＋ Post invoice</button><button class="btn o" onclick="newProvider()">＋ Provider</button></span></div>' +
+    '<div class="kpis">' +
+    '<div class="kpi"><div class="v">' + money(total) + '</div><div class="l">Total invoiced</div></div>' +
+    '<div class="kpi ' + (unpaid ? 'warn' : 'good') + '"><div class="v">' + money(unpaid) + '</div><div class="l">Outstanding</div></div>' +
+    '<div class="kpi ' + (overdueN ? 'bad' : 'good') + '"><div class="v">' + overdueN + '</div><div class="l">Overdue invoices</div></div>' +
+    '<div class="kpi"><div class="v">' + provs.length + '</div><div class="l">Providers</div></div></div>' +
+    '<div class="grid2">' +
+    '<div class="panel"><h3>💵 Spend by provider</h3>' + hBarChart(spendRows, CHART.blue, money) + '</div>' +
+    '<div class="panel"><h3>✅ Paid vs outstanding</h3>' + stackedPayChart(payRows) + '</div></div>' +
+    '<div class="panel"><h3>📈 Monthly spend</h3>' + monthChart(byMonth) + '</div>' +
+    '<div class="panel"><div class="toolbar"><h3>🧾 Invoices</h3>' +
+    '<div class="chan">' + pill('all', 'All') + pill('unpaid', 'Unpaid') + pill('overdue', 'Overdue') + pill('paid', 'Paid') + pill('goods', '📦 Goods') + pill('employees', '👷 Employees') + '</div></div>' +
+    '<div class="tbl-scroll"><table class="t"><thead><tr><th>Invoice</th><th>Provider</th><th>Lines</th><th class="num">Total</th><th>Status</th><th></th></tr></thead><tbody>' + invRows + '</tbody></table></div></div>' +
+    '<div class="panel"><h3>📇 Provider registry</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Provider</th><th>Category</th><th>Phone</th><th class="num">Terms</th><th class="num">Total invoiced</th><th class="num">Outstanding</th></tr></thead><tbody>' + provRows + '</tbody></table></div></div>';
+};
+function supGo(f) { supFilter = f; render(); }
+
+function invPay(id) {
+  var invs = store('sup_invoices').all(); var v = byId(invs, id); if (!v) return;
+  if (v.status === 'paid') { v.status = 'unpaid'; v.paid_at = null; }
+  else { v.status = 'paid'; v.paid_at = today(0); }
+  store('sup_invoices').save(invs); render();
+}
+
+function newProvider() {
+  showDlg('<h3>＋ New provider</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Name<input id="pv-name"></label><label>Type<select id="pv-type"><option value="supplier">🏭 Supplier</option><option value="employee">👷 Employee (service provider)</option></select></label></div>' +
+    '<div class="row"><label>Category / role<input id="pv-cat" placeholder="e.g. Dairy · Kitchen — salary"></label><label>Phone<input id="pv-phone" placeholder="+961 ..."></label></div>' +
+    '<label>Payment terms (days, 0 = on receipt)<input id="pv-terms" type="number" value="30"></label>' +
+    '<button class="btn p" onclick="saveProvider()">Add provider</button></div>');
+}
+function saveProvider() {
+  var name = document.getElementById('pv-name').value.trim();
+  if (!name) { alert('Name required'); return; }
+  var provs = store('providers').all();
+  provs.push({ id: uid(), name: name, type: document.getElementById('pv-type').value,
+    category: document.getElementById('pv-cat').value, phone: document.getElementById('pv-phone').value,
+    terms: Number(document.getElementById('pv-terms').value) || 0 });
+  store('providers').save(provs);
+  closeDlg(); render();
+}
+
+/* — invoice entry: goods lines land in stock the moment the invoice posts — */
+var invDraftLines = [];
+function newInvoice() {
+  invDraftLines = [{}];
+  invoiceDlg();
+}
+function invoiceDlg() {
+  var provs = store('providers').all(), ings = store('ingredients').all();
+  var provOpts = provs.map(function (p) {
+    return '<option value="' + p.id + '">' + (p.type === 'employee' ? '👷 ' : '🏭 ') + esc(p.name) + '</option>';
+  }).join('');
+  var kind = document.getElementById('iv-kind') ? document.getElementById('iv-kind').value : 'goods';
+  var linesHtml = invDraftLines.map(function (l, i) {
+    if (kind === 'service') {
+      return '<div class="row"><label>Description<input data-l="' + i + '" data-f="desc" value="' + esc(l.desc || '') + '"></label>' +
+        '<label>Amount ($)<input data-l="' + i + '" data-f="amount" type="number" step="0.01" value="' + esc(l.amount || '') + '"></label></div>';
+    }
+    var ingOpts = ings.map(function (g) {
+      return '<option value="' + g.id + '"' + (l.ing === g.id ? ' selected' : '') + '>' + esc(g.name) + ' (' + g.unit + ')</option>';
+    }).join('');
+    return '<div class="row" style="grid-template-columns:2fr 1fr"><label>Ingredient<select data-l="' + i + '" data-f="ing">' + ingOpts + '</select></label>' +
+      '<label>Qty<input data-l="' + i + '" data-f="qty" type="number" step="0.1" value="' + esc(l.qty || '') + '"></label></div>' +
+      '<div class="row" style="grid-template-columns:1fr 1fr 1fr"><label>Unit cost ($)<input data-l="' + i + '" data-f="cost" type="number" step="0.01" value="' + esc(l.cost || '') + '"></label>' +
+      '<label>Lot no.<input data-l="' + i + '" data-f="lot" value="' + esc(l.lot || '') + '" placeholder="e.g. CAR-240901"></label>' +
+      '<label>Expiry<input data-l="' + i + '" data-f="expiry" type="date" value="' + esc(l.expiry || today(7)) + '"></label></div><hr style="border:none;border-top:1px solid var(--line)">';
+  }).join('');
+  showDlg('<h3>＋ Post invoice</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Provider<select id="iv-prov">' + provOpts + '</select></label>' +
+    '<label>Invoice type<select id="iv-kind" onchange="invKindChange()"><option value="goods"' + (kind === 'goods' ? ' selected' : '') + '>📦 Goods (updates stock)</option><option value="service"' + (kind === 'service' ? ' selected' : '') + '>🧾 Service / salary</option></select></label></div>' +
+    '<div class="row"><label>Invoice no.<input id="iv-code" placeholder="INV-…"></label><label>Due date<input id="iv-due" type="date" value="' + today(15) + '"></label></div>' +
+    linesHtml +
+    '<div class="pill-row"><button class="btn o s" onclick="invAddLine()">＋ Add line</button></div>' +
+    (kind === 'goods' ? '<p class="muted">Each goods line becomes a stock lot the moment you post — FEFO picks it by its expiry, the ingredient\'s cost updates to this price, and any open requisition for it closes.</p>' : '') +
+    '<button class="btn p" onclick="saveInvoice()">Post invoice</button></div>');
+}
+function invReadLines() {
+  document.querySelectorAll('#dlg [data-l]').forEach(function (el) {
+    var i = Number(el.dataset.l);
+    invDraftLines[i] = invDraftLines[i] || {};
+    invDraftLines[i][el.dataset.f] = el.value;
+  });
+}
+function invKindChange() { invReadLines(); invDraftLines = [{}]; invoiceDlg(); }
+function invAddLine() { invReadLines(); invDraftLines.push({}); invoiceDlg(); }
+function saveInvoice() {
+  invReadLines();
+  var kind = document.getElementById('iv-kind').value;
+  var provId = document.getElementById('iv-prov').value;
+  var provs = store('providers').all(); var prov = byId(provs, provId);
+  var lines = invDraftLines.filter(function (l) { return kind === 'service' ? l.amount : (l.ing && l.qty); })
+    .map(function (l) {
+      return kind === 'service'
+        ? { desc: l.desc || 'Service', amount: Number(l.amount) }
+        : { ing: l.ing, qty: Number(l.qty), cost: Number(l.cost) || 0, lot: l.lot || ('LOT-' + uid().toUpperCase()), expiry: l.expiry || today(7) };
+    });
+  if (!lines.length) { alert('Add at least one complete line'); return; }
+  var invs = store('sup_invoices').all();
+  var inv = { id: uid(), code: document.getElementById('iv-code').value || ('INV-' + uid().toUpperCase().slice(0, 5)),
+    provider: provId, kind: kind, date: today(0), due: document.getElementById('iv-due').value || today(15),
+    status: 'unpaid', paid_at: null, lines: lines };
+  invs.unshift(inv);
+  store('sup_invoices').save(invs);
+
+  if (kind === 'goods') {
+    // AUTO STOCK UPDATE: every line becomes a lot, cost refreshes, requisitions close
+    var lots = store('lots').all(), ings = store('ingredients').all(), reqs = store('requisitions').all();
+    var received = [];
+    lines.forEach(function (l) {
+      lots.push({ id: uid(), ing: l.ing, lot: l.lot, qty: l.qty, expiry: l.expiry, received: today(0) });
+      var g = byId(ings, l.ing);
+      if (g) { if (l.cost) g.cost = l.cost; received.push(l.qty + ' ' + g.unit + ' ' + g.name); }
+      reqs.forEach(function (r) { if (r.ing === l.ing && r.status === 'open') r.status = 'received'; });
+    });
+    store('lots').save(lots); store('ingredients').save(ings); store('requisitions').save(reqs);
+    pushDemo('Stock received 📦', (prov ? prov.name : 'Supplier') + ' · ' + inv.code + ': ' + received.join(', '), 'Role · kitchen');
+  }
+  closeDlg(); render();
+}
+
 /* ── ISO 22000 ── */
 RENDER.iso = function () {
   var iso = store('iso').all();
@@ -1355,7 +1651,7 @@ RENDER.users = function () {
     '<div class="panel"><h3>Team</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
     '<p class="muted" style="margin-top:8px">Real logins are Supabase Auth users; this list maps them to roles.</p></div>' +
     '<div class="panel"><h3>🔐 Permission matrix</h3><div class="tbl-scroll"><table class="t matrix"><thead><tr><th>Permission</th>' + head + '</tr></thead><tbody>' + matrix + '</tbody></table></div>' +
-    '<p class="muted" style="margin-top:8px">super_admin always holds everything. Try it: switch the signed-in user (bottom-left) to Chef Nadim and watch the sidebar shrink to his permissions.</p></div>';
+    '<p class="muted" style="margin-top:8px">super_admin always holds everything, and can <b>take over any role</b>: pick anyone in the bottom-left act-as switcher, work with exactly their permissions (watch the sidebar shrink), and return with one click. In production every acted-as action is logged with both identities.</p></div>';
 };
 function setRole(id, role) {
   var staff = store('staff').all(); var u = byId(staff, id);
@@ -1391,6 +1687,20 @@ function showDlg(html) {
 function closeDlg() { document.getElementById('dlg').close(); }
 
 /* ── boot ── */
+/* Super admin can take over any role: pick anyone in the act-as switcher,
+   work as them (their permissions apply), and return with one click.
+   In production this is an audited impersonation — every action is logged
+   with both the real admin and the acted-as identity. */
+function actAsBack() {
+  localStorage.setItem('ttops_whoami', 'u1');
+  var sel = document.getElementById('whoami'); if (sel) sel.value = 'u1';
+  syncActAs(); render();
+}
+function syncActAs() {
+  var acting = (localStorage.getItem('ttops_whoami') || 'u1') !== 'u1';
+  document.getElementById('who-back').style.display = acting ? 'block' : 'none';
+  document.getElementById('who-label').textContent = acting ? '🎭 Acting as (admin takeover)' : '👑 Super admin · act as';
+}
 (function () {
   var sel = document.getElementById('whoami');
   store('staff').all().forEach(function (u) {
@@ -1401,8 +1711,9 @@ function closeDlg() { document.getElementById('dlg').close(); }
   });
   sel.addEventListener('change', function () {
     localStorage.setItem('ttops_whoami', sel.value);
-    render();
+    syncActAs(); render();
   });
+  syncActAs();
   var h = (location.hash || '').replace('#', '');
   nav(VIEWS.indexOf(h) >= 0 ? h : 'overview');
 })();

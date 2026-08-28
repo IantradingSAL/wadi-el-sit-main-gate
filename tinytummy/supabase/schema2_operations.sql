@@ -47,15 +47,15 @@ $$;
 insert into public.tt_role_perms (role, key, allowed)
 select r, k, case
     when r = 'super_admin' then true
-    when r = 'manager' and k <> 'users_manage' then true
+    when r = 'manager' and k not in ('users_manage') then true
     when r = 'kitchen' and k in ('kitchen_manage','inventory_manage','chat_use') then true
     when r = 'delivery' and k in ('delivery_manage','chat_use') then true
     when r = 'support' and k in ('orders_manage','complaints_manage','chat_use') then true
     else false end
 from unnest(array['super_admin','manager','kitchen','delivery','support']) r,
      unnest(array['orders_manage','kitchen_manage','inventory_manage','bom_manage',
-                  'delivery_manage','iso_manage','complaints_manage','programs_manage',
-                  'chat_use','push_send','reports_view','users_manage']) k
+                  'delivery_manage','suppliers_manage','iso_manage','complaints_manage',
+                  'programs_manage','chat_use','push_send','reports_view','users_manage']) k
 on conflict (role, key) do nothing;
 
 -- ── ingredients, lots (FEFO), BOM ───────────────────────────────────────
@@ -171,6 +171,68 @@ create table if not exists public.tt_requisitions (
   note text,
   created_at timestamptz not null default now()
 );
+
+-- ── suppliers & payables ────────────────────────────────────────────────
+-- Providers cover goods suppliers AND employees as service providers, in
+-- one payables book. Posting a goods invoice through tt_invoice_post()
+-- automatically receives every line into stock as a lot (FEFO-ready),
+-- refreshes the ingredient's latest cost, and closes its open requisitions.
+create table if not exists public.tt_providers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  type text not null default 'supplier' check (type in ('supplier','employee')),
+  category text,
+  phone text,
+  terms_days int not null default 30,
+  staff_id uuid references public.tt_staff(id),   -- set when the provider is an employee
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.tt_sup_invoices (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  provider_id uuid not null references public.tt_providers(id) on delete restrict,
+  kind text not null default 'goods' check (kind in ('goods','service')),
+  invoice_date date not null default current_date,
+  due_date date not null,
+  status text not null default 'unpaid' check (status in ('unpaid','paid')),
+  paid_at date,
+  lines jsonb not null default '[]',
+  -- goods line: {ingredient_id, qty, cost, lot_no, expiry}
+  -- service line: {desc, amount}
+  total numeric(12,2) not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists tt_sup_inv_aging on public.tt_sup_invoices (status, due_date);
+
+create or replace function public.tt_invoice_post(p_invoice uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v record; l jsonb;
+begin
+  if not tt_has_perm('suppliers_manage') then raise exception 'suppliers_manage required'; end if;
+  select * into v from tt_sup_invoices where id = p_invoice;
+  if v.kind <> 'goods' then return; end if;
+  for l in select * from jsonb_array_elements(v.lines) loop
+    insert into tt_lots (ingredient_id, lot_no, qty, expiry)
+    values ((l->>'ingredient_id')::uuid, l->>'lot_no', (l->>'qty')::numeric, (l->>'expiry')::date);
+    update tt_ingredients set cost = coalesce((l->>'cost')::numeric, cost)
+      where id = (l->>'ingredient_id')::uuid and (l->>'cost') is not null;
+    update tt_requisitions set status = 'received'
+      where ingredient_id = (l->>'ingredient_id')::uuid and status = 'open';
+  end loop;
+end $$;
+
+alter table public.tt_providers enable row level security;
+alter table public.tt_sup_invoices enable row level security;
+create policy "providers read" on public.tt_providers for select to authenticated
+  using (public.tt_has_perm('suppliers_manage'));
+create policy "providers write" on public.tt_providers for all to authenticated
+  using (public.tt_has_perm('suppliers_manage')) with check (public.tt_has_perm('suppliers_manage'));
+create policy "sup invoices read" on public.tt_sup_invoices for select to authenticated
+  using (public.tt_has_perm('suppliers_manage'));
+create policy "sup invoices write" on public.tt_sup_invoices for all to authenticated
+  using (public.tt_has_perm('suppliers_manage')) with check (public.tt_has_perm('suppliers_manage'));
 
 -- ── complaints / cases with escalation ──────────────────────────────────
 create table if not exists public.tt_cases (
