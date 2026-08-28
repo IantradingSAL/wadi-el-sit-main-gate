@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Tiny Tummy</title>
+  <meta name="description" content="Contact Tiny Tummy Lebanon: phone, WhatsApp, email, Instagram and Facebook.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🥕%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<div class="bar">🚚 Order before 3:00 PM for next-day delivery — everywhere in Lebanon (except Sundays)</div>
+
+<header class="site">
+  <div class="nav">
+    <a class="logo" href="index.html">🥕 Tiny Tummy <small>YOUR BABY'S BEST MEALSTONE</small></a>
+    <button class="nav-toggle" onclick="ttNavToggle()" aria-label="Menu">☰</button>
+    <nav class="links">
+      <a href="index.html">Home</a>
+      <a href="products.html">Menu</a>
+      <a href="why-us.html">Why Us?</a>
+      <a href="how-it-works.html">How It Works</a>
+      <a href="contact.html" class="active">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<section class="block">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Talk to us</h2>
+      <p>Questions about ingredients, allergies, delivery areas or a custom cake? We answer fast.</p>
+    </div>
+
+    <div class="grid cols-3" style="margin-bottom:44px">
+      <div class="feature">
+        <div class="icon">💬</div>
+        <div>
+          <h3>WhatsApp</h3>
+          <p><a href="https://wa.me/96171008604" target="_blank" rel="noopener">+961 71 008 604</a><br>The fastest way to order.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="icon">📞</div>
+        <div>
+          <h3>Phone</h3>
+          <p><a href="tel:+96171008604">+961 71 008 604</a><br>Call us during working hours.</p>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="icon">✉️</div>
+        <div>
+          <h3>Email</h3>
+          <p><a href="mailto:tinytummylb@outlook.com">tinytummylb@outlook.com</a><br>For anything that can wait a little.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Send a message</h2>
+      <p>This form opens WhatsApp with your message ready to send.</p>
+    </div>
+    <form class="form" style="margin:0 auto" onsubmit="return ttSendForm(this)">
+      <label>Your name
+        <input name="name" required placeholder="e.g. Rana">
+      </label>
+      <label>Phone number
+        <input name="phone" type="tel" placeholder="+961 ...">
+      </label>
+      <label>Message
+        <textarea name="msg" rows="4" required placeholder="I'd like to ask about..."></textarea>
+      </label>
+      <button class="btn btn-wa" type="submit">Send on WhatsApp</button>
+    </form>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="foot">
+    <div>
+      <h4>🥕 Tiny Tummy</h4>
+      <p>Your baby's best mealstone. Healthy, delicious and diverse meals for babies and toddlers, made in Lebanon.</p>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="products.html">Menu</a></li>
+        <li><a href="why-us.html">Why Us?</a></li>
+        <li><a href="how-it-works.html">How It Works</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Get in touch</h4>
+      <ul>
+        <li><a href="tel:+96171008604">📞 +961 71 008 604</a></li>
+        <li><a href="mailto:tinytummylb@outlook.com">✉️ tinytummylb@outlook.com</a></li>
+        <li><a href="https://www.instagram.com/tinytummylb/" target="_blank" rel="noopener">📷 @tinytummylb</a></li>
+        <li><a href="https://www.facebook.com/tinytummylb/" target="_blank" rel="noopener">👍 Tiny Tummy on Facebook</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="copyright">© Tiny Tummy Lebanon. All rights reserved.</div>
+</footer>
+
+<script src="js/products-data.js"></script>
+<script src="js/site.js"></script>
+<script>
+  function ttSendForm(f) {
+    var text = 'Hello Tiny Tummy! I am ' + f.name.value +
+      (f.phone.value ? ' (' + f.phone.value + ')' : '') + '. ' + f.msg.value;
+    window.open('https://wa.me/96171008604?text=' + encodeURIComponent(text), '_blank');
+    return false;
+  }
+</script>
+</body>
+</html>
