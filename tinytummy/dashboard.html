@@ -1115,7 +1115,7 @@ function stepControls(o) {
     var acts = '';
     if (done) acts = '<button class="btn o s" onclick="stepToggle(\'' + o.id + '\',' + i + ',false)">↩</button>';
     else {
-      if (!running) acts += '<button class="btn p s" onclick="stepStart(\'' + o.id + '\',' + i + ')">▶ Start</button>';
+      if (!running) acts += '<button class="btn p s" title="Starts the timer and auto-assigns this step to you" onclick="stepStart(\'' + o.id + '\',' + i + ')">▶ Start</button>';
       acts += '<button class="btn g s" onclick="stepToggle(\'' + o.id + '\',' + i + ',true)">✓ Done</button>';
     }
     return '<div class="srow ' + (done ? 'done' : running ? 'running' : '') + '">' +
@@ -1126,6 +1126,39 @@ function stepControls(o) {
       '<div class="tmr">' + timer + '</div>' +
       '<div class="acts">' + acts + '</div></div>';
   }).join('');
+}
+/* ⚡ Auto-assign: every unassigned step gets the best eligible person for
+   its station — kitchen-role holders first, least-loaded first. */
+function autoAssignSteps(oid) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var staff = store('staff').all().map(normStaff);
+  var defs = stepDefs(o);
+  var loads = {};
+  o.steps.forEach(function (x) { if (x.assigned && !x.done) loads[x.assigned] = (loads[x.assigned] || 0) + 1; });
+  var assigned = [];
+  defs.forEach(function (def) {
+    var st = o.steps.find(function (x) { return x.s === def.name; });
+    if (st && (st.done || st.assigned)) return;
+    var station = stepStation(def.name);
+    var eligible = staff.filter(function (u) { return (u.stations || []).indexOf(station) >= 0; });
+    if (!eligible.length) eligible = staff.filter(function (u) { return u.role === 'manager' || u.role === 'super_admin'; });
+    if (!eligible.length) return;
+    eligible.sort(function (a, b) {
+      var ra = (a.role === 'kitchen' ? 0 : 1) - (b.role === 'kitchen' ? 0 : 1);
+      if (ra) return ra;
+      return (loads[a.name] || 0) - (loads[b.name] || 0);
+    });
+    var pick = eligible[0];
+    if (!st) { st = { s: def.name, done: false }; o.steps.push(st); }
+    st.assigned = pick.name;
+    loads[pick.name] = (loads[pick.name] || 0) + 1;
+    assigned.push(STATION_ICON[station] + ' ' + def.name + ' → ' + pick.name.split(' ')[0]);
+  });
+  if (!assigned.length) { alert('Nothing to assign — every step is already assigned or done.'); return; }
+  o.history.push({ at: nowTs(), what: '⚡ Auto-assigned: ' + assigned.join(' · ') + ' — by ' + currentUser().name });
+  store('orders').save(orders);
+  pushDemo('Tasks assigned ⚡', o.code + ': ' + assigned.join(', '), 'Role · kitchen');
+  render();
 }
 function stepAssign(oid, idx, name) {
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
@@ -1340,7 +1373,7 @@ RENDER.kitchen = function () {
     var cur = currentStep(o, products);
     return '<div class="panel"><div class="toolbar"><h3>' + esc(o.code) + ' <span class="chip ' + o.status + '">' + o.status + '</span>' +
       (o.batch_lot ? ' <span class="chip fefo">lot ' + esc(o.batch_lot) + '</span>' : '') + '</h3>' +
-      (cur ? '<span class="chip progress">▶ now: ' + esc(cur) + '</span>' : '<span class="chip done">all steps complete</span>') + '</div>' +
+      '<span class="pill-row"><button class="btn o s" title="Fill every unassigned step with the best eligible person per station" onclick="autoAssignSteps(\'' + o.id + '\')">⚡ Auto-assign</button>' + (cur ? '<span class="chip progress">▶ now: ' + esc(cur) + '</span>' : '<span class="chip done">all steps complete</span>') + '</span></div>' +
       '<p class="muted">' + esc(items) + ' · ' + esc(o.customer) + '</p>' +
       pipelineStrip(o) +
       stepTimeline(o, products) +
