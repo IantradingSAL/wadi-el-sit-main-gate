@@ -52,6 +52,21 @@ main { flex:1; padding:22px 26px 60px; min-width:0; }
 .kpi .v { font-family:'Baloo 2'; font-size:1.5rem; font-weight:700; font-variant-numeric:tabular-nums; }
 .kpi .l { font-size:.76rem; color:var(--soft); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
 .kpi.good .v { color:var(--ok); } .kpi.warn .v { color:var(--warn); } .kpi.bad .v { color:var(--bad); }
+.kpi.click { cursor:pointer; transition:transform .13s ease, box-shadow .13s ease, border-color .13s ease; }
+.kpi.click:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 12px 28px rgba(23,69,94,.22); border-color:var(--gold); }
+.kpi.click:hover .l::after { content:' →'; color:var(--gold-dark); }
+table.t tbody tr.rowlink { cursor:pointer; }
+table.t tbody tr.rowlink:hover td { background:#fdf1d7; }
+table.t tbody tr.rowlink:hover td:first-child { box-shadow:inset 4px 0 0 var(--gold); }
+svg .bar { transition:filter .1s ease; }
+svg .bar:hover { filter:brightness(1.28); }
+svg .bar.clickable { cursor:pointer; }
+.srow { transition:border-color .12s ease, box-shadow .12s ease; }
+.srow:hover { border-color:var(--gold); box-shadow:0 4px 14px rgba(23,69,94,.12); }
+.pstage { transition:transform .12s ease; }
+.pstage:hover { transform:scale(1.06); }
+.mapmark { cursor:pointer; }
+.mapmark:hover circle { filter:brightness(1.25); }
 
 .panel { background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; margin-bottom:18px; }
 .panel h3 { margin-bottom:12px; display:flex; align-items:center; gap:8px; }
@@ -783,6 +798,12 @@ function pushDemo(title, body, audience) {
   }, 1500);
 }
 
+/* KPI click-through: land on the module already filtered to that data */
+function jsq(x) { return String(x).replace(/\\/g, '').replace(/'/g, "\\'"); }
+function goInv(f) { invFilter = f; invTab = 'lots'; nav('inventory'); }
+function goCases(f) { caseFilter = f; caseCat = 'all'; nav('complaints'); }
+function goSup(f) { supFilter = f; nav('suppliers'); }
+
 /* ── router ── */
 var VIEWS = ['overview','orders','programs','kitchen','bom','inventory','requisitions','delivery','suppliers','iso','complaints','chat','notify','users','settings'];
 var current = 'overview';
@@ -835,7 +856,7 @@ RENDER.overview = function () {
 
   var recent = orders.slice(0, 5).map(function (o) {
     var t = orderTotals(o, products, bom, ings);
-    return '<tr><td><b>' + esc(o.code) + '</b></td><td>' + esc(o.customer) + '</td>' +
+    return '<tr class="rowlink" onclick="openOrder(\'' + o.id + '\')"><td><b>' + esc(o.code) + '</b></td><td>' + esc(o.customer) + '</td>' +
       '<td><span class="chip ' + o.status + '">' + o.status + '</span></td>' +
       '<td class="num">' + money(t.rev) + '</td><td class="num">' + t.pct + '%</td></tr>';
   }).join('');
@@ -843,14 +864,14 @@ RENDER.overview = function () {
   return '<div class="pagehead"><div><h1>📊 Overview</h1><div class="sub">Today across the whole operation</div></div>' +
     '<button class="btn o s" onclick="resetDemo()">↺ Reset demo data</button></div>' +
     '<div class="kpis">' +
-    '<div class="kpi"><div class="v">' + orders.length + '</div><div class="l">Orders</div></div>' +
-    '<div class="kpi"><div class="v">' + active + '</div><div class="l">In pipeline</div></div>' +
-    '<div class="kpi good"><div class="v">' + money(rev) + '</div><div class="l">Revenue</div></div>' +
-    '<div class="kpi good"><div class="v">' + money(rev - cost) + ' · ' + marginPct + '%</div><div class="l">Profit margin</div></div>' +
-    '<div class="kpi ' + (low ? 'bad' : 'good') + '"><div class="v">' + low + '</div><div class="l">Low stock</div></div>' +
-    '<div class="kpi ' + (expiring ? 'warn' : 'good') + '"><div class="v">' + expiring + '</div><div class="l">Lots expiring ≤7d</div></div>' +
-    '<div class="kpi ' + (openC ? 'bad' : 'good') + '"><div class="v">' + openC + '</div><div class="l">Open complaints</div></div>' +
-    '<div class="kpi ' + (isoPct >= 80 ? 'good' : 'warn') + '"><div class="v">' + isoPct + '%</div><div class="l">ISO 22000 done</div></div>' +
+    '<div class="kpi click" onclick="nav(\'orders\')"><div class="v">' + orders.length + '</div><div class="l">Orders</div></div>' +
+    '<div class="kpi click" onclick="nav(\'kitchen\')"><div class="v">' + active + '</div><div class="l">In pipeline</div></div>' +
+    '<div class="kpi good click" onclick="nav(\'orders\')"><div class="v">' + money(rev) + '</div><div class="l">Revenue</div></div>' +
+    '<div class="kpi good click" onclick="nav(\'bom\')"><div class="v">' + money(rev - cost) + ' · ' + marginPct + '%</div><div class="l">Profit margin</div></div>' +
+    '<div class="kpi click ' + (low ? 'bad' : 'good') + '" onclick="goInv(\'low\')"><div class="v">' + low + '</div><div class="l">Low stock</div></div>' +
+    '<div class="kpi click ' + (expiring ? 'warn' : 'good') + '" onclick="goInv(\'expiring\')"><div class="v">' + expiring + '</div><div class="l">Lots expiring ≤7d</div></div>' +
+    '<div class="kpi click ' + (openC ? 'bad' : 'good') + '" onclick="goCases(\'openonly\')"><div class="v">' + openC + '</div><div class="l">Open complaints</div></div>' +
+    '<div class="kpi click ' + (isoPct >= 80 ? 'good' : 'warn') + '" onclick="nav(\'iso\')"><div class="v">' + isoPct + '%</div><div class="l">ISO 22000 done</div></div>' +
     '</div>' +
     '<div class="grid2"><div class="panel"><h3>🛒 Latest orders</h3><div class="tbl-scroll"><table class="t">' +
     '<thead><tr><th>Order</th><th>Customer</th><th>Status</th><th class="num">Value</th><th class="num">Margin</th></tr></thead>' +
@@ -937,7 +958,7 @@ RENDER.orders = function () {
     var t = orderTotals(o, products, bom, ings);
     var items = o.items.map(function (it) { var p = byId(products, it.product); return it.qty + '× ' + (p ? p.name : '?'); }).join(', ');
     var ag = o.agent ? (byId(agents, o.agent) || {}).name : '';
-    return '<tr><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.created) + '</span></td>' +
+    return '<tr class="rowlink" onclick="openOrder(\'' + o.id + '\')"><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.created) + '</span></td>' +
       '<td>' + esc(o.customer) + '<br><span class="muted">' + esc(o.phone) + '</span></td>' +
       '<td class="wrap">' + esc(items) + '</td>' +
       '<td><span class="chip ' + o.status + '">' + o.status + '</span>' +
@@ -1536,15 +1557,15 @@ RENDER.inventory = function () {
     }).map(function (g) {
       var st = stockOf(g.id, lots);
       var low = st < g.min;
-      return '<tr' + (low ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(g.name) + '</b></td>' +
+      return '<tr class="rowlink" onclick="editIngredient(\'' + g.id + '\')"' + (low ? ' style="background:#fdf3e3"' : '') + '><td><b>' + esc(g.name) + '</b></td>' +
         '<td>' + esc(g.cat) + '</td><td>' + g.unit + '</td>' +
         '<td class="num">' + g.min + '</td><td class="num">' + g.max + '</td>' +
         '<td class="num">' + (g.use_m || '—') + '</td>' +
         '<td class="num">' + g.lead + ' d</td>' +
-        '<td><button class="pill ' + (g.auto ? 'on' : 'off') + '" onclick="ingAutoToggle(\'' + g.id + '\')">' + (g.auto ? 'Auto' : 'Off') + '</button></td>' +
+        '<td><button class="pill ' + (g.auto ? 'on' : 'off') + '" onclick="event.stopPropagation();ingAutoToggle(\'' + g.id + '\')">' + (g.auto ? 'Auto' : 'Off') + '</button></td>' +
         '<td class="num">' + (Math.round(st * 100) / 100) + ' ' + g.unit + (low ? ' <span class="chip low">LOW</span>' : '') + '</td>' +
-        '<td class="pill-row"><button class="btn o s" onclick="editIngredient(\'' + g.id + '\')">Edit</button>' +
-        '<button class="btn o s" onclick="receiveLot(\'' + g.id + '\')">＋ Lot</button></td></tr>';
+        '<td class="pill-row"><button class="btn o s" onclick="event.stopPropagation();editIngredient(\'' + g.id + '\')">Edit</button>' +
+        '<button class="btn o s" onclick="event.stopPropagation();receiveLot(\'' + g.id + '\')">＋ Lot</button></td></tr>';
     }).join('') || '<tr><td colspan="10" class="muted">No items match.</td></tr>';
     body = '<div class="tbl-scroll"><table class="t reg"><thead><tr>' +
       '<th>Item Name</th><th>Category</th><th>Unit</th><th class="num">Min</th><th class="num">Max</th><th class="num">Monthly Use</th><th class="num">Lead Time</th><th>Auto Req</th><th class="num">Current Stock</th><th>Actions</th>' +
@@ -1557,11 +1578,11 @@ RENDER.inventory = function () {
   return '<div class="pagehead"><div><h1>📦 Inventory · Lots</h1><div class="sub">Same tool as the Bloom production inventory, adapted to food: a flat stock-by-lot register (FEFO order, value, location, status) and an item master with min/max, monthly use, lead time and per-item auto-requisition.</div></div>' +
     '<button class="btn p" onclick="newIngredient()">＋ New item</button></div>' +
     '<div class="kpis">' +
-    '<div class="kpi b-navy"><div class="v">' + ings.length + '</div><div class="l">Items</div></div>' +
-    '<div class="kpi b-blue"><div class="v">' + money(stockValue) + '</div><div class="l">Stock value</div></div>' +
-    '<div class="kpi ' + (lowN ? 'bad b-red' : 'good b-green') + '"><div class="v">' + lowN + '</div><div class="l">Below minimum</div></div>' +
-    '<div class="kpi ' + (expN ? 'warn b-gold' : 'good b-green') + '"><div class="v">' + expN + '</div><div class="l">Lots expiring ≤7d</div></div>' +
-    '<div class="kpi ' + (openReqs ? 'warn b-gold' : 'good b-green') + '"><div class="v">' + openReqs + '</div><div class="l">Open requisitions</div></div></div>' +
+    '<div class="kpi b-navy click" onclick="invTabGo(\'master\')"><div class="v">' + ings.length + '</div><div class="l">Items</div></div>' +
+    '<div class="kpi b-blue click" onclick="invTabGo(\'lots\')"><div class="v">' + money(stockValue) + '</div><div class="l">Stock value</div></div>' +
+    '<div class="kpi click ' + (lowN ? 'bad b-red' : 'good b-green') + '" onclick="goInv(\'low\')"><div class="v">' + lowN + '</div><div class="l">Below minimum</div></div>' +
+    '<div class="kpi click ' + (expN ? 'warn b-gold' : 'good b-green') + '" onclick="goInv(\'expiring\')"><div class="v">' + expN + '</div><div class="l">Lots expiring ≤7d</div></div>' +
+    '<div class="kpi click ' + (openReqs ? 'warn b-gold' : 'good b-green') + '" onclick="nav(\'requisitions\')"><div class="v">' + openReqs + '</div><div class="l">Open requisitions</div></div></div>' +
     '<div class="panel"><div class="toolbar"><div class="chan">' + tab('lots', '📦 Stock by lot') + tab('master', '📋 Item master') + '</div>' +
     '<div class="chan">' + pill('all', 'All') + pill('low', '⚠️ Low') + pill('expiring', '⏳ ≤7d') + '</div>' +
     '<input class="search-in" placeholder="Search item, lot, location…" value="' + esc(invSearch) + '" oninput="invSearchGo(this.value)"></div>' + body + '</div>';
@@ -1725,12 +1746,12 @@ function deliveryMap(out, agents) {
     var ax = KITCHEN_XY.x + (d.x - KITCHEN_XY.x) * p;
     var ay = KITCHEN_XY.y + (d.y - KITCHEN_XY.y) * p;
     var a = byId(agents, o.agent);
-    return '<line x1="' + KITCHEN_XY.x + '" y1="' + KITCHEN_XY.y + '" x2="' + d.x + '" y2="' + d.y + '" stroke="#d9731f" stroke-width="2" stroke-dasharray="6 5" opacity=".55"/>' +
+    return '<g class="mapmark" onclick="openOrder(\'' + o.id + '\')"><line x1="' + KITCHEN_XY.x + '" y1="' + KITCHEN_XY.y + '" x2="' + d.x + '" y2="' + d.y + '" stroke="#d9731f" stroke-width="2" stroke-dasharray="6 5" opacity=".55"/>' +
       '<circle cx="' + d.x + '" cy="' + d.y + '" r="7" fill="#d95d76"/>' +
       '<text x="' + (d.x + 11) + '" y="' + (d.y + 4) + '" font-size="11" fill="#3d3229" font-weight="700">' + esc(o.code.slice(-3)) + ' · ' + esc(o.customer.split(' ')[0]) + '</text>' +
       '<g transform="translate(' + ax + ',' + ay + ')"><circle r="11" fill="#f28c38" stroke="#fff" stroke-width="2.5"/>' +
       '<text y="4" x="0" text-anchor="middle" font-size="11">🛵</text>' +
-      '<text y="-15" x="0" text-anchor="middle" font-size="10" font-weight="700" fill="#d9731f">' + esc(a ? a.name.split(' ')[0] : '') + '</text></g>';
+      '<text y="-15" x="0" text-anchor="middle" font-size="10" font-weight="700" fill="#d9731f">' + esc(a ? a.name.split(' ')[0] : '') + '</text></g></g>';
   }).join('');
   return '<svg viewBox="0 0 640 400" role="img" aria-label="Live delivery map" style="width:100%;height:auto;border-radius:12px;background:#f6efe4">' +
     '<rect width="88" height="400" fill="#cfe3ee"/><path d="M88 0 C 70 90, 108 200, 82 300 C 74 350, 90 380, 84 400 L 0 400 L 0 0 Z" fill="#bcd8e8"/>' +
@@ -1822,8 +1843,9 @@ function hBarChart(rows, color, valueFmt) {
     var valTxt = inside
       ? '<text x="' + (labelW + w - 6) + '" y="' + (y + 12) + '" text-anchor="end" font-size="10.5" fill="#fff" font-weight="700" style="font-variant-numeric:tabular-nums">' + valueFmt(r.value) + '</text>'
       : '<text x="' + (labelW + w + 6) + '" y="' + (y + 12) + '" font-size="10.5" fill="#64808e" style="font-variant-numeric:tabular-nums">' + valueFmt(r.value) + '</text>';
+    var clickAttr = r.click ? ' class="bar clickable" onclick="' + r.click + '"' : ' class="bar"';
     return '<text x="' + (labelW - 8) + '" y="' + (y + 12) + '" text-anchor="end" font-size="11" fill="#17455e" font-weight="600">' + esc(r.label) + '</text>' +
-      '<rect x="' + labelW + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="4" fill="' + color + '"><title>' + esc(r.label) + ': ' + valueFmt(r.value) + '</title></rect>' + valTxt;
+      '<rect' + clickAttr + ' x="' + labelW + '" y="' + y + '" width="' + w + '" height="' + barH + '" rx="4" fill="' + color + '"><title>' + esc(r.label) + ': ' + valueFmt(r.value) + (r.click ? ' — click to open' : '') + '</title></rect>' + valTxt;
   }).join('');
   // capped: the chart keeps its natural size instead of scaling to the panel
   return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:540px;height:auto;display:block" role="img">' + g + bars + '</svg>';
@@ -1837,8 +1859,8 @@ function stackedPayChart(rows) {
     var y = i * (barH + gap);
     var wP = plotW * r.paid / max, wU = plotW * r.unpaid / max;
     var seg = '<text x="' + (labelW - 8) + '" y="' + (y + 14) + '" text-anchor="end" font-size="11.5" fill="#17455e" font-weight="600">' + esc(r.label) + '</text>';
-    if (wP > 0) seg += '<rect x="' + labelW + '" y="' + y + '" width="' + Math.max(2, wP) + '" height="' + barH + '" rx="4" fill="' + CHART.teal + '"><title>' + esc(r.label) + ' paid: ' + money(r.paid) + '</title></rect>';
-    if (wU > 0) seg += '<rect x="' + (labelW + wP + 2) + '" y="' + y + '" width="' + Math.max(2, wU) + '" height="' + barH + '" rx="4" fill="' + CHART.gold + '"><title>' + esc(r.label) + ' outstanding: ' + money(r.unpaid) + '</title></rect>' +
+    if (wP > 0) seg += '<rect class="bar" x="' + labelW + '" y="' + y + '" width="' + Math.max(2, wP) + '" height="' + barH + '" rx="4" fill="' + CHART.teal + '"><title>' + esc(r.label) + ' paid: ' + money(r.paid) + '</title></rect>';
+    if (wU > 0) seg += '<rect class="bar" x="' + (labelW + wP + 2) + '" y="' + y + '" width="' + Math.max(2, wU) + '" height="' + barH + '" rx="4" fill="' + CHART.gold + '"><title>' + esc(r.label) + ' outstanding: ' + money(r.unpaid) + '</title></rect>' +
       '<text x="' + (labelW + wP + wU + 8) + '" y="' + (y + 14) + '" font-size="11" fill="#a3720d" font-weight="700" style="font-variant-numeric:tabular-nums">' + money(r.unpaid) + '</text>';
     return seg;
   }).join('');
@@ -1859,7 +1881,7 @@ function monthChart(byMonth) {
   var bars = keys.map(function (k, i) {
     var x = 30 + i * ((W - 50) / keys.length);
     var h = Math.max(2, plotH * byMonth[k] / max);
-    return '<rect x="' + x + '" y="' + (base - h) + '" width="' + bw + '" height="' + h + '" rx="4" fill="' + CHART.blue + '"><title>' + k + ': ' + money(byMonth[k]) + '</title></rect>' +
+    return '<rect class="bar" x="' + x + '" y="' + (base - h) + '" width="' + bw + '" height="' + h + '" rx="4" fill="' + CHART.blue + '"><title>' + k + ': ' + money(byMonth[k]) + '</title></rect>' +
       '<text x="' + (x + bw / 2) + '" y="' + (base - h - 5) + '" text-anchor="middle" font-size="10.5" fill="#64808e" style="font-variant-numeric:tabular-nums">' + money(byMonth[k]) + '</text>' +
       '<text x="' + (x + bw / 2) + '" y="' + (base + 14) + '" text-anchor="middle" font-size="10.5" fill="#17455e" font-weight="600">' + k.slice(2) + '</text>';
   }).join('');
@@ -1919,10 +1941,10 @@ RENDER.suppliers = function () {
   return '<div class="pagehead"><div><h1>🏭 Suppliers · Payables</h1><div class="sub">Goods suppliers and employees as service providers, in one payables book. Posting a goods invoice receives its lines straight into stock as lots, updates the ingredient\'s latest cost, and closes its open requisitions.</div></div>' +
     '<span class="pill-row"><button class="btn p" onclick="newInvoice()">＋ Post invoice</button><button class="btn o" onclick="newProvider()">＋ Provider</button></span></div>' +
     '<div class="kpis">' +
-    '<div class="kpi"><div class="v">' + money(total) + '</div><div class="l">Total invoiced</div></div>' +
-    '<div class="kpi ' + (unpaid ? 'warn' : 'good') + '"><div class="v">' + money(unpaid) + '</div><div class="l">Outstanding</div></div>' +
-    '<div class="kpi ' + (overdueN ? 'bad' : 'good') + '"><div class="v">' + overdueN + '</div><div class="l">Overdue invoices</div></div>' +
-    '<div class="kpi"><div class="v">' + provs.length + '</div><div class="l">Providers</div></div></div>' +
+    '<div class="kpi click" onclick="supGo(\'all\')"><div class="v">' + money(total) + '</div><div class="l">Total invoiced</div></div>' +
+    '<div class="kpi click ' + (unpaid ? 'warn' : 'good') + '" onclick="supGo(\'unpaid\')"><div class="v">' + money(unpaid) + '</div><div class="l">Outstanding</div></div>' +
+    '<div class="kpi click ' + (overdueN ? 'bad' : 'good') + '" onclick="supGo(\'overdue\')"><div class="v">' + overdueN + '</div><div class="l">Overdue invoices</div></div>' +
+    '<div class="kpi click" onclick="supGo(\'all\')"><div class="v">' + provs.length + '</div><div class="l">Providers</div></div></div>' +
     '<div class="grid2">' +
     '<div class="panel"><h3>💵 Spend by provider</h3>' + hBarChart(spendRows, CHART.blue, money) + '</div>' +
     '<div class="panel"><h3>✅ Paid vs outstanding</h3>' + stackedPayChart(payRows) + '</div></div>' +
@@ -2118,13 +2140,15 @@ RENDER.complaints = function () {
     if (caseFilter === 'mine' && (c.assigned || '').indexOf(me) < 0) return false;
     if (caseFilter === 'due' && !(c.follow_up && c.follow_up <= today(0) && caseOpenSet(c))) return false;
     if (caseFilter === 'unassigned' && c.assigned) return false;
+    if (caseFilter === 'openonly' && !caseOpenSet(c)) return false;
+    if (caseFilter === 'closedonly' && caseOpenSet(c)) return false;
     if (['complaint', 'inquiry', 'feedback', 'suggestion'].indexOf(caseFilter) >= 0 && c.type !== caseFilter) return false;
     if (caseCat !== 'all' && (c.category || 'Other') !== caseCat) return false;
     if (q && (c.code + ' ' + c.summary + ' ' + (c.desc || '') + ' ' + (c.order || '') + ' ' + c.customer).toLowerCase().indexOf(q) < 0) return false;
     return true;
   });
   var rows = shown.map(function (c) {
-    return '<tr><td><b>' + esc(c.code) + '</b><br><span class="muted">' + esc(c.created) + '</span></td>' +
+    return '<tr class="rowlink" onclick="openCase(\'' + c.id + '\')"><td><b>' + esc(c.code) + '</b><br><span class="muted">' + esc(c.created) + '</span></td>' +
       '<td class="wrap"><b>' + esc(c.summary) + '</b><br><span class="muted">' + esc((c.desc || '').slice(0, 60)) + ((c.desc || '').length > 60 ? '…' : '') + '</span>' +
       '<br><span class="muted">' + esc(c.category || '—') + (c.order ? ' · <b>' + esc(c.order) + '</b>' : '') + '</span></td>' +
       '<td><span class="chip t-' + c.type + '">' + TYPE_META[c.type] + '</span></td>' +
@@ -2132,12 +2156,12 @@ RENDER.complaints = function () {
       '<td>' + (c.assigned ? esc(c.assigned) + (c.second ? ' <span class="chip fefo">' + esc(c.second) + '</span>' : '') : '<span class="chip lowp">unassigned</span>') + '</td>' +
       '<td>' + followCell(c) + '</td>' +
       '<td><span class="chip ' + statusClass(c.status) + '">' + c.status + '</span></td>' +
-      '<td class="pill-row"><button class="btn p s" onclick="openCase(\'' + c.id + '\')">Open</button>' + (caseOpenSet(c) ? '<button class="btn o s" title="Pass the ball" onclick="passBall(\'' + c.id + '\')">⚽</button>' : '') + '</td></tr>';
+      '<td class="pill-row"><button class="btn p s" onclick="event.stopPropagation();openCase(\'' + c.id + '\')">Open</button>' + (caseOpenSet(c) ? '<button class="btn o s" title="Pass the ball" onclick="event.stopPropagation();passBall(\'' + c.id + '\')">⚽</button>' : '') + '</td></tr>';
   }).join('') || '<tr><td colspan="8" class="muted">Nothing matches this view.</td></tr>';
 
   var cats = {};
   comps.forEach(function (c) { var k = c.category || 'Other'; cats[k] = (cats[k] || 0) + 1; });
-  var catRows = Object.keys(cats).map(function (k) { return { label: k, value: cats[k] }; })
+  var catRows = Object.keys(cats).map(function (k) { return { label: k, value: cats[k], click: "caseCatGo('" + jsq(k) + "')" }; })
     .sort(function (a, b) { return b.value - a.value; });
   var catOpts = '<option value="all">All categories</option>' + Object.keys(cats).sort().map(function (k) {
     return '<option' + (caseCat === k ? ' selected' : '') + '>' + esc(k) + '</option>';
@@ -2146,11 +2170,11 @@ RENDER.complaints = function () {
   return '<div class="pagehead"><div><h1>📣 Feedback &amp; Complaints Register</h1><div class="sub">Every customer voice — complaints, inquiries, suggestions and praise — as numbered records with priority, assignee, follow-up and status. High food cases always link the order and its batch lot.</div></div>' +
     '<span class="pill-row"><button class="btn o s" onclick="caseCsv()">📋 CSV</button><button class="btn p" onclick="newCase()">＋ Log feedback</button></span></div>' +
     '<div class="kpis">' +
-    '<div class="kpi b-red"><div class="v">' + nComplaints + '</div><div class="l">Complaints</div></div>' +
-    '<div class="kpi b-gold"><div class="v">' + nOpen + '</div><div class="l">Open</div></div>' +
-    '<div class="kpi b-green"><div class="v">' + nResolved + '</div><div class="l">Resolved</div></div>' +
-    '<div class="kpi b-blue"><div class="v">' + nPositive + '</div><div class="l">Positive feedback</div></div>' +
-    '<div class="kpi b-navy"><div class="v">' + comps.length + '</div><div class="l">Total records</div></div></div>' +
+    '<div class="kpi b-red click" onclick="caseGo(\'complaint\')"><div class="v">' + nComplaints + '</div><div class="l">Complaints</div></div>' +
+    '<div class="kpi b-gold click" onclick="caseGo(\'openonly\')"><div class="v">' + nOpen + '</div><div class="l">Open</div></div>' +
+    '<div class="kpi b-green click" onclick="caseGo(\'closedonly\')"><div class="v">' + nResolved + '</div><div class="l">Resolved</div></div>' +
+    '<div class="kpi b-blue click" onclick="caseGo(\'feedback\')"><div class="v">' + nPositive + '</div><div class="l">Positive feedback</div></div>' +
+    '<div class="kpi b-navy click" onclick="caseGo(\'all\')"><div class="v">' + comps.length + '</div><div class="l">Total records</div></div></div>' +
     '<div class="panel"><h3>📊 Records by category</h3>' + hBarChart(catRows, CHART.blue, function (v) { return v + ' record' + (v > 1 ? 's' : ''); }) + '</div>' +
     '<div class="panel"><div class="toolbar"><div class="chan">' +
     pill('all', 'All') + pill('mine', 'Assigned to me') + pill('due', 'Follow-up due') + pill('unassigned', 'Unassigned') +
