@@ -163,6 +163,15 @@ table.t tbody tr:nth-child(even) td { background:#fffdf9; }
 .case-card h4 { font-size:.95rem; margin:1px 0; }
 .case-card p { font-size:.82rem; color:var(--soft); }
 .search-in { min-width:220px; }
+/* Order pipeline strip: every stage with the time it was entered */
+.pstrip { display:flex; flex-wrap:wrap; gap:4px; align-items:stretch; margin:8px 0 2px; }
+.pstage { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:76px; padding:4px 8px; border-radius:8px; font-size:.66rem; font-weight:700; border:1px solid var(--line); background:#eef1f3; color:#64808e; }
+.pstage b { font-size:.7rem; }
+.pstage small { font-weight:600; font-size:.6rem; opacity:.85; font-variant-numeric:tabular-nums; }
+.pstage.done { background:#e6f4ef; border-color:#bfe0d4; color:#226a58; }
+.pstage.now { background:var(--gold); border-color:var(--gold-dark); color:#12394e; animation:kpulse 1.6s ease-in-out infinite; }
+.pstage.skip { opacity:.5; }
+.parrow { align-self:center; color:#c6d2d9; font-weight:700; }
 /* Kitchen MES timeline */
 .ktl { display:flex; height:34px; border-radius:9px; overflow:hidden; border:1px solid var(--line); position:relative; margin:10px 0 4px; }
 .ktl .seg { display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.62rem; font-weight:700; color:#fff; min-width:0; overflow:hidden; white-space:nowrap; border-right:2px solid #fff; }
@@ -422,6 +431,18 @@ function timeCostPerPortion(p) {
   normProd(p);
   return timePerBatch(p) * kitchenRate() / 60 / (p.batch_portions || 1);
 }
+/* Unit conversion: BOM lines may be entered in a different unit than the
+   item is stocked in. kg<->g, L<->ml, L<->kg (density 1 for our liquids),
+   hr<->min. Unknown pairs pass through unchanged. */
+var UNIT_COMPAT = { kg: ['kg', 'g', 'L'], g: ['g', 'kg'], L: ['L', 'ml', 'kg'], ml: ['ml', 'L'], pc: ['pc'], hr: ['hr', 'min'], min: ['min', 'hr'] };
+var UNIT_FACTOR = { 'kg>g': 1000, 'g>kg': 0.001, 'L>ml': 1000, 'ml>L': 0.001, 'L>kg': 1, 'kg>L': 1, 'hr>min': 60, 'min>hr': 1 / 60 };
+function convQty(qty, from, to) {
+  if (!from || !to || from === to) return qty;
+  var f = UNIT_FACTOR[from + '>' + to];
+  return f ? qty * f : qty;
+}
+function bomLineStockQty(b, g) { return convQty(Number(b.qty) || 0, b.unit || g.unit, g.unit); }
+
 /* Planned production minutes for an order = the longest of its items' batch times */
 function orderPlanMin(o, products) {
   var m = 0;
@@ -472,10 +493,12 @@ SEED.orders = [
   { id: 'o2', code: 'TT-2026-040', customer: 'Hussein M.', phone: '+961 76 789 039', address: 'Hamra, Beirut',
     items: [{ product: 'p7', qty: 3 }], status: 'kitchen', agent: null, program: null,
     kitchen_start: Date.now() - 90 * 60000, kitchen_due: Date.now() - 8 * 60000, alarm_sent: false,
+    stage_times: { 'new': Date.now() - 150 * 60000, confirmed: Date.now() - 120 * 60000, kitchen: Date.now() - 90 * 60000, portioning: Date.now() - 20 * 60000 },
     steps: [{ s: 'Prep & wash', done: true }, { s: 'Cook', done: true }],
     history: [{ at: nowTs(), what: 'Order placed' }, { at: nowTs(), what: 'Confirmed · sent to kitchen (stock consumed FEFO)' }], created: today(0) },
   { id: 'o3', code: 'TT-2026-039', customer: 'Maya A.', phone: '+961 71 553 210', address: 'Jounieh',
     items: [{ product: 'p8', qty: 1 }], status: 'delivering', agent: 'a1', program: null,
+    stage_times: { 'new': Date.now() - 26 * 3600000, confirmed: Date.now() - 25 * 3600000, kitchen: Date.now() - 5 * 3600000, portioning: Date.now() - 4 * 3600000, qc: Date.now() - 200 * 60000, dispatch: Date.now() - 60 * 60000, delivering: Date.now() - 9 * 60000 },
     track: { p: 55, km: roadKm('TT-2026-039'), eta_min: etaMin(roadKm('TT-2026-039')), started: Date.now() - 9 * 60000, promised: Date.now() + 12 * 60000, delayed: false },
     steps: KITCHEN_STEPS.map(function (s) { return { s: s, done: true }; }),
     history: [{ at: nowTs(), what: 'Order placed' }, { at: nowTs(), what: 'Kitchen complete · QC passed' }, { at: nowTs(), what: 'Dispatched with Ali H.' }], created: today(-1) },
@@ -584,7 +607,7 @@ SEED.pushlog = [
 function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
 function productCost(pid, bom, ings) {
   var c = 0;
-  bom.forEach(function (b) { if (b.product === pid) { var g = byId(ings, b.ing); if (g) c += b.qty * g.cost; } });
+  bom.forEach(function (b) { if (b.product === pid) { var g = byId(ings, b.ing); if (g) c += bomLineStockQty(b, g) * g.cost; } });
   return c;
 }
 function stockOf(ingId, lots) {
@@ -629,7 +652,9 @@ function consumeFEFO(order) {
   var need = {}; // ingId -> qty
   order.items.forEach(function (it) {
     bom.forEach(function (b) {
-      if (b.product === it.product) need[b.ing] = (need[b.ing] || 0) + b.qty * it.qty;
+      if (b.product !== it.product) return;
+      var g = byId(ings, b.ing);
+      need[b.ing] = (need[b.ing] || 0) + bomLineStockQty(b, g || {}) * it.qty;
     });
   });
   var picked = [];
@@ -802,6 +827,31 @@ function adviseHtml() {
     tips.slice(0, 6).map(function (t) { return '<li>' + t + '</li>'; }).join('') + '</ul>';
 }
 
+/* Full order pipeline with the time each stage was entered and how long it
+   stayed there. Stage entry times are stamped by orderAct on every move. */
+var PIPELINE = ['new', 'confirmed', 'kitchen', 'portioning', 'qc', 'dispatch', 'delivering', 'delivered'];
+var STAGE_LABEL = { 'new': 'Order', 'confirmed': 'Confirmed', 'kitchen': 'Kitchen', 'portioning': 'Portioning', 'qc': 'QC', 'dispatch': 'Ready', 'delivering': 'On road', 'delivered': 'Delivered' };
+function stageDur(times, from, to) {
+  if (!times[from] || !times[to]) return '';
+  var m = Math.round((times[to] - times[from]) / 60000);
+  return m >= 0 && m < 6000 ? m + ' min' : '';
+}
+function pipelineStrip(o) {
+  var t = o.stage_times || {};
+  var curIdx = PIPELINE.indexOf(o.status);
+  if (o.status === 'cancelled') curIdx = -1;
+  var parts = [];
+  PIPELINE.forEach(function (st, i) {
+    var cls = i < curIdx ? 'done' : i === curIdx ? (st === 'delivered' ? 'done' : 'now') : 'skip';
+    var when = t[st] ? fmtClock(t[st]) : (i <= curIdx ? '—' : '');
+    var next = PIPELINE[i + 1];
+    var dur = (i < curIdx && next) ? stageDur(t, st, next) : '';
+    parts.push('<div class="pstage ' + cls + '"><b>' + STAGE_LABEL[st] + '</b><small>' + when + (dur ? ' · ' + dur : '') + '</small></div>');
+    if (i < PIPELINE.length - 1) parts.push('<span class="parrow">›</span>');
+  });
+  return '<div class="pstrip">' + parts.join('') + '</div>';
+}
+
 /* ── Orders ── */
 RENDER.orders = function () {
   var orders = store('orders').all(), products = store('products').all(),
@@ -813,7 +863,9 @@ RENDER.orders = function () {
     return '<tr><td><b>' + esc(o.code) + '</b><br><span class="muted">' + esc(o.created) + '</span></td>' +
       '<td>' + esc(o.customer) + '<br><span class="muted">' + esc(o.phone) + '</span></td>' +
       '<td class="wrap">' + esc(items) + '</td>' +
-      '<td><span class="chip ' + o.status + '">' + o.status + '</span>' + (ag ? '<br><span class="muted">🚚 ' + esc(ag) + '</span>' : '') + '</td>' +
+      '<td><span class="chip ' + o.status + '">' + o.status + '</span>' +
+      (o.stage_times && o.stage_times[o.status] ? '<br><span class="muted">since ' + fmtClock(o.stage_times[o.status]) + '</span>' : '') +
+      (ag ? '<br><span class="muted">🚚 ' + esc(ag) + '</span>' : '') + '</td>' +
       '<td class="num">' + money(t.rev) + '<br><span class="muted">' + t.pct + '% margin</span></td>' +
       '<td><button class="btn p s" onclick="openOrder(\'' + o.id + '\')">Open</button></td></tr>';
   }).join('');
@@ -856,6 +908,7 @@ function openOrder(id) {
 
   showDlg('<h3>' + esc(o.code) + ' — ' + esc(o.customer) + ' <span class="chip ' + o.status + '">' + o.status + '</span></h3>' +
     '<p class="muted">' + esc(o.phone) + ' · ' + esc(o.address) + '</p>' +
+    pipelineStrip(o) +
     '<div class="tbl-scroll" style="margin:12px 0"><table class="t"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Cost (BOM)</th><th class="num">Margin</th></tr></thead>' +
     '<tbody>' + items + '</tbody>' +
     '<tfoot><tr><th colspan="2">Totals</th><th class="num">' + money(t.rev) + '</th><th class="num">' + money(t.cost) + '</th><th class="num">' + money(t.margin) + ' (' + t.pct + '%)</th></tr></tfoot></table></div>' +
@@ -927,7 +980,7 @@ function savePortioning(oid, planned, target) {
   var st = o.steps.find(function (x) { return x.s === 'Portioning'; });
   if (st) { st.done = true; st.by = currentUser().name; st.at = nowTs(); }
   else o.steps.push({ s: 'Portioning', done: true, by: currentUser().name, at: nowTs() });
-  if (o.status === 'kitchen') o.status = 'portioning';
+  if (o.status === 'kitchen') { o.status = 'portioning'; o.stage_times = o.stage_times || {}; o.stage_times.portioning = Date.now(); }
   o.history.push({ at: nowTs(), what: 'Portioned ' + actual + '/' + planned + ' portions · avg ' + avg + ' g (target ' + target + ' g, ' + (devPct >= 0 ? '+' : '') + devPct + '%)' + (ok ? ' ✓' : ' ⚠️ outside tolerance') + ' — ' + currentUser().name });
   if (!ok) pushDemo('Portioning variance ⚠️', o.code + ': avg ' + avg + 'g vs target ' + target + 'g', 'Role · manager');
   store('orders').save(orders);
@@ -936,6 +989,7 @@ function savePortioning(oid, planned, target) {
 
 function orderAct(oid, act) {
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var prevStatus = o.status;
   function log(w) { o.history.push({ at: nowTs(), what: w }); }
   if (act === 'confirm') { o.status = 'confirmed'; log('Order confirmed'); pushDemo('Order confirmed 🥕', o.code + ' is confirmed and heading to the kitchen', 'Customer · ' + o.customer); }
   if (act === 'tokitchen') {
@@ -961,6 +1015,7 @@ function orderAct(oid, act) {
   }
   if (act === 'delivered') { o.status = 'delivered'; log('Delivered ✓'); pushDemo('Delivered 📦', 'Enjoy! Rate your ' + o.code + ' meals', 'Customer · ' + o.customer); }
   if (act === 'cancel') { if (!confirm('Cancel this order?')) return; o.status = 'cancelled'; log('Order cancelled'); }
+  if (o.status !== prevStatus) { o.stage_times = o.stage_times || {}; o.stage_times[o.status] = Date.now(); }
   store('orders').save(orders);
   openOrder(oid); render();
 }
@@ -980,7 +1035,7 @@ function saveOrder() {
   var o = { id: uid(), code: 'TT-2026-0' + n, customer: document.getElementById('no-name').value || 'Walk-in',
     phone: document.getElementById('no-phone').value, address: document.getElementById('no-addr').value,
     items: [{ product: document.getElementById('no-prod').value, qty: Number(document.getElementById('no-qty').value) || 1 }],
-    status: 'new', agent: null, steps: [], history: [{ at: nowTs(), what: 'Order created from dashboard' }], created: today(0) };
+    status: 'new', agent: null, steps: [], stage_times: { 'new': Date.now() }, history: [{ at: nowTs(), what: 'Order created from dashboard' }], created: today(0) };
   orders.unshift(o); store('orders').save(orders);
   pushDemo('New order', o.code + ' waiting for confirmation', 'Role · manager');
   closeDlg(); render();
@@ -1078,6 +1133,7 @@ RENDER.kitchen = function () {
       (o.batch_lot ? ' <span class="chip fefo">lot ' + esc(o.batch_lot) + '</span>' : '') + '</h3>' +
       (cur ? '<span class="chip progress">▶ now: ' + esc(cur) + '</span>' : '<span class="chip done">all steps complete</span>') + '</div>' +
       '<p class="muted">' + esc(items) + ' · ' + esc(o.customer) + '</p>' +
+      pipelineStrip(o) +
       stepTimeline(o, products) +
       kitchenClock(o) +
       '<div class="steps" style="margin-top:10px">' + steps + '</div>' +
@@ -1123,11 +1179,18 @@ RENDER.bom = function () {
       var opts = ings.map(function (x) {
         return '<option value="' + x.id + '"' + (b.ing === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>';
       }).join('');
+      var lu = b.unit || (g ? g.unit : 'kg');
+      var unitOpts = (UNIT_COMPAT[g ? g.unit : 'kg'] || ['kg']).map(function (u) {
+        return '<option' + (lu === u ? ' selected' : '') + '>' + u + '</option>';
+      }).join('');
+      var effQty = g ? bomLineStockQty(b, g) : 0;
       return '<tr>' +
         '<td><select onchange="bomSet(\'' + b.id + '\',\'ing\',this.value)">' + opts + '</select></td>' +
-        '<td class="num"><input class="inline-num" type="number" step="0.001" value="' + b.qty + '" onchange="bomSet(\'' + b.id + '\',\'qty\',this.value)"> <span class="muted">' + (g ? g.unit : '') + '</span></td>' +
+        '<td class="num"><input class="inline-num" type="number" step="0.001" value="' + b.qty + '" onchange="bomSet(\'' + b.id + '\',\'qty\',this.value)"> ' +
+        '<select style="width:58px;padding:5px 3px" onchange="bomSet(\'' + b.id + '\',\'unit\',this.value)">' + unitOpts + '</select>' +
+        (lu !== (g ? g.unit : lu) ? '<br><span class="muted">= ' + (Math.round(effQty * 1000) / 1000) + ' ' + g.unit + ' stock</span>' : '') + '</td>' +
         '<td class="num">' + money(g ? g.cost : 0) + '/' + (g ? g.unit : '') + '</td>' +
-        '<td class="num"><b>' + money(b.qty * (g ? g.cost : 0)) + '</b></td>' +
+        '<td class="num"><b>' + money(effQty * (g ? g.cost : 0)) + '</b></td>' +
         '<td><button class="btn r s" title="Remove line" onclick="bomDel(\'' + b.id + '\')">✕</button></td></tr>';
     }).join('');
     var cost = productCost(p.id, bom, ings);
@@ -1148,7 +1211,12 @@ RENDER.bom = function () {
       '</div>' +
       '<div class="tbl-scroll"><table class="t"><thead><tr>' +
       '<th>Ingredient</th><th class="num">Qty / portion</th><th class="num">Unit cost</th><th class="num">Line cost</th><th></th>' +
-      '</tr></thead><tbody>' + lines + '</tbody></table></div>' +
+      '</tr></thead><tbody>' + lines +
+      '<tr style="background:#eef3f6"><td><b>💼 Labor — kitchen time</b><br><span class="muted">derived from ⏱ process times below</span></td>' +
+      '<td class="num">' + (Math.round(tBatch / (p.batch_portions || 1) * 10) / 10) + ' min <span class="muted">(' + (Math.round(tBatch / 60 / (p.batch_portions || 1) * 1000) / 1000) + ' hr)</span></td>' +
+      '<td class="num">' + money(kitchenRate()) + '/hr</td>' +
+      '<td class="num"><b>' + money(tCost) + '</b></td><td></td></tr>' +
+      '</tbody></table></div>' +
       '<p style="margin-top:8px"><button class="btn o s" onclick="bomAdd(\'' + p.id + '\')">＋ Add ingredient line</button></p>' +
       '<h4 style="margin-top:12px">⏱ Process times — minutes per batch (drives the kitchen clock & alarm)</h4>' +
       '<div class="steprow">' + KITCHEN_STEPS.map(function (st) {
@@ -1307,7 +1375,9 @@ function editIngredient(id) {
   showDlg('<h3>✏️ ' + esc(g.name) + '</h3><div class="frm" style="margin-top:10px">' +
     '<div class="row"><label>Name<input id="ei-name" value="' + esc(g.name) + '"></label>' +
     '<label>Category<select id="ei-cat">' + ['Vegetables', 'Fruit', 'Dairy', 'Dry goods', 'Bakery', 'Other'].map(function (c) { return '<option' + (g.cat === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
-    '<div class="row"><label>Unit cost ($/' + g.unit + ')<input id="ei-cost" type="number" step="0.01" value="' + g.cost + '"></label>' +
+    '<div class="row"><label>Stock unit<select id="ei-unit">' + ['kg', 'g', 'L', 'ml', 'pc', 'hr'].map(function (u) { return '<option' + (g.unit === u ? ' selected' : '') + '>' + u + '</option>'; }).join('') + '</select></label>' +
+    '<label>Unit cost ($ per unit)<input id="ei-cost" type="number" step="0.01" value="' + g.cost + '"></label></div>' +
+    '<div class="row"><label>&nbsp;<span class="muted" style="font-weight:400">Changing the unit does not convert stored numbers — re-check cost, min/max and lots after switching (1 L counts as 1 kg for liquids).</span></label>' +
     '<label>Monthly use (' + g.unit + ')<input id="ei-use" type="number" step="0.1" value="' + (g.use_m || '') + '"></label></div>' +
     '<div class="row"><label>Min level<input id="ei-min" type="number" step="0.1" value="' + g.min + '"></label>' +
     '<label>Max level<input id="ei-max" type="number" step="0.1" value="' + g.max + '"></label></div>' +
@@ -1318,6 +1388,7 @@ function saveIngredientEdit(id) {
   var ings = store('ingredients').all().map(normIng); var g = byId(ings, id); if (!g) return;
   g.name = document.getElementById('ei-name').value || g.name;
   g.cat = document.getElementById('ei-cat').value;
+  g.unit = document.getElementById('ei-unit').value || g.unit;
   g.cost = Number(document.getElementById('ei-cost').value) || g.cost;
   g.use_m = Number(document.getElementById('ei-use').value) || '';
   g.min = Number(document.getElementById('ei-min').value) || 0;
