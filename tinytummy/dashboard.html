@@ -250,6 +250,7 @@ dialog::backdrop { background:rgba(61,50,41,.45); }
     <div class="grp">Team</div>
     <a data-m="chat"><span>💬</span><em>Team Chat</em></a>
     <a data-m="notify"><span>🔔</span><em>Notifications</em></a>
+    <a data-m="audit"><span>📜</span><em>Activity Log</em></a>
     <a data-m="users"><span>👥</span><em>Users · Roles</em></a>
     <a data-m="settings"><span>⚙️</span><em>Settings</em></a>
   </nav>
@@ -359,12 +360,13 @@ var PERM_KEYS = [
   ['chat_use', 'Team chat'],
   ['push_send', 'Send push notifications'],
   ['reports_view', 'Margins & reports'],
+  ['audit_view', 'Activity log (who did what, when)'],
   ['users_manage', 'Users & permissions']
 ];
 var ROLES = ['super_admin', 'manager', 'kitchen', 'delivery', 'support'];
 SEED.role_perms = (function () {
   var def = {
-    manager: ['orders_manage','kitchen_manage','inventory_manage','bom_manage','delivery_manage','suppliers_manage','iso_manage','complaints_manage','programs_manage','chat_use','push_send','reports_view'],
+    manager: ['orders_manage','kitchen_manage','inventory_manage','bom_manage','delivery_manage','suppliers_manage','iso_manage','complaints_manage','programs_manage','chat_use','push_send','reports_view','audit_view'],
     kitchen: ['kitchen_manage','inventory_manage','chat_use'],
     delivery: ['delivery_manage','chat_use'],
     support: ['orders_manage','complaints_manage','chat_use']
@@ -733,7 +735,7 @@ var MODULE_PERMS = {
   kitchen: 'kitchen_manage', bom: 'bom_manage', inventory: 'inventory_manage',
   requisitions: 'inventory_manage', delivery: 'delivery_manage', suppliers: 'suppliers_manage', iso: 'iso_manage',
   complaints: 'complaints_manage', chat: 'chat_use', notify: 'push_send',
-  users: 'users_manage', settings: null
+  audit: 'audit_view', users: 'users_manage', settings: null
 };
 
 /* ── FEFO consumption + auto-requisition ── */
@@ -787,6 +789,17 @@ function consumeFEFO(order) {
   return picked;
 }
 
+/* ── central activity log: every user action, with person + date + time ── */
+SEED.audit = [];
+function logAct(module, action, detail) {
+  try {
+    var rows = store('audit').all();
+    rows.unshift({ id: uid(), ts: Date.now(), at: nowTs(), user: currentUser().name,
+      role: currentUser().role, module: module, action: action, detail: detail || '' });
+    if (rows.length > 600) rows.length = 600;
+    store('audit').save(rows);
+  } catch (e) {}
+}
 function pushDemo(title, body, audience) {
   var log = store('pushlog').all();
   var row = { id: uid(), title: title, body: body, audience: audience, sent: nowTs(), delivered: '', opened: '' };
@@ -805,7 +818,7 @@ function goCases(f) { caseFilter = f; caseCat = 'all'; nav('complaints'); }
 function goSup(f) { supFilter = f; nav('suppliers'); }
 
 /* ── router ── */
-var VIEWS = ['overview','orders','programs','kitchen','bom','inventory','requisitions','delivery','suppliers','iso','complaints','chat','notify','users','settings'];
+var VIEWS = ['overview','orders','programs','kitchen','bom','inventory','requisitions','delivery','suppliers','iso','complaints','chat','notify','audit','users','settings'];
 var current = 'overview';
 function nav(m) {
   current = m; location.hash = m;
@@ -1043,6 +1056,7 @@ function stepToggle(oid, idx, checked) {
   var st = o.steps.find(function (x) { return x.s === step; });
   if (st) { st.done = checked; st.by = checked ? currentUser().name : null; st.at = checked ? nowTs() : null; }
   else o.steps.push({ s: step, done: checked, by: currentUser().name, at: nowTs() });
+  if (checked) logAct('Kitchen', 'step done', o.code + ' · ' + step);
   if (kind === 'pack' && checked && !o.batch_lot) {
     o.batch_lot = 'B-' + o.code.replace('TT-', '') + '-' + today(0).replace(/-/g, '').slice(4);
     o.history.push({ at: nowTs(), what: 'Batch lot label printed: ' + o.batch_lot });
@@ -1069,6 +1083,7 @@ function stepStart(oid, idx) {
   if (!st) { st = { s: def.name, done: false }; o.steps.push(st); }
   st.started_at = Date.now(); st.buzzed = false;
   o.history.push({ at: nowTs(), what: '▶ Started ' + def.name + ' (' + def.min + ' min planned) — ' + currentUser().name });
+  logAct('Kitchen', 'step start', o.code + ' · ' + def.name);
   store('orders').save(orders);
   try { _audio = _audio || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
   setTimeout(function () {
@@ -1156,6 +1171,7 @@ function autoAssignSteps(oid) {
   });
   if (!assigned.length) { alert('Nothing to assign — every step is already assigned or done.'); return; }
   o.history.push({ at: nowTs(), what: '⚡ Auto-assigned: ' + assigned.join(' · ') + ' — by ' + currentUser().name });
+  logAct('Kitchen', 'auto-assign', o.code + ' · ' + assigned.length + ' steps');
   store('orders').save(orders);
   pushDemo('Tasks assigned ⚡', o.code + ': ' + assigned.join(', '), 'Role · kitchen');
   render();
@@ -1167,6 +1183,7 @@ function stepAssign(oid, idx, name) {
   if (!st) { st = { s: def.name, done: false }; o.steps.push(st); }
   st.assigned = name || null;
   o.history.push({ at: nowTs(), what: '👤 ' + def.name + ' assigned to ' + (name || 'nobody') + ' — by ' + currentUser().name });
+  logAct('Kitchen', 'assign', o.code + ' · ' + def.name + ' → ' + (name || '—'));
   store('orders').save(orders);
   render();
 }
@@ -1205,6 +1222,7 @@ function savePortioning(oid, planned, target, stepName) {
   else o.steps.push({ s: stepName, done: true, by: currentUser().name, at: nowTs() });
   if (o.status === 'kitchen') { o.status = 'portioning'; o.stage_times = o.stage_times || {}; o.stage_times.portioning = Date.now(); }
   o.history.push({ at: nowTs(), what: 'Portioned ' + actual + '/' + planned + ' portions · avg ' + avg + ' g (target ' + target + ' g, ' + (devPct >= 0 ? '+' : '') + devPct + '%)' + (ok ? ' ✓' : ' ⚠️ outside tolerance') + ' — ' + currentUser().name });
+  logAct('Kitchen', 'portioning', o.code + ' · ' + actual + '/' + planned + ' avg ' + avg + 'g');
   if (!ok) pushDemo('Portioning variance ⚠️', o.code + ': avg ' + avg + 'g vs target ' + target + 'g', 'Role · manager');
   store('orders').save(orders);
   closeDlg(); openOrder(oid); render();
@@ -1239,6 +1257,7 @@ function orderAct(oid, act) {
   if (act === 'delivered') { o.status = 'delivered'; log('Delivered ✓'); pushDemo('Delivered 📦', 'Enjoy! Rate your ' + o.code + ' meals', 'Customer · ' + o.customer); }
   if (act === 'cancel') { if (!confirm('Cancel this order?')) return; o.status = 'cancelled'; log('Order cancelled'); }
   if (o.status !== prevStatus) { o.stage_times = o.stage_times || {}; o.stage_times[o.status] = Date.now(); }
+  logAct('Orders', act, o.code + (o.status !== prevStatus ? ' → ' + o.status : ''));
   store('orders').save(orders);
   openOrder(oid); render();
 }
@@ -1259,7 +1278,7 @@ function saveOrder() {
     phone: document.getElementById('no-phone').value, address: document.getElementById('no-addr').value,
     items: [{ product: document.getElementById('no-prod').value, qty: Number(document.getElementById('no-qty').value) || 1 }],
     status: 'new', agent: null, steps: [], stage_times: { 'new': Date.now() }, history: [{ at: nowTs(), what: 'Order created from dashboard' }], created: today(0) };
-  orders.unshift(o); store('orders').save(orders);
+  orders.unshift(o); logAct('Orders', 'create', o.code + ' — ' + o.customer); store('orders').save(orders);
   pushDemo('New order', o.code + ' waiting for confirmation', 'Role · manager');
   closeDlg(); render();
 }
@@ -1659,6 +1678,7 @@ function lotWriteOff(lotId) {
   var reason = prompt('Write off lot ' + l.lot + ' (' + l.qty + ' ' + (g ? g.unit : '') + ' ' + (g ? g.name : '') + ')?\nReason (expired / damaged / recall):', 'expired');
   if (!reason) return;
   l.qty = 0;
+  logAct('Inventory', 'lot write-off', l.lot + ' — ' + reason);
   store('lots').save(lots);
   pushDemo('Lot written off 🗑', l.lot + ' (' + (g ? g.name : '') + ') — ' + reason + ' — by ' + currentUser().name, 'Role · manager');
   render();
@@ -1696,6 +1716,7 @@ function saveLot(ingId) {
     qty: Number(document.getElementById('rl-qty').value) || 0, loc: document.getElementById('rl-loc').value,
     expiry: document.getElementById('rl-exp').value, received: today(0) });
   store('lots').save(lots);
+  logAct('Inventory', 'lot received', document.getElementById('rl-lot').value || 'lot');
   var reqs = store('requisitions').all();
   reqs.map(normReq).forEach(function (r) { if (r.ing === ingId && (r.status === 'pending' || r.status === 'approved')) r.status = 'received'; });
   store('requisitions').save(reqs);
@@ -1730,6 +1751,7 @@ function reqAct(id, act) {
   var reqs = store('requisitions').all().map(normReq); var r = byId(reqs, id); if (!r) return;
   if (act === 'approve') { r.status = 'approved'; pushDemo('Requisition approved ✓', 'Order it from the supplier — receiving happens via the invoice', 'Role · kitchen'); }
   if (act === 'cancel') { if (!confirm('Cancel this requisition?')) return; r.status = 'cancelled'; }
+  logAct('Requisitions', act, (byId(store('ingredients').all(), r.ing) || {}).name || '');
   store('requisitions').save(reqs); render();
 }
 /* ── Delivery: map tracking + road-distance ETA ── */
@@ -1993,6 +2015,7 @@ function invPay(id) {
   var invs = store('sup_invoices').all(); var v = byId(invs, id); if (!v) return;
   if (v.status === 'paid') { v.status = 'unpaid'; v.paid_at = null; }
   else { v.status = 'paid'; v.paid_at = today(0); }
+  logAct('Payables', v.status === 'paid' ? 'marked paid' : 'marked unpaid', v.code);
   store('sup_invoices').save(invs); render();
 }
 
@@ -2075,6 +2098,7 @@ function saveInvoice() {
     provider: provId, kind: kind, date: today(0), due: document.getElementById('iv-due').value || today(15),
     status: 'unpaid', paid_at: null, lines: lines };
   invs.unshift(inv);
+  logAct('Payables', 'invoice posted', inv.code + ' · ' + money(invTotal(inv)) + (kind === 'goods' ? ' · stock received' : ''));
   store('sup_invoices').save(invs);
 
   if (kind === 'goods') {
@@ -2268,6 +2292,7 @@ function savePass(id) {
   c.assigned = to;
   if (c.status === 'new') c.status = 'in progress';
   c.log.push({ at: nowTs(), what: '⚽ Passed from ' + (c.second || 'unassigned') + ' to ' + to + (note ? ' — ' + note : '') + ' (by ' + currentUser().name + ')' });
+  logAct('Register', 'pass the ball', c.code + ' → ' + to);
   store('complaints').save(comps);
   pushDemo('Case passed to you ⚽', c.code + ': ' + c.summary + (note ? ' — ' + note : ''), to.indexOf('(role)') > 0 ? 'Role · ' + to.replace(' (role)', '') : 'Staff · ' + to);
   closeDlg(); openCase(id); render();
@@ -2347,6 +2372,7 @@ function caseAct(id, act) {
     c.log.push({ at: nowTs(), what: n + ' — ' + currentUser().name });
     if (c.status === 'new') c.status = 'in progress';
   }
+  logAct('Register', act, c.code);
   store('complaints').save(comps);
   openCase(id); render();
 }
@@ -2430,6 +2456,7 @@ RENDER.notify = function () {
 function sendPush() {
   var t = document.getElementById('pn-title').value, b = document.getElementById('pn-body').value;
   if (!t) { alert('Title required'); return; }
+  logAct('Notifications', 'push sent', t + ' → ' + document.getElementById('pn-aud').value);
   pushDemo(t, b, document.getElementById('pn-aud').value);
   render();
 }
@@ -2453,6 +2480,58 @@ RENDER.programs = function () {
 function progEnroll(id, d) {
   var progs = store('programs').all(); var p = byId(progs, id);
   if (p) { p.enrolled = Math.max(0, p.enrolled + d); store('programs').save(progs); render(); }
+}
+
+/* ── Activity Log: per-user actions with date & time ── */
+var audUser = 'all', audSearch = '';
+RENDER.audit = function () {
+  var rows = store('audit').all();
+  var users = {};
+  rows.forEach(function (r) { users[r.user] = (users[r.user] || 0) + 1; });
+  var todayN = rows.filter(function (r) { return new Date(r.ts).toDateString() === new Date().toDateString(); }).length;
+  var q = audSearch.toLowerCase();
+  var shown = rows.filter(function (r) {
+    if (audUser !== 'all' && r.user !== audUser) return false;
+    if (q && (r.user + ' ' + r.module + ' ' + r.action + ' ' + r.detail).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  }).slice(0, 200);
+  var userOpts = '<option value="all">All users</option>' + Object.keys(users).sort().map(function (u) {
+    return '<option' + (audUser === u ? ' selected' : '') + '>' + esc(u) + '</option>';
+  }).join('');
+  var trs = shown.map(function (r) {
+    var d = new Date(r.ts);
+    return '<tr><td style="font-variant-numeric:tabular-nums">' + d.toLocaleDateString() + '<br><b>' + d.toLocaleTimeString() + '</b></td>' +
+      '<td><b>' + esc(r.user) + '</b><br><span class="muted">' + esc(r.role) + '</span></td>' +
+      '<td><span class="chip fefo">' + esc(r.module) + '</span></td>' +
+      '<td><b>' + esc(r.action) + '</b></td>' +
+      '<td class="wrap">' + esc(r.detail) + '</td></tr>';
+  }).join('') || '<tr><td colspan="5" class="muted">No activity recorded yet — every action from now on lands here with its user, date and time.</td></tr>';
+  return '<div class="pagehead"><div><h1>📜 Activity Log</h1><div class="sub">Every action in the platform, per user, with date and time — order moves, kitchen signatures, payments, write-offs, permission changes, act-as sessions. This is the project\'s flight recorder for error tracing.</div></div>' +
+    '<button class="btn o s" onclick="audCsv()">📋 CSV</button></div>' +
+    '<div class="kpis">' +
+    '<div class="kpi b-navy"><div class="v">' + rows.length + '</div><div class="l">Actions recorded</div></div>' +
+    '<div class="kpi b-blue"><div class="v">' + todayN + '</div><div class="l">Today</div></div>' +
+    '<div class="kpi b-gold"><div class="v">' + Object.keys(users).length + '</div><div class="l">Active users</div></div></div>' +
+    '<div class="panel"><div class="toolbar"><select onchange="audUser=this.value;render()">' + userOpts + '</select>' +
+    '<input class="search-in" placeholder="Search action, order, case…" value="' + esc(audSearch) + '" oninput="audGo(this.value)"></div>' +
+    '<div class="tbl-scroll"><table class="t reg"><thead><tr><th>Date · Time</th><th>User</th><th>Module</th><th>Action</th><th>Detail</th></tr></thead><tbody>' + trs + '</tbody></table></div></div>';
+};
+function audGo(v) {
+  audSearch = v;
+  var i0 = document.querySelector('.search-in'); var pos = i0 ? i0.selectionStart : 0;
+  render();
+  var i1 = document.querySelector('.search-in'); if (i1) { i1.focus(); i1.setSelectionRange(pos, pos); }
+}
+function audCsv() {
+  var lines = ['Date,Time,User,Role,Module,Action,Detail'];
+  store('audit').all().forEach(function (r) {
+    var d = new Date(r.ts);
+    lines.push([d.toLocaleDateString(), d.toLocaleTimeString(), r.user, r.role, r.module, r.action, r.detail]
+      .map(function (x) { return '"' + String(x).replace(/"/g, '""') + '"'; }).join(','));
+  });
+  var csv = lines.join('\n');
+  if (navigator.clipboard) navigator.clipboard.writeText(csv).then(function () { alert('Activity log copied as CSV.'); });
+  else alert(csv);
 }
 
 /* ── Users ── */
@@ -2490,13 +2569,14 @@ RENDER.users = function () {
 };
 function setRole(id, role) {
   var staff = store('staff').all().map(normStaff); var u = byId(staff, id);
-  if (u) { u.role = role; store('staff').save(staff); render(); }
+  if (u) { u.role = role; logAct('Users', 'role change', u.name + ' → ' + role); store('staff').save(staff); render(); }
 }
 function stationToggle(id, station) {
   if (!can('users_manage')) { alert('users_manage permission required'); return; }
   var staff = store('staff').all().map(normStaff); var u = byId(staff, id); if (!u) return;
   var i = u.stations.indexOf(station);
   if (i >= 0) u.stations.splice(i, 1); else u.stations.push(station);
+  logAct('Users', (i >= 0 ? 'station revoked' : 'station granted'), u.name + ' · ' + station);
   store('staff').save(staff); render();
 }
 function newEmployee() {
@@ -2519,6 +2599,7 @@ function saveEmployee() {
   var staff = store('staff').all().map(normStaff);
   var u = { id: uid(), name: name, email: document.getElementById('ne-email').value, role: document.getElementById('ne-role').value, stations: stations };
   staff.push(u);
+  logAct('Users', 'employee added', u.name + ' (' + u.role + ') · ' + stations.join('/'));
   store('staff').save(staff);
   rebuildWhoami();
   closeDlg(); render();
@@ -2588,6 +2669,7 @@ function syncActAs() {
   });
   sel.addEventListener('change', function () {
     localStorage.setItem('ttops_whoami', sel.value);
+    logAct('Users', 'act-as', 'Super admin now acting as ' + (sel.options[sel.selectedIndex] || {}).text);
     syncActAs(); render();
   });
   syncActAs();

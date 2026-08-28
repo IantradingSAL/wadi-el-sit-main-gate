@@ -55,7 +55,7 @@ select r, k, case
 from unnest(array['super_admin','manager','kitchen','delivery','support']) r,
      unnest(array['orders_manage','kitchen_manage','inventory_manage','bom_manage',
                   'delivery_manage','suppliers_manage','iso_manage','complaints_manage',
-                  'programs_manage','chat_use','push_send','reports_view','users_manage']) k
+                  'programs_manage','chat_use','push_send','reports_view','audit_view','users_manage']) k
 on conflict (role, key) do nothing;
 
 -- ── ingredients, lots (FEFO), BOM ───────────────────────────────────────
@@ -417,6 +417,25 @@ create policy "push log read" on public.tt_push_log for select to authenticated
   using (public.tt_has_perm('push_send'));
 create policy "push log write" on public.tt_push_log for insert to authenticated
   with check (public.tt_has_perm('push_send'));
+
+
+-- ── central activity log: every user action with date & time ───────────
+create table if not exists public.tt_audit (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.tt_staff(id),
+  user_name text not null,
+  module text not null,
+  action text not null,
+  detail text,
+  at timestamptz not null default now()
+);
+create index if not exists tt_audit_at on public.tt_audit (at desc);
+alter table public.tt_audit enable row level security;
+create policy "audit write own" on public.tt_audit for insert to authenticated
+  with check (user_id = auth.uid());
+create policy "audit read" on public.tt_audit for select to authenticated
+  using (public.tt_has_perm('audit_view'));
+-- no UPDATE or DELETE policy: the log is append-only by design
 
 -- ── seed: ISO 22000 checklist (matches iso22000-checklist.csv) ─────────
 insert into public.tt_iso (clause, item, status) values
