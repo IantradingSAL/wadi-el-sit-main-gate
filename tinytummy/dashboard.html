@@ -163,6 +163,18 @@ table.t tbody tr:nth-child(even) td { background:#fffdf9; }
 .case-card h4 { font-size:.95rem; margin:1px 0; }
 .case-card p { font-size:.82rem; color:var(--soft); }
 .search-in { min-width:220px; }
+/* Kitchen step rows: station icon · step · plan · assignee · timer · actions */
+.srow { display:grid; grid-template-columns:34px 1.5fr 62px 150px 110px 130px; gap:8px; align-items:center; padding:7px 10px; border:1px solid var(--line); border-radius:10px; margin-bottom:6px; background:var(--paper); font-size:.84rem; }
+.srow.done { background:#f1f8f4; border-color:#cfe3d6; }
+.srow.running { background:#fdf7ea; border-color:#f0dcae; }
+.srow .ico { font-size:1.15rem; text-align:center; }
+.srow .nm { font-weight:700; }
+.srow .nm small { display:block; font-weight:600; color:var(--soft); font-size:.68rem; }
+.srow .plan { text-align:right; font-variant-numeric:tabular-nums; color:var(--soft); font-weight:700; }
+.srow select { width:100%; padding:4px 6px; font-size:.78rem; }
+.srow .tmr { text-align:center; }
+.srow .acts { display:flex; gap:6px; justify-content:flex-end; }
+@media (max-width:900px){ .srow { grid-template-columns:28px 1fr 90px; } .srow select,.srow .tmr { grid-column:2/-1; } }
 /* Order pipeline strip: every stage with the time it was entered */
 .pstrip { display:flex; flex-wrap:wrap; gap:4px; align-items:stretch; margin:8px 0 2px; }
 .pstage { display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:76px; padding:4px 8px; border-radius:8px; font-size:.66rem; font-weight:700; border:1px solid var(--line); background:#eef1f3; color:#64808e; }
@@ -282,12 +294,41 @@ function resetDemo() {
 
 /* ── seed data ── */
 SEED.staff = [
-  { id: 'u1', name: 'Owner (you)', email: 'owner@tinytummy', role: 'super_admin' },
-  { id: 'u2', name: 'Chef Nadim', email: 'kitchen@tinytummy', role: 'kitchen' },
-  { id: 'u3', name: 'Sara — Support', email: 'support@tinytummy', role: 'support' },
-  { id: 'u4', name: 'Ali — Delivery', email: 'ali@tinytummy', role: 'delivery' },
-  { id: 'u5', name: 'Lina — Manager', email: 'manager@tinytummy', role: 'manager' }
+  { id: 'u1', name: 'Owner (you)', email: 'owner@tinytummy', role: 'super_admin', stations: ['prep','cook','assembly','portion','chill','pack','qc'] },
+  { id: 'u2', name: 'Chef Nadim', email: 'kitchen@tinytummy', role: 'kitchen', stations: ['prep','cook','assembly','portion','chill','pack','qc'] },
+  { id: 'u3', name: 'Sara — Support', email: 'support@tinytummy', role: 'support', stations: [] },
+  { id: 'u4', name: 'Ali — Delivery', email: 'ali@tinytummy', role: 'delivery', stations: [] },
+  { id: 'u5', name: 'Lina — Manager', email: 'manager@tinytummy', role: 'manager', stations: ['portion','pack','qc'] },
+  { id: 'u6', name: 'Karim — Helper', email: 'karim@tinytummy', role: 'kitchen', stations: ['assembly','pack'] }
 ];
+/* Kitchen stations: the work areas a person can be granted in Users · Roles */
+var STATIONS = [
+  ['prep', '🔪 Prep'], ['cook', '🔥 Cooking'], ['assembly', '🥣 Assembly'],
+  ['portion', '⚖️ Portioning'], ['chill', '❄️ Chilling'], ['pack', '📦 Packaging'], ['qc', '✅ QC']
+];
+var STATION_ICON = { prep: '🔪', cook: '🔥', assembly: '🥣', portion: '⚖️', chill: '❄️', pack: '📦', qc: '✅' };
+function normStaff(u) {
+  if (!u.stations) u.stations = (u.role === 'kitchen' || u.role === 'super_admin') ? ['prep','cook','assembly','portion','chill','pack','qc'] : [];
+  return u;
+}
+/* Which station does a step belong to? (drives access + the icon) */
+function stepStation(name) {
+  var n = name.toLowerCase();
+  if (n.indexOf('portion') >= 0) return 'portion';
+  if (n.indexOf('chill') >= 0 || n.indexOf('freez') >= 0) return 'chill';
+  if (n.indexOf('cook') >= 0 || n.indexOf('bake') >= 0 || n.indexOf('boil') >= 0) return 'cook';
+  if (n.indexOf('pack') >= 0 || n.indexOf('label') >= 0) return 'pack';
+  if (n.indexOf('qc') >= 0 || n.indexOf('check') >= 0 || n.indexOf('quality') >= 0) return 'qc';
+  if (n.indexOf('prep') >= 0 || n.indexOf('wash') >= 0) return 'prep';
+  return 'assembly';
+}
+/* Station access: super admin & manager always; otherwise the person must
+   hold the station grant from Users · Roles. */
+function canStation(kind) {
+  var u = normStaff(currentUser());
+  if (u.role === 'super_admin' || u.role === 'manager') return true;
+  return (u.stations || []).indexOf(kind) >= 0;
+}
 var PERM_KEYS = [
   ['orders_manage', 'Manage orders & dispatch'],
   ['kitchen_manage', 'Kitchen production & portioning'],
@@ -953,6 +994,11 @@ function stepToggle(oid, idx, checked) {
   var def = stepDefs(o)[idx]; if (!def) return;
   var step = def.name;
   var kind = stepKind(step);
+  var station = stepStation(step);
+  if (checked && !canStation(station)) {
+    alert('🔒 ' + currentUser().name + ' does not have the ' + STATION_ICON[station] + ' ' + station + ' station.\nA super admin or manager can grant it in Users · Roles → Kitchen stations.');
+    render(); return;
+  }
   // Portioning-type steps have their own control sheet — checking opens the form.
   if (kind === 'portion' && checked) { portioningForm(oid, step); return; }
   // Cook / chill steps are CCPs: record a measured value against the limit.
@@ -989,6 +1035,13 @@ function stepToggle(oid, idx, checked) {
 function stepStart(oid, idx) {
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
   var def = stepDefs(o)[idx]; if (!def) return;
+  var station = stepStation(def.name);
+  if (!canStation(station)) {
+    alert('🔒 ' + currentUser().name + ' does not have the ' + STATION_ICON[station] + ' ' + station + ' station.\nA super admin or manager can grant it in Users · Roles → Kitchen stations.');
+    return;
+  }
+  var st0 = o.steps.find(function (x) { return x.s === def.name; });
+  if (!(st0 && st0.assigned)) { (st0 || (o.steps[o.steps.push({ s: def.name, done: false }) - 1])).assigned = currentUser().name; }
   var st = o.steps.find(function (x) { return x.s === def.name; });
   if (!st) { st = { s: def.name, done: false }; o.steps.push(st); }
   st.started_at = Date.now(); st.buzzed = false;
@@ -1007,23 +1060,57 @@ function stepStart(oid, idx) {
   }, Math.max(1, (Number(def.min) || 0)) * 60000);
   render();
 }
-/* Shared step controls: ▶ start, live countdown, ⏰ overdue, ☑ done */
+/* Shared step controls — one professional row per task:
+   station icon · step + station · planned min · responsible person ·
+   live timer · actions (▶ start / ☑ done). */
 function stepControls(o) {
   var defs = stepDefs(o);
-  return '<div class="steps">' + defs.map(function (def, i) {
+  var staff = store('staff').all().map(normStaff);
+  return defs.map(function (def, i) {
     var st = o.steps.find(function (x) { return x.s === def.name; });
     var done = st && st.done;
     var running = st && st.started_at && !done;
-    var timer = '';
+    var station = stepStation(def.name);
+    var timer = '<span class="muted">—</span>';
     if (running) {
       var rem = Math.round((st.started_at + (Number(def.min) || 0) * 60000 - Date.now()) / 60000);
-      timer = rem >= 0 ? ' <span class="chip fefo">⏳ ' + rem + 'm left</span>' : ' <span class="chip alarm">⏰ +' + (-rem) + 'm</span>';
+      timer = rem >= 0 ? '<span class="chip fefo">⏳ ' + rem + 'm left</span>' : '<span class="chip alarm">⏰ +' + (-rem) + 'm</span>';
+    } else if (done) {
+      timer = '<span class="chip done">✓ ' + esc((st.at || '').split(',').pop() || '') + '</span>';
     }
-    return '<label class="' + (done ? 'done' : '') + '">' +
-      (!done && !running ? '<button class="btn o s" style="padding:0 8px;font-size:.72rem" onclick="stepStart(\'' + o.id + '\',' + i + ')">▶</button> ' : '') +
-      '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="stepToggle(\'' + o.id + '\',' + i + ',this.checked)">' +
-      esc(def.name) + ' <small>' + def.min + 'm</small>' + timer + '</label>';
-  }).join('') + '</div>';
+    var eligible = staff.filter(function (u) {
+      return u.role === 'super_admin' || u.role === 'manager' || (u.stations || []).indexOf(station) >= 0;
+    });
+    var assignSel = '<select onchange="stepAssign(\'' + o.id + '\',' + i + ',this.value)">' +
+      '<option value="">— responsible —</option>' +
+      eligible.map(function (u) {
+        var short = u.name.split(' ')[0].replace('—', '').trim();
+        return '<option' + ((st && st.assigned === u.name) ? ' selected' : '') + ' value="' + esc(u.name) + '">' + esc(short) + '</option>';
+      }).join('') + '</select>';
+    var acts = '';
+    if (done) acts = '<button class="btn o s" onclick="stepToggle(\'' + o.id + '\',' + i + ',false)">↩</button>';
+    else {
+      if (!running) acts += '<button class="btn p s" onclick="stepStart(\'' + o.id + '\',' + i + ')">▶ Start</button>';
+      acts += '<button class="btn g s" onclick="stepToggle(\'' + o.id + '\',' + i + ',true)">✓ Done</button>';
+    }
+    return '<div class="srow ' + (done ? 'done' : running ? 'running' : '') + '">' +
+      '<div class="ico">' + STATION_ICON[station] + '</div>' +
+      '<div class="nm">' + esc(def.name) + '<small>' + station + ' station' + (done && st.by ? ' · signed ' + esc(st.by) : '') + '</small></div>' +
+      '<div class="plan">' + def.min + 'm</div>' +
+      '<div>' + assignSel + '</div>' +
+      '<div class="tmr">' + timer + '</div>' +
+      '<div class="acts">' + acts + '</div></div>';
+  }).join('');
+}
+function stepAssign(oid, idx, name) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var def = stepDefs(o)[idx]; if (!def) return;
+  var st = o.steps.find(function (x) { return x.s === def.name; });
+  if (!st) { st = { s: def.name, done: false }; o.steps.push(st); }
+  st.assigned = name || null;
+  o.history.push({ at: nowTs(), what: '👤 ' + def.name + ' assigned to ' + (name || 'nobody') + ' — by ' + currentUser().name });
+  store('orders').save(orders);
+  render();
 }
 /* ── portioning control sheet ── */
 function portioningForm(oid, stepName) {
@@ -2304,11 +2391,17 @@ function progEnroll(id, d) {
 
 /* ── Users ── */
 RENDER.users = function () {
-  var staff = store('staff').all();
+  var staff = store('staff').all().map(normStaff);
   var rows = staff.map(function (u) {
     var roleOpts = ROLES.map(function (r) { return '<option' + (u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('');
-    return '<tr><td><b>' + esc(u.name) + '</b></td><td>' + esc(u.email) + '</td>' +
-      '<td><select onchange="setRole(\'' + u.id + '\',this.value)">' + roleOpts + '</select></td></tr>';
+    var chips = STATIONS.map(function (st) {
+      var on = (u.stations || []).indexOf(st[0]) >= 0;
+      return '<button class="pill ' + (on ? 'on' : 'off') + '" style="font-size:.68rem;padding:2px 8px" ' +
+        'onclick="stationToggle(\'' + u.id + '\',\'' + st[0] + '\')" title="Grant / revoke the ' + st[1] + ' station">' + st[1] + '</button>';
+    }).join(' ');
+    return '<tr><td><b>' + esc(u.name) + '</b><br><span class="muted">' + esc(u.email) + '</span></td>' +
+      '<td><select onchange="setRole(\'' + u.id + '\',this.value)">' + roleOpts + '</select></td>' +
+      '<td class="wrap" style="max-width:420px"><div class="pill-row">' + chips + '</div></td></tr>';
   }).join('');
   var rp = store('role_perms').all();
   var head = ROLES.map(function (r) { return '<th>' + r.replace('_', ' ') + '</th>'; }).join('');
@@ -2322,15 +2415,58 @@ RENDER.users = function () {
     }).join('');
     return '<tr><td><b>' + pk[0] + '</b><br><span class="muted">' + pk[1] + '</span></td>' + cells + '</tr>';
   }).join('');
-  return '<div class="pagehead"><div><h1>👥 Users · Roles</h1><div class="sub">One permission key per capability — role defaults here, per-person overrides in Supabase (has_perm: override → role → super_admin), exactly the municipality pattern</div></div></div>' +
-    '<div class="panel"><h3>Team</h3><div class="tbl-scroll"><table class="t"><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-    '<p class="muted" style="margin-top:8px">Real logins are Supabase Auth users; this list maps them to roles.</p></div>' +
+  return '<div class="pagehead"><div><h1>👥 Users · Roles</h1><div class="sub">One permission key per capability (override → role → super_admin) — plus per-person <b>kitchen station grants</b>: cooking and preparation tasks in the Kitchen can only be started by someone holding that station. Hire a helper, grant only 🥣 Assembly or 📦 Packaging, and that is all they can touch.</div></div>' +
+    '<button class="btn p" onclick="newEmployee()">＋ Add employee</button></div>' +
+    '<div class="panel"><h3>Team &amp; kitchen stations</h3><div class="tbl-scroll"><table class="t reg"><thead><tr><th>Person</th><th>Role</th><th>Kitchen stations (tap to grant / revoke)</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<p class="muted" style="margin-top:8px">Real logins are Supabase Auth users; roles carry the permission keys, stations carry the physical work areas. Try it: act as <b>Karim — Helper</b> (bottom-left) and start a 🔥 cooking step — the kitchen refuses him, while 🥣 assembly works.</p></div>' +
     '<div class="panel"><h3>🔐 Permission matrix</h3><div class="tbl-scroll"><table class="t matrix"><thead><tr><th>Permission</th>' + head + '</tr></thead><tbody>' + matrix + '</tbody></table></div>' +
     '<p class="muted" style="margin-top:8px">super_admin always holds everything, and can <b>take over any role</b>: pick anyone in the bottom-left act-as switcher, work with exactly their permissions (watch the sidebar shrink), and return with one click. In production every acted-as action is logged with both identities.</p></div>';
 };
 function setRole(id, role) {
-  var staff = store('staff').all(); var u = byId(staff, id);
+  var staff = store('staff').all().map(normStaff); var u = byId(staff, id);
   if (u) { u.role = role; store('staff').save(staff); render(); }
+}
+function stationToggle(id, station) {
+  if (!can('users_manage')) { alert('users_manage permission required'); return; }
+  var staff = store('staff').all().map(normStaff); var u = byId(staff, id); if (!u) return;
+  var i = u.stations.indexOf(station);
+  if (i >= 0) u.stations.splice(i, 1); else u.stations.push(station);
+  store('staff').save(staff); render();
+}
+function newEmployee() {
+  var boxes = STATIONS.map(function (st) {
+    return '<label style="display:flex;align-items:center;gap:6px;font-weight:600"><input type="checkbox" class="ne-st" value="' + st[0] + '">' + st[1] + '</label>';
+  }).join('');
+  showDlg('<h3>＋ Add employee</h3><div class="frm" style="margin-top:10px">' +
+    '<div class="row"><label>Name<input id="ne-name" placeholder="e.g. Karim — Helper"></label>' +
+    '<label>Email<input id="ne-email" placeholder="name@tinytummy"></label></div>' +
+    '<label>Role<select id="ne-role">' + ROLES.filter(function (r) { return r !== 'super_admin'; }).map(function (r) { return '<option' + (r === 'kitchen' ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
+    '<label>Kitchen stations this person may work</label>' +
+    '<div class="pill-row" style="gap:12px;flex-wrap:wrap">' + boxes + '</div>' +
+    '<button class="btn p" onclick="saveEmployee()">Add to team</button>' +
+    '<p class="muted">In production this also creates the Supabase Auth login; stations and role apply the moment they sign in.</p></div>');
+}
+function saveEmployee() {
+  var name = document.getElementById('ne-name').value.trim();
+  if (!name) { alert('Name required'); return; }
+  var stations = Array.prototype.slice.call(document.querySelectorAll('.ne-st:checked')).map(function (x) { return x.value; });
+  var staff = store('staff').all().map(normStaff);
+  var u = { id: uid(), name: name, email: document.getElementById('ne-email').value, role: document.getElementById('ne-role').value, stations: stations };
+  staff.push(u);
+  store('staff').save(staff);
+  rebuildWhoami();
+  closeDlg(); render();
+}
+function rebuildWhoami() {
+  var sel = document.getElementById('whoami'); if (!sel) return;
+  var cur = localStorage.getItem('ttops_whoami') || 'u1';
+  sel.innerHTML = '';
+  store('staff').all().map(normStaff).forEach(function (u) {
+    var o = document.createElement('option');
+    o.value = u.id; o.textContent = u.name + ' (' + u.role + ')';
+    if (u.id === cur) o.selected = true;
+    sel.appendChild(o);
+  });
 }
 function setPerm(role, key, allowed) {
   var rp = store('role_perms').all();
