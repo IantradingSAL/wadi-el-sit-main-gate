@@ -409,9 +409,25 @@ var DEFAULT_STEP_MIN = {
   cakes:  { 'Prep & wash': 15, 'Cook': 45, 'Blend / assemble': 20, 'Portioning': 10, 'Blast chill': 30, 'Pack + lot label': 8, 'QC check': 5 }
 };
 function normProd(p) {
-  if (!p.step_min) p.step_min = Object.assign({}, DEFAULT_STEP_MIN[p.category] || DEFAULT_STEP_MIN.purees);
+  // steps are now custom, addable lines (like ingredients): name + minutes + $/hr
+  if (!p.steps) {
+    var src = p.step_min || DEFAULT_STEP_MIN[p.category] || DEFAULT_STEP_MIN.purees;
+    p.steps = KITCHEN_STEPS.map(function (n) { return { name: n, min: Number(src[n]) || 0, rate: 0 }; });
+  }
   return p;
 }
+function stepRate(st) { return Number(st.rate) || kitchenRate(); }
+function shortLabel(name) { return STEP_SHORT[name] || (name.split(' ')[0].slice(0, 7)); }
+/* keyword behavior for custom step names */
+function stepKind(name) {
+  var n = name.toLowerCase();
+  if (n.indexOf('portion') >= 0) return 'portion';
+  if (n.indexOf('chill') >= 0 || n.indexOf('freez') >= 0) return 'chill';
+  if (n.indexOf('cook') >= 0 || n.indexOf('bake') >= 0 || n.indexOf('boil') >= 0) return 'cook';
+  if (n.indexOf('pack') >= 0) return 'pack';
+  return null;
+}
+function orderProduct(o, products) { return byId(products, (o.items[0] || {}).product) || products[0]; }
 function kitchenRate() {
   var st = store('settings').all();
   var r = st.find(function (x) { return x.key === 'rate_h'; });
@@ -425,11 +441,29 @@ function setKitchenRate(v) {
 }
 function timePerBatch(p) {
   normProd(p);
-  return KITCHEN_STEPS.reduce(function (sum, st) { return sum + (Number(p.step_min[st]) || 0); }, 0);
+  return p.steps.reduce(function (sum, st) { return sum + (Number(st.min) || 0); }, 0);
+}
+function laborPerBatch(p) {
+  normProd(p);
+  return p.steps.reduce(function (sum, st) { return sum + (Number(st.min) || 0) * stepRate(st) / 60; }, 0);
 }
 function timeCostPerPortion(p) {
-  normProd(p);
-  return timePerBatch(p) * kitchenRate() / 60 / (p.batch_portions || 1);
+  return laborPerBatch(p) / (p.batch_portions || 1);
+}
+/* 🔔 buzzer — three short beeps (started from a user gesture, so audio is allowed) */
+var _audio;
+function buzz() {
+  try {
+    _audio = _audio || new (window.AudioContext || window.webkitAudioContext)();
+    for (var i = 0; i < 3; i++) {
+      var o = _audio.createOscillator(), g = _audio.createGain();
+      o.type = 'square'; o.frequency.value = 880;
+      g.gain.setValueAtTime(0.12, _audio.currentTime + i * 0.45);
+      g.gain.exponentialRampToValueAtTime(0.001, _audio.currentTime + i * 0.45 + 0.3);
+      o.connect(g); g.connect(_audio.destination);
+      o.start(_audio.currentTime + i * 0.45); o.stop(_audio.currentTime + i * 0.45 + 0.32);
+    }
+  } catch (e) {}
 }
 /* Unit conversion: BOM lines may be entered in a different unit than the
    item is stocked in. kg<->g, L<->ml, L<->kg (density 1 for our liquids),
@@ -888,12 +922,7 @@ function openOrder(id) {
       '<td class="num">' + money((p ? p.price : 0) - c) + '</td></tr>';
   }).join('');
   var hist = o.history.map(function (h) { return '<li><b>' + esc(h.what) + '</b><span>' + esc(h.at) + '</span></li>'; }).join('');
-  var steps = KITCHEN_STEPS.map(function (s) {
-    var st = o.steps.find(function (x) { return x.s === s; });
-    var done = st && st.done;
-    return '<label class="' + (done ? 'done' : '') + '"><input type="checkbox" ' + (done ? 'checked' : '') +
-      ' onchange="stepToggle(\'' + o.id + '\',\'' + s + '\',this.checked)">' + s + '</label>';
-  }).join('');
+  var steps = stepControls(o);
   var agentOpts = agents.filter(function (a) { return a.active; })
     .map(function (a) { return '<option value="' + a.id + '"' + (o.agent === a.id ? ' selected' : '') + '>' + esc(a.name) + '</option>'; }).join('');
   var actions = '';
@@ -912,19 +941,23 @@ function openOrder(id) {
     '<div class="tbl-scroll" style="margin:12px 0"><table class="t"><thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Cost (BOM)</th><th class="num">Margin</th></tr></thead>' +
     '<tbody>' + items + '</tbody>' +
     '<tfoot><tr><th colspan="2">Totals</th><th class="num">' + money(t.rev) + '</th><th class="num">' + money(t.cost) + '</th><th class="num">' + money(t.margin) + ' (' + t.pct + '%)</th></tr></tfoot></table></div>' +
-    '<h4>👨‍🍳 Kitchen steps</h4><div class="steps" style="margin:8px 0 8px">' + steps + '</div>' +
+    '<h4>👨‍🍳 Kitchen steps</h4><div style="margin:8px 0 8px">' + steps + '</div>' +
     kitchenDetail(o) +
     '<div class="pill-row" style="margin:14px 0">' + actions + '</div>' +
     '<h4>📍 Tracking</h4><ul class="timeline" style="margin-top:8px">' + hist + '</ul>');
 }
 
-function stepToggle(oid, step, checked) {
+function stepDefs(o) { return normProd(orderProduct(o, store('products').all())).steps; }
+function stepToggle(oid, idx, checked) {
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
-  // Portioning has its own control sheet — checking it opens the form.
-  if (step === 'Portioning' && checked) { portioningForm(oid); return; }
-  // CCP steps must record a measured value against the critical limit.
-  if (checked && CCP_META[step]) {
-    var meta = CCP_META[step];
+  var def = stepDefs(o)[idx]; if (!def) return;
+  var step = def.name;
+  var kind = stepKind(step);
+  // Portioning-type steps have their own control sheet — checking opens the form.
+  if (kind === 'portion' && checked) { portioningForm(oid, step); return; }
+  // Cook / chill steps are CCPs: record a measured value against the limit.
+  if (checked && (kind === 'cook' || kind === 'chill')) {
+    var meta = CCP_META[kind === 'cook' ? 'Cook' : 'Blast chill'];
     var v = prompt(meta.ask + ':');
     if (v === null) { render(); return; }
     var val = Number(v);
@@ -941,7 +974,7 @@ function stepToggle(oid, step, checked) {
   var st = o.steps.find(function (x) { return x.s === step; });
   if (st) { st.done = checked; st.by = checked ? currentUser().name : null; st.at = checked ? nowTs() : null; }
   else o.steps.push({ s: step, done: checked, by: currentUser().name, at: nowTs() });
-  if (step === 'Pack + lot label' && checked && !o.batch_lot) {
+  if (kind === 'pack' && checked && !o.batch_lot) {
     o.batch_lot = 'B-' + o.code.replace('TT-', '') + '-' + today(0).replace(/-/g, '').slice(4);
     o.history.push({ at: nowTs(), what: 'Batch lot label printed: ' + o.batch_lot });
   }
@@ -949,9 +982,53 @@ function stepToggle(oid, step, checked) {
   openOrder(oid); render();
 }
 
-/* ── portioning control sheet ── */
-function portioningForm(oid) {
+
+/* ▶ Start a step: stamps the start time and arms the ⏰ buzzer reminder for
+   the step's planned minutes (sound plays when the time is up while the
+   page is open; the overdue chip and a push land either way). */
+function stepStart(oid, idx) {
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  var def = stepDefs(o)[idx]; if (!def) return;
+  var st = o.steps.find(function (x) { return x.s === def.name; });
+  if (!st) { st = { s: def.name, done: false }; o.steps.push(st); }
+  st.started_at = Date.now(); st.buzzed = false;
+  o.history.push({ at: nowTs(), what: '▶ Started ' + def.name + ' (' + def.min + ' min planned) — ' + currentUser().name });
+  store('orders').save(orders);
+  try { _audio = _audio || new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+  setTimeout(function () {
+    var os2 = store('orders').all(); var o2 = byId(os2, oid); if (!o2) return;
+    var s2 = o2.steps.find(function (x) { return x.s === def.name; });
+    if (s2 && s2.started_at && !s2.done && !s2.buzzed) {
+      s2.buzzed = true; store('orders').save(os2);
+      buzz();
+      pushDemo('⏰ Step timer — ' + def.name, o2.code + ': the ' + def.min + ' min for “' + def.name + '” are up', 'Role · kitchen');
+      if (current === 'kitchen') render();
+    }
+  }, Math.max(1, (Number(def.min) || 0)) * 60000);
+  render();
+}
+/* Shared step controls: ▶ start, live countdown, ⏰ overdue, ☑ done */
+function stepControls(o) {
+  var defs = stepDefs(o);
+  return '<div class="steps">' + defs.map(function (def, i) {
+    var st = o.steps.find(function (x) { return x.s === def.name; });
+    var done = st && st.done;
+    var running = st && st.started_at && !done;
+    var timer = '';
+    if (running) {
+      var rem = Math.round((st.started_at + (Number(def.min) || 0) * 60000 - Date.now()) / 60000);
+      timer = rem >= 0 ? ' <span class="chip fefo">⏳ ' + rem + 'm left</span>' : ' <span class="chip alarm">⏰ +' + (-rem) + 'm</span>';
+    }
+    return '<label class="' + (done ? 'done' : '') + '">' +
+      (!done && !running ? '<button class="btn o s" style="padding:0 8px;font-size:.72rem" onclick="stepStart(\'' + o.id + '\',' + i + ')">▶</button> ' : '') +
+      '<input type="checkbox" ' + (done ? 'checked' : '') + ' onchange="stepToggle(\'' + o.id + '\',' + i + ',this.checked)">' +
+      esc(def.name) + ' <small>' + def.min + 'm</small>' + timer + '</label>';
+  }).join('') + '</div>';
+}
+/* ── portioning control sheet ── */
+function portioningForm(oid, stepName) {
+  var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
+  stepName = stepName || 'Portioning';
   var products = store('products').all();
   var planned = 0, weightSum = 0;
   var lines = o.items.map(function (it) {
@@ -968,18 +1045,19 @@ function portioningForm(oid) {
     '<div class="row"><label>Portions actually produced<input id="pt-actual" type="number" value="' + planned + '"></label>' +
     '<label>Average portion weight (g)<input id="pt-avg" type="number" value="' + target + '"></label></div>' +
     '<p class="muted">Tolerance: average weight within ±5% of the ' + target + ' g target. Short portions or over-portioning both show up in the margin.</p>' +
-    '<button class="btn p" onclick="savePortioning(\'' + oid + '\',' + planned + ',' + target + ')">Record portioning & sign</button></div>');
+    '<button class="btn p" onclick="savePortioning(\'' + oid + '\',' + planned + ',' + target + ',this.dataset.step)" data-step="' + esc(stepName) + '">Record portioning & sign</button></div>');
 }
-function savePortioning(oid, planned, target) {
+function savePortioning(oid, planned, target, stepName) {
+  stepName = stepName || 'Portioning';
   var orders = store('orders').all(); var o = byId(orders, oid); if (!o) return;
   var actual = Number(document.getElementById('pt-actual').value) || 0;
   var avg = Number(document.getElementById('pt-avg').value) || 0;
   var devPct = target ? Math.round((avg - target) / target * 100) : 0;
   var ok = Math.abs(devPct) <= 5 && actual >= planned;
   o.portioning = { planned: planned, actual: actual, target_g: target, avg_g: avg, dev_pct: devPct, by: currentUser().name, at: nowTs(), ok: ok };
-  var st = o.steps.find(function (x) { return x.s === 'Portioning'; });
+  var st = o.steps.find(function (x) { return x.s === stepName; });
   if (st) { st.done = true; st.by = currentUser().name; st.at = nowTs(); }
-  else o.steps.push({ s: 'Portioning', done: true, by: currentUser().name, at: nowTs() });
+  else o.steps.push({ s: stepName, done: true, by: currentUser().name, at: nowTs() });
   if (o.status === 'kitchen') { o.status = 'portioning'; o.stage_times = o.stage_times || {}; o.stage_times.portioning = Date.now(); }
   o.history.push({ at: nowTs(), what: 'Portioned ' + actual + '/' + planned + ' portions · avg ' + avg + ' g (target ' + target + ' g, ' + (devPct >= 0 ? '+' : '') + devPct + '%)' + (ok ? ' ✓' : ' ⚠️ outside tolerance') + ' — ' + currentUser().name });
   if (!ok) pushDemo('Portioning variance ⚠️', o.code + ': avg ' + avg + 'g vs target ' + target + 'g', 'Role · manager');
@@ -1047,24 +1125,25 @@ function saveOrder() {
    red now-marker, start / due clocks, live countdown, and an alarm the
    moment the planned cooking time is exceeded. Station load shows how many
    minutes of work are queued at each step across all active orders.      */
-function currentStep(o) {
-  for (var i = 0; i < KITCHEN_STEPS.length; i++) {
-    var st = o.steps.find(function (x) { return x.s === KITCHEN_STEPS[i]; });
-    if (!(st && st.done)) return KITCHEN_STEPS[i];
+function currentStep(o, products) {
+  var p0 = orderProduct(o, products); normProd(p0);
+  for (var i = 0; i < p0.steps.length; i++) {
+    var st = o.steps.find(function (x) { return x.s === p0.steps[i].name; });
+    if (!(st && st.done)) return p0.steps[i].name;
   }
   return null;
 }
 function stepTimeline(o, products) {
-  var p0 = byId(products, (o.items[0] || {}).product) || products[0];
+  var p0 = orderProduct(o, products);
   normProd(p0);
   var total = timePerBatch(p0) || 1;
-  var cur = currentStep(o);
-  var segs = KITCHEN_STEPS.map(function (name) {
-    var min = Number(p0.step_min[name]) || 0;
+  var cur = currentStep(o, products);
+  var segs = p0.steps.map(function (def) {
+    var name = def.name, min = Number(def.min) || 0;
     var st = o.steps.find(function (x) { return x.s === name; });
     var cls = (st && st.done) ? 'done' : (name === cur ? 'now' : 'todo');
     return '<div class="seg ' + cls + '" style="width:' + (min / total * 100) + '%" title="' + esc(name) + ' · ' + min + ' min planned' + (st && st.by ? ' · ' + st.by + ' ' + (st.at || '') : '') + '">' +
-      STEP_SHORT[name] + '<small>' + min + 'm</small></div>';
+      esc(shortLabel(name)) + '<small>' + min + 'm</small></div>';
   }).join('');
   var marker = '';
   if (o.kitchen_start) {
@@ -1073,17 +1152,37 @@ function stepTimeline(o, products) {
   }
   return '<div class="ktl">' + segs + marker + '</div>';
 }
-function kitchenClock(o) {
-  if (!o.kitchen_start) return '';
-  var remain = Math.round((o.kitchen_due - Date.now()) / 60000);
-  var overdue = remain < 0;
-  return '<div class="ktime">' +
-    '<span>▶ Started <b>' + fmtClock(o.kitchen_start) + '</b></span>' +
-    '<span>🏁 Due <b>' + fmtClock(o.kitchen_due) + '</b></span>' +
-    (overdue
-      ? '<span class="chip alarm">⏰ OVERDUE ' + Math.abs(remain) + ' min</span>'
-      : '<span>⏳ Remaining <b>' + remain + ' min</b></span>') +
-    '</div>';
+/* Minutes of work still ahead of this order: undone steps' planned minutes,
+   minus what already ran in the currently started step. */
+function remainingMin(o, products) {
+  var defs = normProd(orderProduct(o, products)).steps;
+  var m = 0;
+  defs.forEach(function (def) {
+    var st = o.steps.find(function (x) { return x.s === def.name; });
+    if (st && st.done) return;
+    var plan = Number(def.min) || 0;
+    if (st && st.started_at) plan = Math.max(0, plan - (Date.now() - st.started_at) / 60000);
+    m += plan;
+  });
+  return Math.round(m);
+}
+function kitchenClock(o, products) {
+  var remainWork = remainingMin(o, products);
+  var est = Date.now() + remainWork * 60000;
+  var head = '';
+  if (o.kitchen_start) {
+    var remain = Math.round((o.kitchen_due - Date.now()) / 60000);
+    head = '<span>▶ Started <b>' + fmtClock(o.kitchen_start) + '</b></span>' +
+      '<span>🏁 Due <b>' + fmtClock(o.kitchen_due) + '</b></span>' +
+      (remain < 0
+        ? '<span class="chip alarm">⏰ OVERDUE ' + Math.abs(remain) + ' min</span>'
+        : '<span>⏳ Remaining <b>' + remain + ' min</b></span>');
+  } else {
+    head = '<span>▶ Not started</span>';
+  }
+  return '<div class="ktime">' + head +
+    '<span>📐 Work left <b>' + remainWork + ' min</b></span>' +
+    '<span>🔮 Est. finish <b>' + fmtClock(est) + '</b></span></div>';
 }
 function checkKitchenAlarms() {
   var orders = store('orders').all(); var changed = false;
@@ -1104,39 +1203,37 @@ RENDER.kitchen = function () {
   var stationMin = {};
   active.forEach(function (o) {
     o.items.forEach(function (it) { portions += it.qty; });
-    var p0 = byId(products, (o.items[0] || {}).product); if (!p0) return;
-    var cur = currentStep(o); var reached = false;
-    KITCHEN_STEPS.forEach(function (name) {
-      if (name === cur) reached = true;
+    var p0 = orderProduct(o, products); if (!p0) return;
+    normProd(p0);
+    var cur = currentStep(o, products); var reached = false;
+    p0.steps.forEach(function (def) {
+      if (def.name === cur) reached = true;
       if (reached) {
-        var m = Number(p0.step_min[name]) || 0;
+        var m = Number(def.min) || 0;
         minsQueued += m;
-        stationMin[STEP_SHORT[name]] = (stationMin[STEP_SHORT[name]] || 0) + m;
+        var lbl = shortLabel(def.name);
+        stationMin[lbl] = (stationMin[lbl] || 0) + m;
       }
     });
     if (o.kitchen_due && Date.now() > o.kitchen_due) overdueN++;
   });
-  var stationRows = KITCHEN_STEPS.map(function (n) { return { label: STEP_SHORT[n], value: stationMin[STEP_SHORT[n]] || 0 }; })
+  var stationRows = Object.keys(stationMin).map(function (k) { return { label: k, value: stationMin[k] }; })
     .filter(function (r) { return r.value > 0; });
 
   var cards = active.map(function (o) {
     var items = o.items.map(function (it) { var p = byId(products, it.product); return it.qty + '× ' + (p ? p.name : '?'); }).join(', ');
-    var doneN = o.steps.filter(function (st) { return st.done; }).length;
-    var pct = Math.round(doneN / KITCHEN_STEPS.length * 100);
-    var cur = currentStep(o);
-    var steps = KITCHEN_STEPS.map(function (st) {
-      var x = o.steps.find(function (y) { return y.s === st; }); var done = x && x.done;
-      return '<label class="' + (done ? 'done' : '') + '"><input type="checkbox" ' + (done ? 'checked' : '') +
-        ' onchange="stepToggle(\'' + o.id + '\',\'' + st + '\',this.checked)">' + st + '</label>';
-    }).join('');
+    var defs = normProd(orderProduct(o, products)).steps;
+    var doneN = defs.filter(function (d) { var x = o.steps.find(function (y) { return y.s === d.name; }); return x && x.done; }).length;
+    var pct = defs.length ? Math.round(doneN / defs.length * 100) : 0;
+    var cur = currentStep(o, products);
     return '<div class="panel"><div class="toolbar"><h3>' + esc(o.code) + ' <span class="chip ' + o.status + '">' + o.status + '</span>' +
       (o.batch_lot ? ' <span class="chip fefo">lot ' + esc(o.batch_lot) + '</span>' : '') + '</h3>' +
       (cur ? '<span class="chip progress">▶ now: ' + esc(cur) + '</span>' : '<span class="chip done">all steps complete</span>') + '</div>' +
       '<p class="muted">' + esc(items) + ' · ' + esc(o.customer) + '</p>' +
       pipelineStrip(o) +
       stepTimeline(o, products) +
-      kitchenClock(o) +
-      '<div class="steps" style="margin-top:10px">' + steps + '</div>' +
+      kitchenClock(o, products) +
+      '<div style="margin-top:10px">' + stepControls(o) + '</div>' +
       kitchenDetail(o) +
       (pct === 100 ? '<p style="margin-top:10px"><button class="btn g s" onclick="orderAct(\'' + o.id + '\',\'qcpass\')">✅ QC pass → dispatch</button></p>' : '') +
       '</div>';
@@ -1211,20 +1308,23 @@ RENDER.bom = function () {
       '</div>' +
       '<div class="tbl-scroll"><table class="t"><thead><tr>' +
       '<th>Ingredient</th><th class="num">Qty / portion</th><th class="num">Unit cost</th><th class="num">Line cost</th><th></th>' +
-      '</tr></thead><tbody>' + lines +
-      '<tr style="background:#eef3f6"><td><b>💼 Labor — kitchen time</b><br><span class="muted">derived from ⏱ process times below</span></td>' +
-      '<td class="num">' + (Math.round(tBatch / (p.batch_portions || 1) * 10) / 10) + ' min <span class="muted">(' + (Math.round(tBatch / 60 / (p.batch_portions || 1) * 1000) / 1000) + ' hr)</span></td>' +
-      '<td class="num">' + money(kitchenRate()) + '/hr</td>' +
-      '<td class="num"><b>' + money(tCost) + '</b></td><td></td></tr>' +
-      '</tbody></table></div>' +
+      '</tr></thead><tbody>' + lines + '</tbody></table></div>' +
       '<p style="margin-top:8px"><button class="btn o s" onclick="bomAdd(\'' + p.id + '\')">＋ Add ingredient line</button></p>' +
-      '<h4 style="margin-top:12px">⏱ Process times — minutes per batch (drives the kitchen clock & alarm)</h4>' +
-      '<div class="steprow">' + KITCHEN_STEPS.map(function (st) {
-        return '<label>' + STEP_SHORT[st] + '<input type="number" min="0" value="' + (Number(p.step_min[st]) || 0) + '" onchange="prodStepSet(\'' + p.id + '\',\'' + st + '\',this.value)"></label>';
-      }).join('') + '</div>' +
+      '<h4 style="margin-top:12px">⏱ Process steps — add any step (e.g. Carrot cooking, Meat preparation), each with its minutes and labor rate</h4>' +
+      '<div class="tbl-scroll"><table class="t"><thead><tr><th>Step</th><th class="num">Minutes / batch</th><th class="num">Labor $/hr</th><th class="num">Labor cost / batch</th><th></th></tr></thead><tbody>' +
+      p.steps.map(function (st, i) {
+        return '<tr><td><input value="' + esc(st.name) + '" style="min-width:170px" onchange="stepDefSet(\'' + p.id + '\',' + i + ',\'name\',this.value)">' +
+          (stepKind(st.name) ? ' <span class="chip fefo">' + stepKind(st.name) + (stepKind(st.name) === 'cook' || stepKind(st.name) === 'chill' ? ' · CCP' : '') + '</span>' : '') + '</td>' +
+          '<td class="num"><input class="inline-num" type="number" min="0" value="' + (Number(st.min) || 0) + '" onchange="stepDefSet(\'' + p.id + '\',' + i + ',\'min\',this.value)"></td>' +
+          '<td class="num"><input class="inline-num" type="number" step="0.5" placeholder="' + kitchenRate() + '" value="' + (st.rate || '') + '" onchange="stepDefSet(\'' + p.id + '\',' + i + ',\'rate\',this.value)"></td>' +
+          '<td class="num"><b>' + money((Number(st.min) || 0) * stepRate(st) / 60) + '</b></td>' +
+          '<td><button class="btn r s" onclick="stepDefDel(\'' + p.id + '\',' + i + ')">✕</button></td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<p style="margin-top:8px"><button class="btn o s" onclick="stepDefAdd(\'' + p.id + '\')">＋ Add process step</button> ' +
+      '<span class="muted">names containing cook/chill become CCPs with temperature checks; “portion” opens the portioning sheet; “pack” prints the lot label</span></p>' +
       '<div class="stat-line">' +
       '<span>Materials / portion <b>' + money(cost) + '</b></span>' +
-      '<span>⏱ ' + tBatch + ' min / batch · time cost <b>' + money(tCost) + '</b>/portion</span>' +
+      '<span>💼 Labor ' + tBatch + ' min / batch (' + (Math.round(tBatch / 60 * 100) / 100) + ' hr) · <b>' + money(tCost) + '</b>/portion</span>' +
       '<span>Full cost <b>' + money(fullCost) + '</b></span>' +
       '<span>Food cost <b style="color:' + (foodCost > 50 ? 'var(--bad)' : 'var(--ok)') + '">' + foodCost + '%</b></span>' +
       '<span>Full margin <b style="color:' + (fullPct < 40 ? 'var(--bad)' : 'var(--ok)') + '">' + money(p.price - fullCost) + ' · ' + fullPct + '%</b></span>' +
@@ -1250,9 +1350,20 @@ function bomAdd(productId) {
   bom.push({ id: uid(), product: productId, ing: ings[0].id, qty: 0.05 });
   store('bom').save(bom); render();
 }
-function prodStepSet(id, step, value) {
+function stepDefSet(id, idx, field, value) {
+  var products = store('products').all().map(normProd); var p = byId(products, id); if (!p || !p.steps[idx]) return;
+  p.steps[idx][field] = field === 'name' ? value : (Number(value) || 0);
+  store('products').save(products); render();
+}
+function stepDefAdd(id) {
   var products = store('products').all().map(normProd); var p = byId(products, id); if (!p) return;
-  p.step_min[step] = Number(value) || 0;
+  p.steps.push({ name: 'New step', min: 10, rate: 0 });
+  store('products').save(products); render();
+}
+function stepDefDel(id, idx) {
+  var products = store('products').all().map(normProd); var p = byId(products, id); if (!p) return;
+  if (!confirm('Remove step "' + p.steps[idx].name + '"?')) return;
+  p.steps.splice(idx, 1);
   store('products').save(products); render();
 }
 function prodSet(id, field, value) {
