@@ -3,7 +3,7 @@
 // FIXED: GitHub Pages subdirectory handling — notifications open correctly
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CACHE_NAME   = 'wadi-elsit-v161';
+const CACHE_NAME   = 'wadi-elsit-v162';
 const RUNTIME_NAME = 'wadi-elsit-runtime-v18';
 
 // Push tracking config — used to report a notification's fate back to the
@@ -36,6 +36,9 @@ const APP_SHELL = [
   './games.html',
   './games-screen.html',
   './pay.html',
+  './whish.html',
+  // whish-demo.mp4 stays out of the shell on purpose — ~1MB of video has no
+  // place in every phone's install; the runtime cache picks it up on first play.
   './privacy.html',
   './404.html',
   './analytics.js',
