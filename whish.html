@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f4d82">
+<meta name="description" content="دليل مصوّر خطوة بخطوة لدفع الرسوم البلدية في بلدية وادي الست عبر تطبيق Whish — بالدولار الأميركي أو بالليرة اللبنانية.">
+<link rel="canonical" href="https://app.municipality-wadi-el-sitt.org/whish.html">
+<meta property="og:type" content="article">
+<meta property="og:locale" content="ar_LB">
+<meta property="og:site_name" content="بلدية وادي الست">
+<meta property="og:url" content="https://app.municipality-wadi-el-sitt.org/whish.html">
+<meta property="og:title" content="أصبح بإمكانكم دفع الرسوم البلدية عبر تطبيق Whish">
+<meta property="og:description" content="دليل مصوّر خطوة بخطوة: من البحث عن البلدية في التطبيق حتى الضغط على زر الدفع. بالدولار الأميركي أو بالليرة اللبنانية.">
+<meta property="og:image" content="https://app.municipality-wadi-el-sitt.org/whish-logo.jpg">
+<meta property="og:image:width" content="640">
+<meta property="og:image:height" content="309">
+<meta property="og:image:alt" content="ادفعوا رسومكم البلدية عبر تطبيق Whish — بلدية وادي الست">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="أصبح بإمكانكم دفع الرسوم البلدية عبر تطبيق Whish">
+<meta name="twitter:description" content="دليل مصوّر خطوة بخطوة لدفع الرسوم البلدية عبر تطبيق Whish.">
+<meta name="twitter:image" content="https://app.municipality-wadi-el-sitt.org/whish-logo.jpg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>html,body{margin:0}</style>
+<title>دفع الرسوم البلدية عبر Whish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Tajawal:wght@300;400;500;700;800&display=swap">
+<style>
+  :root{
+    --paper:#F5F7FA;
+    --surface:#FFFFFF;
+    --surface-2:#EDF2F8;
+    --ink:#1A2332;
+    --ink-2:#4A5568;
+    --ink-3:#8A95A3;
+    --line:#E2E8F0;
+    --line-2:#CBD5E1;
+    --deep:#0F4D82;
+    --deep-2:#0B3A63;
+    --accent:#9C7418;
+    --accent-2:#C79A34;
+    --tint:#F5EBD4;
+    --on-deep:#FFFFFF;
+    --ok:#2A7A5E;
+    --alert:#A8412C;
+    --shadow:0 1px 2px rgba(16,36,59,.07), 0 14px 34px -18px rgba(16,36,59,.35);
+    --ar:"Tajawal", "Segoe UI", system-ui, sans-serif;
+    --kufi:"Tajawal", "Inter", system-ui, sans-serif;
+    --mono:"Inter", "Tajawal", ui-sans-serif, system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0A141E;
+      --surface:#11202E;
+      --surface-2:#18293A;
+      --ink:#E9EFF5;
+      --ink-2:#A7B8C8;
+      --ink-3:#77899A;
+      --line:#1E3244;
+      --line-2:#2B4257;
+      --deep:#0B3255;
+      --deep-2:#082441;
+      --accent:#E0B44E;
+      --accent-2:#F0CB74;
+      --tint:#2A2213;
+      --on-deep:#FFFFFF;
+      --ok:#57B694;
+      --alert:#E28068;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 16px 40px -20px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0A141E;
+    --surface:#11202E;
+    --surface-2:#18293A;
+    --ink:#E9EFF5;
+    --ink-2:#A7B8C8;
+    --ink-3:#77899A;
+    --line:#1E3244;
+    --line-2:#2B4257;
+    --deep:#0B3255;
+    --deep-2:#082441;
+    --accent:#E0B44E;
+    --accent-2:#F0CB74;
+    --tint:#2A2213;
+    --on-deep:#FFFFFF;
+    --ok:#57B694;
+    --alert:#E28068;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 16px 40px -20px rgba(0,0,0,.8);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--ar);font-size:16px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page[dir="ltr"]{font-family:var(--ar)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  h1,h2,h3{margin:0;text-wrap:balance;font-family:var(--kufi);font-weight:700;line-height:1.3;letter-spacing:-.01em}
+  p{margin:0}
+  button{font:inherit;color:inherit}
+
+  /* ---------- masthead ---------- */
+  .top{background:linear-gradient(135deg,var(--deep-2),var(--deep) 58%,#1A6EB5);color:var(--on-deep);position:relative;overflow:hidden}
+  .top::after{
+    content:"";position:absolute;inset:auto 0 0;height:3px;
+    background:linear-gradient(90deg,var(--accent-2),transparent 62%);
+  }
+  .top .wrap{padding-top:26px;padding-bottom:30px}
+  .toprow{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .seal{display:flex;align-items:center;gap:11px}
+  .seal-plaque{
+    width:68px;height:68px;border-radius:50%;background:#fff;flex:none;
+    display:grid;place-items:center;padding:10px;
+    box-shadow:0 6px 18px -8px rgba(0,0,0,.55);
+  }
+  .seal-logo{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+  .seal b{
+    font-family:var(--kufi);font-weight:500;font-size:13px;line-height:1.4;
+    color:rgba(255,255,255,.66);max-width:20ch;padding-inline-start:14px;
+    border-inline-start:1px solid rgba(255,255,255,.24);
+  }
+  @media (max-width:520px){ .seal-plaque{width:56px;height:56px;padding:8px} .seal b{font-size:12px} }
+  .langs{display:flex;gap:0;border:1px solid rgba(255,255,255,.28);border-radius:999px;overflow:hidden}
+  .langs button{
+    background:none;border:0;padding:6px 16px;cursor:pointer;font-size:13px;
+    color:rgba(255,255,255,.72);
+  }
+  .langs button[aria-pressed="true"]{
+    background:var(--accent-2);color:var(--deep-2);font-weight:700;
+    box-shadow:0 2px 8px -4px rgba(0,0,0,.5);
+  }
+  h1{font-size:clamp(28px,4.6vw,44px);margin-top:26px;letter-spacing:0}
+  .dek{color:rgba(255,255,255,.78);font-size:17px;max-width:56ch;margin-top:12px;font-weight:300}
+  .facts{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .fact{
+    border:1px solid rgba(255,255,255,.24);border-radius:999px;padding:5px 14px;font-size:13px;
+    color:rgba(255,255,255,.86);
+  }
+  .fact b{font-family:var(--mono);font-weight:600;color:var(--accent-2);font-variant-numeric:tabular-nums}
+
+  /* ---------- stage ---------- */
+  .stage{display:grid;grid-template-columns:308px minmax(0,1fr);gap:34px;padding:34px 0 12px;align-items:start}
+  @media (max-width:860px){ .stage{grid-template-columns:1fr;gap:26px} }
+
+  .phonewrap{position:sticky;top:18px}
+  @media (max-width:860px){ .phonewrap{position:static;max-width:308px;margin:0 auto} }
+  .phone{
+    background:var(--deep-2);border-radius:30px;padding:9px;box-shadow:var(--shadow);
+    border:1px solid var(--line-2);
+  }
+  .phone video{
+    display:block;width:100%;aspect-ratio:384/848;border-radius:22px;background:#000;
+  }
+  .vhint{
+    margin-top:10px;font-size:12.5px;color:var(--ink-3);text-align:center;
+    display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;
+  }
+  .vhint .mute{border:1px solid var(--line-2);border-radius:999px;padding:1px 9px;font-size:11.5px}
+  .nowstep{
+    margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;box-shadow:var(--shadow);
+  }
+  .nowstep span{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--accent);
+    text-transform:uppercase;display:block;margin-bottom:3px;
+  }
+  .nowstep b{font-family:var(--kufi);font-weight:700;font-size:17px;line-height:1.4;display:block}
+
+  /* ---------- steps ---------- */
+  .steps-h{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .steps-h h2{font-size:21px}
+  .steps-h em{font-style:normal;font-size:13.5px;color:var(--ink-3)}
+  ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;counter-reset:s}
+  ol.steps li{counter-increment:s}
+  ol.steps button{
+    width:100%;text-align:inherit;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;
+    grid-template-columns:34px 1fr auto;gap:14px;align-items:start;
+    transition:border-color .18s ease, transform .18s ease, background .18s ease;
+  }
+  ol.steps button:hover{border-color:var(--line-2);transform:translateY(-1px)}
+  ol.steps .n{
+    font-family:var(--mono);font-weight:600;font-size:13px;color:var(--accent);background:var(--tint);
+    border-radius:8px;height:26px;display:grid;place-items:center;margin-top:2px;
+  }
+  ol.steps .n::before{content:counter(s)}
+  ol.steps .t{font-family:var(--kufi);font-weight:700;font-size:17px;line-height:1.45;display:block}
+  ol.steps .d{font-size:15px;color:var(--ink-2);margin-top:4px;font-weight:300;line-height:1.6}
+  ol.steps .tc{
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums;font-weight:500;
+    border:1px solid var(--line);border-radius:999px;padding:2px 8px;margin-top:3px;white-space:nowrap;
+  }
+  ol.steps li.on button{
+    background:var(--tint);border-color:var(--accent-2);
+    box-shadow:0 0 0 1px var(--accent-2);
+  }
+  ol.steps li.on .tc{border-color:var(--accent-2);color:var(--accent)}
+  ol.steps li.done .n{background:var(--surface-2);color:var(--ink-3)}
+
+  /* ---------- cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:20px;padding:34px 0 0;align-items:start}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card h3{font-size:18px;margin-bottom:12px}
+  .card h3 .ic{color:var(--accent);margin-inline-end:8px;font-family:var(--mono);font-size:14px}
+  .fees{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+  .fees li{
+    padding:8px 2px;border-bottom:1px dotted var(--line);font-size:15.5px;color:var(--ink-2);
+    display:flex;justify-content:space-between;gap:12px;direction:rtl;text-align:right;
+  }
+  .fees li:last-child{border-bottom:0}
+  .fees li b{font-weight:500;color:var(--ink)}
+  .more{font-size:13.5px;color:var(--ink-3);margin-top:10px}
+  .checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
+  .checks li{display:grid;grid-template-columns:20px 1fr;gap:11px;font-size:15.5px;color:var(--ink-2);line-height:1.55}
+  .checks li::before{content:"✓";color:var(--ok);font-weight:700;line-height:1.5}
+  .qa{display:flex;flex-direction:column;gap:15px}
+  .qa h4{margin:0 0 3px;font-size:15.5px;font-weight:700;font-family:var(--ar)}
+  .qa p{font-size:15px;color:var(--ink-2);font-weight:300;line-height:1.6}
+  .calc{
+    display:grid;grid-template-columns:1fr auto;gap:6px 14px;font-family:var(--mono);
+    font-size:14.5px;color:var(--ink-2);font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:10px;padding:13px 15px;
+    background:var(--paper);
+  }
+  .calc .v{text-align:end;color:var(--ink)}
+  .calc .tot{border-top:1px solid var(--line-2);padding-top:7px;margin-top:3px;color:var(--ink);font-weight:500}
+  .calc .tot.v{color:var(--accent)}
+
+  footer{padding:34px 0 56px;margin-top:34px;border-top:1px solid var(--line)}
+  footer p{font-size:13.5px;color:var(--ink-3);max-width:74ch;font-weight:300;line-height:1.7}
+  footer p + p{margin-top:8px}
+  footer .rights-row{
+    margin-top:20px;padding-top:18px;border-top:1px solid var(--line);
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  footer .rights{color:var(--ink-2);font-weight:500;font-size:13.5px}
+  footer .lg-plaque{
+    width:54px;height:54px;border-radius:50%;background:#fff;border:1px solid var(--line);
+    display:grid;place-items:center;padding:8px;flex:none;
+  }
+  footer .lg{max-width:100%;max-height:100%;width:auto;height:auto;display:block}
+
+  .announce{
+    display:inline-flex;align-items:center;gap:11px;margin-top:22px;
+    background:var(--accent-2);color:#0B3A63;border-radius:999px;
+    padding:9px 20px;font-weight:700;font-size:15.5px;line-height:1.35;
+    box-shadow:0 10px 26px -14px rgba(0,0,0,.7);max-width:100%;
+  }
+  .announce i{font-style:normal;font-size:13px;opacity:.7}
+  .notice{
+    background:var(--surface);border:1px solid var(--line);
+    border-inline-start:4px solid var(--accent-2);border-radius:12px;
+    padding:14px 17px;margin-bottom:14px;font-size:15.5px;line-height:1.6;color:var(--ink-2);
+    display:grid;grid-template-columns:22px 1fr;gap:12px;align-items:start;
+  }
+  .notice::before{
+    content:"!";font-family:var(--mono);font-weight:500;color:var(--accent);
+    background:var(--tint);border-radius:6px;width:22px;height:22px;
+    display:grid;place-items:center;font-size:13px;margin-top:1px;
+  }
+  .notice b{color:var(--ink);font-weight:600}
+  /* ---------- phones ---------- */
+  @media (max-width:700px){
+    .wrap{padding:0 16px}
+    .top .wrap{padding-top:18px;padding-bottom:22px}
+    .toprow{gap:12px}
+    .seal-plaque{width:54px;height:54px;padding:8px}
+    .seal b{font-size:11.5px;max-width:16ch;padding-inline-start:11px}
+    .langs button{padding:5px 13px;font-size:12.5px}
+    .announce{
+      margin-top:16px;font-size:14px;padding:9px 15px;border-radius:14px;
+      gap:9px;align-items:flex-start;text-align:start;
+    }
+    .announce i{margin-top:2px}
+    h1{margin-top:16px;line-height:1.22}
+    .dek{font-size:15.5px;margin-top:10px}
+    .facts{margin-top:16px;gap:7px}
+    .fact{font-size:12px;padding:4px 11px}
+
+    /* the video follows you down the steps */
+    .stage{padding-top:0;gap:0}
+    .phonewrap{
+      position:sticky;top:0;z-index:30;max-width:none;margin:0 -16px;
+      padding:10px 16px 11px;background:var(--paper);border-bottom:1px solid var(--line);
+    }
+    .phone{padding:6px;border-radius:20px;width:max-content;margin:0 auto}
+    .phone video{height:min(38vh,360px);width:auto;border-radius:15px}
+    .vhint{margin-top:7px;font-size:11.5px;gap:6px}
+    .nowstep{display:none}
+
+    .steps-h{margin:18px 0 12px}
+    .steps-h h2{font-size:19px}
+    ol.steps button{padding:12px 13px;gap:11px;grid-template-columns:28px 1fr auto}
+    ol.steps .n{height:24px}
+    ol.steps .t{font-size:15.5px}
+    ol.steps .d{font-size:14.5px}
+    ol.steps .tc{font-size:11.5px;padding:1px 7px}
+    .notice{font-size:14.5px;padding:12px 14px;gap:10px}
+    .grid{padding-top:26px;gap:16px}
+    .card{padding:17px 18px}
+    footer{padding-bottom:44px}
+  }
+  @media (max-width:700px) and (orientation:landscape){
+    .phonewrap{position:static;margin:0;padding:0;border:0;background:none}
+    .phone video{height:auto;width:100%}
+    .phone{width:auto;max-width:280px}
+  }
+
+  :focus-visible{outline:2px solid var(--accent-2);outline-offset:3px;border-radius:8px}
+  @media (prefers-reduced-motion: reduce){ *{transition-duration:.001ms !important} }
+</style>
+</head>
+<body>
+
+<div class="page" id="page" dir="rtl" lang="ar">
+  <header class="top">
+    <div class="wrap">
+      <div class="toprow">
+        <div class="seal">
+          <span class="seal-plaque"><img class="seal-logo" id="sealLogo" src="whish-logo.jpg" alt="بلدية وادي الست"></span>
+          <b id="org"></b>
+        </div>
+        <div class="langs" role="group" aria-label="Language">
+          <button id="btnAr" aria-pressed="true">العربية</button>
+          <button id="btnEn" aria-pressed="false">English</button>
+        </div>
+      </div>
+      <p class="announce" id="announce"></p>
+      <h1 id="h1">كيف تدفع رسمك البلدي عبر تطبيق Whish</h1>
+      <p class="dek" id="dek"></p>
+      <div class="facts" id="facts"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="stage">
+      <div class="phonewrap">
+        <div class="phone">
+          <video id="vid" playsinline preload="metadata" controls src="whish-demo.mp4"></video>
+        </div>
+        <p class="vhint"><span class="mute" id="muteNote"></span><span id="tapNote"></span></p>
+        <div class="nowstep">
+          <span id="nowLabel"></span>
+          <b id="nowTitle"></b>
+        </div>
+      </div>
+
+      <div>
+        <div class="steps-h">
+          <h2 id="stepsH"></h2>
+          <em id="stepsSub"></em>
+        </div>
+        <p class="notice" id="notice"></p>
+        <ol class="steps" id="steps"></ol>
+      </div>
+    </section>
+
+    <section class="grid" id="cards"></section>
+
+    <footer>
+      <p id="foot1"></p>
+      <p id="foot2"></p>
+      <div class="rights-row">
+        <span class="lg-plaque"><img class="lg" src="whish-logo.jpg" alt=""></span>
+        <p class="rights" id="foot3"></p>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var SERVICES = [
+    "إفادة محتويات عقار","إفادة شغور عقار","ارتفاق و تخطيط","براءة ذمة بلدية",
+    "افادة تخمين","طلب ترميم","طلب إسطصلاح ارض","طلب إنشاء حائط دعم",
+    "طلب إنشاء سور","طلب إنشاء بركة تجميع مياه","طلب حفر بئر","طلب إنشاء خيمة (قرميد، توتيا…)"
+  ];
+
+  var STEPS = [
+    { t:0,  ar:["افتح تطبيق Whish واضغط على شريط البحث","شريط البحث في أعلى الشاشة الرئيسية. قبل أن تبدأ، راجع البلدية لتعرف المبلغ المتوجّب عليك بدقّة. والدفع متاح بالدولار الأميركي أو بالليرة اللبنانية — تختار العملة من مبدّل USD / LBP في أعلى الشاشة."],
+            en:["Open Whish and tap the search bar","It sits at the top of the home screen. Before you start, check with the municipality for the exact amount you owe. You can pay in US dollars or in Lebanese pounds — pick the currency from the USD / LBP switch at the top of the screen."] },
+    { t:4,  ar:["ابدأ بكتابة Mun في شريط البحث","ثلاثة أحرف تكفي لتظهر البلدية بين النتائج."],
+            en:["Start typing Mun in the search box","Three letters are enough to bring the municipality up in the results."] },
+    { t:6,  ar:["اختر Wadi El Sitt Municipality","تفتح مباشرة استمارة الدفع الخاصة بالبلدية."],
+            en:["Choose Wadi El Sitt Municipality","The municipality's payment form opens straight away."] },
+    { t:9,  ar:["أدخل الاسم الأول واسم العائلة","اكتب الاسم كما هو مسجّل لدى البلدية، لأنّ الدفعة تُطابَق باسم المكلّف."],
+            en:["Enter your first and last name","Use the name as it appears in the municipal records — that's how the payment is matched to you."] },
+    { t:13, ar:["اختر الرسم أو الخدمة من اللائحة","اضغط على حقل Municipal Fee or Service Name وستظهر لائحة الخدمات بالعربية. في المثال: إفادة شغور عقار."],
+            en:["Pick the fee or service from the list","Tap Municipal Fee or Service Name and the list of services appears in Arabic. Here: a property-vacancy certificate."] },
+    { t:15, ar:["أدخل رقم هاتفك","الرقم الذي يمكن للبلدية أن تتواصل معك عليه لتأكيد المعاملة."],
+            en:["Enter your phone number","The number the municipality can reach you on to confirm the transaction."] },
+    { t:20, ar:["أدخل المبلغ","المبلغ الذي حدّدته لك البلدية بالضبط — لا تُقرّبه. في هذا المثال الدفع بالدولار."],
+            en:["Enter the amount","Exactly the figure the municipality gave you — don't round it. This example is paid in dollars."] },
+    { t:22, ar:["تحقّق من العمولة والمجموع قبل الدفع","العمولة تُضاف على المبلغ ويتحمّلها الدافع: 20 دولاراً تصبح 21 دولاراً."],
+            en:["Check the fee and total before paying","The transfer fee is added on top and paid by you: $20 becomes $21."] },
+    { t:24, ar:["اضغط Pay واحتفظ بالإيصال","خُذ لقطة شاشة للإيصال وأبرزها عند استلام معاملتك من البلدية."],
+            en:["Tap Pay and keep the receipt","Screenshot it and show it when you collect your paperwork at the municipality."] }
+  ];
+
+  var T = {
+    ar:{
+      org:"بلدية وادي الست", orgsub:"قضاء الشوف — محافظة جبل لبنان",
+      h1:"كيف تدفع رسمك البلدي عبر تطبيق Whish",
+      announce:"أصبح بإمكانكم دفع الرسوم البلدية عبر تطبيق Whish",
+      dek:"تسجيل شاشة من التطبيق، خطوة بخطوة، من البحث عن البلدية حتى الضغط على زر الدفع. الخطوات تتقدّم تلقائياً مع الفيديو، واضغط أيّ خطوة للانتقال إلى لحظتها.",
+      notice:"<b>قبل الدفع، راجع البلدية.</b> اسأل عن المبلغ المتوجّب عليك بالضبط وعن الخدمة التي يقابلها، لأنّ الدفعة لا تُعاد تلقائياً بعد إتمامها.",
+      facts:[["مدّة الفيديو","26 ثانية"],["عدد الخطوات","9"],["العملة","دولار أو ليرة"],["العمولة","على الدافع"]],
+      mute:"بدون صوت", tap:"اضغط أيّ خطوة للانتقال إلى لحظتها",
+      nowLabel:"الخطوة الحالية",
+      stepsH:"الخطوات", stepsSub:"تتقدّم تلقائياً مع الفيديو",
+      cards:[
+        { h:"الخدمات المتوفّرة في اللائحة", type:"services",
+          more:"اللائحة تتابع داخل التطبيق. إن لم تجد خدمتك، راجع البلدية قبل الدفع." },
+        { h:"قبل أن تبدأ", type:"checks",
+          items:["مراجعة البلدية لمعرفة المبلغ المتوجّب","حساب Whish مفعّل وفيه رصيد كافٍ","اسمك كما هو مسجّل في سجلات البلدية","رقم هاتف تتواصل عليه البلدية معك"] },
+        { h:"كيف يُحتسب المبلغ", type:"calc",
+          rows:[["الرسم البلدي","20.00 $"],["عمولة التحويل","1.00 $"]], tot:["المجموع المقتطع","21.00 $"],
+          note:"العمولة تُضاف على الرسم ويتحمّلها الدافع. والدفع متاح بالدولار الأميركي أو بالليرة اللبنانية، تختار العملة من التطبيق." },
+        { h:"إذا واجهت مشكلة", type:"qa",
+          items:[
+            ["لا تظهر البلدية في نتائج البحث","تأكّد من تحديث التطبيق، وابدأ بكتابة Mun في شريط البحث."],
+            ["لا أعرف قيمة الرسم","القيمة مذكورة في الإشعار البلدي. عند الشك، راجع البلدية قبل الدفع — الدفعة لا تُعاد تلقائياً."],
+            ["دفعت ولم تُسجَّل المعاملة","احتفظ بلقطة شاشة الإيصال ورقم العملية وراجع البلدية بهما."]
+          ] }
+      ],
+      foot1:"الفيديو أعلاه تسجيل شاشة حقيقي لخطوات الدفع داخل تطبيق Whish. الأسماء والأرقام الظاهرة فيه للتجربة فقط.",
+      foot2:"Whish علامة تجارية تعود لأصحابها. هذه الصفحة دليل إرشادي للأهالي أعدّته البلدية، وليست صفحة رسمية للتطبيق.",
+      foot3:"© 2026 بلدية وادي الست — جميع الحقوق محفوظة."
+    },
+    en:{
+      org:"Wadi El Sitt Municipality", orgsub:"Chouf District — Mount Lebanon",
+      h1:"Paying a municipal fee with Whish",
+      announce:"You can now pay your municipal fees through the Whish app",
+      dek:"A screen recording of the whole flow, from finding the municipality in search to tapping Pay. The steps track the video — tap any of them to jump there.",
+      notice:"<b>Check with the municipality first.</b> Ask for the exact amount you owe and which service it covers — once a payment goes through, it isn't reversed automatically.",
+      facts:[["Video","26 seconds"],["Steps","9"],["Currency","USD or LBP"],["Transfer fee","paid by you"]],
+      mute:"no sound", tap:"Tap any step to jump to that moment",
+      nowLabel:"Current step",
+      stepsH:"The steps", stepsSub:"they follow the video automatically",
+      cards:[
+        { h:"Services in the list", type:"services",
+          more:"The list continues in the app. If your service isn't there, check with the municipality before paying." },
+        { h:"Before you start", type:"checks",
+          items:["A check with the municipality on the exact amount","An active Whish account with enough balance","Your name as the municipality has it on file","A phone number the municipality can reach you on"] },
+        { h:"How the total is built", type:"calc",
+          rows:[["Municipal fee","$20.00"],["Transfer fee","$1.00"]], tot:["Charged to you","$21.00"],
+          note:"The transfer fee is added on top and borne by the payer. You can pay in US dollars or in Lebanese pounds — the currency is chosen in the app." },
+        { h:"If something goes wrong", type:"qa",
+          items:[
+            ["The municipality doesn't appear in search","Update the app, then start typing Mun in the search box."],
+            ["I don't know the amount","It's on your municipal notice. When in doubt, ask before paying — payments aren't reversed automatically."],
+            ["I paid but the transaction wasn't recorded","Keep the receipt screenshot and the transaction number, and bring both to the municipality."]
+          ] }
+      ],
+      foot1:"The video is a real screen recording of the payment flow inside Whish. The name and numbers shown in it are test values.",
+      foot2:"Whish is a trademark of its owners. This page is a guide for residents prepared by the municipality, not an official page of the app.",
+      foot3:"© 2026 Wadi El Sitt Municipality. All rights reserved."
+    }
+  };
+
+  var lang = "ar";
+  var $ = function(id){ return document.getElementById(id); };
+  var vid = $("vid"), stepsEl = $("steps"), page = $("page");
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function fmt(s){
+    s = Math.max(0, Math.floor(s));
+    return "0:" + (s<10 ? "0"+s : s);
+  }
+
+  function renderCards(t){
+    var out = t.cards.map(function(c){
+      var body = "";
+      if (c.type === "services"){
+        body = '<ul class="fees">' + SERVICES.map(function(s){
+          return "<li><b>" + esc(s) + "</b></li>";
+        }).join("") + '</ul><p class="more">' + esc(c.more) + "</p>";
+      } else if (c.type === "checks"){
+        body = '<ul class="checks">' + c.items.map(function(i){ return "<li>" + esc(i) + "</li>"; }).join("") + "</ul>";
+      } else if (c.type === "calc"){
+        body = '<div class="calc">' +
+          c.rows.map(function(r){ return "<span>"+esc(r[0])+'</span><span class="v">'+esc(r[1])+"</span>"; }).join("") +
+          '<span class="tot">'+esc(c.tot[0])+'</span><span class="tot v">'+esc(c.tot[1])+"</span></div>" +
+          '<p class="more">' + esc(c.note) + "</p>";
+      } else {
+        body = '<div class="qa">' + c.items.map(function(i){
+          return "<div><h4>" + esc(i[0]) + "</h4><p>" + esc(i[1]) + "</p></div>";
+        }).join("") + "</div>";
+      }
+      return '<div class="card"><h3>' + esc(c.h) + "</h3>" + body + "</div>";
+    }).join("");
+    $("cards").innerHTML = out;
+  }
+
+  function render(){
+    var t = T[lang];
+    page.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    page.setAttribute("lang", lang);
+    document.documentElement.setAttribute("lang", lang);
+    $("btnAr").setAttribute("aria-pressed", String(lang === "ar"));
+    $("btnEn").setAttribute("aria-pressed", String(lang === "en"));
+
+    $("org").textContent = t.orgsub;
+    $("sealLogo").setAttribute("alt", t.org);
+    $("announce").innerHTML = '<i aria-hidden="true">\u2726</i>' + esc(t.announce);
+    $("h1").textContent = t.h1;
+    $("dek").textContent = t.dek;
+    $("notice").innerHTML = "<span>" + t.notice + "</span>";
+    $("facts").innerHTML = t.facts.map(function(f){
+      return '<span class="fact">' + esc(f[0]) + " <b>" + esc(f[1]) + "</b></span>";
+    }).join("");
+    $("muteNote").textContent = t.mute;
+    $("tapNote").textContent = t.tap;
+    $("nowLabel").textContent = t.nowLabel;
+    $("stepsH").textContent = t.stepsH;
+    $("stepsSub").textContent = t.stepsSub;
+    $("foot1").textContent = t.foot1;
+    $("foot2").textContent = t.foot2;
+    $("foot3").textContent = t.foot3;
+
+    stepsEl.innerHTML = STEPS.map(function(s, i){
+      var c = s[lang];
+      return "<li data-i='" + i + "'><button type='button'>" +
+        "<span class='n' aria-hidden='true'></span>" +
+        "<span><span class='t'>" + esc(c[0]) + "</span><span class='d'>" + esc(c[1]) + "</span></span>" +
+        "<span class='tc'>" + fmt(s.t) + "</span></button></li>";
+    }).join("");
+
+    renderCards(t);
+    sync(true);
+  }
+
+  var active = -1;
+  function currentIndex(){
+    var time = vid.currentTime || 0, k = 0;
+    for (var i = 0; i < STEPS.length; i++) if (time + 0.25 >= STEPS[i].t) k = i;
+    return k;
+  }
+  function sync(force){
+    var k = currentIndex();
+    if (k === active && !force) return;
+    active = k;
+    Array.prototype.forEach.call(stepsEl.children, function(li, i){
+      li.classList.toggle("on", i === k);
+      li.classList.toggle("done", i < k);
+    });
+    $("nowTitle").textContent = (k + 1) + ". " + STEPS[k][lang][0];
+  }
+
+  stepsEl.addEventListener("click", function(e){
+    var li = e.target.closest("li[data-i]");
+    if (!li) return;
+    var i = +li.getAttribute("data-i");
+    vid.currentTime = STEPS[i].t + 0.15;
+    sync(true);
+    var p = vid.play();
+    if (p && p.catch) p.catch(function(){});
+  });
+
+  vid.addEventListener("timeupdate", function(){ sync(false); });
+  vid.addEventListener("seeked", function(){ sync(true); });
+
+  $("btnAr").addEventListener("click", function(){ lang = "ar"; render(); });
+  $("btnEn").addEventListener("click", function(){ lang = "en"; render(); });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
