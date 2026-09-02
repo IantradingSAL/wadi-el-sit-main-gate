@@ -608,7 +608,10 @@ function showTicket(d,name,phone,name2){
 }
 
 // ── تسجيلاتي ──
+// صاحب الرقم يعدّل شيئاً واحداً: اسم فريقه في لعبات الورق. club_team_name_set
+// تتحقق في القاعدة أن التسجيل لرقمه وأن اللعبة فرق — لا اعتماد على المتصفح.
 function openMy(){ $('my-list').innerHTML=''; $('m-my').classList.add('open'); }
+let MY_DATA=[];
 async function loadMy(){
   const ph=$('my-phone').value.trim();
   if(!ph)return;
@@ -616,12 +619,40 @@ async function loadMy(){
   try{
     const{data,error}=await sb.rpc('club_my_regs',{p_phone:ph});
     if(error)throw error;
-    if(!data||!data.length){$('my-list').innerHTML='<div style="text-align:center;color:#8d93a6;padding:10px">لا تسجيلات على هذا الرقم</div>';return;}
-    $('my-list').innerHTML=data.map(r=>
-      '<div class="reg-row"><div class="reg-top"><span class="tno">'+esc(r.table_label)+'</span>'
-      +'<span class="nm">'+esc(r.team_name||r.p1_name+(r.p2_name?' + '+r.p2_name:''))+'</span>'
-      +'<span style="font-size:11px;color:#515668">'+esc(r.label)+' · '+r.fee+'$'+(r.own_board?' 🎲':'')+'</span></div></div>').join('');
+    MY_DATA=data||[];
+    if(!MY_DATA.length){$('my-list').innerHTML='<div style="text-align:center;color:#8d93a6;padding:10px">لا تسجيلات على هذا الرقم</div>';return;}
+    renderMy();
   }catch(e){$('my-list').innerHTML='<div style="color:#bf2424">⚠️ '+esc(e.message||e)+'</div>';}
+}
+function renderMy(){
+  $('my-list').innerHTML=MY_DATA.map(function(r,i){
+    return '<div class="reg-row"><div class="reg-top"><span class="tno">'+esc(r.table_label)+'</span>'
+      +'<span class="nm">'+esc(r.team_name||r.p1_name+(r.p2_name?' + '+r.p2_name:''))+'</span>'
+      +'<span style="font-size:11px;color:#515668">'+esc(r.label)+' · '+r.fee+'$'+(r.own_board?' 🎲':'')+'</span>'
+      +(r.p2_name?'<button style="color:#0f4d82;font-weight:800;font-size:12px" onclick="myTeamEdit('+i+')">✏️ اسم الفريق</button>':'')
+      +'</div><div id="my-ed-'+i+'"></div></div>';
+  }).join('')
+  +(MY_DATA.some(function(r){return !!r.p2_name;})
+    ?'<div style="font-size:11.5px;color:#8d93a6;margin-top:8px;text-align:center">✏️ لفرق الورق: أضيفوا اسم فريقكم أو عدّلوه — يظهر على الجدول وشاشة العرض</div>':'');
+}
+function myTeamEdit(i){
+  const r=MY_DATA[i], box=$('my-ed-'+i);
+  if(!r||!box)return;
+  if(box.innerHTML){box.innerHTML='';return;}
+  box.innerHTML='<div style="display:flex;gap:6px;margin-top:8px">'
+    +'<input class="fm-i" id="my-tn-'+i+'" maxlength="40" placeholder="اسم الفريق" value="'+esc(r.team_name||'')+'" style="flex:1">'
+    +'<button style="background:#16a34a;color:#fff;border-radius:10px;padding:0 16px;font-weight:900" onclick="myTeamSave('+i+')">💾</button></div>';
+}
+async function myTeamSave(i){
+  const r=MY_DATA[i];
+  try{
+    const{data,error}=await sb.rpc('club_team_name_set',
+      {p_phone:$('my-phone').value.trim(),p_reg:r.id,p_name:$('my-tn-'+i).value});
+    if(error)throw error;
+    r.team_name=(data||'')||null;
+    toast('✅ حُفظ اسم الفريق');
+    renderMy();
+  }catch(e){toast('⚠️ '+(e.message||e));}
 }
 
 function closeM(){document.querySelectorAll('.modal').forEach(m=>m.classList.remove('open'));}
@@ -793,11 +824,13 @@ async function admRender(){
   }catch(e){box.innerHTML='<div style="color:#bf2424">⚠️ '+esc(e.message||e)+'</div>';}
 }
 
+let ADM_REGS={};
 async function admRegs(box){
   const{data,error}=await sb.from('club_game_regs')
     .select('*').eq('game',ADM.game).eq('status','registered').order('seq');
   if(error)throw error;
   if(!data.length){box.innerHTML='<div style="text-align:center;color:#8d93a6;padding:14px">لا تسجيلات بعد</div>';return;}
+  ADM_REGS={};data.forEach(r=>{ADM_REGS[r.id]=r;});
   const total=data.reduce((a,r)=>a+r.fee,0), paid=data.filter(r=>r.paid).reduce((a,r)=>a+r.fee,0);
   box.innerHTML=
     '<div style="font-size:12px;font-weight:800;color:#0f4d82;margin-bottom:8px">'+data.length+' تسجيل · المستحق '+total+'$ · المدفوع '+paid+'$</div>'
@@ -812,8 +845,42 @@ async function admRegs(box){
         +'<label><input type="checkbox" '+(r.attended===true?'checked':'')+' onchange="admFlag(\''+r.id+'\',\'attended\',this.checked)"> حضر</label>'
         +(r.attended===false?'<span style="color:#bf2424">🚫 غائب — الرسم مستحق</span>':'')
         +(r.p1_photo||r.p2_photo?'<button style="color:#0f4d82;font-weight:800" onclick="admPhoto(\''+esc(r.p1_photo||r.p2_photo)+'\')">📸 الصورة</button>':'')
-        +'</div></div>';
+        +'<button style="color:#0f4d82;font-weight:800" onclick="admEdit(\''+r.id+'\')">✏️ تصحيح</button>'
+        +'</div><div id="adm-ed-'+r.id+'"></div></div>';
     }).join('');
+}
+// ── ✏️ تصحيح الإدارة: أسماء اللاعبين وأرقامهم واسم الفريق ──
+// club_reg_admin_update تعيد حساب الأرقام المعيارية وتعيد فرض «تسجيل واحد لكل
+// شخص لكل لعبة»، وترفض في القاعدة بدون club_games_manage.
+function admEdit(id){
+  const r=ADM_REGS[id], box=$('adm-ed-'+id);
+  if(!r||!box)return;
+  if(box.innerHTML){box.innerHTML='';return;}
+  const team=GAMES[ADM.game]&&GAMES[ADM.game].team;
+  box.innerHTML='<div style="background:#f6f8fc;border:1.5px solid #dce0ea;border-radius:12px;padding:10px;margin-top:8px;display:grid;gap:6px">'
+    +'<input class="fm-i" id="ae-p1n-'+id+'" value="'+esc(r.p1_name)+'" placeholder="اسم اللاعب الأول">'
+    +'<input class="fm-i" id="ae-p1p-'+id+'" value="'+esc(r.p1_phone)+'" style="direction:ltr" placeholder="هاتف اللاعب الأول">'
+    +(r.p2_name!=null
+      ?'<input class="fm-i" id="ae-p2n-'+id+'" value="'+esc(r.p2_name)+'" placeholder="اسم الشريك">'
+       +'<input class="fm-i" id="ae-p2p-'+id+'" value="'+esc(r.p2_phone||'')+'" style="direction:ltr" placeholder="هاتف الشريك">'
+      :'')
+    +(team?'<input class="fm-i" id="ae-tn-'+id+'" maxlength="40" value="'+esc(r.team_name||'')+'" placeholder="اسم الفريق (اختياري)">':'')
+    +'<button style="background:#16a34a;color:#fff;border-radius:10px;padding:10px;font-weight:900" onclick="admEditSave(\''+id+'\')">💾 حفظ التصحيح</button>'
+    +'</div>';
+}
+async function admEditSave(id){
+  const r=ADM_REGS[id];
+  const e164=v=>(window.phoneE164?phoneE164(v):v);
+  const p={p1_name:$('ae-p1n-'+id).value,p1_phone:e164($('ae-p1p-'+id).value.trim())};
+  if(r.p2_name!=null){p.p2_name=$('ae-p2n-'+id).value;p.p2_phone=e164($('ae-p2p-'+id).value.trim());}
+  const tn=$('ae-tn-'+id); if(tn)p.team_name=tn.value;
+  try{
+    const{data,error}=await sb.rpc('club_reg_admin_update',{p_reg:id,p:p});
+    if(error)throw error;
+    if(data&&data.ok===false)throw new Error(data.error||'تعذّر الحفظ');
+    toast('✅ حُفظ التصحيح');
+    admRender();
+  }catch(e){toast('⚠️ '+(e.message||e));}
 }
 async function admFlag(id,field,val){
   const u={};u[field]=val;
