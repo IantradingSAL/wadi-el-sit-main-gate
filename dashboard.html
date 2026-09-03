@@ -3237,6 +3237,7 @@ ar:{
   pk_audit_view:'سجل العمليات',pk_activity_view:'تتبع نشاط الموظفين',pk_notify_prefs_edit:'قنوات تنبيه الموظفين',
   pk_club_games_manage:'إدارة البطولة (طاولة وورق)',pks_club_games_manage:'التسجيلات والرسوم والجدول والنتائج — games.html',
   pk_pay_manage:'إدارة الدفع الإلكتروني',pks_pay_manage:'خدمات الدفع ورسومها وشرط رقم العقار — pay.html',
+  pk_pay_view:'سجل الدفعات الإلكترونية',pks_pay_view:'من دفع ماذا عبر Whish — أسماء وأرقام ومبالغ',
   ev_club_game_reg:'🎲 تسجيل في بطولة وادي الست'
 },
 en:{
@@ -3289,6 +3290,7 @@ en:{
   pk_audit_view:'Audit log',pk_activity_view:'Staff activity',pk_notify_prefs_edit:'Staff notify channels',
   pk_club_games_manage:'Run the championship (tawle & cards)',pks_club_games_manage:'Registrations, fees, bracket and results — games.html',
   pk_pay_manage:'Manage online payment',pks_pay_manage:'Payment services, fees and the property-number rule — pay.html',
+  pk_pay_view:'Online payments log',pks_pay_view:'Who paid what via Whish — names, phones and amounts',
   ev_club_game_reg:'🎲 Championship registration'
 },
 fr:{
@@ -3341,6 +3343,7 @@ fr:{
   pk_audit_view:'Journal des opérations',pk_activity_view:'Activité du personnel',pk_notify_prefs_edit:'Canaux de notification du personnel',
   pk_club_games_manage:'Gérer le championnat (tawlé & cartes)',pks_club_games_manage:'Inscriptions, frais, tableau et résultats — games.html',
   pk_pay_manage:'Gérer le paiement en ligne',pks_pay_manage:'Services de paiement, frais et règle du numéro de parcelle — pay.html',
+  pk_pay_view:'Journal des paiements en ligne',pks_pay_view:'Qui a payé quoi via Whish — noms, numéros et montants',
   ev_club_game_reg:'🎲 Inscription au championnat'
 }};
 
@@ -3364,7 +3367,7 @@ const UP_MODULES=[
   {id:'club',  icon:'🎲', bg:'#fff5d6', quick:[['club_games_manage','qEdit']],
    keys:['club_games_manage']},
   {id:'pay',   icon:'💳', bg:'#fde8e9', quick:[['pay_manage','qEdit']],
-   keys:['pay_manage']},
+   keys:['pay_manage','pay_view']},
   {id:'sys',   icon:'👥', bg:'#fdecea', quick:[['users_view','qView']],
    keys:['users_view','users_create','users_edit','users_delete','roles_edit','roles_delete',
          'settings_edit','export_data','audit_view','activity_view','notify_prefs_edit']}
