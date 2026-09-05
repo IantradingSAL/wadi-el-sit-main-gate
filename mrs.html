@@ -54,6 +54,11 @@ th{background:#eef3fa;color:var(--b);padding:8px 6px;font-weight:800;white-space
 th:hover{background:#dce9f7}
 th.s-asc::after{content:' ▲';font-size:9px}
 th.s-desc::after{content:' ▼';font-size:9px}
+tr.fh td{background:#f7fafd;padding:4px 5px;border-bottom:1.5px solid #d5dfec}
+.cfi{width:100%;padding:4px 6px;border:1px solid #d5dfec;border-radius:6px;font-family:inherit;font-size:11.5px;background:#fff;box-sizing:border-box;height:26px;min-width:56px}
+.cfi::placeholder{color:#a8b0bc;font-size:10.5px}
+.cfi:focus{outline:none;border-color:#1a6eb5;box-shadow:0 0 0 2px rgba(26,110,181,.15)}
+.cfi.sm{direction:ltr;text-align:center;font-variant-numeric:tabular-nums}
 td{padding:7px 6px;border-bottom:1px solid #eef2f5;white-space:nowrap}
 tbody tr{cursor:pointer}tbody tr:hover td{background:#e8f1fb}
 .tw{overflow-x:auto}
@@ -342,13 +347,156 @@ function goTab(t,q,sortCol){
   if(sortCol!=null){sortState={tab:t,col:sortCol,dir:1};sortBy(sortCol);}
   document.getElementById('tblcard').scrollIntoView({behavior:'smooth',block:'start'});
 }
+// ── 🎯 تصفية الأعمدة — أرقام وتواريخ، لا مجرّد "يحتوي" ──
+// Sorting alone was not enough on 30,000 archive rows: you could order by المبلغ but
+// not ask for "أكبر من مليون", and typing 1,250,000 with commas matched nothing.
+// Each header now carries a filter box; number and date columns are detected from
+// the data itself so every tab gets the right kind without a hard-coded column list.
+const D_MAP={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+function nd(v){return String(v==null?'':v).replace(/[٠-٩۰-۹]/g,d=>D_MAP[d]||d);}
+function ntxt(v){return nd(v).replace(/\s+/g,' ').trim().toLowerCase();}
+const CF_MULT=[[/^(.+?)\s*(?:مليون|م|m)$/i,1e6],[/^(.+?)\s*(?:ألف|الف|k)$/i,1e3]];
+function pnum(v){
+  let t=nd(v).replace(/[,،\s٬']/g,'').trim(); if(!t)return null;
+  let mult=1;
+  for(let i=0;i<CF_MULT.length;i++){const m=CF_MULT[i][0].exec(t);if(m){t=m[1];mult=CF_MULT[i][1];break;}}
+  t=t.replace(/[^0-9.\-]/g,''); if(!t||t==='-'||t==='.')return null;
+  const n=parseFloat(t); return isFinite(n)?n*mult:null;
+}
+function pdate(v){
+  const t=nd(v).trim(); if(!t)return null;
+  let m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(t);
+  if(m)return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  m=/^(\d{4})(?:[-\/](\d{1,2})(?:[-\/](\d{1,2}))?)?$/.exec(t);
+  if(m)return m[1]+(m[2]?('-'+('0'+m[2]).slice(-2)):'')+(m[3]?('-'+('0'+m[3]).slice(-2)):'');
+  return null;
+}
+const dLo=v=>v.length===4?v+'-01-01':v.length===7?v+'-01':v;
+const dHi=v=>v.length===4?v+'-12-31':v.length===7?v+'-31':v;
+function spec(raw,kind){
+  const t=nd(raw).trim(); if(!t)return null;
+  const P = kind==='date'?pdate:pnum;
+  let m=/^(>=|<=|=>|=<|!=|≠|≥|≤|>|<|=)\s*(.+)$/.exec(t);
+  if(m){
+    const v=P(m[2]); if(v===null)return null;
+    let op=m[1];
+    if(op==='=>'||op==='≥')op='>='; else if(op==='=<'||op==='≤')op='<='; else if(op==='≠')op='!=';
+    return {op:op,a:v};
+  }
+  m=/^(.+?)\s*(?:\.\.+|—|–)\s*(.+)$/.exec(t) || (kind==='num'?/^([^\-]+?)\s*-\s*([^\-]+)$/.exec(t):null);
+  if(m){
+    const a=P(m[1]), b=P(m[2]);
+    if(a!==null&&b!==null&&a!==undefined&&b!==undefined)
+      return {op:'between',a:(a<b?a:b),b:(a<b?b:a)};
+  }
+  return null;
+}
+function testSpec(sp,val,kind){
+  if(val===null||val===undefined||val==='')return false;
+  if(kind==='date'){
+    if(sp.op==='>')return val>dHi(sp.a);
+    if(sp.op==='>=')return val>=dLo(sp.a);
+    if(sp.op==='<')return val<dLo(sp.a);
+    if(sp.op==='<=')return val<=dHi(sp.a);
+    if(sp.op==='between')return val>=dLo(sp.a)&&val<=dHi(sp.b);
+    if(sp.op==='=')return val>=dLo(sp.a)&&val<=dHi(sp.a);
+    return true;
+  }
+  if(!isFinite(val))return false;
+  if(sp.op==='>')return val>sp.a;
+  if(sp.op==='>=')return val>=sp.a;
+  if(sp.op==='<')return val<sp.a;
+  if(sp.op==='<=')return val<=sp.a;
+  if(sp.op==='=')return val===sp.a;
+  if(sp.op==='!=')return val!==sp.a;
+  if(sp.op==='between')return val>=sp.a&&val<=sp.b;
+  return true;
+}
+const TIP_N='أمثلة:  >1م  ·  <500 ألف  ·  1م-5م  ·  =0  ·  أو اكتب رقماً للبحث داخل القيمة';
+const TIP_D='أمثلة:  2026  ·  2026-05  ·  01/05/2026..30/06/2026  ·  >=2026-07-01';
+let colF={};              // per-tab: {tab: {colIndex: text}}
+let colKinds=[];          // kind of each column of the tab on screen
+function cellTxt(td){return td?String(td.textContent||'').replace(/\s+/g,' ').trim():'';}
+// A bare 4-digit token ("1201" — a receipt number) must NOT be read as the year
+// 1201, or the الإيصال column gets typed as a date. Detection therefore demands a
+// real separator and a sane year; the filter box itself still accepts "2026".
+function looksDate(t){
+  if(!/[\/\-.]/.test(nd(t)))return false;
+  const iso=pdate(t); if(!iso)return false;
+  const y=+iso.slice(0,4);
+  return y>=1900&&y<=2100;
+}
+// Look at the column's own data: mostly dates → date, mostly numbers → num.
+function detectKinds(){
+  const bd=document.getElementById('bd');
+  const trs=[...bd.querySelectorAll('tr')].filter(t=>t.querySelectorAll('td').length>1).slice(0,40);
+  const n=document.querySelectorAll('#hd tr:first-child th').length;
+  colKinds=[];
+  for(let i=0;i<n;i++){
+    let d=0,num=0,seen=0;
+    trs.forEach(tr=>{
+      const t=cellTxt(tr.cells[i]); if(!t||t==='—')return;
+      seen++;
+      if(looksDate(t))d++; else if(pnum(t)!==null)num++;
+    });
+    colKinds[i] = !seen ? 'text' : (d/seen>=.7 ? 'date' : (num/seen>=.7 ? 'num' : 'text'));
+  }
+}
+function applyColFilters(){
+  const bd=document.getElementById('bd');
+  const f=colF[cur]||{};
+  const keys=Object.keys(f).filter(k=>String(f[k]||'').trim());
+  const trs=[...bd.querySelectorAll('tr')].filter(t=>t.querySelectorAll('td').length>1);
+  let shown=0;
+  trs.forEach(tr=>{
+    let ok=true;
+    for(let i=0;i<keys.length;i++){
+      const ix=+keys[i], raw=f[keys[i]], kind=colKinds[ix]||'text', txt=cellTxt(tr.cells[ix]);
+      if(kind!=='text'){
+        const sp=spec(raw,kind);
+        if(sp){ if(!testSpec(sp, kind==='date'?pdate(txt):pnum(txt), kind)){ok=false;break;} continue; }
+      }
+      if(ntxt(txt).indexOf(ntxt(raw))<0){ok=false;break;}
+    }
+    tr.style.display=ok?'':'none';
+    if(ok)shown++;
+  });
+  const c=document.getElementById('cnt');
+  if(c)c.textContent = keys.length
+    ? (shown.toLocaleString('en-US')+' من '+trs.length.toLocaleString('en-US')+' سجل — 🎛️ مُصفّى')
+    : (trs.length.toLocaleString('en-US')+' سجل');
+}
+function buildFilterRow(){
+  const hd=document.getElementById('hd');
+  const hr=hd.querySelector('tr'); if(!hr)return;
+  let fr=hd.querySelector('tr.fh');
+  if(fr)fr.remove();
+  detectKinds();
+  fr=document.createElement('tr'); fr.className='fh';
+  const f=colF[cur]||(colF[cur]={});
+  [...hr.children].forEach((th,ix)=>{
+    const td=document.createElement('td');
+    const kind=colKinds[ix]||'text';
+    const inp=document.createElement('input');
+    inp.className='cfi'+(kind==='text'?'':' sm');
+    inp.placeholder = kind==='num'?'‹ ›  رقم':kind==='date'?'من..إلى':'تصفية';
+    inp.title = kind==='num'?TIP_N:kind==='date'?TIP_D:('تصفية حسب '+cellTxt(th));
+    inp.value = f[ix]||'';
+    inp.oninput=()=>{f[ix]=inp.value;applyColFilters();};
+    td.appendChild(inp); fr.appendChild(td);
+  });
+  hd.appendChild(fr);
+  applyColFilters();
+}
+function clearColFilters(){colF[cur]={};buildFilterRow();}
 function bindSort(){
-  const ths=[...document.querySelectorAll('#hd th')];
+  const ths=[...document.querySelectorAll('#hd tr:first-child th')];
   ths.forEach((th,ix)=>{th.onclick=()=>sortBy(ix);});
   ths.forEach((th,ix)=>{
     th.classList.remove('s-asc','s-desc');
     if(sortState.tab===cur&&sortState.col===ix)th.classList.add(sortState.dir>0?'s-asc':'s-desc');
   });
+  buildFilterRow();
 }
 function sortKey(td){
   const t=td?td.textContent.trim():'';
