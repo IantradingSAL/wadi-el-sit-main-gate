@@ -171,6 +171,10 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 .bf-tblwrap thead tr.bf-hh th.bf-sorted{background:#dbe9fa;color:#0b3c68}
 .bf-sortind{display:inline-block;margin-inline-start:4px;font-size:10px;color:#9fb0c6;font-weight:800;vertical-align:middle}
 .bf-sorted .bf-sortind{color:#0f4d82;font-size:11px}
+.bf-tblwrap thead tr.bf-hh th[draggable]{user-select:none;-webkit-user-select:none}
+.bf-tblwrap thead tr.bf-hh th.bf-col-dragging{opacity:.35}
+.bf-tblwrap thead tr.bf-hh th.bf-drop-l{box-shadow:inset 3px 0 0 #1a6eb5}
+.bf-tblwrap thead tr.bf-hh th.bf-drop-r{box-shadow:inset -3px 0 0 #1a6eb5}
 .bf-colfilter{width:100%;padding:4px 6px;border:1px solid #d5dfec;border-radius:6px;font-family:inherit;font-size:12px;background:#fff;box-sizing:border-box;color:#1a1a2e;height:28px;line-height:1.2;min-width:60px}
 .bf-colfilter::placeholder{color:#a8b0bc;font-size:11px}
 .bf-colfilter:focus{outline:none;border-color:#1a6eb5;box-shadow:0 0 0 2px rgba(26,110,181,.15)}
@@ -197,6 +201,14 @@ select.bf-colfilter{padding-inline-end:22px}
 .bf-rowpop button.danger{color:#a83232}
 .bf-rowpop button.danger:hover{background:#fdecec}
 .bf-rowpop .sep{height:1px;background:#eef2f5;margin:5px 4px}
+button.bf-msel{text-align:right;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#5b6675;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:4px}
+button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-weight:800}
+.bf-mselpop{max-width:280px;min-width:190px;max-height:50vh;overflow-y:auto}
+.bf-mselpop .hd{direction:rtl}
+.bf-msel-it{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:13px;cursor:pointer;border-radius:8px;font-weight:700;color:#1a1a2e}
+.bf-msel-it:hover{background:#f0f6fd}
+.bf-msel-it input{accent-color:#1a6eb5;flex:0 0 auto}
+.bf-mselpop .bf-msel-clear{border-top:1px solid #eef2f5;border-radius:0 0 8px 8px;color:#a83232;font-size:12.5px;justify-content:center;margin-top:5px}
 </style>
 
 <div id="bf-screen">
@@ -265,7 +277,7 @@ select.bf-colfilter{padding-inline-end:22px}
     <div class="bf-share-ov" id="bf-cols-ov" onclick="if(event.target===this)bfColsClose()">
       <div class="bf-share-box" style="max-width:440px">
         <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">⚙️ الأعمدة — إظهار وترتيب</div>
-        <div style="font-size:12px;color:#8a95a3;margin-bottom:12px">فعّل الأعمدة التي تريد رؤيتها، واستخدم ▲ ▼ لتغيير ترتيبها. اضغط "تطبيق" للحفظ.</div>
+        <div style="font-size:12px;color:#8a95a3;margin-bottom:12px">فعّل الأعمدة التي تريد رؤيتها، واستخدم ▲ ▼ لتغيير ترتيبها. اضغط "تطبيق" للحفظ. ويمكنك أيضاً سحب عنوان العمود في الجدول نفسه بالفأرة لنقله مباشرة.</div>
         <div id="bf-cols-list"></div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="bf-share-btn" style="flex:1;justify-content:center;background:linear-gradient(135deg,#1f7a45,#2a9c5a);color:#fff;border:none;margin-bottom:0" onclick="bfColsApply()">✓ تطبيق</button>
@@ -1203,7 +1215,7 @@ const BF_COLS=[
   {key:'entry_type',label:'النوع',filter:'select',opts:[['income','مقبوضات'],['expense','مصروفات'],['opening','رصيد افتتاحي']],val:e=>e.entry_type||'',sortVal:e=>BF_TYPE_LABEL[e.entry_type]||e.entry_type||'',search:e=>e.entry_type||'',cell:e=>'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type||'')+(e.voided?' <span class="bf-badge" style="background:#fdecec;color:#c22">⛔ ملغى</span>':'')+'</td>'},
   {key:'category',label:'الفئة',filter:'auto',val:e=>e.category||'',search:e=>e.category||'',cell:e=>'<td style="font-size:12px">'+(e.category||'')+'</td>'},
   {key:'payment_method',label:'الدفع',filter:'select',opts:[['cash','نقداً'],['transfer','حوالة'],['whish','Whish']],val:e=>e.payment_method||'cash',sortVal:e=>bfPay(e),search:e=>bfPay(e),cell:e=>'<td style="font-size:12px">'+bfPay(e)+'</td>'},
-  {key:'description',label:'البيان',filter:'text',val:e=>e.description||'',search:e=>e.description||'',cell:e=>'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'},
+  {key:'description',label:'البيان',filter:'combo',val:e=>e.description||'',search:e=>e.description||'',cell:e=>'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'},
   {key:'person',label:'الجهة',filter:'auto',val:e=>e.person||'',search:e=>e.person||'',cell:e=>'<td>'+(e.person||'')+'</td>'},
   {key:'handled_by',label:'المستلم/المسلّم',filter:'auto',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
   {key:'karar_number',label:'رقم القرار',filter:'auto',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
@@ -1211,7 +1223,7 @@ const BF_COLS=[
   {key:'manual_receipt_no',tip:'أمثلة:  >100  ·  26-50  ·  =26  ·  أو اكتب جزءاً من الرقم للبحث',label:'رقم الإيصال اليدوي',filter:'num',numVal:e=>bfTrailNum(e.manual_receipt_no),val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
   {key:'wassel_number',tip:'أمثلة:  >100  ·  26-50  ·  =26  ·  أو اكتب جزءاً من الرقم للبحث',label:'رقم الإيصال',filter:'num',numVal:e=>bfWasselSeq(e.wassel_number),val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا إيصال';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا إيصال</span>')+'</td>';}},
   {key:'wassel_date',label:'تاريخ الإيصال',filter:'date',dateVal:e=>e.wassel_date||'',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
-  {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
+  {key:'notes',label:'ملاحظات',filter:'combo',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
   {key:'stamp_value',label:'قيمة الطوابع',filter:'num',num:true,numVal:e=>Number(e.stamp_value)||0,sortVal:e=>Number(e.stamp_value)||0,val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
   {key:'amount',label:'المبلغ',filter:'num',num:true,numVal:e=>Math.abs(Number(e.signed)||0),sortVal:e=>Number(e.signed)||0,val:e=>String(e.amount||''),search:e=>String(e.amount||''),cell:e=>'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'},
@@ -1572,7 +1584,14 @@ function bfFiltered(){
       const col=bfCol(keys[i]), raw=cf[keys[i]]||'', v=bfNormTxt(raw);
       // dropdowns are an exact pick, never a substring
       if(col.filter==='select'){ if(bfNormTxt(col.search(e)||'')!==v)return false; continue; }
-      if(col.filter==='auto'){ if(bfNormTxt((col.val?col.val(e):'')||'')!==v)return false; continue; }
+      // auto = multi-pick: the value is a \x1f-joined set; the row passes if it
+      // matches ANY picked value (قرار 1 و2 و4 معاً). A single old saved value
+      // splits into a one-item set, so nothing stored breaks.
+      if(col.filter==='auto'){
+        const set=String(raw).split('\x1f').map(bfNormTxt).filter(Boolean);
+        if(set.length&&set.indexOf(bfNormTxt((col.val?col.val(e):'')||''))<0)return false;
+        continue;
+      }
       // ">1م" / "1م-5م" / "01/05/2026..30/06/2026" — an expression wins; plain text
       // falls through to the contains-match below so old habits keep working
       if(col.filter==='num'){
@@ -1591,17 +1610,22 @@ function bfFiltered(){
 }
 
 function bfRenderLedgerHead(){
+  bfMselClose(); // the button it hangs off is about to be replaced
   const cols=bfVisibleCols();
   const cf=bfColState.filters||{};
   const so=bfColState.sort||{};
   const th=cols.map(c=>{
-    if(c.sort==='none')return '<th>'+c.label+'</th>';
+    // اسحب العنوان نفسه لنقل العمود — بلا فتح ⚙️ الأعمدة
+    const drag=' draggable="true" data-colkey="'+c.key+'" ondragstart="bfColDragStart(event)"'
+      +' ondragover="bfColDragOver(event)" ondragleave="bfColDragLeave(event)"'
+      +' ondrop="bfColDrop(event)" ondragend="bfColDragEnd()"';
+    if(c.sort==='none')return '<th'+drag+'>'+c.label+'</th>';
     const on=so.key===c.key&&!!so.dir;
     const ind=on?(so.dir==='desc'?'▼':'▲'):'⇅';
-    const tip=on
+    const tip=(on
       ? (so.dir==='desc'?'مرتّب تنازلياً (ي→أ) — اضغط لإلغاء الترتيب':'مرتّب تصاعدياً (أ→ي) — اضغط للترتيب التنازلي')
-      : 'اضغط للترتيب أ→ي';
-    return '<th class="bf-sortable'+(on?' bf-sorted':'')+'" title="'+tip+'" onclick="bfSortBy(\''+c.key+'\')">'
+      : 'اضغط للترتيب أ→ي')+' · اسحب العنوان لنقل العمود';
+    return '<th class="bf-sortable'+(on?' bf-sorted':'')+'" title="'+tip+'" onclick="bfSortBy(\''+c.key+'\')"'+drag+'>'
       +c.label+'<span class="bf-sortind">'+ind+'</span></th>';
   }).join('');
   // Dropdown options come from the rows the TOP filters already kept, so picking a
@@ -1611,15 +1635,29 @@ function bfRenderLedgerHead(){
   const fh=cols.map(c=>{
     if(c.filter==='none')return '<th></th>';
     const cur=String(cf[c.key]||'');
-    if(c.filter==='select'||c.filter==='auto'){
-      const list=c.filter==='select'?c.opts:bfAutoOpts(c,scopeRows(),cur);
-      const opts='<option value="">—</option>'+list.map(o=>'<option value="'+bfEsc(o[0])+'"'+(cur===String(o[0])?' selected':'')+'>'+bfEsc(o[1])+'</option>').join('');
+    if(c.filter==='select'){
+      const opts='<option value="">—</option>'+c.opts.map(o=>'<option value="'+bfEsc(o[0])+'"'+(cur===String(o[0])?' selected':'')+'>'+bfEsc(o[1])+'</option>').join('');
       return '<th><select class="bf-colfilter" data-cf="'+c.key+'" onchange="bfColFilter(this)" title="'+bfEsc('تصفية حسب '+(c.label||''))+'">'+opts+'</select></th>';
     }
+    if(c.filter==='auto'){
+      // a button opening a checkbox list — one value or several at once
+      const sel=cur.split('\x1f').filter(Boolean);
+      const lbl=!sel.length?'—':(sel.length===1?sel[0]:sel.length+' قيم');
+      return '<th><button type="button" class="bf-colfilter bf-msel'+(sel.length?' on':'')+'" data-cf="'+c.key
+        +'" onclick="bfMselOpen(event,\''+c.key+'\')" title="'+bfEsc('تصفية حسب '+(c.label||'')+' — يمكن اختيار أكثر من قيمة')+'">'
+        +bfEsc(lbl)+' <span style="font-size:9px">▼</span></button></th>';
+    }
+    // combo = free text that also offers the ledger's own values while typing
+    let dl='';
+    if(c.filter==='combo'){
+      const opts=bfAutoOpts(c,scopeRows(),'').slice(0,300);
+      dl='<datalist id="bf-cf-dl-'+c.key+'">'+opts.map(o=>'<option value="'+bfEsc(o[0])+'">'+bfEsc(o[1])+'</option>').join('')+'</datalist>';
+    }
     const ph=c.filter==='num'?'‹ ›  رقم':c.filter==='date'?'من..إلى':'تصفية';
-    const tip=c.tip||(c.filter==='num'?BF_TIP_NUM:c.filter==='date'?BF_TIP_DATE:('تصفية حسب '+(c.label||'')));
+    const tip=c.tip||(c.filter==='num'?BF_TIP_NUM:c.filter==='date'?BF_TIP_DATE:('تصفية حسب '+(c.label||'')+(c.filter==='combo'?' — اكتب للبحث أو اختر من القائمة':'')));
     return '<th><input class="bf-colfilter'+(c.filter==='num'||c.filter==='date'?' bf-cf-smart':'')
-      +'" data-cf="'+c.key+'" value="'+bfEsc(cur)+'" oninput="bfColFilter(this)" placeholder="'+bfEsc(ph)+'" title="'+bfEsc(tip)+'"></th>';
+      +'" data-cf="'+c.key+'" value="'+bfEsc(cur)+'" oninput="bfColFilter(this)" placeholder="'+bfEsc(ph)+'" title="'+bfEsc(tip)+'"'
+      +(dl?' list="bf-cf-dl-'+c.key+'"':'')+'>'+dl+'</th>';
   }).join('');
   document.getElementById('bf-ledger-head').innerHTML='<tr class="bf-hh">'+th+'</tr><tr class="bf-fh">'+fh+'</tr>';
 }
@@ -1638,6 +1676,67 @@ function bfColFilter(el){
     if(again)again.focus();
   }
 }
+
+// ── ☑️ MULTI-PICK FILTER — قرار 1 و2 و4 معاً ──
+// The auto dropdowns became buttons that open a checkbox list, because a native
+// <select> can only ever hold one value. Ticking updates the ledger live; the
+// picked set is stored as one \x1f-joined string so views, localStorage and the
+// filter engine keep working on a plain string.
+let bfMselKey=null,bfMselEl=null;
+function bfMselSet(key){return String((bfColState.filters||{})[key]||'').split('\x1f').filter(Boolean);}
+function bfMselClose(){
+  if(!bfMselEl)return;
+  bfMselEl.remove(); bfMselEl=null; bfMselKey=null;
+  document.removeEventListener('click',bfMselDocClick,true);
+}
+function bfMselDocClick(ev){ if(bfMselEl&&!bfMselEl.contains(ev.target))bfMselClose(); }
+function bfMselBtnRefresh(key){
+  const btn=document.querySelector('.bf-fh [data-cf="'+key+'"]');
+  if(!btn||btn.tagName!=='BUTTON')return;
+  const sel=bfMselSet(key);
+  btn.innerHTML=bfEsc(!sel.length?'—':(sel.length===1?sel[0]:sel.length+' قيم'))+' <span style="font-size:9px">▼</span>';
+  btn.classList.toggle('on',!!sel.length);
+}
+function bfMselOpen(ev,key){
+  ev.stopPropagation();
+  if(bfMselKey===key){bfMselClose();return;}
+  bfMselClose();
+  const col=bfCol(key); if(!col)return;
+  let rows=[]; try{rows=bfRowsFor(bfReadFilters('bf-f-'));}catch(_e){}
+  const sel=bfMselSet(key);
+  const opts=bfAutoOpts(col,rows,'');
+  // a picked value that the current scope no longer contains stays listed, so it
+  // can always be unticked
+  sel.forEach(v=>{ if(!opts.some(o=>String(o[0])===v))opts.push([v,v]); });
+  const pop=document.createElement('div');
+  pop.className='bf-rowpop bf-mselpop';
+  pop.innerHTML='<div class="hd">'+bfEsc(col.label||'')+' — قيمة أو أكثر</div>'
+    +(opts.length?opts.map(o=>'<label class="bf-msel-it"><input type="checkbox"'
+        +(sel.indexOf(String(o[0]))>=0?' checked':'')+' data-v="'+bfEsc(o[0])+'"><span>'+bfEsc(o[1])+'</span></label>').join('')
+      :'<div style="padding:8px 10px;color:#999;font-size:12.5px">لا قيم في النطاق الحالي</div>')
+    +'<button type="button" class="bf-msel-clear" onclick="bfMselClear(\''+key+'\')">✕ مسح تصفية هذا العمود</button>';
+  document.body.appendChild(pop);
+  const r=ev.currentTarget.getBoundingClientRect();
+  pop.style.top=Math.min(r.bottom+4,window.innerHeight-Math.min(pop.offsetHeight,window.innerHeight*.5)-8)+'px';
+  pop.style.left=Math.max(8,Math.min(r.left,window.innerWidth-pop.offsetWidth-8))+'px';
+  pop.addEventListener('change',(e2)=>{
+    const cb=e2.target; if(!cb||cb.type!=='checkbox')return;
+    const v=cb.getAttribute('data-v');
+    const cur=bfMselSet(key), i=cur.indexOf(v);
+    if(cb.checked&&i<0)cur.push(v); else if(!cb.checked&&i>=0)cur.splice(i,1);
+    bfColState.filters=bfColState.filters||{};
+    bfColState.filters[key]=cur.join('\x1f');
+    bfRenderLedgerBody(); bfKPIs(); bfColStatePersist(); bfMselBtnRefresh(key);
+  });
+  bfMselEl=pop; bfMselKey=key;
+  setTimeout(()=>document.addEventListener('click',bfMselDocClick,true),0);
+}
+function bfMselClear(key){
+  bfColState.filters=bfColState.filters||{};
+  bfColState.filters[key]='';
+  bfRenderLedgerBody(); bfKPIs(); bfColStatePersist(); bfMselBtnRefresh(key);
+  bfMselClose();
+}
 function bfRenderLedgerBody(){
   const cols=bfVisibleCols();
   const rows=bfFiltered().map(e=>{
@@ -1652,6 +1751,54 @@ function bfRenderLedgerBody(){
   document.getElementById('bf-ledger-body').innerHTML=rows||'<tr><td colspan="'+cs+'" style="text-align:center;color:#999;padding:20px">لا توجد حركات</td></tr>';
 }
 function bfRenderLedger(){bfCloseRowMenu();bfRenderLedgerHead();bfRenderLedgerBody();bfKPIs();}
+
+// ── 🖱️ DRAG A HEADER TO MOVE ITS COLUMN ──
+// The ⚙️ الأعمدة panel stays for show/hide and for touch screens; with a mouse,
+// grabbing the header itself is the natural gesture. RTL rules the geometry:
+// DOM position 0 is the RIGHTMOST column, so dropping on a header's LEFT half
+// means "after it in the order". Reordering edits bfColState.order directly and
+// persists like the panel does; hidden columns keep their slot untouched.
+let bfColDragKey=null;
+function bfColDragStart(ev){
+  const th=ev.target.closest('th'); if(!th)return;
+  bfColDragKey=th.getAttribute('data-colkey');
+  ev.dataTransfer.effectAllowed='move';
+  try{ev.dataTransfer.setData('text/plain',bfColDragKey);}catch(_e){}
+  th.classList.add('bf-col-dragging');
+}
+function bfColDragOver(ev){
+  if(!bfColDragKey)return;
+  const th=ev.currentTarget, k=th.getAttribute('data-colkey');
+  if(!k||k===bfColDragKey)return;
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect='move';
+  const r=th.getBoundingClientRect();
+  const after=ev.clientX<r.left+r.width/2;
+  th.classList.toggle('bf-drop-l',after);
+  th.classList.toggle('bf-drop-r',!after);
+}
+function bfColDragLeave(ev){ev.currentTarget.classList.remove('bf-drop-l','bf-drop-r');}
+function bfColDrop(ev){
+  ev.preventDefault();
+  const th=ev.currentTarget, target=th.getAttribute('data-colkey');
+  const after=th.classList.contains('bf-drop-l');
+  th.classList.remove('bf-drop-l','bf-drop-r');
+  const key=bfColDragKey; bfColDragKey=null;
+  if(!key||!target||target===key)return;
+  const o=bfColState.order, from=o.indexOf(key);
+  if(from<0)return;
+  o.splice(from,1);
+  const to=o.indexOf(target);
+  if(to<0){o.splice(from,0,key);return;}
+  o.splice(to+(after?1:0),0,key);
+  bfRenderLedger();
+  bfColStatePersist();
+}
+function bfColDragEnd(){
+  bfColDragKey=null;
+  document.querySelectorAll('#bf-ledger-head .bf-col-dragging,#bf-ledger-head .bf-drop-l,#bf-ledger-head .bf-drop-r')
+    .forEach(el=>el.classList.remove('bf-col-dragging','bf-drop-l','bf-drop-r'));
+}
 
 // ── ⚙️ COLUMNS MENU ──
 let bfColsDraft=null;
