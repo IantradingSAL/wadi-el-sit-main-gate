@@ -175,6 +175,9 @@ function toast(m,t){const el=document.getElementById('toast');el.textContent=m;e
 .bf-colfilter::placeholder{color:#a8b0bc;font-size:11px}
 .bf-colfilter:focus{outline:none;border-color:#1a6eb5;box-shadow:0 0 0 2px rgba(26,110,181,.15)}
 select.bf-colfilter{padding-inline-end:22px}
+.bf-cf-smart{direction:ltr;text-align:center;font-variant-numeric:tabular-nums}
+.bf-cf-smart::placeholder{letter-spacing:.5px}
+.bf-tt-none td{text-align:center;color:#999;padding:14px;font-size:12.5px}
 .bf-colmenu-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f4f8fd;border:1.5px solid var(--border,#d5dfec);border-radius:8px;margin-bottom:6px;font-size:13px}
 .bf-colmenu-item input[type=checkbox]{transform:scale(1.15);margin:0}
 .bf-colmenu-item .lbl{flex:1;font-weight:700;color:#0f4d82}
@@ -1195,25 +1198,25 @@ function bfShowTab(t){
 }
 // ── 🧱 COLUMN DEFINITIONS ──
 const BF_COLS=[
-  {key:'entry_date',label:'التاريخ',filter:'text',val:e=>e.entry_date||'',search:e=>e.entry_date||'',cell:e=>'<td>'+(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')+'</td>'},
+  {key:'entry_date',label:'التاريخ',filter:'date',dateVal:e=>e.entry_date||'',val:e=>e.entry_date||'',search:e=>e.entry_date||'',cell:e=>'<td>'+(e.entry_date?e.entry_date.split('-').reverse().join('/'):'')+'</td>'},
   {key:'receipt_no',label:'السند',filter:'text',val:e=>e.receipt_no||'',search:e=>String(e.receipt_no||''),cell:e=>'<td style="font-size:11.5px;font-weight:700;color:#0f4d82">'+(e.receipt_no||'')+(bfSigCount(e)?' <span title="عدد التواقيع">✍️'+bfSigCount(e)+'</span>':'')+((e.documents&&e.documents.length)?' <span title="عدد المرفقات">📎'+e.documents.length+'</span>':'')+'</td>'},
   {key:'entry_type',label:'النوع',filter:'select',opts:[['income','مقبوضات'],['expense','مصروفات'],['opening','رصيد افتتاحي']],val:e=>e.entry_type||'',sortVal:e=>BF_TYPE_LABEL[e.entry_type]||e.entry_type||'',search:e=>e.entry_type||'',cell:e=>'<td>'+(BF_TYPE_LABEL[e.entry_type]||e.entry_type||'')+(e.voided?' <span class="bf-badge" style="background:#fdecec;color:#c22">⛔ ملغى</span>':'')+'</td>'},
-  {key:'category',label:'الفئة',filter:'text',val:e=>e.category||'',search:e=>e.category||'',cell:e=>'<td style="font-size:12px">'+(e.category||'')+'</td>'},
+  {key:'category',label:'الفئة',filter:'auto',val:e=>e.category||'',search:e=>e.category||'',cell:e=>'<td style="font-size:12px">'+(e.category||'')+'</td>'},
   {key:'payment_method',label:'الدفع',filter:'select',opts:[['cash','نقداً'],['transfer','حوالة'],['whish','Whish']],val:e=>e.payment_method||'cash',sortVal:e=>bfPay(e),search:e=>bfPay(e),cell:e=>'<td style="font-size:12px">'+bfPay(e)+'</td>'},
   {key:'description',label:'البيان',filter:'text',val:e=>e.description||'',search:e=>e.description||'',cell:e=>'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'},
-  {key:'person',label:'الجهة',filter:'text',val:e=>e.person||'',search:e=>e.person||'',cell:e=>'<td>'+(e.person||'')+'</td>'},
-  {key:'handled_by',label:'المستلم/المسلّم',filter:'text',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
+  {key:'person',label:'الجهة',filter:'auto',val:e=>e.person||'',search:e=>e.person||'',cell:e=>'<td>'+(e.person||'')+'</td>'},
+  {key:'handled_by',label:'المستلم/المسلّم',filter:'auto',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
   {key:'karar_number',label:'رقم القرار',filter:'text',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
   {key:'property_number',label:'رقم العقار',filter:'text',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'manual_receipt_no',label:'رقم الإيصال اليدوي',filter:'text',val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
   {key:'wassel_number',label:'رقم الإيصال',filter:'text',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا إيصال';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا إيصال</span>')+'</td>';}},
-  {key:'wassel_date',label:'تاريخ الإيصال',filter:'text',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
+  {key:'wassel_date',label:'تاريخ الإيصال',filter:'date',dateVal:e=>e.wassel_date||'',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'text',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
-  {key:'stamp_value',label:'قيمة الطوابع',filter:'text',num:true,sortVal:e=>Number(e.stamp_value)||0,val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
-  {key:'amount',label:'المبلغ',filter:'text',num:true,sortVal:e=>Number(e.signed)||0,val:e=>String(e.amount||''),search:e=>String(e.amount||''),cell:e=>'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'},
-  {key:'balance',label:'الرصيد',filter:'none',num:true,sortVal:e=>Number(e.bal)||0,val:e=>String(e.bal||''),search:e=>'',cell:e=>'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'},
-  {key:'created_by',label:'أدخلت بواسطة',filter:'text',val:e=>e.created_by||'',search:e=>e.created_by||'',cell:e=>'<td style="font-size:11px;color:#666">'+(e.created_by||'')+'</td>'},
+  {key:'stamp_value',label:'قيمة الطوابع',filter:'num',num:true,numVal:e=>Number(e.stamp_value)||0,sortVal:e=>Number(e.stamp_value)||0,val:e=>String(e.stamp_value||''),search:e=>String(e.stamp_value||''),cell:e=>{const sv=Number(e.stamp_value)||0;return '<td style="font-size:12px;color:'+(sv>0?'#8a6d1a':'#bbb')+';font-weight:700">'+(sv>0?bfMoney(sv,e.currency):'—')+'</td>';}},
+  {key:'amount',label:'المبلغ',filter:'num',num:true,numVal:e=>Math.abs(Number(e.signed)||0),sortVal:e=>Number(e.signed)||0,val:e=>String(e.amount||''),search:e=>String(e.amount||''),cell:e=>'<td class="'+(e.signed<0?'bf-neg':'bf-pos')+'">'+(e.voided?'<s>':'')+(e.signed<0?'-':'+')+bfMoney(Math.abs(e.signed),e.currency)+(e.voided?'</s>':'')+'</td>'},
+  {key:'balance',label:'الرصيد',filter:'num',num:true,numVal:e=>Number(e.bal)||0,sortVal:e=>Number(e.bal)||0,val:e=>String(e.bal||''),search:e=>'',ftext:e=>String(e.bal==null?'':e.bal),cell:e=>'<td class="bf-balc">'+bfMoney(e.bal,e.currency)+'</td>'},
+  {key:'created_by',label:'أدخلت بواسطة',filter:'auto',val:e=>e.created_by||'',search:e=>e.created_by||'',cell:e=>'<td style="font-size:11px;color:#666">'+(e.created_by||'')+'</td>'},
   {key:'actions',label:'',filter:'none',sort:'none',val:e=>'',search:e=>'',cell:e=>'<td style="white-space:nowrap;width:1%" onclick="event.stopPropagation()">'
       +'<button class="bf-rowmenu" title="إجراءات السند" aria-label="إجراءات السند" aria-haspopup="menu" aria-expanded="false" onclick="bfRowMenu(event,\''+e.id+'\')">⋯</button>'
     +'</td>'}
@@ -1223,6 +1226,225 @@ const BF_COL_DEFAULT_ORDER=BF_COLS.map(c=>c.key);
 let bfColState={order:BF_COL_DEFAULT_ORDER.slice(),hidden:BF_COLS.filter(c=>BF_COL_DEFAULT_VISIBLE.indexOf(c.key)<0).map(c=>c.key),filters:{},sort:{key:'',dir:''}};
 function bfCol(key){return BF_COLS.find(c=>c.key===key);}
 function bfVisibleCols(){return bfColState.order.map(bfCol).filter(c=>c&&bfColState.hidden.indexOf(c.key)<0);}
+
+// ── 🎯 SMART COLUMN FILTERS — أرقام وتواريخ، لا مجرّد "يحتوي" ──
+// A column filter used to be a dumb contains-match, which is useless on money and
+// dates: typing 5,000,000 matched nothing (the value is 5000000) and there was no
+// way to ask for "أكبر من مليون" or a date range. bfSpecNum/bfSpecDate parse a tiny
+// expression language; when the text is NOT an expression they return null and the
+// caller falls back to the old contains-match, so nothing that worked stopped working.
+const BF_TIP_NUM='أمثلة:  >1م  ·  <500 ألف  ·  1م-5م  ·  =0  ·  أو اكتب رقماً للبحث داخل القيمة';
+const BF_TIP_DATE='أمثلة:  2026  ·  2026-05  ·  01/05/2026..30/06/2026  ·  >=2026-07-01';
+const BF_MULT=[[/^(.+?)\s*(?:مليون|م|m)$/i,1e6],[/^(.+?)\s*(?:ألف|الف|k)$/i,1e3]];
+function bfParseNum(v){
+  let t=bfNormDigits(String(v==null?'':v)).replace(/[,،\s٬']/g,'').trim();
+  if(!t)return null;
+  let mult=1;
+  for(let i=0;i<BF_MULT.length;i++){const m=BF_MULT[i][0].exec(t); if(m){t=m[1];mult=BF_MULT[i][1];break;}}
+  t=t.replace(/[^0-9.\-]/g,'');
+  if(!t||t==='-'||t==='.')return null;
+  const n=parseFloat(t);
+  return isFinite(n)?n*mult:null;
+}
+function bfSpecNum(raw){
+  const t=bfNormDigits(String(raw==null?'':raw)).trim();
+  if(!t)return null;
+  let m=/^(>=|<=|=>|=<|!=|≠|≥|≤|>|<|=)\s*(.+)$/.exec(t);
+  if(m){
+    const v=bfParseNum(m[2]); if(v===null)return null;
+    let op=m[1];
+    if(op==='=>'||op==='≥')op='>='; else if(op==='=<'||op==='≤')op='<='; else if(op==='≠')op='!=';
+    return {op:op,a:v};
+  }
+  m=/^(.+?)\s*(?:\.\.+|—|–|÷|:)\s*(.+)$/.exec(t) || /^([^\-]+?)\s*-\s*([^\-]+)$/.exec(t);
+  if(m){
+    const a=bfParseNum(m[1]), b=bfParseNum(m[2]);
+    if(a!==null&&b!==null)return {op:'between',a:Math.min(a,b),b:Math.max(a,b)};
+  }
+  return null;
+}
+function bfTestNum(sp,n){
+  if(n===null||n===undefined||!isFinite(n))return false;
+  if(sp.op==='>')return n>sp.a;
+  if(sp.op==='>=')return n>=sp.a;
+  if(sp.op==='<')return n<sp.a;
+  if(sp.op==='<=')return n<=sp.a;
+  if(sp.op==='=')return n===sp.a;
+  if(sp.op==='!=')return n!==sp.a;
+  if(sp.op==='between')return n>=sp.a&&n<=sp.b;
+  return true;
+}
+// Dates are stored ISO (YYYY-MM-DD) so a plain string compare is chronological.
+// The user may type ISO or the DD/MM/YYYY they actually see in the table.
+function bfParseDate(v){
+  const t=bfNormDigits(String(v==null?'':v)).trim();
+  if(!t)return null;
+  let m=/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/.exec(t);
+  if(m)return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  m=/^(\d{4})(?:[-\/](\d{1,2})(?:[-\/](\d{1,2}))?)?$/.exec(t);
+  if(m)return m[1]+(m[2]?('-'+('0'+m[2]).slice(-2)):'')+(m[3]?('-'+('0'+m[3]).slice(-2)):'');
+  return null;
+}
+function bfDateLo(v){return v.length===4?v+'-01-01':v.length===7?v+'-01':v;}
+function bfDateHi(v){return v.length===4?v+'-12-31':v.length===7?v+'-31':v;}
+function bfSpecDate(raw){
+  const t=bfNormDigits(String(raw==null?'':raw)).trim();
+  if(!t)return null;
+  let m=/^(>=|<=|=>|=<|>|<)\s*(.+)$/.exec(t);
+  if(m){
+    const v=bfParseDate(m[2]); if(!v)return null;
+    let op=m[1]; if(op==='=>')op='>='; else if(op==='=<')op='<=';
+    return {op:op,a:v};
+  }
+  m=/^(.+?)\s*(?:\.\.+|—|–)\s*(.+)$/.exec(t);
+  if(m){
+    const a=bfParseDate(m[1]), b=bfParseDate(m[2]);
+    if(a&&b)return {op:'between',a:(a<b?a:b),b:(a<b?b:a)};
+  }
+  return null;
+}
+function bfTestDate(sp,iso){
+  iso=String(iso||'').slice(0,10); if(!iso)return false;
+  if(sp.op==='>')return iso>bfDateHi(sp.a);
+  if(sp.op==='>=')return iso>=bfDateLo(sp.a);
+  if(sp.op==='<')return iso<bfDateLo(sp.a);
+  if(sp.op==='<=')return iso<=bfDateHi(sp.a);
+  if(sp.op==='between')return iso>=bfDateLo(sp.a)&&iso<=bfDateHi(sp.b);
+  return true;
+}
+function bfEsc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// Options for a dropdown filter, built from the rows actually in scope so the list
+// never offers a value that would empty the table.
+function bfAutoOpts(col,rows,cur){
+  const m=new Map();
+  (rows||[]).forEach(e=>{
+    let v='';
+    try{v=String((col.val?col.val(e):'')||'').trim();}catch(_e){v='';}
+    if(!v)return; m.set(v,(m.get(v)||0)+1);
+  });
+  if(cur&&!m.has(cur))m.set(cur,0);
+  return [...m.entries()]
+    .sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'ar',{numeric:true,sensitivity:'base'}))
+    .map(p=>[p[0],p[0]+(p[1]?'  ('+p[1]+')':'')]);
+}
+
+// ── 🧰 GENERIC TABLE TOOLS — ترتيب وتصفية لجداول التقارير وسجل العمليات ──
+// The ledger filters its own data model; these tables are plain rendered DOM, so the
+// tools work on the cells themselves. bfTableTools() is idempotent — call it at the
+// end of every re-render and it re-wires the header, restores what the user typed,
+// and re-applies the active sort.
+function bfTTCellText(td){return td?String(td.textContent||'').replace(/\s+/g,' ').trim():'';}
+function bfTTIsData(tr){
+  const tds=tr.querySelectorAll('td');
+  if(!tds.length)return false;
+  if(tr.classList.contains('bf-tt-none'))return false;
+  if(tds.length===1&&tds[0].hasAttribute('colspan'))return false;
+  return true;
+}
+function bfTTApply(tbl){
+  const st=tbl.__tt; if(!st)return;
+  const bd=tbl.tBodies[0]; if(!bd)return;
+  const rows=[...bd.rows].filter(bfTTIsData);
+  const active=Object.keys(st.filters).filter(k=>String(st.filters[k]||'').trim());
+  let shown=0;
+  rows.forEach(tr=>{
+    let ok=true;
+    for(let i=0;i<active.length;i++){
+      const ix=+active[i], raw=st.filters[active[i]], kind=st.kinds[ix]||'text';
+      const txt=bfTTCellText(tr.cells[ix]);
+      if(kind==='num'){
+        const sp=bfSpecNum(raw);
+        if(sp){ if(!bfTestNum(sp,bfParseNum(txt))){ok=false;break;} continue; }
+      }else if(kind==='date'){
+        const sp=bfSpecDate(raw);
+        if(sp){ if(!bfTestDate(sp,bfParseDate(txt)||txt)){ok=false;break;} continue; }
+      }
+      if(bfNormTxt(txt).indexOf(bfNormTxt(raw))<0){ok=false;break;}
+    }
+    tr.style.display=ok?'':'none';
+    if(ok)shown++;
+  });
+  // sort only what is on screen, and keep the DOM order stable when sort is off
+  if(st.sort.dir){
+    const ix=st.sort.col, kind=st.kinds[ix]||'text', mul=st.sort.dir;
+    rows.slice().sort((a,b)=>{
+      const ta=bfTTCellText(a.cells[ix]), tb=bfTTCellText(b.cells[ix]);
+      if(kind==='num'||kind==='date'){
+        const na=kind==='num'?bfParseNum(ta):(bfParseDate(ta)||ta), nb=kind==='num'?bfParseNum(tb):(bfParseDate(tb)||tb);
+        const ea=(na===null||na===''), eb=(nb===null||nb==='');
+        if(ea&&eb)return 0; if(ea)return 1; if(eb)return -1;   // blanks last, both ways
+        return (na<nb?-1:na>nb?1:0)*mul;
+      }
+      if(!ta&&!tb)return 0; if(!ta)return 1; if(!tb)return -1;
+      return ta.localeCompare(tb,'ar',{numeric:true,sensitivity:'base'})*mul;
+    }).forEach(tr=>bd.appendChild(tr));
+  }
+  // an all-filtered-away table should say so instead of looking broken
+  let none=bd.querySelector('tr.bf-tt-none');
+  if(!shown&&active.length){
+    if(!none){
+      none=document.createElement('tr'); none.className='bf-tt-none';
+      none.innerHTML='<td colspan="'+tbl.tHead.rows[0].cells.length+'">لا نتائج مطابقة للتصفية</td>';
+    }
+    bd.appendChild(none);
+  }else if(none){none.remove();}
+  if(st.countEl){
+    const el=document.getElementById(st.countEl);
+    if(el){
+      let tag=el.querySelector('.bf-tt-count');
+      if(active.length){
+        if(!tag){tag=document.createElement('span');tag.className='bf-tt-count';el.appendChild(tag);}
+        tag.textContent=' · 🎛️ التصفية: '+bfFmt(shown)+' من '+bfFmt(rows.length);
+      }else if(tag){tag.remove();}
+    }
+  }
+  [...tbl.tHead.rows[0].cells].forEach((th,ix)=>{
+    const ind=th.querySelector('.bf-sortind');
+    if(ind)ind.textContent = (st.sort.dir&&st.sort.col===ix) ? (st.sort.dir>0?'▲':'▼') : '⇅';
+    th.classList.toggle('bf-sorted', !!st.sort.dir&&st.sort.col===ix);
+  });
+}
+function bfTableTools(tbl,kinds,countEl){
+  if(!tbl||!tbl.tHead||!tbl.tHead.rows.length)return;
+  if(!tbl.__tt){
+    tbl.__tt={sort:{col:-1,dir:0},filters:{},kinds:kinds||[],countEl:countEl||''};
+    const st=tbl.__tt, hr=tbl.tHead.rows[0];
+    hr.classList.add('bf-hh');
+    [...hr.cells].forEach((th,ix)=>{
+      if((st.kinds[ix]||'text')==='none')return;
+      th.classList.add('bf-sortable');
+      th.title='اضغط للترتيب أ→ي، ثم ي→أ، ثم إلغاء الترتيب';
+      th.insertAdjacentHTML('beforeend','<span class="bf-sortind">⇅</span>');
+      th.onclick=()=>{
+        if(st.sort.col===ix)st.sort.dir = st.sort.dir===1?-1:(st.sort.dir===-1?0:1);
+        else {st.sort.col=ix;st.sort.dir=1;}
+        bfTTApply(tbl);
+      };
+    });
+    const fr=tbl.tHead.insertRow(1); fr.className='bf-fh';
+    [...hr.cells].forEach((th,ix)=>{
+      const cell=fr.insertCell(-1);
+      const kind=st.kinds[ix]||'text';
+      if(kind==='none')return;
+      const ph=kind==='num'?'‹ ›  رقم':kind==='date'?'من..إلى':'تصفية';
+      const tip=kind==='num'?BF_TIP_NUM:kind==='date'?BF_TIP_DATE:'تصفية حسب '+bfTTCellText(th).replace(/[⇅▲▼]/g,'').trim();
+      const inp=document.createElement('input');
+      inp.className='bf-colfilter'+(kind==='num'||kind==='date'?' bf-cf-smart':'');
+      inp.placeholder=ph; inp.title=tip;
+      inp.oninput=()=>{st.filters[ix]=inp.value;bfTTApply(tbl);};
+      cell.appendChild(inp);
+    });
+  }
+  bfTableTools.__last=tbl;
+  bfTTApply(tbl);
+}
+function bfWireStaticTables(){
+  const T=id=>{const b=document.getElementById(id);return b?b.closest('table'):null;};
+  bfTableTools(T('bf-rep-inc'),    ['text','num','num']);
+  bfTableTools(T('bf-rep-exp'),    ['text','num','num']);
+  bfTableTools(T('bf-rep-person'), ['text','num','num','num']);
+  bfTableTools(T('bf-rep-stamps'), ['date','text','text','text','text','num']);
+}
 
 // ── 🔤 SORTING (أ→ي / ي→أ on every column) ──
 // Clicking a header cycles: تصاعدي ▲ → تنازلي ▼ → بلا ترتيب (natural ledger order).
@@ -1347,10 +1569,21 @@ function bfFiltered(){
   const keys=Object.keys(cf).filter(k=>bfNormTxt(cf[k]||'')&&bfCol(k));
   const out=!keys.length?rows:rows.filter(e=>{
     for(let i=0;i<keys.length;i++){
-      const col=bfCol(keys[i]), v=bfNormTxt(cf[keys[i]]||'');
-      const t=bfNormTxt(col.search(e)||'');
-      if(col.filter==='select'){ if(t!==v)return false; }
-      else if(t.indexOf(v)<0)return false;
+      const col=bfCol(keys[i]), raw=cf[keys[i]]||'', v=bfNormTxt(raw);
+      // dropdowns are an exact pick, never a substring
+      if(col.filter==='select'){ if(bfNormTxt(col.search(e)||'')!==v)return false; continue; }
+      if(col.filter==='auto'){ if(bfNormTxt((col.val?col.val(e):'')||'')!==v)return false; continue; }
+      // ">1م" / "1م-5م" / "01/05/2026..30/06/2026" — an expression wins; plain text
+      // falls through to the contains-match below so old habits keep working
+      if(col.filter==='num'){
+        const sp=bfSpecNum(raw);
+        if(sp)  { if(!bfTestNum(sp,col.numVal?col.numVal(e):bfParseNum(col.val(e))))return false; continue; }
+      } else if(col.filter==='date'){
+        const sp=bfSpecDate(raw);
+        if(sp)  { if(!bfTestDate(sp,col.dateVal?col.dateVal(e):col.val(e)))return false; continue; }
+      }
+      const t=bfNormTxt((col.ftext?col.ftext(e):col.search(e))||'');
+      if(t.indexOf(v)<0)return false;
     }
     return true;
   });
@@ -1371,23 +1604,39 @@ function bfRenderLedgerHead(){
     return '<th class="bf-sortable'+(on?' bf-sorted':'')+'" title="'+tip+'" onclick="bfSortBy(\''+c.key+'\')">'
       +c.label+'<span class="bf-sortind">'+ind+'</span></th>';
   }).join('');
+  // Dropdown options come from the rows the TOP filters already kept, so picking a
+  // value can never leave you staring at an empty table with an impossible choice.
+  let scope=null;
+  const scopeRows=()=>{ if(scope===null){try{scope=bfRowsFor(bfReadFilters('bf-f-'));}catch(_e){scope=[];}} return scope; };
   const fh=cols.map(c=>{
     if(c.filter==='none')return '<th></th>';
-    if(c.filter==='select'){
-      const cur=cf[c.key]||'';
-      const opts='<option value="">—</option>'+c.opts.map(o=>'<option value="'+o[0]+'"'+(cur===o[0]?' selected':'')+'>'+o[1]+'</option>').join('');
-      return '<th><select class="bf-colfilter" data-cf="'+c.key+'" onchange="bfColFilter(this)">'+opts+'</select></th>';
+    const cur=String(cf[c.key]||'');
+    if(c.filter==='select'||c.filter==='auto'){
+      const list=c.filter==='select'?c.opts:bfAutoOpts(c,scopeRows(),cur);
+      const opts='<option value="">—</option>'+list.map(o=>'<option value="'+bfEsc(o[0])+'"'+(cur===String(o[0])?' selected':'')+'>'+bfEsc(o[1])+'</option>').join('');
+      return '<th><select class="bf-colfilter" data-cf="'+c.key+'" onchange="bfColFilter(this)" title="'+bfEsc('تصفية حسب '+(c.label||''))+'">'+opts+'</select></th>';
     }
-    return '<th><input class="bf-colfilter" data-cf="'+c.key+'" value="'+String(cf[c.key]||'').replace(/"/g,'&quot;')+'" oninput="bfColFilter(this)" placeholder="تصفية"></th>';
+    const ph=c.filter==='num'?'‹ ›  رقم':c.filter==='date'?'من..إلى':'تصفية';
+    const tip=c.filter==='num'?BF_TIP_NUM:c.filter==='date'?BF_TIP_DATE:('تصفية حسب '+(c.label||''));
+    return '<th><input class="bf-colfilter'+(c.filter==='num'||c.filter==='date'?' bf-cf-smart':'')
+      +'" data-cf="'+c.key+'" value="'+bfEsc(cur)+'" oninput="bfColFilter(this)" placeholder="'+bfEsc(ph)+'" title="'+bfEsc(tip)+'"></th>';
   }).join('');
   document.getElementById('bf-ledger-head').innerHTML='<tr class="bf-hh">'+th+'</tr><tr class="bf-fh">'+fh+'</tr>';
 }
 function bfColFilter(el){
   bfColState.filters=bfColState.filters||{};
-  bfColState.filters[el.getAttribute('data-cf')]=el.value;
+  const k=el.getAttribute('data-cf');
+  bfColState.filters[k]=el.value;
   bfRenderLedgerBody();
   bfKPIs();
   bfColStatePersist();
+  // A <select> can be re-rendered without stealing focus; a text box must NOT be,
+  // or the caret jumps to the start on every keystroke.
+  if(el.tagName==='SELECT'){
+    bfRenderLedgerHead();
+    const again=document.querySelector('.bf-fh [data-cf="'+k+'"]');
+    if(again)again.focus();
+  }
 }
 function bfRenderLedgerBody(){
   const cols=bfVisibleCols();
@@ -2040,6 +2289,7 @@ function bfRenderReports(){
         +'</tr>').join('')
       : '<tr><td colspan="6" style="color:#999;text-align:center;padding:10px">—</td></tr>';
   }
+  bfWireStaticTables();
 }
 // من جدول التقرير إلى السجل — مع الحفاظ على نطاق التقرير نفسه
 function bfRepDrill(f){
@@ -2226,7 +2476,7 @@ function bfRenderAudit(){
   const rows=bfAuditFiltered();
   const cnt=document.getElementById('bf-a-count');
   if(cnt)cnt.textContent='عدد العمليات: '+bfFmt(rows.length)+(bfAuditRows.length!==rows.length?(' من أصل '+bfFmt(bfAuditRows.length)):'');
-  if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">لا توجد عمليات مطابقة</td></tr>';return;}
+  if(!rows.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;color:#888">لا توجد عمليات مطابقة</td></tr>';bfWireAuditTable();return;}
   const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const COLOR={create:'#1f7a45',update:'#8a6d1a',void:'#a83232',unvoid:'#8a6d1a',delete:'#a83232',sign:'#0f4d82'};
   tb.innerHTML=rows.map(r=>{
@@ -2240,6 +2490,11 @@ function bfRenderAudit(){
       +'<td style="white-space:nowrap;font-size:12px">'+esc(r.receipt_no||'—')+'</td>'
       +'<td style="white-space:normal;font-size:12px;line-height:1.7">'+bfAuditDetailHTML(r)+'</td></tr>';
   }).join('');
+  bfWireAuditTable();
+}
+function bfWireAuditTable(){
+  const b=document.getElementById('bf-a-rows');
+  bfTableTools(b?b.closest('table'):null,['date','text','text','text','text'],'bf-a-count');
 }
 function bfAuditCSV(){
   const rows=bfAuditFiltered();
