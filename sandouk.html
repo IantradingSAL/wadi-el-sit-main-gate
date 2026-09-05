@@ -1218,10 +1218,10 @@ const BF_COLS=[
   {key:'description',label:'البيان',filter:'combo',val:e=>e.description||'',search:e=>e.description||'',cell:e=>'<td style="white-space:normal;min-width:180px">'+(e.description||'')+'</td>'},
   {key:'person',label:'الجهة',filter:'auto',val:e=>e.person||'',search:e=>e.person||'',cell:e=>'<td>'+(e.person||'')+'</td>'},
   {key:'handled_by',label:'المستلم/المسلّم',filter:'auto',val:e=>e.handled_by||'',search:e=>e.handled_by||'',cell:e=>'<td>'+(e.handled_by||'')+'</td>'},
-  {key:'karar_number',label:'رقم القرار',filter:'auto',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
-  {key:'property_number',label:'رقم العقار',filter:'auto',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
+  {key:'karar_number',label:'رقم القرار',filter:'auto',emptyLabel:'بدون رقم قرار',val:e=>e.karar_number||'',search:e=>e.karar_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.karar_number||'')+'</td>'},
+  {key:'property_number',label:'رقم العقار',filter:'auto',emptyLabel:'بدون رقم عقار',val:e=>e.property_number||'',search:e=>e.property_number||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed">'+(e.property_number||'')+'</td>'},
   {key:'manual_receipt_no',tip:'أمثلة:  >100  ·  26-50  ·  =26  ·  أو اكتب جزءاً من الرقم للبحث',label:'رقم الإيصال اليدوي',filter:'num',numVal:e=>bfTrailNum(e.manual_receipt_no),val:e=>e.manual_receipt_no||'',search:e=>e.manual_receipt_no||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#8a6d1a;font-weight:700">'+(e.manual_receipt_no||'')+'</td>'},
-  {key:'wassel_number',tip:'أمثلة:  >100  ·  26-50  ·  =26  ·  أو اكتب جزءاً من الرقم للبحث',label:'رقم الإيصال',filter:'num',numVal:e=>bfWasselSeq(e.wassel_number),val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا إيصال';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا إيصال</span>')+'</td>';}},
+  {key:'wassel_number',label:'رقم الإيصال',filter:'auto',emptyLabel:'بلا إيصال',val:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),sortVal:e=>String(e.wassel_number==null?'':e.wassel_number).trim(),search:e=>{if(e.entry_type==='opening')return '';const wn=String(e.wassel_number==null?'':e.wassel_number).trim();return wn||'بلا إيصال';},cell:e=>{const wn=String(e.wassel_number==null?'':e.wassel_number).trim();if(e.entry_type==='opening')return '<td style="text-align:center;color:#bbb">—</td>';return '<td style="direction:ltr;unicode-bidi:embed;font-size:12px;font-weight:800">'+(wn?'<span style="color:#0f4d82">'+wn+'</span>':'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا إيصال</span>')+'</td>';}},
   {key:'wassel_date',label:'تاريخ الإيصال',filter:'date',dateVal:e=>e.wassel_date||'',val:e=>e.wassel_date||'',search:e=>e.wassel_date||'',cell:e=>'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'+(e.wassel_date?e.wassel_date.split('-').reverse().join('/'):'—')+'</td>'},
   {key:'notes',label:'ملاحظات',filter:'combo',val:e=>e.notes||'',search:e=>e.notes||'',cell:e=>'<td style="white-space:normal;min-width:140px">'+(e.notes||'')+'</td>'},
   {key:'currency',label:'العملة',filter:'select',opts:[['USD','USD'],['LBP','LBP']],val:e=>e.currency||'USD',search:e=>e.currency||'USD',cell:e=>'<td>'+(e.currency||'USD')+'</td>'},
@@ -1588,8 +1588,12 @@ function bfFiltered(){
       // matches ANY picked value (قرار 1 و2 و4 معاً). A single old saved value
       // splits into a one-item set, so nothing stored breaks.
       if(col.filter==='auto'){
-        const set=String(raw).split('\x1f').map(bfNormTxt).filter(Boolean);
-        if(set.length&&set.indexOf(bfNormTxt((col.val?col.val(e):'')||''))<0)return false;
+        const set=String(raw).split('\x1f').filter(Boolean);
+        if(set.length){
+          const cv=bfNormTxt((col.val?col.val(e):'')||'');
+          const wantEmpty=set.indexOf(BF_MSEL_EMPTY)>=0;
+          if(!((wantEmpty&&!cv)||set.map(bfNormTxt).indexOf(cv)>=0))return false;
+        }
         continue;
       }
       // ">1م" / "1م-5م" / "01/05/2026..30/06/2026" — an expression wins; plain text
@@ -1642,7 +1646,7 @@ function bfRenderLedgerHead(){
     if(c.filter==='auto'){
       // a button opening a checkbox list — one value or several at once
       const sel=cur.split('\x1f').filter(Boolean);
-      const lbl=!sel.length?'—':(sel.length===1?sel[0]:sel.length+' قيم');
+      const lbl=!sel.length?'—':(sel.length===1?bfMselLbl(c,sel[0]):sel.length+' قيم');
       return '<th><button type="button" class="bf-colfilter bf-msel'+(sel.length?' on':'')+'" data-cf="'+c.key
         +'" onclick="bfMselOpen(event,\''+c.key+'\')" title="'+bfEsc('تصفية حسب '+(c.label||'')+' — يمكن اختيار أكثر من قيمة')+'">'
         +bfEsc(lbl)+' <span style="font-size:9px">▼</span></button></th>';
@@ -1683,6 +1687,11 @@ function bfColFilter(el){
 // picked set is stored as one \x1f-joined string so views, localStorage and the
 // filter engine keep working on a plain string.
 let bfMselKey=null,bfMselEl=null;
+// Rows with NO value at all (the imported paper-book entries have neither قرار
+// nor إيصال) must be pickable too, so every list carries a «بدون …» entry
+// stored as this sentinel — it can never collide with a real cell value.
+const BF_MSEL_EMPTY='\x02__empty__';
+function bfMselLbl(col,v){return v===BF_MSEL_EMPTY?('⬜ '+((col&&col.emptyLabel)||'بدون قيمة')):v;}
 function bfMselSet(key){return String((bfColState.filters||{})[key]||'').split('\x1f').filter(Boolean);}
 function bfMselClose(){
   if(!bfMselEl)return;
@@ -1694,7 +1703,7 @@ function bfMselBtnRefresh(key){
   const btn=document.querySelector('.bf-fh [data-cf="'+key+'"]');
   if(!btn||btn.tagName!=='BUTTON')return;
   const sel=bfMselSet(key);
-  btn.innerHTML=bfEsc(!sel.length?'—':(sel.length===1?sel[0]:sel.length+' قيم'))+' <span style="font-size:9px">▼</span>';
+  btn.innerHTML=bfEsc(!sel.length?'—':(sel.length===1?bfMselLbl(bfCol(key),sel[0]):sel.length+' قيم'))+' <span style="font-size:9px">▼</span>';
   btn.classList.toggle('on',!!sel.length);
 }
 function bfMselOpen(ev,key){
@@ -1707,7 +1716,12 @@ function bfMselOpen(ev,key){
   const opts=bfAutoOpts(col,rows,'');
   // a picked value that the current scope no longer contains stays listed, so it
   // can always be unticked
-  sel.forEach(v=>{ if(!opts.some(o=>String(o[0])===v))opts.push([v,v]); });
+  sel.forEach(v=>{ if(v!==BF_MSEL_EMPTY&&!opts.some(o=>String(o[0])===v))opts.push([v,v]); });
+  // «بدون …» first, with its own count, whenever the scope has valueless rows
+  let nEmpty=0;
+  rows.forEach(e=>{ try{ if(!String((col.val?col.val(e):'')||'').trim())nEmpty++; }catch(_e){} });
+  if(nEmpty>0||sel.indexOf(BF_MSEL_EMPTY)>=0)
+    opts.unshift([BF_MSEL_EMPTY,bfMselLbl(col,BF_MSEL_EMPTY)+(nEmpty?'  ('+nEmpty+')':'')]);
   const pop=document.createElement('div');
   pop.className='bf-rowpop bf-mselpop';
   pop.innerHTML='<div class="hd">'+bfEsc(col.label||'')+' — قيمة أو أكثر</div>'
