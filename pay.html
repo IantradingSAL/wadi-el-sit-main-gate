@@ -86,6 +86,10 @@ a{color:#0f4d82}
 .svc-amt input{flex:1;min-width:0;padding:9px 12px;border:1.5px solid #e9c463;border-radius:10px;background:#fff;direction:ltr;text-align:left;font-weight:800;font-variant-numeric:tabular-nums}
 .svc-amt .cur{font-size:12.5px;font-weight:900;color:#8a6d1a}
 
+/* الجباية المستحقة */
+.du-find{width:100%;margin-top:9px;background:#eef5fc;color:#0f4d82;border:1.5px solid #b4d4ed;border-radius:12px;padding:11px;font-size:13.5px;font-weight:900}
+.du-amt{font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:embed;font-weight:900;color:#a07a0b;font-size:13.5px;white-space:nowrap}
+
 /* رقم العقار */
 .step.prop-on:before{background:linear-gradient(90deg,#0f4d82,#60a5fa)}
 .prop-note{font-size:12px;color:#8a6d1a;background:#fdf6e3;border:1px solid #e9c463;border-radius:10px;padding:7px 11px;margin-top:8px;font-weight:700;line-height:1.8}
@@ -201,6 +205,18 @@ a{color:#0f4d82}
 </section>
 
 <main class="main">
+
+  <!-- 🏠 · الجباية المستحقة — رقم العقار أو الاسم أو الهاتف، أي معرّف يكفي -->
+  <div class="step" id="stD">
+    <div class="st-head">
+      <div class="st-num">🏠</div>
+      <div><div class="st-t">جبايتك المستحقة</div><div class="st-s">اكتب رقم العقار أو اسمك أو رقم هاتفك — أي واحد منها يكفي</div></div>
+    </div>
+    <input class="fm-i" id="du-q" placeholder="رقم العقار / الاسم / رقم الهاتف" aria-label="البحث عن الجباية المستحقة">
+    <button class="du-find" onclick="duFind()">🔎 استعلم عن رسومك</button>
+    <div id="du-list"></div>
+    <button class="btn-whish" id="du-pay" disabled onclick="duPay()" style="display:none">ادفع عبر <span class="wlogo">whish</span> <span id="du-pay-amt"></span></button>
+  </div>
 
   <!-- ١ · الهاتف -->
   <div class="step" id="st1">
@@ -605,6 +621,83 @@ function openWhish(){
   if(payReal())return doPay();
   $('wh-amt').textContent='$'+total().toFixed(2);openM('m-whish');
 }
+
+// ── 🏠 الجباية المستحقة — أي معرّف يعرفه المواطن يوصله إلى رسومه ──
+// العرض فقط هنا؛ البحث والتسعير كلاهما في القاعدة (pay_dues_lookup /
+// pay_dues_create_order) — المتصفح لا يحدد مبلغاً ولا يرى غير المستحق.
+let DUES=[],DU_SEL={};
+function fmtAmt(a,c){return c==='LBP'?Number(a).toLocaleString('en-US')+' ل.ل':'$'+Number(a).toFixed(2);}
+async function duFind(){
+  const q=$('du-q').value.trim(),box=$('du-list');
+  $('du-pay').style.display='none';DUES=[];
+  if(q.length<3){box.innerHTML='<div class="lk no">اكتب ٣ أحرف أو أرقام على الأقل</div>';return;}
+  box.innerHTML='<div class="sum-empty">⏳ نبحث في سجل الجباية…</div>';
+  try{
+    const r=await sb.rpc('pay_dues_lookup',{p_q:q});
+    if(r.error)throw r.error;
+    if(!r.data||!r.data.found){
+      box.innerHTML='<div class="lk no">لا رسوم مستحقة على هذا المعرّف — إن كنت تظن غير ذلك راجع البلدية</div>';
+      return;
+    }
+    DUES=r.data.dues;DU_SEL={};DUES.forEach(function(d){DU_SEL[d.id]=true;});
+    duRender();
+  }catch(e){box.innerHTML='<div class="lk no">⚠️ '+esc(e.message||e)+'</div>';}
+}
+function duRender(){
+  const box=$('du-list');
+  box.innerHTML='<div class="lk ok">🏠 عقار <b>'+esc(DUES[0].property_number)+'</b> — '+esc(DUES[0].owner_name)+'</div>'
+    +DUES.map(function(d){
+      const on=!!DU_SEL[d.id];
+      return '<div class="svc'+(on?' on':'')+'" onclick="duTog(\''+d.id+'\')">'
+        +'<div class="svc-row"><div class="svc-i">🧾</div>'
+        +'<div style="flex:1"><div class="svc-t">'+esc(d.label)+' — '+d.year+'</div></div>'
+        +'<span class="du-amt">'+fmtAmt(d.amount,d.currency)+'</span>'
+        +'<div class="svc-chk">'+(on?'✓':'')+'</div></div></div>';
+    }).join('')
+    +'<div class="sum-tot"><span>المجموع المختار</span><span class="v" id="du-tot">—</span></div>';
+  duRefresh();
+}
+function duTog(id){DU_SEL[id]=!DU_SEL[id];duRender();}
+function duSel(){return DUES.filter(function(d){return DU_SEL[d.id]});}
+function duRefresh(){
+  const sel=duSel(),btn=$('du-pay');
+  const t=sel.reduce(function(s,d){return s+Number(d.amount)},0);
+  const el=$('du-tot');if(el)el.textContent=sel.length?fmtAmt(t,sel[0].currency):'—';
+  btn.style.display=DUES.length?'flex':'none';
+  btn.disabled=!sel.length;
+  $('du-pay-amt').textContent=sel.length?('· '+fmtAmt(t,sel[0].currency)):'';
+}
+function duPay(){
+  const sel=duSel();if(!sel.length)return;
+  if(!payReal()){
+    $('wh-amt').textContent=fmtAmt(sel.reduce(function(s,d){return s+Number(d.amount)},0),sel[0].currency);
+    openM('m-whish');return;
+  }
+  doDuPay(sel);
+}
+async function doDuPay(sel){
+  const btn=$('du-pay');
+  btn.disabled=true;
+  const old=btn.innerHTML; btn.innerHTML='⏳ جارٍ تجهيز الدفعة…';
+  try{
+    const o=await sb.rpc('pay_dues_create_order',{p_ids:sel.map(function(d){return d.id})});
+    if(o.error)throw o.error;
+    const r=await fetch(SB_URL+'/functions/v1/whish-checkout',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({order_id:o.data.order_id})});
+    const j=await r.json().catch(function(){return null;});
+    if(!r.ok||!j||!j.redirect_url)throw new Error((j&&j.error)||'تعذّر فتح صفحة الدفع');
+    location.href=j.redirect_url;      // → صفحة Whish الآمنة
+  }catch(e){
+    toast('⚠️ '+(e.message||e));
+    btn.innerHTML=old; duRefresh();
+  }
+}
+window.addEventListener('load',function(){setTimeout(function(){
+  const el=$('du-q'); if(!el)return;
+  el.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();duFind();}});
+},800);});
 // ── الدفع الفعلي: الطلب يُبنى ويُسعَّر في القاعدة، وWhish لا يكلمه إلا الخادم ──
 async function doPay(){
   const btn=$('pay');
@@ -656,7 +749,7 @@ async function loadReceipts(){
       const svcs=(o.services||[]).map(function(s){return s.label;}).join(' + ');
       const d=new Date(o.created_at).toLocaleDateString('ar-LB');
       return '<div class="rc"><div class="rc-top"><span class="rc-no">'+esc(o.receipt_no||'…قيد القيد')+'</span>'
-        +'<span class="rc-amt">$'+Number(o.amount).toFixed(2)+'</span></div>'
+        +'<span class="rc-amt">'+fmtAmt(o.amount,o.currency)+'</span></div>'
         +'<div class="rc-sub">'+esc(svcs)+(o.property_number?' · عقار '+esc(o.property_number):'')+' · '+d+' · Whish ✓</div></div>';
     }).join('');
   }catch(e){box.innerHTML='<div style="color:#a52833">⚠️ '+esc(e.message||e)+'</div>';}
