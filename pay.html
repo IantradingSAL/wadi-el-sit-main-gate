@@ -341,9 +341,21 @@ a{color:#0f4d82}
 <div class="modal" id="m-my" role="dialog" aria-modal="true"><div class="sheet" style="text-align:right">
   <div class="grab"></div>
   <div class="pop-t" style="text-align:center">🧾 إيصالاتي</div>
-  <div class="pop-s" style="text-align:center">⏳ قريباً — عند إطلاق الخدمة تجد هنا كل ما دفعته لبلدية وادي الست برقم هاتفك. هكذا سيبدو:</div>
-  <div class="rc sample"><div class="rc-top"><span class="rc-no">Q-2026-XXX</span><span class="rc-amt">$95.00</span></div><div class="rc-sub">مثال — جباية ورسوم بلدية + بدل نفايات · عقار 1245/شوف · Whish ✓</div></div>
+  <div class="pop-s" style="text-align:center" id="rc-sub">أدخل رقم هاتفك لعرض إيصالاتك</div>
+  <input class="fm-i" id="rc-phone" style="direction:ltr;text-align:left" inputmode="tel" placeholder="+961 3 000 000" aria-label="رقم الهاتف">
+  <button class="pop-btn gold" onclick="loadReceipts()">عرض إيصالاتي</button>
+  <div id="rc-list"></div>
   <button class="pop-btn no" onclick="closeM('m-my')">إغلاق</button>
+</div></div>
+
+<!-- تم الدفع (العودة من Whish) -->
+<div class="modal" id="m-paid" role="dialog" aria-modal="true"><div class="sheet">
+  <div class="grab"></div>
+  <span class="pop-i">🎉</span>
+  <div class="pop-t">تمّ الدفع بنجاح</div>
+  <div class="pop-s">شكراً لك — إيصالك الرسمي قُيّد في دفتر صندوق البلدية.<br>افتح «🧾 إيصالاتي» برقم هاتفك لترى رقم إيصالك.</div>
+  <button class="pop-btn gold" onclick="closeM('m-paid');openM('m-my')">🧾 عرض إيصالاتي</button>
+  <button class="pop-btn no" onclick="closeM('m-paid')">إغلاق</button>
 </div></div>
 
 <script>
@@ -385,12 +397,30 @@ function cfgToSvcs(list){
   return list.filter(function(s){return s.active!==false})
     .map(function(s){return {k:s.key,i:s.icon||'💳',t:s.label||'',prop:!!s.prop,amt:(s.fee==null?null:s.fee)};});
 }
+// live: الربط فعّال على الوضع الحقيقي — الصفحة تخلع وجه «قريباً» وتدفع فعلاً.
+// test: الربط فعّال على sandbox — الدفع الحقيقي يعمل فقط لمن فتح pay.html#test
+// (فريق البلدية أثناء التجارب)، والأهالي يبقون على المعاينة.
+let CFG_LIVE=false,CFG_TEST=false;
+function payReal(){return CFG_LIVE||(CFG_TEST&&location.hash.indexOf('test')>=0);}
+function applyLiveUi(){
+  if(CFG_LIVE){
+    const s=document.querySelector('.soon'); if(s)s.style.display='none';
+    const g=document.querySelector('.hm.gold'); if(g)g.style.display='none';
+  }else if(CFG_TEST&&location.hash.indexOf('test')>=0){
+    const s=document.querySelector('.soon');
+    if(s)s.innerHTML='🧪 <b>وضع تجريبي</b> بيئة Whish التجريبية (Sandbox) — الدفعات هنا اختبارية ولا تُحصّل أموالاً حقيقية.';
+  }
+}
 async function loadCfg(){
   try{
     const r=await sb.rpc('pay_config');
-    if(r&&r.data&&Array.isArray(r.data.services)){
-      const list=cfgToSvcs(r.data.services);
-      if(list.length){SVCS=list;renderSvcs();}
+    if(r&&r.data){
+      CFG_LIVE=!!r.data.live; CFG_TEST=!!r.data.test;
+      if(Array.isArray(r.data.services)){
+        const list=cfgToSvcs(r.data.services);
+        if(list.length){SVCS=list;renderSvcs();}
+      }
+      applyLiveUi();
     }
   }catch(_e){}
 }
@@ -470,7 +500,7 @@ function refresh(){
   $('pay').disabled=!ok;
   $('pay-amt').textContent=t>0?('· $'+t.toFixed(2)):'';
 }
-document.addEventListener('DOMContentLoaded',function(){$('prop').addEventListener('input',refresh);renderSvcs();loadCfg();});
+document.addEventListener('DOMContentLoaded',function(){$('prop').addEventListener('input',refresh);renderSvcs();loadCfg();payReturn();});
 
 // ── ⚙️ الإدارة (pay_manage) — بوابة الصفحة، والقاعدة تتحقق مجدداً في pay_set_config ──
 async function adminGate(){
@@ -571,7 +601,66 @@ async function admSave(){
   }catch(e){toast('⚠️ '+(e.message||e));}
 }
 
-function openWhish(){$('wh-amt').textContent='$'+total().toFixed(2);openM('m-whish')}
+function openWhish(){
+  if(payReal())return doPay();
+  $('wh-amt').textContent='$'+total().toFixed(2);openM('m-whish');
+}
+// ── الدفع الفعلي: الطلب يُبنى ويُسعَّر في القاعدة، وWhish لا يكلمه إلا الخادم ──
+async function doPay(){
+  const btn=$('pay');
+  btn.disabled=true;
+  const old=btn.innerHTML; btn.innerHTML='⏳ جارٍ تجهيز الدفعة…';
+  try{
+    const sel=SVCS.filter(function(s){return SEL[s.k]}).map(function(s){
+      return {key:s.k,amount:parseFloat($('amt-'+s.k).value)||0};});
+    const o=await sb.rpc('pay_create_order',{
+      p_phone:(window.phoneE164?phoneE164($('ph').value.trim()):$('ph').value.trim()),
+      p_name:$('nm').value.trim(),
+      p_services:sel,
+      p_property:$('prop').value.trim()||null});
+    if(o.error)throw o.error;
+    const r=await fetch(SB_URL+'/functions/v1/whish-checkout',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({order_id:o.data.order_id})});
+    const j=await r.json().catch(function(){return null;});
+    if(!r.ok||!j||!j.redirect_url)throw new Error((j&&j.error)||'تعذّر فتح صفحة الدفع');
+    location.href=j.redirect_url;      // → صفحة Whish الآمنة
+  }catch(e){
+    toast('⚠️ '+(e.message||e));
+    btn.innerHTML=old; refresh();
+  }
+}
+// العودة من Whish — النجاح يفتح نافذة الإيصال، والفشل يقال بصراحة
+function payReturn(){
+  if(location.hash.indexOf('#paid=')===0){openM('m-paid');history.replaceState(null,'',location.pathname);}
+  else if(location.hash.indexOf('#payfail=')===0){
+    toast('⚠️ لم تكتمل عملية الدفع — لم يُقتطع أي مبلغ، يمكنك المحاولة مجدداً');
+    history.replaceState(null,'',location.pathname);
+  }
+}
+// ── إيصالاتي — حقيقية عندما يكون الربط فعالاً، ومثال للمعاينة قبله ──
+async function loadReceipts(){
+  const ph=$('rc-phone').value.trim(), box=$('rc-list');
+  if(!ph)return;
+  if(!CFG_LIVE&&!CFG_TEST){
+    box.innerHTML='<div class="rc sample"><div class="rc-top"><span class="rc-no">Q-2026-XXX</span><span class="rc-amt">$95.00</span></div><div class="rc-sub">مثال — عند إطلاق الخدمة تظهر إيصالاتك الحقيقية هنا</div></div>';
+    return;
+  }
+  box.innerHTML='⏳ …';
+  try{
+    const r=await sb.rpc('pay_my_orders',{p_phone:(window.phoneE164?phoneE164(ph):ph)});
+    if(r.error)throw r.error;
+    if(!r.data||!r.data.length){box.innerHTML='<div class="sum-empty">لا إيصالات على هذا الرقم بعد</div>';return;}
+    box.innerHTML=r.data.map(function(o){
+      const svcs=(o.services||[]).map(function(s){return s.label;}).join(' + ');
+      const d=new Date(o.created_at).toLocaleDateString('ar-LB');
+      return '<div class="rc"><div class="rc-top"><span class="rc-no">'+esc(o.receipt_no||'…قيد القيد')+'</span>'
+        +'<span class="rc-amt">$'+Number(o.amount).toFixed(2)+'</span></div>'
+        +'<div class="rc-sub">'+esc(svcs)+(o.property_number?' · عقار '+esc(o.property_number):'')+' · '+d+' · Whish ✓</div></div>';
+    }).join('');
+  }catch(e){box.innerHTML='<div style="color:#a52833">⚠️ '+esc(e.message||e)+'</div>';}
+}
 function whishPaid(){
   closeM('m-whish');
   const rows=SVCS.filter(function(s){return SEL[s.k]}).map(function(s){

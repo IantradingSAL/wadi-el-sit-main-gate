@@ -1,19 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// whish-callback — Supabase Edge Function (SCAFFOLD, awaiting the Whish API doc)
+// whish-callback — Supabase Edge Function
 //
-// Whish calls this when a payment settles. The chain it must complete, in one
-// place and only after VERIFYING the notification came from Whish:
+// Whish calls this when a payment settles. The notification itself is NEVER
+// trusted: whoever calls this, for whatever externalId, the function turns
+// around and asks Whish directly (POST /payment/collect/status, authenticated
+// with the merchant secret) and only that answer decides. A forged "paid"
+// therefore cannot book a receipt — at worst it makes us re-check a pending
+// order.
 //
-//   verify signature → pay_orders.status = paid → book the sanad → notify
+//   verify with Whish → pay_orders.status = paid → pay_book_receipt()
 //
-// The receipt is booked into the cash box through the sandouk numbering series
-// (Q-YYYY-NNN) under its advisory lock — the same rule as the paper book: a
-// number is never issued twice. The row carries the payer, the services as the
-// البيان, رقم العقار, and payment_method «Whish», so 📊 التقارير and the CSV
-// see an online payment like any counter payment.
+// pay_book_receipt() issues the سند قبض from the sandouk series under its
+// advisory lock and is idempotent, so Whish retrying the callback (or calling
+// it for both legs) books exactly one receipt.
 //
-// TODO(whish) blocks: the signature/authentication scheme of the callback and
-// the payload field names — both come from the API documentation.
+// Deploy: supabase functions deploy whish-callback --no-verify-jwt
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -24,30 +25,82 @@ const admin = createClient(
 );
 
 Deno.serve(async (req) => {
-  if (req.method !== "POST") return new Response("POST only", { status: 405 });
+  // ── which order? accept the id from query or body, GET or POST ────────────
+  const url = new URL(req.url);
+  let ext = url.searchParams.get("externalId") ?? url.searchParams.get("external_id");
+  if (!ext && req.method === "POST") {
+    const b = await req.json().catch(() => null) as Record<string, unknown> | null;
+    const v = b?.externalId ?? b?.external_id;
+    if (v !== undefined && v !== null) ext = String(v);
+  }
+  const externalId = Number(ext);
+  if (!externalId || !Number.isFinite(externalId)) {
+    return new Response("externalId?", { status: 400 });
+  }
 
   const { data: cfgRow } = await admin
     .from("settings").select("value").eq("key", "pay_whish").single();
-  const cfg = (cfgRow?.value ?? {}) as { secret?: string; enabled?: boolean };
-  if (!cfg.enabled || !cfg.secret) return new Response("not live", { status: 503 });
+  const cfg = (cfgRow?.value ?? {}) as {
+    api_url?: string; channel?: string; secret?: string; website?: string; enabled?: boolean;
+  };
+  if (!cfg.enabled || !cfg.api_url || !cfg.secret) {
+    return new Response("not live", { status: 503 });
+  }
 
-  // ── TODO(whish): verify this call really came from Whish ──────────────────
-  // Per the API doc: HMAC over the body with cfg.secret, a signature header,
-  // or a server-to-server confirmation call — whichever the doc specifies.
-  // An unverifiable notification is dropped with 401; a forged "paid" must
-  // never be able to book a receipt.
-  return new Response("callback verification pending Whish API documentation", {
-    status: 501,
-  });
+  const { data: order } = await admin
+    .from("pay_orders").select("*").eq("external_id", externalId).single();
+  if (!order) return new Response("unknown order", { status: 404 });
+  if (order.status === "paid" && order.receipt_no) {
+    return new Response("ok (already booked)", { status: 200 });
+  }
 
-  // ── After verification (the shape of what follows) ────────────────────────
-  // const { reference: orderId, transactionId } = payload;   // names per doc
-  // 1. load the order; ignore if already paid (callbacks can repeat)
-  // 2. update pay_orders: status='paid', paid_at=now(), whish_ref=transactionId
-  // 3. book the receipt in the sandouk series (advisory lock, next Q number),
-  //    with category per service, البيان from order.services, الجهة the payer,
-  //    property_number, payment_method 'Whish' — then stamp receipt_no back
-  //    onto the order
-  // 4. push to the payer (push_notify via its own token) + the pay/sandouk
-  //    staff per the notify matrix
+  // ── the only voice we trust: Whish itself, asked with the secret ──────────
+  let statusBody:
+    | { status?: boolean; data?: { collectStatus?: string } }
+    | null = null;
+  try {
+    const resp = await fetch(`${cfg.api_url}/payment/collect/status`, {
+      method: "POST",
+      headers: {
+        channel: cfg.channel!,
+        secret: cfg.secret!,
+        websiteurl: cfg.website ?? "app.municipality-wadi-el-sitt.org",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        externalId,
+        currency: order.currency,
+        amount: Number(order.amount),
+      }),
+    });
+    statusBody = await resp.json().catch(() => null);
+    console.log("whish status", externalId, resp.status, JSON.stringify(statusBody));
+  } catch (e) {
+    console.error("status check failed", externalId, e);
+    return new Response("verification unavailable", { status: 502 });
+  }
+  const collectStatus = statusBody?.data?.collectStatus;
+
+  if (collectStatus === "success") {
+    if (order.status !== "paid") {
+      await admin.from("pay_orders")
+        .update({ status: "paid", paid_at: new Date().toISOString() })
+        .eq("id", order.id).eq("status", "pending");
+    }
+    const { data: receipt, error } = await admin.rpc("pay_book_receipt", { p_order: order.id });
+    if (error) {
+      console.error("booking failed", order.id, error.message);
+      return new Response("paid, booking failed", { status: 500 });
+    }
+    console.log("booked", externalId, receipt);
+    return new Response("ok " + receipt, { status: 200 });
+  }
+
+  if (collectStatus === "failed" && order.status === "pending") {
+    await admin.from("pay_orders")
+      .update({ status: "failed" }).eq("id", order.id).eq("status", "pending");
+    return new Response("marked failed", { status: 200 });
+  }
+
+  return new Response("status: " + (collectStatus ?? "unknown"), { status: 200 });
 });
