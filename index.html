@@ -1011,6 +1011,28 @@ const WN_DEFAULT = [
 
 const WN_VERSIONS = [
   {
+    version: '5.4',
+    date: {ar:'أيلول 2026', en:'September 2026', fr:'Septembre 2026'},
+    color: '#eef7f1', badgeColor: '#1f7a45',
+    features: [
+      {icon:'🎛️',
+        title:{ar:'تصفية على كل عمود — لا ترتيب فقط', en:'A Filter on Every Column — Not Just Sorting', fr:'Un filtre sur chaque colonne — pas seulement le tri'},
+        desc:{ar:'كل عمود في سجل صندوق البلدية أصبح قابلاً للتصفية إلى جانب الترتيب، بما فيه عمود «الرصيد» الذي كان يُرتَّب ولا يُصفّى. أعمدة المبالغ (المبلغ، الرصيد، قيمة الطوابع) تفهم الآن المقارنات والنطاقات: ‏«>1م» و«<500 ألف» و«1م-5م» و«=0»، مع تجاهل الفواصل فتكتب 5,000,000 أو ٥٠٠٠٠٠٠ كما تشاء. وأعمدة التواريخ (التاريخ، تاريخ الإيصال) تقبل «2026-05» أو «01/05/2026..30/06/2026» أو «‏>=2026-07-01». أما «الفئة» و«الجهة» و«المستلم/المسلّم» و«أدخلت بواسطة» فصارت قوائم منسدلة مبنية من بيانات السجل نفسه مع عدد الحركات بجانب كل قيمة — فلا مجال بعد اليوم لاختلاف الإملاء بين «انيس» و«أنيس»',
+              en:'Every column in the municipal fund ledger can now be filtered as well as sorted — including «Balance», which could previously only be sorted. Money columns (Amount, Balance, Stamp value) understand comparisons and ranges: «>1m», «<500k», «1m-5m», «=0», and commas and Arabic-Indic digits are ignored, so 5,000,000 and ٥٠٠٠٠٠٠ both work. Date columns (Date, Wassel date) accept «2026-05», «01/05/2026..30/06/2026» or «>=2026-07-01». Category, Party, Handed by and Entered by became dropdowns built from the ledger’s own data with a count beside each value — no more misses because one entry says «انيس» and another «أنيس»',
+              fr:'Chaque colonne du registre de la caisse municipale peut désormais être filtrée en plus d’être triée — y compris « Solde », qui n’était jusqu’ici que triable. Les colonnes monétaires (Montant, Solde, Valeur des timbres) comprennent les comparaisons et les plages : « >1m », « <500k », « 1m-5m », « =0 », les virgules et les chiffres arabes étant ignorés. Les colonnes de dates (Date, Date du wassel) acceptent « 2026-05 », « 01/05/2026..30/06/2026 » ou « >=2026-07-01 ». Catégorie, Partie, Remis par et Saisi par deviennent des listes déroulantes construites à partir des données du registre, avec le nombre d’écritures en regard de chaque valeur'}},
+      {icon:'📊',
+        title:{ar:'التقارير وسجل العمليات: ترتيب وتصفية أيضاً', en:'Reports & Audit Log: Sortable and Filterable Too', fr:'Rapports et journal : triables et filtrables aussi'},
+        desc:{ar:'جداول التقارير الأربعة (المقبوضات حسب الفئة، المصروفات حسب الفئة، حسب الجهة، تقرير الطوابع) وسجل العمليات لم تكن تُرتَّب ولا تُصفّى إطلاقاً. صار لكل عنوان فيها ضغطة للترتيب أ→ي ثم ي→أ ثم إلغاء، وصفّ تصفية تحته بالقواعد نفسها — مع سطر يبيّن كم حركة ظهرت من أصل الكل، ورسالة واضحة حين لا تطابق التصفية شيئاً',
+              en:'The four report tables (income by category, expenses by category, by party, stamps report) and the audit log had neither sorting nor filtering. Every header is now clickable — A→Z, then Z→A, then off — with a filter row underneath following the same rules, a line showing how many rows survived the filter, and a clear message when nothing matches',
+              fr:'Les quatre tableaux de rapports (recettes par catégorie, dépenses par catégorie, par partie, rapport des timbres) et le journal des opérations n’avaient ni tri ni filtre. Chaque en-tête est désormais cliquable — A→Z, puis Z→A, puis annulé — avec une ligne de filtres en dessous suivant les mêmes règles, un compteur des lignes retenues et un message clair quand rien ne correspond'}},
+      {icon:'🗂️',
+        title:{ar:'أرشيف الجباية: صفّ تصفية فوق كل جدول', en:'Revenue Archive: A Filter Row on Every Table', fr:'Archives fiscales : une ligne de filtres sur chaque tableau'},
+        desc:{ar:'في أرشيف MRS كان الترتيب متاحاً على كل عمود لكن من دون تصفية، وهذا لا يكفي على أكثر من ثلاثين ألف سجل. أضفنا صفّ تصفية تحت العناوين في كل التبويبات، ويتعرّف النظام تلقائياً على نوع كل عمود من بياناته: أرقام تقبل «>1م» و«1م-5م»، وتواريخ تقبل النطاقات، والباقي بحث نصّي. ويُظهر العدّاد كم سجلاً بقي من أصل الكل',
+              en:'The MRS archive already sorted on every column but had no filtering, which is not enough across thirty thousand records. A filter row now sits under the headers on every tab, and the column type is detected from the data itself: numeric columns take «>1m» and «1m-5m», date columns take ranges, the rest are text search. The counter shows how many records remain out of the total',
+              fr:'Les archives MRS permettaient déjà le tri sur chaque colonne mais sans filtrage, insuffisant sur trente mille enregistrements. Une ligne de filtres se place désormais sous les en-têtes de chaque onglet, et le type de colonne est détecté à partir des données : les colonnes numériques acceptent « >1m » et « 1m-5m », les colonnes de dates acceptent les plages, le reste est une recherche textuelle. Le compteur indique combien d’enregistrements subsistent'}},
+    ]
+  },
+  {
     version: '5.3',
     date: {ar:'آب 2026', en:'August 2026', fr:'Août 2026'},
     color: '#f3f7fd', badgeColor: '#1a6eb5',
