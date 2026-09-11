@@ -800,7 +800,17 @@ async function adminGate(){
     const u=await sb.auth.getUser();
     if(!u||!u.data||!u.data.user)return;      // only a signed-in staff member
     if(!WadiPerms.loaded())await WadiPerms.load(sb);
-    if(WadiPerms.can('club_games_manage'))$('adm-fab').classList.add('on');
+    if(!WadiPerms.can('club_games_manage'))return;
+    $('adm-fab').classList.add('on');
+    // ‎#admin=bracket أو ‎#admin=bracket:tarneeb — رابط يُحفظ على هاتف الحكم
+    // ويفتح شاشة التحكيم مباشرة (لمن يحمل club_games_manage فقط)
+    const m=(location.hash||'').match(/^#admin(?:=([a-z]+))?(?::([a-z]+))?$/);
+    if(m){
+      if(m[1]&&['regs','bracket','report','cfg'].indexOf(m[1])>=0)ADM.tab=m[1];
+      if(m[2]&&GAMES[m[2]])ADM.game=m[2];
+      document.querySelectorAll('.at').forEach(t=>t.classList.toggle('on',t.dataset.a===ADM.tab));
+      openAdmin();
+    }
   }catch(_e){}
 }
 function openAdmin(){ $('m-adm').classList.add('open'); admRender(); }
