@@ -625,12 +625,14 @@ function openWhish(){
 // ── 🏠 الجباية المستحقة — أي معرّف يعرفه المواطن يوصله إلى رسومه ──
 // العرض فقط هنا؛ البحث والتسعير كلاهما في القاعدة (pay_dues_lookup /
 // pay_dues_create_order) — المتصفح لا يحدد مبلغاً ولا يرى غير المستحق.
-let DUES=[],DU_SEL={};
+let DU_FILES=[],DU_FILE=null,DU_SEL={};
 function fmtAmt(a,c){return c==='LBP'?Number(a).toLocaleString('en-US')+' ل.ل':'$'+Number(a).toFixed(2);}
 async function duFind(){
   const q=$('du-q').value.trim(),box=$('du-list');
-  $('du-pay').style.display='none';DUES=[];
-  if(q.length<3){box.innerHTML='<div class="lk no">اكتب ٣ أحرف أو أرقام على الأقل</div>';return;}
+  $('du-pay').style.display='none';DU_FILES=[];DU_FILE=null;DU_SEL={};
+  // رقم العقار قد يكون رقماً واحداً («0»، «18»)؛ الاسم وحده يحتاج ثلاثة أحرف
+  const numeric=/^[0-9+ ()-]+$/.test(q);
+  if(!numeric&&q.length<3){box.innerHTML='<div class="lk no">اكتب ٣ أحرف من الاسم على الأقل — أو رقم العقار</div>';return;}
   box.innerHTML='<div class="sum-empty">⏳ نبحث في سجل الجباية…</div>';
   try{
     const r=await sb.rpc('pay_dues_lookup',{p_q:q});
@@ -639,31 +641,70 @@ async function duFind(){
       box.innerHTML='<div class="lk no">لا رسوم مستحقة على هذا المعرّف — إن كنت تظن غير ذلك راجع البلدية</div>';
       return;
     }
-    DUES=r.data.dues;DU_SEL={};DUES.forEach(function(d){DU_SEL[d.id]=true;});
-    duRender();
+    DU_FILES=r.data.files||[];
+    // عقار واحد قد يحمل أكثر من مكلّف (قسم ١، قسم ٢…) — لا تُخلط ذممهم
+    if(DU_FILES.length===1)duPick(0); else duRenderFiles();
   }catch(e){box.innerHTML='<div class="lk no">⚠️ '+esc(e.message||e)+'</div>';}
 }
+function duRenderFiles(){
+  $('du-list').innerHTML='<div class="lk ask">🏠 على هذا العقار أكثر من مكلّف — اختر ملفك</div>'
+    +DU_FILES.map(function(f,i){
+      return '<div class="svc" onclick="duPick('+i+')"><div class="svc-row">'
+        +'<div class="svc-i">📇</div><div style="flex:1">'
+        +'<div class="svc-t">'+esc(f.owner_name)+'</div>'
+        +'<div class="svc-tags"><span class="tag">عقار '+esc(f.property_number)+'</span>'
+        +(f.taxpayer_no?'<span class="tag">مكلّف '+esc(f.taxpayer_no)+'</span>':'')
+        +(f.unit?'<span class="tag">'+esc(f.unit)+'</span>':'')
+        +'<span class="tag">'+f.dues.length+' سنة</span></div></div>'
+        +'<span class="du-amt">'+fmtAmt(f.total,f.currency)+'</span>'
+        +'<div class="svc-chk">›</div></div></div>';
+    }).join('');
+}
+function duPick(i){
+  DU_FILE=DU_FILES[i];
+  DU_SEL={};
+  // كل السنوات مختارة ابتداءً — والمواطن يقلّص من الأحدث نزولاً
+  DU_FILE.dues.forEach(function(d){DU_SEL[d.id]=true;});
+  duRender();
+}
+// الأقدم أولاً: اختيار سنة يجرّ معها كل ما هو أقدم منها، وإلغاؤها يُلغي
+// كل ما هو أحدث — وهي القاعدة نفسها التي تطبّقها pay_dues_create_order.
+function duTog(id){
+  const list=DU_FILE.dues,i=list.findIndex(function(d){return d.id===id;});
+  if(i<0)return;
+  const on=!DU_SEL[id];
+  list.forEach(function(d,j){
+    if(on){ if(j<=i)DU_SEL[d.id]=true; }
+    else  { if(j>=i)DU_SEL[d.id]=false; }
+  });
+  duRender();
+}
 function duRender(){
-  const box=$('du-list');
-  box.innerHTML='<div class="lk ok">🏠 عقار <b>'+esc(DUES[0].property_number)+'</b> — '+esc(DUES[0].owner_name)+'</div>'
-    +DUES.map(function(d){
+  const f=DU_FILE,box=$('du-list');
+  box.innerHTML='<div class="lk ok">🏠 عقار <b>'+esc(f.property_number)+'</b> — '+esc(f.owner_name)
+      +(f.taxpayer_no?' <span class="tag">مكلّف '+esc(f.taxpayer_no)+'</span>':'')
+      +(DU_FILES.length>1?' · <a href="#" onclick="duBack();return false">تغيير المكلّف</a>':'')+'</div>'
+    +'<div class="lk ask">🧾 الدفع يبدأ من أقدم سنة — يمكنك تسديد المتأخرات كلها أو جزءاً منها، '
+      +'على أن تبقى السنوات المدفوعة متتالية من الأقدم.</div>'
+    +f.dues.map(function(d){
       const on=!!DU_SEL[d.id];
       return '<div class="svc'+(on?' on':'')+'" onclick="duTog(\''+d.id+'\')">'
         +'<div class="svc-row"><div class="svc-i">🧾</div>'
-        +'<div style="flex:1"><div class="svc-t">'+esc(d.label)+' — '+d.year+'</div></div>'
+        +'<div style="flex:1"><div class="svc-t">'+esc(d.label)+' — '+d.year+'</div>'
+        +(d.detail?'<div class="svc-tags"><span class="tag">'+esc(d.detail)+'</span></div>':'')+'</div>'
         +'<span class="du-amt">'+fmtAmt(d.amount,d.currency)+'</span>'
         +'<div class="svc-chk">'+(on?'✓':'')+'</div></div></div>';
     }).join('')
     +'<div class="sum-tot"><span>المجموع المختار</span><span class="v" id="du-tot">—</span></div>';
   duRefresh();
 }
-function duTog(id){DU_SEL[id]=!DU_SEL[id];duRender();}
-function duSel(){return DUES.filter(function(d){return DU_SEL[d.id]});}
+function duBack(){DU_FILE=null;DU_SEL={};$('du-pay').style.display='none';duRenderFiles();}
+function duSel(){return DU_FILE?DU_FILE.dues.filter(function(d){return DU_SEL[d.id]}):[];}
 function duRefresh(){
   const sel=duSel(),btn=$('du-pay');
   const t=sel.reduce(function(s,d){return s+Number(d.amount)},0);
   const el=$('du-tot');if(el)el.textContent=sel.length?fmtAmt(t,sel[0].currency):'—';
-  btn.style.display=DUES.length?'flex':'none';
+  btn.style.display=DU_FILE?'flex':'none';
   btn.disabled=!sel.length;
   $('du-pay-amt').textContent=sel.length?('· '+fmtAmt(t,sel[0].currency)):'';
 }

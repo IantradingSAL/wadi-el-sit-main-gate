@@ -58,6 +58,37 @@ agree about the same person.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 
+## الجباية المستحقة (`pay.html` · 💰 in `sandouk.html`)
+
+- **The cash box records what was paid; `pay_dues` records what is owed.** The
+  two meet when Whish confirms: `pay_book_receipt` writes the قبض entry and
+  stamps its number back onto the dues rows, so no one reconciles by hand.
+- **A due belongs to a ملف مكلّف, not to a property.** عقار 18 carries two
+  مكلّفين (٨٦ و٨٧), عقار 54 carries three. `file_key` is generated from
+  `taxpayer_no @ property_number` — never typed, so it cannot drift from the two
+  columns it is made of. Keyed on the property alone, a lookup put two families'
+  debts in one basket and one name on the other's receipt.
+- **Oldest first, and the database is what refuses.** `pay_dues_create_order`
+  rejects a selection that leaves an older unpaid year behind, naming it. The
+  page makes the same rule feel natural — ticking a year pulls every older one
+  with it, unticking one drops every newer one — but a rule that lives only in
+  the browser is not a rule.
+- **A property number can be one digit.** «0», «2», «18» are real numbers in
+  this تكليف: the three-character minimum locked a fifth of the town out of its
+  own dues. A number matches exactly and so reveals nothing else; only a name
+  search still needs three letters, so that the lookup never becomes a roll call.
+- **The roll arrives once a year as a PDF.** ⬆️ استيراد تكليف in 💰 الجباية takes
+  it pasted from Excel — عقار, مكلّف, اسم, سنة, مبلغ — previews what it
+  understood and what it rejected, and inserts. Nobody types 246 lines, and no
+  resident's name ever passes through a file in this repository.
+- The key is **`pay_dues_manage`** (super_admin, mayor, admin by default):
+  the tab, the table's RLS and `pay_dues_files()` all ask for that same key.
+- **The 2026 opening load, for the record:** the الأموال الباقية بدون تحصيل
+  report of 2026-09-12 — 139 مكلّفاً, 246 بنداً, **514,270,000 ل.ل**, years
+  2013→2026, each مكلّف's own المجموع matching the sum of their years. Loaded
+  straight into the database, never into a migration file: a file at the repo
+  root is served on the municipality's domain to anyone who asks.
+
 ## Cooperative (`coop.html`)
 
 - **Sellers and delivery agents hold a session token**, not a `localStorage`
