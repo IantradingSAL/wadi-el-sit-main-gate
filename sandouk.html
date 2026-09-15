@@ -235,6 +235,7 @@ button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-wei
       <button class="bf-tab" id="bf-tab-income" onclick="bfShowTab('income')">🟢 سند قبض</button>
       <button class="bf-tab" id="bf-tab-expense" onclick="bfShowTab('expense')">🔴 سند صرف</button>
       <button class="bf-tab" id="bf-tab-reports" onclick="bfShowTab('reports')">📊 التقارير</button>
+      <button class="bf-tab" id="bf-tab-dues" style="display:none" onclick="bfShowTab('dues')">💰 الجباية المستحقة</button>
       <button class="bf-tab" id="bf-tab-audit" onclick="bfShowTab('audit')">📜 سجل العمليات</button>
       <button class="bf-tab" id="bf-tab-settings" style="display:none" onclick="bfShowTab('settings')">⚙️ الإعدادات</button>
     </div>
@@ -484,6 +485,44 @@ button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-wei
       </div>
     </div>
 
+    <!-- DUES — الجباية المستحقة (pay_dues_manage) -->
+    <div id="bf-pane-dues" style="display:none">
+      <div class="bf-card">
+        <div class="bf-sumtitle">💰 الجباية المستحقة</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
+          ما يتوجّب على كل مكلّف، سنةً بسنة. هذا ما يراه المواطن على صفحة الدفع
+          <span class="mono" style="direction:ltr;display:inline-block">pay.html</span>
+          ويسدّده عبر Whish — <b>من الأقدم إلى الأحدث</b>؛ لا يُدفع عام وتُترك سنة أقدم منه معلّقة.
+          كل دفعة ناجحة تُقيَّد إيصالاً في دفتر الصندوق وتُختم هنا برقمه.
+        </div>
+        <div class="bf-kpis" style="margin-bottom:12px">
+          <div class="bf-kpi exp"><div class="v" id="bf-du-k-due">—</div><div class="l">المستحق غير المحصّل</div></div>
+          <div class="bf-kpi inc"><div class="v" id="bf-du-k-paid">—</div><div class="l">المحصّل إلكترونياً</div></div>
+          <div class="bf-kpi"><div class="v" id="bf-du-k-files" style="color:#555">—</div><div class="l">ملفات المكلّفين</div></div>
+          <div class="bf-kpi"><div class="v" id="bf-du-k-old" style="color:#8a6d1a">—</div><div class="l">أقدم سنة مستحقة</div></div>
+        </div>
+        <div class="bf-views">
+          <span style="font-size:12px;font-weight:800;color:#0f4d82">👁️ العرض:</span>
+          <button class="bf-vbtn primary" id="bf-du-v-files" onclick="bfDuView('files')">📇 حسب المكلّف</button>
+          <button class="bf-vbtn" id="bf-du-v-rows" onclick="bfDuView('rows')">🧾 حسب البند</button>
+          <button class="bf-vbtn primary" onclick="bfDuAdd()">➕ بند جديد</button>
+          <button class="bf-vbtn" onclick="bfDuImportOpen()">⬆️ استيراد تكليف</button>
+          <button class="bf-vbtn" onclick="bfDuExport()">⬇️ تصدير CSV</button>
+          <button class="bf-vbtn" onclick="bfDuLoad(true)">↻ تحديث</button>
+        </div>
+        <div class="bf-filters">
+          <div style="flex:2;min-width:200px"><label class="fl">🔍 بحث</label>
+            <input type="text" class="fi" id="bf-du-f-q" placeholder="رقم العقار، اسم المكلّف، رقم المكلّف، رقم الإيصال…" oninput="bfDuRender()"></div>
+          <div><label class="fl">السنة</label><select class="fi" id="bf-du-f-year" onchange="bfDuRender()"><option value="">الكل</option></select></div>
+          <div><label class="fl">الحالة</label><select class="fi" id="bf-du-f-st" onchange="bfDuRender()">
+            <option value="unpaid">مستحق</option><option value="paid">مدفوع</option>
+            <option value="cancelled">ملغى</option><option value="">الكل</option></select></div>
+        </div>
+        <div class="bf-tblwrap"><table id="bf-du-tbl"><thead></thead><tbody></tbody></table></div>
+        <div id="bf-du-empty" style="font-size:13px;color:#8a95a3;padding:14px 4px;display:none"></div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div id="bf-pane-settings" style="display:none">
       <div class="bf-card">
@@ -508,6 +547,28 @@ button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-wei
   <datalist id="bf-dl-persons"></datalist>
   <datalist id="bf-dl-handlers"></datalist>
   <datalist id="bf-dl-desc"></datalist>
+</div>
+
+<!-- DUES IMPORT MODAL -->
+<div class="bf-share-ov" id="bf-du-imp-ov" style="display:none" onclick="if(event.target===this)bfDuImportClose()">
+  <div class="bf-share-box" style="max-width:640px">
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">⬆️ استيراد تكليف</div>
+    <div style="font-size:12.5px;color:#6b7280;line-height:1.7;margin-bottom:10px">
+      سطر لكل بند، والأعمدة مفصولة بفاصلة أو بمسافة جدولية (Tab) — كما تُنسخ من Excel مباشرة:<br>
+      <span class="mono" style="direction:ltr;display:inline-block;background:#f3f6fa;padding:3px 7px;border-radius:6px;margin-top:4px">
+        رقم العقار , رقم المكلف , الاسم , السنة , المبلغ</span><br>
+      أو مع عمودين إضافيين: <span class="mono" style="direction:ltr;display:inline-block">… , السنة , بلوك/طابق/شقة , المبلغ , البند</span><br>
+      البنود تُضاف ولا تستبدل شيئاً؛ راجع المعاينة قبل التأكيد.
+    </div>
+    <textarea id="bf-du-imp-txt" oninput="bfDuImportPreview()" dir="ltr" rows="8"
+      style="width:100%;box-sizing:border-box;font-family:monospace;font-size:13px;padding:10px;border:1px solid #d5dee6;border-radius:9px"
+      placeholder="&#1633;&#1634;&#1635;,&#1636;&#1637;,&#1575;&#1587;&#1605; &#1575;&#1604;&#1605;&#1603;&#1604;&#1617;&#1601;,2026,2130000"></textarea>
+    <div id="bf-du-imp-prev" style="margin:10px 0"></div>
+    <div style="display:flex;gap:9px">
+      <button class="bf-vbtn" style="flex:1" onclick="bfDuImportClose()">إلغاء</button>
+      <button class="bf-vbtn primary" style="flex:1" id="bf-du-imp-go" onclick="bfDuImportRun()">استيراد</button>
+    </div>
+  </div>
 </div>
 
 <!-- SHARE MODAL -->
@@ -741,6 +802,13 @@ function bfStart(user){
   // the cash box's settings — today that is ترقيم السندات alone.
   const st=document.getElementById('bf-tab-settings');
   if(st) st.style.display = bfCanSeries() ? '' : 'none';
+  // 💰 الجباية — its own key, the same one the table's RLS asks for
+  const du=document.getElementById('bf-tab-dues');
+  if(du) du.style.display = bfCanDues() ? '' : 'none';
+  if(!bfCanDues()){
+    const dp=document.getElementById('bf-pane-dues');
+    if(dp && dp.style.display!=='none'){dp.style.display='none';bfShowTab('ledger');}
+  }
   if(!bfCanSeries()){
     // permission revoked between sessions — never leave the pane on screen
     const sp=document.getElementById('bf-pane-settings');
@@ -1192,10 +1260,15 @@ function bfShowTab(t){
     toast('🔒 الإعدادات متاحة للمشرف العام','err');
     return;
   }
+  if(t==='dues'&&!bfCanDues()){
+    toast('🔒 الجباية المستحقة تحتاج صلاحية إدارة الجباية','err');
+    return;
+  }
   if(t==='audit')bfLoadAudit();
   if(t==='reports')bfRenderReports();
   if(t==='settings')bfSettingsRender();
-  ['ledger','income','expense','reports','audit','settings'].forEach(x=>{
+  if(t==='dues')bfDuLoad();
+  ['ledger','income','expense','reports','audit','settings','dues'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
@@ -3903,6 +3976,293 @@ async function bfSignSave(){
   const s=bfSigs(bfSignTarget);
   bfSignRole=BF_SIGN_ROLES.find(k=>!(s[k]&&s[k].img))||bfSignRole;
   bfSignRenderRoles();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 💰 الجباية المستحقة — ما يتوجّب، مقابل ما قُبض
+//
+// The ledger above records what WAS paid; pay_dues records what is OWED, and
+// pay.html is the citizen's window onto it. The two meet at the moment Whish
+// confirms: pay_book_receipt writes the قبض entry and stamps its number back
+// onto the due, so nothing here has to be reconciled by hand.
+//
+// Reading and writing both ride the table's own RLS (has_perm('pay_dues_manage')),
+// never a side door — the screen only decides what to draw.
+// ══════════════════════════════════════════════════════════════════════════
+let bfDues=[],bfDuFiles=[],bfDuMode='files',bfDuLoaded=false;
+function bfCanDues(){return !!bfUser && WadiPerms.can('pay_dues_manage');}
+function bfDuYear(d){return Number(d.year)||0;}
+function bfDuAmt(d){return Number(d.amount)||0;}
+
+async function bfDuLoad(force){
+  if(!bfCanDues())return;
+  // العودة إلى التبويب تعيد الرسم من الصفوف المحمّلة — ولا تُنزلها مرة ثانية
+  if(bfDuLoaded&&!force){bfDuRender();return;}
+  const tb=document.querySelector('#bf-du-tbl tbody');
+  if(tb)tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#8a95a3;padding:16px">⏳ جارٍ تحميل الجباية…</td></tr>';
+  try{
+    const[r,f]=await Promise.all([
+      sb.from('pay_dues').select('*').order('property_number').order('year'),
+      sb.rpc('pay_dues_files')]);
+    if(r.error)throw r.error;
+    if(f.error)throw f.error;
+    bfDues=r.data||[];
+    bfDuFiles=(f.data||[]).slice().sort(function(a,b){
+      return (b.due_total-a.due_total)||String(a.property_number).localeCompare(String(b.property_number));});
+    bfDuLoaded=true;
+    bfDuFillYears();
+    bfDuRender();
+  }catch(e){
+    if(tb)tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#a83232;padding:16px">⚠️ '+bfEsc(e.message||e)+'</td></tr>';
+  }
+}
+function bfDuFillYears(){
+  const sel=document.getElementById('bf-du-f-year');if(!sel)return;
+  const cur=sel.value;
+  const years=Array.from(new Set(bfDues.map(bfDuYear))).filter(Boolean).sort();
+  sel.innerHTML='<option value="">الكل</option>'+years.map(function(y){return '<option>'+y+'</option>';}).join('');
+  if(cur)sel.value=cur;
+}
+function bfDuView(m){
+  bfDuMode=m;
+  const a=document.getElementById('bf-du-v-files'),b=document.getElementById('bf-du-v-rows');
+  if(a)a.classList.toggle('primary',m==='files');
+  if(b)b.classList.toggle('primary',m==='rows');
+  bfDuRender();
+}
+function bfDuMatch(d,q){
+  if(!q)return true;
+  return [d.property_number,d.owner_name,d.taxpayer_no,d.receipt_no,d.phone,d.label,d.year]
+    .some(function(v){return String(v==null?'':v).toLowerCase().indexOf(q)>-1;});
+}
+function bfDuFiltered(){
+  const q=(document.getElementById('bf-du-f-q').value||'').trim().toLowerCase();
+  const y=document.getElementById('bf-du-f-year').value;
+  const st=document.getElementById('bf-du-f-st').value;
+  return bfDues.filter(function(d){
+    if(st&&d.status!==st)return false;
+    if(y&&String(d.year)!==String(y))return false;
+    return bfDuMatch(d,q);
+  });
+}
+function bfDuRender(){
+  if(!bfCanDues())return;
+  const rows=bfDuFiltered();
+  // المجاميع تُحسب من الصفوف المعروضة نفسها — لا رقم على الشاشة بلا مصدر ظاهر
+  const unpaid=bfDues.filter(function(d){return d.status==='unpaid';});
+  const paid=bfDues.filter(function(d){return d.status==='paid';});
+  const k=function(id,v){const el=document.getElementById(id);if(el)el.textContent=v;};
+  k('bf-du-k-due',bfMoney(unpaid.reduce(function(s,d){return s+bfDuAmt(d);},0),'LBP'));
+  k('bf-du-k-paid',bfMoney(paid.reduce(function(s,d){return s+bfDuAmt(d);},0),'LBP'));
+  k('bf-du-k-files',bfFmt(new Set(unpaid.map(function(d){return d.file_key;})).size));
+  k('bf-du-k-old',unpaid.length?Math.min.apply(null,unpaid.map(bfDuYear)):'—');
+  (bfDuMode==='files'?bfDuRenderFiles:bfDuRenderRows)(rows);
+}
+function bfDuRenderRows(rows){
+  const th=document.querySelector('#bf-du-tbl thead'),tb=document.querySelector('#bf-du-tbl tbody');
+  const empty=document.getElementById('bf-du-empty');
+  th.innerHTML='<tr class="bf-hh"><th>العقار</th><th>المكلّف</th><th>الاسم</th><th>بلوك/طابق/شقة</th>'
+    +'<th>السنة</th><th>البند</th><th>المبلغ</th><th>الحالة</th><th></th></tr>';
+  tb.innerHTML=rows.map(function(d){
+    return '<tr>'
+      +'<td style="direction:ltr;unicode-bidi:embed;font-weight:800;color:#0f4d82">'+bfEsc(d.property_number)+'</td>'
+      +'<td style="direction:ltr;unicode-bidi:embed">'+bfEsc(d.taxpayer_no||'—')+'</td>'
+      +'<td style="white-space:normal;min-width:160px">'+bfEsc(d.owner_name)
+        +(d.phone?'<div style="font-size:11px;color:#8a95a3;direction:ltr;unicode-bidi:embed">'+bfEsc(window.phoneDisplay?phoneDisplay(d.phone):d.phone)+'</div>':'')+'</td>'
+      +'<td style="direction:ltr;unicode-bidi:embed;font-size:12px;color:#6b7280">'+bfEsc(d.unit||'—')+'</td>'
+      +'<td style="font-weight:800">'+bfEsc(d.year)+'</td>'
+      +'<td style="white-space:normal;min-width:170px">'+bfEsc(d.label)
+        +(d.detail?'<div style="font-size:11px;color:#8a95a3">'+bfEsc(d.detail)+'</div>':'')+'</td>'
+      +'<td class="bf-pos" style="font-weight:800">'+bfMoney(bfDuAmt(d),d.currency||'LBP')+'</td>'
+      +'<td>'+bfDuBadge(d)+'</td>'
+      +'<td style="text-align:center">'+bfDuMenu(d)+'</td>'
+      +'</tr>';
+  }).join('');
+  empty.style.display=rows.length?'none':'';
+  empty.textContent=rows.length?'':'لا بنود ضمن هذا الفلتر.';
+}
+function bfDuRenderFiles(rows){
+  // ملف المكلّف = عقار + رقم مكلّف، وهو ما يدفع عنه دفعة واحدة
+  const keep=new Set(rows.map(function(d){return d.file_key;}));
+  const files=bfDuFiles.filter(function(f){return keep.has(f.file_key);});
+  const th=document.querySelector('#bf-du-tbl thead'),tb=document.querySelector('#bf-du-tbl tbody');
+  const empty=document.getElementById('bf-du-empty');
+  th.innerHTML='<tr class="bf-hh"><th>العقار</th><th>المكلّف</th><th>الاسم</th><th>الهاتف</th>'
+    +'<th>سنوات مستحقة</th><th>من سنة</th><th>المستحق</th><th>المحصّل</th><th></th></tr>';
+  tb.innerHTML=files.map(function(f){
+    const late=f.oldest_year&&(new Date().getFullYear()-f.oldest_year)>=2;
+    return '<tr>'
+      +'<td style="direction:ltr;unicode-bidi:embed;font-weight:800;color:#0f4d82">'+bfEsc(f.property_number)+'</td>'
+      +'<td style="direction:ltr;unicode-bidi:embed">'+bfEsc(f.taxpayer_no||'—')+'</td>'
+      +'<td style="white-space:normal;min-width:170px">'+bfEsc(f.owner_name)
+        +(f.unit?'<div style="font-size:11px;color:#8a95a3;direction:ltr;unicode-bidi:embed">'+bfEsc(f.unit)+'</div>':'')+'</td>'
+      +'<td style="direction:ltr;unicode-bidi:embed;font-size:12px">'
+        +(f.phone?bfEsc(window.phoneDisplay?phoneDisplay(f.phone):f.phone)
+                :'<span class="bf-badge" style="background:#fdecec;color:#c22;font-size:10.5px">بلا هاتف</span>')+'</td>'
+      +'<td style="text-align:center;font-weight:800">'+bfEsc(f.years_unpaid||0)+'</td>'
+      +'<td style="text-align:center;font-weight:800;color:'+(late?'#a83232':'#6b7280')+'">'+bfEsc(f.oldest_year||'—')+'</td>'
+      +'<td class="bf-neg" style="font-weight:800">'+bfMoney(Number(f.due_total)||0,f.currency||'LBP')+'</td>'
+      +'<td class="bf-pos">'+(Number(f.paid_total)?bfMoney(Number(f.paid_total),f.currency||'LBP')
+        +(f.last_receipt?'<div style="font-size:11px;color:#8a95a3">'+bfEsc(f.last_receipt)+'</div>':''):'—')+'</td>'
+      +'<td style="text-align:center"><button class="bf-vbtn" onclick="bfDuFileOpen(\''+bfEsc(f.file_key).replace(/'/g,"\\'")+'\')">⋯</button></td>'
+      +'</tr>';
+  }).join('');
+  empty.style.display=files.length?'none':'';
+  empty.textContent=files.length?'':'لا ملفات ضمن هذا الفلتر.';
+}
+function bfDuBadge(d){
+  if(d.status==='paid')return '<span class="bf-badge" style="background:#e8f6ed;color:#1f7a45">✓ مدفوع'
+    +(d.receipt_no?' · '+bfEsc(d.receipt_no):'')+'</span>';
+  if(d.status==='cancelled')return '<span class="bf-badge" style="background:#f1f3f5;color:#6b7280">⛔ ملغى</span>';
+  return '<span class="bf-badge" style="background:#fdecec;color:#c22">مستحق</span>';
+}
+function bfDuMenu(d){
+  return '<button class="bf-vbtn" onclick="bfDuRowOpen(\''+d.id+'\')">⋯</button>';
+}
+async function bfDuRowOpen(id){
+  const d=bfDues.find(function(x){return x.id===id;});if(!d)return;
+  if(d.status==='paid'){
+    await wadiAlert('هذا البند مدفوع بالإيصال '+(d.receipt_no||'—')+' — يُعدَّل من دفتر الصندوق لا من هنا.');
+    return;
+  }
+  const f=await wadiForm({title:'✏️ تعديل بند جباية',
+    note:'عقار '+d.property_number+' · مكلّف '+(d.taxpayer_no||'—')+' — '+d.owner_name,
+    fields:[
+      {key:'owner_name',label:'اسم المكلّف',value:d.owner_name,required:true},
+      {key:'year',label:'سنة التكليف',value:d.year,type:'number',inputmode:'numeric',required:true},
+      {key:'label',label:'البند',value:d.label,required:true},
+      {key:'amount',label:'المبلغ (ل.ل)',value:d.amount,type:'number',inputmode:'numeric',required:true},
+      {key:'detail',label:'تفصيل الرسوم',value:d.detail||''},
+      {key:'phone',label:'هاتف المكلّف',value:d.phone||'',type:'tel',dir:'ltr',placeholder:'+961 3 000 000'}
+    ],okText:'حفظ'});
+  if(!f)return;
+  const patch={owner_name:f.owner_name,year:Number(f.year),label:f.label,
+    amount:Number(f.amount),detail:f.detail||null,
+    phone:f.phone?(window.phoneE164?phoneE164(f.phone):f.phone):null};
+  if(!(patch.amount>0)){toast('⚠️ المبلغ يجب أن يكون أكبر من صفر','err');return;}
+  const r=await sb.from('pay_dues').update(patch).eq('id',id);
+  if(r.error){toast('⚠️ '+r.error.message,'err');return;}
+  toast('✓ حُفظ البند');
+  bfDuLoad(true);
+}
+async function bfDuFileOpen(fileKey){
+  const rows=bfDues.filter(function(d){return d.file_key===fileKey;});
+  if(!rows.length)return;
+  const one=rows[0];
+  const f=await wadiForm({title:'📇 ملف المكلّف',
+    note:'عقار '+one.property_number+' · مكلّف '+(one.taxpayer_no||'—')+' — '+rows.length+' بنداً.\n'
+      +'الهاتف يُطبَّق على بنود هذا الملف كلها، وبه يجد المواطن جبايته على صفحة الدفع.',
+    fields:[
+      {key:'owner_name',label:'اسم المكلّف',value:one.owner_name,required:true},
+      {key:'phone',label:'الهاتف',value:one.phone||'',type:'tel',dir:'ltr',placeholder:'+961 3 000 000'},
+      {key:'unit',label:'بلوك/طابق/شقة',value:one.unit||'',dir:'ltr'}
+    ],okText:'حفظ على الملف'});
+  if(!f)return;
+  const patch={owner_name:f.owner_name,unit:f.unit||null,
+    phone:f.phone?(window.phoneE164?phoneE164(f.phone):f.phone):null};
+  if(f.phone&&window.phoneValid&&!phoneValid(f.phone)){toast('⚠️ رقم الهاتف غير صالح','err');return;}
+  const r=await sb.from('pay_dues').update(patch).eq('file_key',fileKey).neq('status','paid');
+  if(r.error){toast('⚠️ '+r.error.message,'err');return;}
+  toast('✓ حُدّث ملف المكلّف');
+  bfDuLoad(true);
+}
+async function bfDuAdd(){
+  const f=await wadiForm({title:'➕ بند جباية جديد',
+    note:'رقم العقار ورقم المكلّف معاً هما ملف المكلّف — البند الذي يحمل الرقمين نفسيهما ينضم إلى ملفه.',
+    fields:[
+      {key:'property_number',label:'رقم العقار',required:true,dir:'ltr',inputmode:'numeric'},
+      {key:'taxpayer_no',label:'رقم المكلّف',dir:'ltr',inputmode:'numeric'},
+      {key:'owner_name',label:'اسم المكلّف',required:true},
+      {key:'year',label:'سنة التكليف',type:'number',inputmode:'numeric',value:new Date().getFullYear(),required:true},
+      {key:'label',label:'البند',value:'جباية ورسوم بلدية',required:true},
+      {key:'amount',label:'المبلغ (ل.ل)',type:'number',inputmode:'numeric',required:true},
+      {key:'phone',label:'هاتف المكلّف',type:'tel',dir:'ltr',placeholder:'+961 3 000 000'}
+    ],okText:'إضافة'});
+  if(!f)return;
+  if(!(Number(f.amount)>0)){toast('⚠️ المبلغ يجب أن يكون أكبر من صفر','err');return;}
+  const r=await sb.from('pay_dues').insert({
+    property_number:f.property_number,taxpayer_no:f.taxpayer_no||null,
+    owner_name:f.owner_name,year:Number(f.year),label:f.label,
+    amount:Number(f.amount),currency:'LBP',
+    phone:f.phone?(window.phoneE164?phoneE164(f.phone):f.phone):null});
+  if(r.error){toast('⚠️ '+r.error.message,'err');return;}
+  toast('✓ أُضيف البند');
+  bfDuLoad(true);
+}
+// ── ⬆️ استيراد تكليف — سطر لكل بند، كما يخرج من جدول التكليف ──────────────
+// The roll arrives once a year as a PDF; this is how it becomes rows without
+// anyone typing 246 lines, and without the names ever passing through a file
+// in the repository.
+function bfDuImportOpen(){
+  const ov=document.getElementById('bf-du-imp-ov');
+  document.getElementById('bf-du-imp-txt').value='';
+  document.getElementById('bf-du-imp-prev').innerHTML='';
+  ov.style.display='flex';
+}
+function bfDuImportClose(){document.getElementById('bf-du-imp-ov').style.display='none';}
+function bfDuParse(txt){
+  const out=[],bad=[];
+  (txt||'').split(/\r?\n/).forEach(function(line,i){
+    const t=line.trim();
+    if(!t)return;
+    const c=t.split(/\t|,|;/).map(function(x){return x.trim();});
+    if(c.length<5){bad.push((i+1)+': أعمدة ناقصة');return;}
+    const amount=Number(String(c[5]!=null&&c.length>5?c[5]:c[4]).replace(/[^\d.]/g,''));
+    const rec={property_number:c[0],taxpayer_no:c[1]||null,owner_name:c[2],
+      year:Number(String(c[3]).replace(/[^\d]/g,'')),
+      amount:amount,label:c[6]||'جباية ورسوم بلدية',
+      unit:(c.length>5?c[4]:null)||null,currency:'LBP'};
+    if(!rec.property_number||!rec.owner_name){bad.push((i+1)+': العقار أو الاسم فارغ');return;}
+    if(!(rec.year>1900&&rec.year<2100)){bad.push((i+1)+': سنة غير صالحة');return;}
+    if(!(rec.amount>0)){bad.push((i+1)+': مبلغ غير صالح');return;}
+    out.push(rec);
+  });
+  return{rows:out,bad:bad};
+}
+function bfDuImportPreview(){
+  const r=bfDuParse(document.getElementById('bf-du-imp-txt').value);
+  const box=document.getElementById('bf-du-imp-prev');
+  const tot=r.rows.reduce(function(s,x){return s+x.amount;},0);
+  box.innerHTML='<div style="font-size:13px;margin-bottom:8px">'
+    +'✓ <b>'+r.rows.length+'</b> بنداً صالحاً — المجموع <b>'+bfMoney(tot,'LBP')+'</b>'
+    +(r.bad.length?' · <span style="color:#a83232">'+r.bad.length+' سطراً مرفوضاً</span>':'')+'</div>'
+    +(r.bad.length?'<div style="font-size:12px;color:#a83232;max-height:90px;overflow:auto">'
+      +r.bad.map(bfEsc).join('<br>')+'</div>':'')
+    +(r.rows.length?'<div class="bf-tblwrap" style="max-height:200px;overflow:auto"><table><tbody>'
+      +r.rows.slice(0,20).map(function(x){return '<tr><td>'+bfEsc(x.property_number)+'</td><td>'+bfEsc(x.taxpayer_no||'—')
+      +'</td><td>'+bfEsc(x.owner_name)+'</td><td>'+x.year+'</td><td>'+bfMoney(x.amount,'LBP')+'</td></tr>';}).join('')
+      +'</tbody></table></div>':'');
+}
+async function bfDuImportRun(){
+  const r=bfDuParse(document.getElementById('bf-du-imp-txt').value);
+  if(!r.rows.length){toast('⚠️ لا بنود صالحة للاستيراد','err');return;}
+  const tot=r.rows.reduce(function(s,x){return s+x.amount;},0);
+  if(!await wadiConfirm('إضافة '+r.rows.length+' بنداً بمجموع '+bfMoney(tot,'LBP')+' إلى الجباية المستحقة؟'))return;
+  const btn=document.getElementById('bf-du-imp-go');
+  btn.disabled=true;const old=btn.textContent;btn.textContent='⏳ جارٍ الاستيراد…';
+  try{
+    for(let i=0;i<r.rows.length;i+=100){
+      const res=await sb.from('pay_dues').insert(r.rows.slice(i,i+100));
+      if(res.error)throw res.error;
+    }
+    toast('✓ استُورد '+r.rows.length+' بنداً');
+    bfDuImportClose();
+    bfDuLoad(true);
+  }catch(e){toast('⚠️ '+(e.message||e),'err');}
+  btn.disabled=false;btn.textContent=old;
+}
+function bfDuExport(){
+  const rows=bfDuFiltered();
+  if(!rows.length){toast('⚠️ لا شيء لتصديره','err');return;}
+  const head=['رقم العقار','رقم المكلف','اسم المكلف','بلوك/طابق/شقة','السنة','البند','التفصيل','المبلغ','العملة','الحالة','رقم الإيصال','الهاتف'];
+  const esc=function(v){const t=String(v==null?'':v).replace(/"/g,'""');return /[",\n]/.test(t)?'"'+t+'"':t;};
+  const csv=[head.join(',')].concat(rows.map(function(d){return [d.property_number,d.taxpayer_no,d.owner_name,
+    d.unit,d.year,d.label,d.detail,d.amount,d.currency,d.status,d.receipt_no,d.phone].map(esc).join(',');})).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='جباية-وادي-الست-'+bfToday()+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 // ── 🔐 AUTH (standalone) ──
