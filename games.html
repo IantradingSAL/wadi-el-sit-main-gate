@@ -975,6 +975,9 @@ async function admBracket(box){
       return '<button class="seat'+sel+'" onclick="seatTap(\''+r.id+'\')"><span class="si">'+pref+'</span>'
         +'<span class="sn">'+esc(nameOf(r))+(r.own_board?' 🎲':'')+'</span></button>';
     };
+    if(regs.length>1)
+      html+='<button class="abtn" onclick="admShuffle()">🎲 قرعة عشوائية — النظام يوزّع الطاولات</button>'
+        +'<div style="font-size:10.5px;color:#8d93a6;margin:4px 2px 0">توزيع محايد أمام الجميع — شاشة القاعة تعرض النتيجة فوراً، ويمكن تعديل مقعد بعدها يدوياً.</div>';
     html+='<div class="seat-hint">🎲 رتّب الطاولات: المس لاعباً ثم المس آخر لتبديل مكانيهما بين الطاولات — قبل إنشاء الجدول.</div>'
       +'<div class="tgrid">'
       +Object.keys(tbl).map(n=>{
@@ -1038,6 +1041,16 @@ async function admGen(){
     if(error)throw error;
     toast('✅ أُنشئ الجدول');admRender();loadAll();
   }catch(e){toast('⚠️ '+(e.message||e));}
+}
+async function admShuffle(){
+  if(!confirm('قرعة عشوائية لطاولات '+GAMES[ADM.game].ar+'؟ يعاد توزيع كل المقاعد عشوائياً.'))return;
+  try{
+    const{data,error}=await sb.rpc('club_seat_shuffle',{p_game:ADM.game});
+    if(error)throw error;
+    if(!data||!data.ok)throw new Error((data&&data.error)||'تعذّرت القرعة');
+    toast('🎲 أُجريت القرعة — توزيع جديد للطاولات');
+  }catch(e){toast('⚠️ '+(e.message||e));}
+  SEATSEL=null;admRender();
 }
 async function admScore(id,side,val,a,b,needed){
   // اضغط الرقم لتثبيته لهذا الطرف؛ الضغط على القيمة الحالية يعيدها خطوة
