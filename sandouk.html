@@ -236,6 +236,7 @@ button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-wei
       <button class="bf-tab" id="bf-tab-expense" onclick="bfShowTab('expense')">🔴 سند صرف</button>
       <button class="bf-tab" id="bf-tab-reports" onclick="bfShowTab('reports')">📊 التقارير</button>
       <button class="bf-tab" id="bf-tab-dues" style="display:none" onclick="bfShowTab('dues')">💰 الجباية المستحقة</button>
+      <button class="bf-tab" id="bf-tab-budget" style="display:none" onclick="bfShowTab('budget')">🧾 الموازنة</button>
       <button class="bf-tab" id="bf-tab-audit" onclick="bfShowTab('audit')">📜 سجل العمليات</button>
       <button class="bf-tab" id="bf-tab-settings" style="display:none" onclick="bfShowTab('settings')">⚙️ الإعدادات</button>
     </div>
@@ -523,6 +524,44 @@ button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-wei
       </div>
     </div>
 
+    <!-- BUDGET — الموازنة (budget_view / budget_manage) -->
+    <div id="bf-pane-budget" style="display:none">
+      <div class="bf-card">
+        <div class="bf-sumtitle">🧾 الموازنة</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
+          بنود الموازنة كما أقرّها المجلس، وأمام كل بند ما صُرف أو قُبض عليه فعلاً من الصندوق في السنة نفسها.
+          كل بند مربوط بفئة أو أكثر من فئات السندات، فلا دفتر ثانياً ولا مطابقة يدوية — والفئة الواحدة تغذّي بنداً واحداً.
+        </div>
+        <div class="bf-views">
+          <span style="font-size:12px;font-weight:800;color:#0f4d82">📅 السنة:</span>
+          <select class="fi" id="bf-bu-year" style="width:auto;margin:0" onchange="bfBuRender()"></select>
+          <button class="bf-vbtn primary" id="bf-bu-v-expense" onclick="bfBuKind('expense')">🔴 النفقات</button>
+          <button class="bf-vbtn" id="bf-bu-v-income" onclick="bfBuKind('income')">🟢 الواردات</button>
+          <span class="bf-bu-mng" style="display:none">
+            <button class="bf-vbtn primary" onclick="bfBuEdit(null)">➕ بند جديد</button>
+            <button class="bf-vbtn" onclick="bfBuImportOpen()">⬆️ استيراد بنود</button>
+            <button class="bf-vbtn" onclick="bfBuCopyYear()">📋 نسخ من سنة سابقة</button>
+          </span>
+          <button class="bf-vbtn" onclick="bfBuPrint()">🖨️ طباعة</button>
+          <button class="bf-vbtn" onclick="bfBuExport()">⬇️ تصدير CSV</button>
+          <button class="bf-vbtn" onclick="bfBuLoad(true)">↻ تحديث</button>
+        </div>
+        <div class="bf-kpis" style="margin:10px 0 12px">
+          <div class="bf-kpi"><div class="v" id="bf-bu-k-bud" style="color:#0f4d82">—</div><div class="l" id="bf-bu-k-bud-l">الموازنة</div></div>
+          <div class="bf-kpi exp"><div class="v" id="bf-bu-k-act">—</div><div class="l" id="bf-bu-k-act-l">المصروف الفعلي</div></div>
+          <div class="bf-kpi inc"><div class="v" id="bf-bu-k-rem">—</div><div class="l" id="bf-bu-k-rem-l">المتبقي</div></div>
+          <div class="bf-kpi"><div class="v" id="bf-bu-k-pct" style="color:#555">—</div><div class="l">نسبة التنفيذ</div></div>
+        </div>
+        <div class="bf-tblwrap"><table id="bf-bu-tbl"><thead></thead><tbody></tbody></table></div>
+        <div id="bf-bu-empty" style="font-size:13px;color:#8a95a3;padding:14px 4px;display:none"></div>
+      </div>
+      <div class="bf-card" id="bf-bu-unl-card" style="display:none">
+        <div class="bf-sumtitle">⚠️ حركات غير مربوطة بأي بند</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px">فئات لها سندات في هذه السنة ولا يغذّيها أي بند — تُربط من ✏️ البند المناسب كي لا يغيب شيء عن الموازنة.</div>
+        <div class="bf-tblwrap"><table><thead><tr><th>الفئة</th><th>عدد السندات</th><th>المجموع</th></tr></thead><tbody id="bf-bu-unl"></tbody></table></div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div id="bf-pane-settings" style="display:none">
       <div class="bf-card">
@@ -567,6 +606,58 @@ button.bf-msel.on{border-color:#1a6eb5;background:#eaf2fb;color:#0f4d82;font-wei
     <div style="display:flex;gap:9px">
       <button class="bf-vbtn" style="flex:1" onclick="bfDuImportClose()">إلغاء</button>
       <button class="bf-vbtn primary" style="flex:1" id="bf-du-imp-go" onclick="bfDuImportRun()">استيراد</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET LINE MODAL -->
+<div class="bf-share-ov" id="bf-bu-ed-ov" style="display:none" onclick="if(event.target===this)bfBuEditClose()">
+  <div class="bf-share-box" style="max-width:560px">
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:10px" id="bf-bu-ed-title">➕ بند موازنة</div>
+    <div class="bf-g2">
+      <div><label class="fl">النوع</label><select class="fi" id="bf-bu-ed-kind" onchange="bfBuEdCats()"><option value="expense">🔴 نفقات</option><option value="income">🟢 واردات</option></select></div>
+      <div><label class="fl">السنة</label><input type="number" inputmode="numeric" class="fi" id="bf-bu-ed-year" style="direction:ltr" onchange="bfBuEdCats()"></div>
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">الرمز (باب-فصل-بند) *</label><input type="text" class="fi" id="bf-bu-ed-code" style="direction:ltr" placeholder="5-2-1"></div>
+      <div><label class="fl">العملة</label><select class="fi" id="bf-bu-ed-cur"><option value="LBP">ليرة ل.ل.</option><option value="USD">دولار $</option></select></div>
+    </div>
+    <label class="fl">اسم البند *</label><input type="text" class="fi" id="bf-bu-ed-name" placeholder="مثال: سهرة وادي الست">
+    <label class="fl">المبلغ المرصود</label><input type="text" inputmode="decimal" class="fi" id="bf-bu-ed-amt" style="direction:ltr" placeholder="0">
+    <label class="fl">الفئات التي تغذّي البند <span style="color:#8a95a3;font-weight:700">(سندات هذه الفئات في السنة نفسها تُحتسب عليه)</span></label>
+    <div id="bf-bu-ed-cats" style="max-height:190px;overflow:auto;border:1.5px solid #d5dfec;border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:13px;line-height:1.9"></div>
+    <label class="fl">ملاحظات</label><input type="text" class="fi" id="bf-bu-ed-notes" placeholder="اختياري">
+    <div class="bf-err" id="bf-bu-ed-err"></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="bf-vbtn danger" id="bf-bu-ed-del" style="display:none" onclick="bfBuDelete()">🗑️ حذف</button>
+      <button class="bf-vbtn" style="flex:1" onclick="bfBuEditClose()">إلغاء</button>
+      <button class="bf-vbtn primary" style="flex:1" id="bf-bu-ed-go" onclick="bfBuSave()">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET IMPORT MODAL -->
+<div class="bf-share-ov" id="bf-bu-imp-ov" style="display:none" onclick="if(event.target===this)bfBuImportClose()">
+  <div class="bf-share-box" style="max-width:640px">
+    <div style="font-size:16px;font-weight:800;color:#0f4d82;margin-bottom:6px">⬆️ استيراد بنود الموازنة</div>
+    <div style="font-size:12.5px;color:#6b7280;line-height:1.7;margin-bottom:10px">
+      سطر لكل بند، منسوخاً من جدول الموازنة في Excel مباشرة:<br>
+      <span class="mono" style="direction:ltr;display:inline-block;background:#f3f6fa;padding:3px 7px;border-radius:6px;margin-top:4px">
+        الرمز , اسم البند , المبلغ [, فئة | فئة]</span><br>
+      الصق <b>البنود التفصيلية فقط</b> — مجاميع الأبواب تُحسب هنا، ولصقها يضاعف الموازنة.
+      رمز موجود في السنة نفسها يُحدَّث مبلغه واسمه؛ رمز جديد يُضاف.
+    </div>
+    <div class="bf-g2">
+      <div><label class="fl">النوع</label><select class="fi" id="bf-bu-imp-kind" onchange="bfBuImportPreview()"><option value="expense">🔴 نفقات</option><option value="income">🟢 واردات</option></select></div>
+      <div><label class="fl">السنة</label><input type="number" inputmode="numeric" class="fi" id="bf-bu-imp-year" style="direction:ltr" oninput="bfBuImportPreview()"></div>
+    </div>
+    <textarea id="bf-bu-imp-txt" oninput="bfBuImportPreview()" dir="rtl" rows="8"
+      style="width:100%;box-sizing:border-box;font-family:monospace;font-size:13px;padding:10px;border:1px solid #d5dee6;border-radius:9px"
+      placeholder="5-2-1&#9;سهرة وادي الست&#9;150000000"></textarea>
+    <div id="bf-bu-imp-prev" style="margin:10px 0"></div>
+    <div style="display:flex;gap:9px">
+      <button class="bf-vbtn" style="flex:1" onclick="bfBuImportClose()">إلغاء</button>
+      <button class="bf-vbtn primary" style="flex:1" id="bf-bu-imp-go" onclick="bfBuImportRun()">استيراد</button>
     </div>
   </div>
 </div>
@@ -726,9 +817,12 @@ const BF_LOGO=(function(){
   try{const s=document.querySelector('.sb-logo'); if(s&&s.src)return s.src;}catch(e){}
   try{return new URL('icons/apple-touch-icon.png', location.href).href;}catch(e){return 'icons/apple-touch-icon.png';}
 })();
+// The two 2027 events have a budget chapter of their own (5-2-1 / 5-2-2 in
+// the 2027 budget), so their spending and their sponsors are their own
+// categories: the report per category is then the event's account.
 const BF_CATS={
-  income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
-  expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
+  income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','رعايات وبطاقات سهرة وادي الست','رعايات وبطاقات مهرجان Welcome Summer','أخرى'],
+  expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','سهرة وادي الست','مهرجان Welcome Summer','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
 };
 // The fixed lists above are a starting point, not the whole truth: categories
 // typed into "أخرى" become real categories on their entries (تكليف العمال
@@ -808,6 +902,14 @@ function bfStart(user){
   if(!bfCanDues()){
     const dp=document.getElementById('bf-pane-dues');
     if(dp && dp.style.display!=='none'){dp.style.display='none';bfShowTab('ledger');}
+  }
+  // 🧾 الموازنة — budget_view to see it, budget_manage to change it; the
+  // table's RLS asks the same two keys
+  const bu=document.getElementById('bf-tab-budget');
+  if(bu) bu.style.display = bfCanBudget() ? '' : 'none';
+  if(!bfCanBudget()){
+    const bp=document.getElementById('bf-pane-budget');
+    if(bp && bp.style.display!=='none'){bp.style.display='none';bfShowTab('ledger');}
   }
   if(!bfCanSeries()){
     // permission revoked between sessions — never leave the pane on screen
@@ -934,6 +1036,7 @@ async function bfLoad(){
   ]);
   if(fin.error){toast('⚠️ خطأ في تحميل الصندوق: '+fin.error.message,'err');return;}
   bfEntries=fin.data||[];
+  if(bfBuLoaded)bfBuRender();   // the budget's actuals are these same rows
   // Numbering rules live in `settings`, so every device and every clerk reads
   // the same series. Missing or unreadable → the built-in Q/S defaults.
   bfSeries=(!ser.error && ser.data && ser.data[0] && ser.data[0].value) ? ser.data[0].value : null;
@@ -1264,11 +1367,16 @@ function bfShowTab(t){
     toast('🔒 الجباية المستحقة تحتاج صلاحية إدارة الجباية','err');
     return;
   }
+  if(t==='budget'&&!bfCanBudget()){
+    toast('🔒 الموازنة تحتاج صلاحية الاطلاع على الموازنة','err');
+    return;
+  }
   if(t==='audit')bfLoadAudit();
   if(t==='reports')bfRenderReports();
   if(t==='settings')bfSettingsRender();
   if(t==='dues')bfDuLoad();
-  ['ledger','income','expense','reports','audit','settings','dues'].forEach(x=>{
+  if(t==='budget')bfBuLoad();
+  ['ledger','income','expense','reports','audit','settings','dues','budget'].forEach(x=>{
     document.getElementById('bf-pane-'+x).style.display = x===t ? '' : 'none';
     document.getElementById('bf-tab-'+x).classList.toggle('on',x===t);
   });
@@ -4263,6 +4371,398 @@ function bfDuExport(){
   a.download='جباية-وادي-الست-'+bfToday()+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// 🧾 الموازنة — what the council voted, against what the cash box did.
+// A budget line names the cash-box categories that feed it; its actual is the
+// year's non-voided vouchers of the line's type filed under those categories,
+// in the line's own currency. Nothing is stored twice: budget_lines holds the
+// vote, baladieh_finance holds the money, and this screen only adds them up.
+// A voucher in the other currency is shown beside the line, never converted —
+// the screen does not invent an exchange rate.
+// Reads ride has_perm('budget_view'), writes has_perm('budget_manage') — the
+// same keys the table's RLS asks for.
+// ══════════════════════════════════════════════════════════════════════════
+let bfBudget=[],bfBuLoaded=false,bfBuMode='expense',bfBuEditId=null;
+function bfCanBudget(){return !!bfUser && (WadiPerms.can('budget_view')||WadiPerms.can('budget_manage'));}
+function bfCanBudgetEdit(){return !!bfUser && WadiPerms.can('budget_manage');}
+// «5-2-10» after «5-2-9»: codes compare segment by segment, as numbers
+function bfBuCodeCmp(a,b){
+  const x=String(a).split(/[-.\/ ]+/),y=String(b).split(/[-.\/ ]+/);
+  for(let i=0;i<Math.max(x.length,y.length);i++){
+    if(x[i]==null)return -1; if(y[i]==null)return 1;
+    const nx=Number(x[i]),ny=Number(y[i]);
+    const c=(!isNaN(nx)&&!isNaN(ny))?nx-ny:String(x[i]).localeCompare(String(y[i]));
+    if(c)return c;
+  }
+  return 0;
+}
+// «0 ل.ل.», not «$0»: a budget is in lira unless a line says otherwise
+function bfBuSum(v){const p=[];if(v.lbp||!v.usd)p.push(bfFmt(v.lbp||0)+' ل.ل.');if(v.usd)p.push('$'+bfFmt(v.usd));return p.join(' + ');}
+function bfBuChapter(code){return String(code).split(/[-.\/ ]+/)[0]||'—';}
+function bfBuYearSel(){return Number(document.getElementById('bf-bu-year').value)||new Date().getFullYear()+1;}
+function bfBuFillYears(){
+  const sel=document.getElementById('bf-bu-year');if(!sel)return;
+  const cur=sel.value;
+  const now=new Date().getFullYear();
+  const ys=new Set([now,now+1]);
+  bfBudget.forEach(function(l){ys.add(Number(l.year));});
+  const list=Array.from(ys).filter(Boolean).sort(function(a,b){return b-a;});
+  sel.innerHTML=list.map(function(y){return '<option value="'+y+'">'+y+'</option>';}).join('');
+  // the budget being prepared is next year's; once it has lines, the latest
+  // year with lines is the one people come here for
+  const withLines=bfBudget.map(function(l){return Number(l.year);});
+  sel.value=cur||String(withLines.length?Math.max.apply(null,withLines):now+1);
+}
+async function bfBuLoad(force){
+  if(!bfCanBudget())return;
+  document.querySelectorAll('.bf-bu-mng').forEach(function(el){el.style.display=bfCanBudgetEdit()?'contents':'none';});
+  if(bfBuLoaded&&!force){bfBuRender();return;}
+  const tb=document.querySelector('#bf-bu-tbl tbody');
+  if(tb)tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#8a95a3;padding:16px">⏳ جارٍ تحميل الموازنة…</td></tr>';
+  const r=await sb.from('budget_lines').select('*').order('year',{ascending:false});
+  if(r.error){
+    if(tb)tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#a83232;padding:16px">⚠️ '+bfEsc(r.error.message)+'</td></tr>';
+    return;
+  }
+  bfBudget=r.data||[];
+  bfBuLoaded=true;
+  bfBuFillYears();
+  bfBuRender();
+}
+function bfBuKind(k){
+  bfBuMode=k;
+  document.getElementById('bf-bu-v-expense').classList.toggle('primary',k==='expense');
+  document.getElementById('bf-bu-v-income').classList.toggle('primary',k==='income');
+  bfBuRender();
+}
+// The year's vouchers of one type, per category and currency
+function bfBuActuals(year,kind){
+  const by={};
+  (bfEntries||[]).forEach(function(e){
+    if(e.voided||e.entry_type!==kind)return;
+    if(String(e.entry_date||'').slice(0,4)!==String(year))return;
+    const c=String(e.category||'').trim()||'—';
+    const cur=e.currency==='LBP'?'LBP':'USD';
+    const o=by[c]||(by[c]={LBP:0,USD:0,n:0});
+    o[cur]+=Number(e.amount)||0; o.n++;
+  });
+  return by;
+}
+function bfBuCompute(year,kind){
+  const act=bfBuActuals(year,kind);
+  const lines=bfBudget.filter(function(l){return Number(l.year)===year&&l.kind===kind;})
+    .sort(function(a,b){return bfBuCodeCmp(a.code,b.code);});
+  const used=new Set();
+  const rows=lines.map(function(l){
+    const cur=l.currency==='USD'?'USD':'LBP',oth=cur==='LBP'?'USD':'LBP';
+    let a=0,o=0,n=0;
+    (l.categories||[]).forEach(function(c){used.add(c);const x=act[c];if(x){a+=x[cur];o+=x[oth];n+=x.n;}});
+    return {line:l,cur:cur,oth:oth,actual:a,other:o,n:n,budget:Number(l.amount)||0};
+  });
+  const unlinked=Object.keys(act).filter(function(c){return !used.has(c);})
+    .map(function(c){return {cat:c,x:act[c]};})
+    .sort(function(a,b){return (b.x.LBP+b.x.USD)-(a.x.LBP+a.x.USD);});
+  return {rows:rows,unlinked:unlinked};
+}
+function bfBuBar(p){
+  const w=Math.max(0,Math.min(100,p));
+  const col=p>100?'#c22':(p>=90?'#d98a00':'#1f7a45');
+  return '<div style="min-width:90px"><div style="height:7px;border-radius:5px;background:#eef2f7;overflow:hidden">'
+    +'<div style="height:100%;width:'+w.toFixed(1)+'%;background:'+col+'"></div></div>'
+    +'<div style="font-size:11px;font-weight:800;color:'+col+';margin-top:2px">'+(isFinite(p)?p.toFixed(1)+'%':'—')+'</div></div>';
+}
+function bfBuRender(){
+  if(!bfCanBudget())return;
+  const year=bfBuYearSel(),kind=bfBuMode;
+  const c=bfBuCompute(year,kind);
+  const exp=kind==='expense';
+  const th=document.querySelector('#bf-bu-tbl thead'),tb=document.querySelector('#bf-bu-tbl tbody');
+  const edit=bfCanBudgetEdit();
+  th.innerHTML='<tr class="bf-hh"><th>الرمز</th><th>البند</th><th>الفئات المربوطة</th><th>المرصود</th>'
+    +'<th>'+(exp?'المصروف':'المقبوض')+'</th><th>'+(exp?'المتبقي':'الفرق')+'</th><th>التنفيذ</th>'+(edit?'<th></th>':'')+'</tr>';
+  // totals per currency; a budget is normally all in ليرة, but a dollar line
+  // is summed on its own rather than added to lira
+  const tot={LBP:{b:0,a:0},USD:{b:0,a:0}};
+  let html='',chap=null,sub=null;
+  const flush=function(){
+    if(sub&&chap!==null)html+='<tr style="background:#f4f8fd;font-weight:800"><td colspan="3" style="color:#0f4d82">مجموع الباب '+bfEsc(chap)+'</td>'
+      +'<td>'+bfBuSum({lbp:sub.LBP.b,usd:sub.USD.b})+'</td><td>'+bfBuSum({lbp:sub.LBP.a,usd:sub.USD.a})+'</td>'
+      +'<td>'+bfBuSum({lbp:sub.LBP.b-sub.LBP.a,usd:sub.USD.b-sub.USD.a})+'</td><td></td>'+(edit?'<td></td>':'')+'</tr>';
+  };
+  c.rows.forEach(function(r){
+    const ch=bfBuChapter(r.line.code);
+    if(ch!==chap){flush();chap=ch;sub={LBP:{b:0,a:0},USD:{b:0,a:0}};}
+    sub[r.cur].b+=r.budget;sub[r.cur].a+=r.actual;
+    tot[r.cur].b+=r.budget;tot[r.cur].a+=r.actual;
+    const rem=r.budget-r.actual;
+    const pct=r.budget>0?r.actual/r.budget*100:(r.actual>0?Infinity:0);
+    const cats=(r.line.categories||[]).length
+      ?(r.line.categories||[]).map(function(x){return '<span class="bf-badge" style="background:#eef4fb;color:#0f4d82;font-size:10.5px;margin:1px">'+bfEsc(x)+'</span>';}).join(' ')
+      :'<span class="bf-badge" style="background:#fff7ed;color:#8a5a00;font-size:10.5px">غير مربوط</span>';
+    html+='<tr>'
+      +'<td style="direction:ltr;unicode-bidi:embed;font-weight:800;color:#0f4d82;white-space:nowrap">'+bfEsc(r.line.code)+'</td>'
+      +'<td style="white-space:normal;min-width:170px;font-weight:700">'+bfEsc(r.line.title)
+        +(r.line.notes?'<div style="font-size:11px;color:#8a95a3;font-weight:400">'+bfEsc(r.line.notes)+'</div>':'')+'</td>'
+      +'<td style="white-space:normal;min-width:150px">'+cats+'</td>'
+      +'<td style="font-weight:800">'+bfMoney(r.budget,r.cur)+'</td>'
+      +'<td class="'+(exp?'bf-neg':'bf-pos')+'" style="font-weight:800">'+bfMoney(r.actual,r.cur)
+        +(r.n?'<div style="font-size:11px;color:#8a95a3;font-weight:400">'+r.n+' سنداً</div>':'')
+        +(r.other?'<div style="font-size:11px;color:#8a5a00;font-weight:700" title="سندات بالعملة الأخرى — لا تُحوَّل">+ '+bfMoney(r.other,r.oth)+'</div>':'')+'</td>'
+      +'<td style="font-weight:800;color:'+(rem<0?'#c22':'#1f7a45')+'">'+bfMoney(rem,r.cur)+'</td>'
+      +'<td>'+bfBuBar(pct)+'</td>'
+      +(edit?'<td style="text-align:center"><button class="bf-vbtn" onclick="bfBuEdit(\''+r.line.id+'\')">✏️</button></td>':'')
+      +'</tr>';
+  });
+  flush();
+  tb.innerHTML=html;
+  const empty=document.getElementById('bf-bu-empty');
+  empty.style.display=c.rows.length?'none':'';
+  empty.innerHTML=c.rows.length?'':'لا بنود '+(exp?'نفقات':'واردات')+' لموازنة '+year+' بعد.'
+    +(edit?' أضفها من ➕ بند جديد، أو الصقها من جدول الموازنة عبر ⬆️ استيراد بنود.':'');
+  const k=function(id,v){const el=document.getElementById(id);if(el)el.textContent=v;};
+  k('bf-bu-k-bud',bfBuSum({lbp:tot.LBP.b,usd:tot.USD.b}));
+  k('bf-bu-k-act',bfBuSum({lbp:tot.LBP.a,usd:tot.USD.a}));
+  k('bf-bu-k-rem',bfBuSum({lbp:tot.LBP.b-tot.LBP.a,usd:tot.USD.b-tot.USD.a}));
+  k('bf-bu-k-bud-l',(exp?'موازنة النفقات ':'الواردات المقدّرة ')+year);
+  k('bf-bu-k-act-l',exp?'المصروف الفعلي':'المقبوض الفعلي');
+  k('bf-bu-k-rem-l',exp?'المتبقي من الاعتمادات':'الفرق عن التقدير');
+  const bl=tot.LBP.b,al=tot.LBP.a;
+  k('bf-bu-k-pct',bl>0?(al/bl*100).toFixed(1)+'%':'—');
+  // what the cash box did this year that no line claims
+  const uc=document.getElementById('bf-bu-unl-card');
+  uc.style.display=c.unlinked.length?'':'none';
+  document.getElementById('bf-bu-unl').innerHTML=c.unlinked.map(function(u){
+    return '<tr><td style="font-weight:700">'+bfEsc(u.cat)+'</td><td style="text-align:center">'+u.x.n+'</td>'
+      +'<td style="font-weight:800">'+bfBuSum({lbp:u.x.LBP,usd:u.x.USD})+'</td></tr>';
+  }).join('');
+}
+
+// ── ✏️ بند واحد ──
+function bfBuEdCats(){
+  const kind=document.getElementById('bf-bu-ed-kind').value;
+  const year=Number(document.getElementById('bf-bu-ed-year').value)||0;
+  const box=document.getElementById('bf-bu-ed-cats');
+  const checked=new Set(Array.from(box.querySelectorAll('input:checked')).map(function(i){return i.value;}));
+  if(!box.dataset.init){
+    const cur=bfBudget.find(function(l){return l.id===bfBuEditId;});
+    ((cur&&cur.categories)||[]).forEach(function(c){checked.add(c);});
+    box.dataset.init='1';
+  }
+  // which categories another line of the same year and type already claims
+  const taken={};
+  bfBudget.forEach(function(l){
+    if(l.id===bfBuEditId||Number(l.year)!==year||l.kind!==kind)return;
+    (l.categories||[]).forEach(function(c){taken[c]=l.code;});
+  });
+  const cats=bfCatList(kind).filter(function(c){return c!=='أخرى';});
+  checked.forEach(function(c){if(cats.indexOf(c)<0)cats.push(c);});
+  box.innerHTML=cats.map(function(c){
+    const t=taken[c];
+    return '<label style="display:flex;gap:7px;align-items:center;'+(t?'color:#9aa5b1':'')+'">'
+      +'<input type="checkbox" value="'+bfEsc(c)+'"'+(checked.has(c)?' checked':'')+(t?' disabled':'')+'>'
+      +'<span>'+bfEsc(c)+(t?' <span style="font-size:11px">— مربوطة بالبند '+bfEsc(t)+'</span>':'')+'</span></label>';
+  }).join('');
+}
+function bfBuEdit(id){
+  if(!bfCanBudgetEdit()){toast('🔒 تعديل الموازنة يحتاج صلاحية إدارة الموازنة','err');return;}
+  bfBuEditId=id;
+  const l=id?bfBudget.find(function(x){return x.id===id;}):null;
+  document.getElementById('bf-bu-ed-title').textContent=l?'✏️ تعديل بند الموازنة':'➕ بند موازنة جديد';
+  document.getElementById('bf-bu-ed-kind').value=l?l.kind:bfBuMode;
+  document.getElementById('bf-bu-ed-year').value=l?l.year:bfBuYearSel();
+  document.getElementById('bf-bu-ed-code').value=l?l.code:'';
+  document.getElementById('bf-bu-ed-name').value=l?l.title:'';
+  document.getElementById('bf-bu-ed-amt').value=l?bfFmt(l.amount):'';
+  document.getElementById('bf-bu-ed-cur').value=l?l.currency:'LBP';
+  document.getElementById('bf-bu-ed-notes').value=l?(l.notes||''):'';
+  document.getElementById('bf-bu-ed-err').textContent='';
+  document.getElementById('bf-bu-ed-del').style.display=l?'':'none';
+  const box=document.getElementById('bf-bu-ed-cats');box.innerHTML='';delete box.dataset.init;
+  bfBuEdCats();
+  document.getElementById('bf-bu-ed-ov').style.display='flex';
+}
+function bfBuEditClose(){document.getElementById('bf-bu-ed-ov').style.display='none';bfBuEditId=null;}
+function bfBuNum(v){return Number(String(v==null?'':v).replace(/[^\d.]/g,''));}
+async function bfBuSave(){
+  const err=document.getElementById('bf-bu-ed-err');err.textContent='';
+  const rec={
+    kind:document.getElementById('bf-bu-ed-kind').value,
+    year:Number(document.getElementById('bf-bu-ed-year').value),
+    code:document.getElementById('bf-bu-ed-code').value.trim(),
+    title:document.getElementById('bf-bu-ed-name').value.trim(),
+    amount:bfBuNum(document.getElementById('bf-bu-ed-amt').value)||0,
+    currency:document.getElementById('bf-bu-ed-cur').value,
+    notes:document.getElementById('bf-bu-ed-notes').value.trim()||null,
+    categories:Array.from(document.querySelectorAll('#bf-bu-ed-cats input:checked')).map(function(i){return i.value;})
+  };
+  if(!(rec.year>2000&&rec.year<2100)){err.textContent='⚠️ سنة غير صالحة';return;}
+  if(!rec.code||!rec.title){err.textContent='⚠️ الرمز واسم البند مطلوبان';return;}
+  const btn=document.getElementById('bf-bu-ed-go');btn.disabled=true;
+  const r=bfBuEditId
+    ?await sb.from('budget_lines').update(rec).eq('id',bfBuEditId).select()
+    :await sb.from('budget_lines').insert(rec).select();
+  btn.disabled=false;
+  if(r.error){err.textContent='⚠️ '+(/duplicate|unique/i.test(r.error.message)?'الرمز '+rec.code+' موجود في هذه السنة':r.error.message);return;}
+  if(!r.data||!r.data.length){err.textContent='⚠️ لم يُحفظ — تحقّق من الصلاحية';return;}
+  toast('✓ حُفظ البند '+rec.code);
+  bfBuEditClose();
+  await bfBuLoad(true);
+  document.getElementById('bf-bu-year').value=String(rec.year);
+  if(rec.kind!==bfBuMode)bfBuKind(rec.kind);else bfBuRender();
+}
+async function bfBuDelete(){
+  const l=bfBudget.find(function(x){return x.id===bfBuEditId;});if(!l)return;
+  if(!await wadiConfirm('حذف البند '+l.code+' «'+l.title+'» من موازنة '+l.year+'؟ السندات لا تتأثر.'))return;
+  const r=await sb.from('budget_lines').delete().eq('id',l.id).select();
+  if(r.error){toast('⚠️ '+r.error.message,'err');return;}
+  if(!r.data||!r.data.length){toast('⚠️ لم يُحذف — تحقّق من الصلاحية','err');return;}
+  toast('✓ حُذف البند');
+  bfBuEditClose();
+  bfBuLoad(true);
+}
+
+// ── ⬆️ استيراد — لصق من جدول الموازنة ──
+function bfBuImportOpen(){
+  if(!bfCanBudgetEdit())return;
+  document.getElementById('bf-bu-imp-kind').value=bfBuMode;
+  document.getElementById('bf-bu-imp-year').value=bfBuYearSel();
+  document.getElementById('bf-bu-imp-txt').value='';
+  document.getElementById('bf-bu-imp-prev').innerHTML='';
+  document.getElementById('bf-bu-imp-ov').style.display='flex';
+}
+function bfBuImportClose(){document.getElementById('bf-bu-imp-ov').style.display='none';}
+function bfBuParse(txt){
+  const out=[],bad=[],seen={};
+  (txt||'').split(/\r?\n/).forEach(function(line,i){
+    const t=line.trim();if(!t)return;
+    // Excel pastes with tabs, and its amounts carry thousands commas — so a
+    // comma only separates columns when there is no tab on the line at all
+    const c=(t.indexOf('\t')>-1?t.split('\t'):(t.indexOf(';')>-1?t.split(';'):t.split(','))).map(function(x){return x.trim();});
+    if(c.length<3){bad.push((i+1)+': أعمدة ناقصة');return;}
+    const amount=bfBuNum(c[2]);
+    const rec={code:c[0],title:c[1],amount:amount,
+      categories:c[3]?c[3].split('|').map(function(x){return x.trim();}).filter(Boolean):null};
+    if(!rec.code||!rec.title){bad.push((i+1)+': الرمز أو الاسم فارغ');return;}
+    if(!String(c[2]).match(/\d/)||!(amount>=0)){bad.push((i+1)+': مبلغ غير صالح «'+c[2]+'»');return;}
+    if(seen[rec.code]){bad.push((i+1)+': الرمز '+rec.code+' مكرّر في اللصق');return;}
+    seen[rec.code]=1;
+    out.push(rec);
+  });
+  return{rows:out,bad:bad};
+}
+function bfBuImportPreview(){
+  const r=bfBuParse(document.getElementById('bf-bu-imp-txt').value);
+  const year=Number(document.getElementById('bf-bu-imp-year').value);
+  const kind=document.getElementById('bf-bu-imp-kind').value;
+  const have={};bfBudget.forEach(function(l){if(Number(l.year)===year&&l.kind===kind)have[l.code]=l;});
+  const upd=r.rows.filter(function(x){return have[x.code];}).length;
+  const tot=r.rows.reduce(function(s,x){return s+x.amount;},0);
+  document.getElementById('bf-bu-imp-prev').innerHTML='<div style="font-size:13px;margin-bottom:8px">'
+    +'✓ <b>'+r.rows.length+'</b> بنداً — المجموع <b>'+bfFmt(tot)+'</b>'
+    +' · جديد '+(r.rows.length-upd)+' · تحديث '+upd
+    +(r.bad.length?' · <span style="color:#a83232">'+r.bad.length+' سطراً مرفوضاً</span>':'')+'</div>'
+    +(r.bad.length?'<div style="font-size:12px;color:#a83232;max-height:90px;overflow:auto">'+r.bad.map(bfEsc).join('<br>')+'</div>':'')
+    +(r.rows.length?'<div class="bf-tblwrap" style="max-height:200px;overflow:auto"><table><tbody>'
+      +r.rows.slice(0,30).map(function(x){return '<tr><td style="direction:ltr;unicode-bidi:embed;font-weight:800">'+bfEsc(x.code)
+      +'</td><td>'+bfEsc(x.title)+'</td><td>'+bfFmt(x.amount)+'</td><td style="font-size:11px">'+bfEsc((x.categories||[]).join(' | '))
+      +'</td><td>'+(have[x.code]?'<span class="bf-badge" style="background:#fff7ed;color:#8a5a00">تحديث</span>':'<span class="bf-badge" style="background:#e8f6ed;color:#1f7a45">جديد</span>')+'</td></tr>';}).join('')
+      +'</tbody></table></div>':'');
+}
+async function bfBuImportRun(){
+  const r=bfBuParse(document.getElementById('bf-bu-imp-txt').value);
+  const year=Number(document.getElementById('bf-bu-imp-year').value);
+  const kind=document.getElementById('bf-bu-imp-kind').value;
+  if(!(year>2000&&year<2100)){toast('⚠️ سنة غير صالحة','err');return;}
+  if(!r.rows.length){toast('⚠️ لا بنود صالحة للاستيراد','err');return;}
+  if(!await wadiConfirm('استيراد '+r.rows.length+' بنداً إلى '+(kind==='expense'?'نفقات':'واردات')+' موازنة '+year+'؟'))return;
+  const have={};bfBudget.forEach(function(l){if(Number(l.year)===year&&l.kind===kind)have[l.code]=l;});
+  // a pasted line without a categories column keeps the links it already had
+  const recs=r.rows.map(function(x){
+    const old=have[x.code];
+    return {year:year,kind:kind,code:x.code,title:x.title,amount:x.amount,
+      currency:old?old.currency:'LBP',notes:old?old.notes:null,
+      categories:x.categories||(old?old.categories:[])};
+  });
+  const btn=document.getElementById('bf-bu-imp-go');
+  btn.disabled=true;const txt=btn.textContent;btn.textContent='⏳ جارٍ الاستيراد…';
+  try{
+    for(let i=0;i<recs.length;i+=100){
+      const res=await sb.from('budget_lines').upsert(recs.slice(i,i+100),{onConflict:'year,kind,code'}).select('id');
+      if(res.error)throw res.error;
+    }
+    toast('✓ استُورد '+recs.length+' بنداً');
+    bfBuImportClose();
+    await bfBuLoad(true);
+    document.getElementById('bf-bu-year').value=String(year);
+    if(kind!==bfBuMode)bfBuKind(kind);else bfBuRender();
+  }catch(e){toast('⚠️ '+(e.message||e),'err');}
+  btn.disabled=false;btn.textContent=txt;
+}
+// ── 📋 a new year starts from the last one: lines, links and amounts, then edited ──
+async function bfBuCopyYear(){
+  if(!bfCanBudgetEdit())return;
+  const to=bfBuYearSel();
+  const years=Array.from(new Set(bfBudget.map(function(l){return Number(l.year);}))).filter(function(y){return y!==to;}).sort(function(a,b){return b-a;});
+  if(!years.length){toast('⚠️ لا موازنة سابقة للنسخ منها','err');return;}
+  const f=await wadiForm({title:'📋 نسخ بنود موازنة إلى '+to,
+    note:'تُنسخ البنود بأرقامها وأسمائها وفئاتها ومبالغها إلى موازنة '+to+'، ثم تعدّلها. البنود الموجودة في '+to+' لا تُمسّ.\nالسنوات المتاحة: '+years.join('، '),
+    fields:[{key:'from',label:'انسخ من سنة',value:years[0],type:'number',inputmode:'numeric',required:true}],okText:'نسخ'});
+  if(!f)return;
+  const from=Number(f.from);
+  const have=new Set(bfBudget.filter(function(l){return Number(l.year)===to;}).map(function(l){return l.kind+'|'+l.code;}));
+  const recs=bfBudget.filter(function(l){return Number(l.year)===from&&!have.has(l.kind+'|'+l.code);})
+    .map(function(l){return {year:to,kind:l.kind,code:l.code,title:l.title,amount:l.amount,currency:l.currency,categories:l.categories||[],notes:l.notes};});
+  if(!recs.length){toast('⚠️ لا بنود جديدة للنسخ من '+from,'err');return;}
+  const r=await sb.from('budget_lines').insert(recs).select('id');
+  if(r.error){toast('⚠️ '+r.error.message,'err');return;}
+  toast('✓ نُسخ '+recs.length+' بنداً من '+from+' إلى '+to);
+  await bfBuLoad(true);
+  document.getElementById('bf-bu-year').value=String(to);bfBuRender();
+}
+function bfBuExport(){
+  const year=bfBuYearSel();
+  const all=['expense','income'].map(function(k){return {k:k,c:bfBuCompute(year,k)};});
+  const esc=function(v){const t=String(v==null?'':v).replace(/"/g,'""');return /[",\n]/.test(t)?'"'+t+'"':t;};
+  const lines=[['النوع','الرمز','البند','الفئات','المرصود','الفعلي','المتبقي','العملة','بالعملة الأخرى','عدد السندات'].join(',')];
+  all.forEach(function(g){g.c.rows.forEach(function(r){
+    lines.push([g.k==='expense'?'نفقات':'واردات',r.line.code,r.line.title,(r.line.categories||[]).join(' | '),
+      r.budget,r.actual,r.budget-r.actual,r.cur,r.other||'',r.n].map(esc).join(','));
+  });});
+  if(lines.length<2){toast('⚠️ لا بنود لموازنة '+year,'err');return;}
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='موازنة-وادي-الست-'+year+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+function bfBuPrint(){
+  const year=bfBuYearSel();
+  const w=window.open('','_blank');
+  if(!w){toast('⚠️ اسمح بالنوافذ المنبثقة للطباعة','err');return;}
+  const sec=function(kind){
+    const c=bfBuCompute(year,kind);if(!c.rows.length)return '';
+    const exp=kind==='expense';
+    let b=0,a=0;
+    const body=c.rows.map(function(r){if(r.cur==='LBP'){b+=r.budget;a+=r.actual;}
+      return '<tr><td class="c">'+bfEsc(r.line.code)+'</td><td>'+bfEsc(r.line.title)+'</td><td>'+bfMoney(r.budget,r.cur)+'</td><td>'
+        +bfMoney(r.actual,r.cur)+(r.other?' <small>(+ '+bfMoney(r.other,r.oth)+')</small>':'')+'</td><td>'+bfMoney(r.budget-r.actual,r.cur)+'</td><td>'
+        +(r.budget>0?(r.actual/r.budget*100).toFixed(1)+'%':'—')+'</td></tr>';}).join('');
+    return '<h2>'+(exp?'النفقات':'الواردات')+'</h2><table><thead><tr><th>الرمز</th><th>البند</th><th>المرصود</th><th>'
+      +(exp?'المصروف':'المقبوض')+'</th><th>'+(exp?'المتبقي':'الفرق')+'</th><th>%</th></tr></thead><tbody>'+body
+      +'<tr class="t"><td colspan="2">المجموع (ل.ل.)</td><td>'+bfMoney(b,'LBP')+'</td><td>'+bfMoney(a,'LBP')+'</td><td>'+bfMoney(b-a,'LBP')+'</td><td>'
+      +(b>0?(a/b*100).toFixed(1)+'%':'—')+'</td></tr></tbody></table>';
+  };
+  w.document.write('<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>موازنة '+year+' — بلدية وادي الست</title>'
+    +'<style>body{font-family:Tahoma,Arial,sans-serif;margin:24px;color:#1b2733}h1{font-size:20px;color:#0f4d82;margin:0 0 4px}'
+    +'h2{font-size:16px;color:#0f4d82;margin:20px 0 6px}table{width:100%;border-collapse:collapse;font-size:12.5px}'
+    +'th,td{border:1px solid #cfd8e3;padding:5px 7px;text-align:right}th{background:#eef4fb}td.c{direction:ltr;text-align:left;font-weight:700}'
+    +'tr.t td{font-weight:800;background:#f4f8fd}small{color:#8a5a00}.m{font-size:12px;color:#6b7280}</style></head><body>'
+    +'<h1>بلدية وادي الست — موازنة '+year+'</h1><div class="m">المرصود مقابل الفعلي من صندوق البلدية حتى '+bfToday().split('-').reverse().join('/')
+    +' — السندات الملغاة مستثناة، ولا تحويل بين العملات.</div>'
+    +sec('expense')+sec('income')+'<script>setTimeout(function(){print()},300)<\/script></body></html>');
+  w.document.close();
 }
 
 // ── 🔐 AUTH (standalone) ──
