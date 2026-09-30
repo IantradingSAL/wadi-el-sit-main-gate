@@ -63,6 +63,28 @@ agree about the same person.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 
+## الموازنة (🧾 in `sandouk.html`)
+
+- **`budget_lines` holds the vote; the cash box holds the money.** One row per
+  budget line — year, نفقات/واردات, code (`5-2-1`), title, amount, currency —
+  and the cash-box **categories that feed it**. A line's actual is that year's
+  non-voided vouchers of its type under those categories, computed on the page
+  from `baladieh_finance`: nothing is stored twice, nothing reconciled by hand.
+- **A category feeds one line per year and type.** The edit dialog greys out a
+  category another line already claims, and the `budget_lines_guard` trigger
+  refuses it — otherwise one voucher would count twice. Categories with
+  vouchers that no line claims are listed under the table, never dropped.
+- **No exchange rate is invented.** A voucher in the other currency shows
+  beside the line («+ $500»), not converted into it.
+- Lines arrive pasted from the council's workbook (⬆️ استيراد بنود — الرمز, الاسم,
+  المبلغ[, فئة|فئة]); detail lines only, the chapter totals are computed. A
+  code already in that year is updated, and keeps its links. 📋 نسخ من سنة
+  سابقة starts next year from this one. The workbook itself stays out of the
+  repo, like every finance file.
+- Two keys (migration 49): **`budget_view`** (super_admin, mayor, admin,
+  finance, sandouk) and **`budget_manage`** (super_admin, mayor, admin); the
+  table's RLS asks the same two.
+
 ## الجباية المستحقة (`pay.html` · 💰 in `sandouk.html`)
 
 - **The cash box records what was paid; `pay_dues` records what is owed.** The

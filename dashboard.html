@@ -3238,6 +3238,8 @@ ar:{
   pk_club_games_manage:'إدارة البطولة (طاولة وورق)',pks_club_games_manage:'التسجيلات والرسوم والجدول والنتائج — games.html',
   pk_pay_manage:'إدارة الدفع الإلكتروني',pks_pay_manage:'خدمات الدفع ورسومها وشرط رقم العقار — pay.html',
   pk_pay_view:'سجل الدفعات الإلكترونية',pks_pay_view:'من دفع ماذا عبر Whish — أسماء وأرقام ومبالغ',
+  pk_budget_view:'الاطلاع على الموازنة',pks_budget_view:'بنود الموازنة والمصروف الفعلي عليها من الصندوق',
+  pk_budget_manage:'إدارة الموازنة',pks_budget_manage:'إضافة بنود الموازنة ومبالغها وربطها بفئات السندات',
   pk_pay_dues_manage:'إدارة الجباية المستحقة',pks_pay_dues_manage:'ما يتوجب على كل عقار سنةً بسنة — يظهر للمواطن في pay.html ويُدفع عبر Whish',
   ev_club_game_reg:'🎲 تسجيل في بطولة وادي الست'
 },
@@ -3292,6 +3294,8 @@ en:{
   pk_club_games_manage:'Run the championship (tawle & cards)',pks_club_games_manage:'Registrations, fees, bracket and results — games.html',
   pk_pay_manage:'Manage online payment',pks_pay_manage:'Payment services, fees and the property-number rule — pay.html',
   pk_pay_view:'Online payments log',pks_pay_view:'Who paid what via Whish — names, phones and amounts',
+  pk_budget_view:'View the budget',pks_budget_view:'Budget lines and what the cash box actually spent against them',
+  pk_budget_manage:'Manage the budget',pks_budget_manage:'Add budget lines and amounts, and link them to voucher categories',
   pk_pay_dues_manage:'Manage municipal dues',pks_pay_dues_manage:'What each property owes, year by year — shown to the citizen on pay.html, paid via Whish',
   ev_club_game_reg:'🎲 Championship registration'
 },
@@ -3346,6 +3350,8 @@ fr:{
   pk_club_games_manage:'Gérer le championnat (tawlé & cartes)',pks_club_games_manage:'Inscriptions, frais, tableau et résultats — games.html',
   pk_pay_manage:'Gérer le paiement en ligne',pks_pay_manage:'Services de paiement, frais et règle du numéro de parcelle — pay.html',
   pk_pay_view:'Journal des paiements en ligne',pks_pay_view:'Qui a payé quoi via Whish — noms, numéros et montants',
+  pk_budget_view:'Consulter le budget',pks_budget_view:'Lignes budgétaires et dépenses réelles de la caisse',
+  pk_budget_manage:'Gérer le budget',pks_budget_manage:'Ajouter les lignes et montants, et les lier aux catégories de bons',
   pk_pay_dues_manage:'Gérer les taxes dues',pks_pay_dues_manage:'Ce que chaque parcelle doit, année par année — visible au citoyen sur pay.html, payé via Whish',
   ev_club_game_reg:'🎲 Inscription au championnat'
 }};
@@ -3360,7 +3366,7 @@ const UP_MODULES=[
   {id:'news',  icon:'📣', bg:'#fef3e2', quick:[['push_send','qPush']],
    keys:['news_publish','push_send','push_log_view','inbox_read']},
   {id:'sandouk',icon:'💰', bg:'#fdf6e3', quick:[['sandouk_view','qView'],['sandouk_sign','qSign']],
-   keys:['sandouk_view','sandouk_add','sandouk_edit','sandouk_delete','sandouk_sign','sandouk_series']},
+   keys:['sandouk_view','sandouk_add','sandouk_edit','sandouk_delete','sandouk_sign','sandouk_series','budget_view','budget_manage']},
   {id:'cases', icon:'📋', bg:'var(--blue3)', quick:[['cases_view','qView'],['cases_approve','qAppr']],
    keys:['cases_view','cases_add','cases_edit','cases_delete','cases_approve']},
   {id:'coop',  icon:'🛒', bg:'#e8f6ef', quick:[['coop_view','qView'],['coop_edit','qEdit']],
