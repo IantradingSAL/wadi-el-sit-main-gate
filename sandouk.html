@@ -726,9 +726,12 @@ const BF_LOGO=(function(){
   try{const s=document.querySelector('.sb-logo'); if(s&&s.src)return s.src;}catch(e){}
   try{return new URL('icons/apple-touch-icon.png', location.href).href;}catch(e){return 'icons/apple-touch-icon.png';}
 })();
+// The two 2027 events have a budget chapter of their own (5-2-1 / 5-2-2 in
+// the 2027 budget), so their spending and their sponsors are their own
+// categories: the report per category is then the event's account.
 const BF_CATS={
-  income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','أخرى'],
-  expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
+  income:['جباية ورسوم بلدية','قيمة تأجيرية','بدل نفايات','رسوم رخص وإفادات','إيجارات أملاك البلدية','هبات وتبرعات','مساعدات ومنح حكومية','غرامات','عائدات مشاريع وخدمات','رعايات وبطاقات سهرة وادي الست','رعايات وبطاقات مهرجان Welcome Summer','أخرى'],
+  expense:['رواتب وأجور وتعويضات','صيانة الطرق والأشغال','الإنارة العامة','النظافة وجمع النفايات','المياه والري','محروقات ونقليات','كهرباء ومولدات','قرطاسية ولوازم إدارية','مناسبات ونشاطات','سهرة وادي الست','مهرجان Welcome Summer','مساعدات اجتماعية','صيانة عامة وتجهيزات','أخرى']
 };
 // The fixed lists above are a starting point, not the whole truth: categories
 // typed into "أخرى" become real categories on their entries (تكليف العمال

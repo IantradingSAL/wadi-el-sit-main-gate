@@ -55,6 +55,11 @@ agree about the same person.
   carries `?download=<name>` for the ⬇️ button. Asking for it on the view link is
   what made every tap save the file instead of showing it, and the tab is opened
   synchronously inside the click so a popup blocker still lets it through.
+- **The 2027 events have categories of their own**: سهرة وادي الست and مهرجان
+  Welcome Summer (expense), and their رعايات وبطاقات (income). The 2027 draft
+  budget gives them their own chapter (5-2-1 / 5-2-2 under الاحتفالات
+  والمهرجانات), so the category report is each event's account against it. The
+  budget workbook itself stays out of the repo, like every other finance file.
 - Row actions live behind one `⋯` menu per row; the signature and attachment
   counts stay visible on the السند column.
 
